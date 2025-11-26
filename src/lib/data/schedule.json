@@ -1,0 +1,61 @@
+{
+  "workouts": {
+    "2025-12-01": {
+      "date": "2025-12-01",
+      "title": "Récupération Active",
+      "type": "Recovery",
+      "duration": 45,
+      "tss": 30,
+      "status": "pending",
+      "mode": "Outdoor",
+      "description_outdoor": "45 min de vélo en Zone 1 (55-70% FTP) sur terrain plat. Fréquence cardiaque basse et effort très léger. Concentrez-vous sur la fluidité du pédalage.",
+      "description_indoor": "45 min Z1 (55-70% FTP) sur Zwift. Maintenez une cadence > 90 RPM. Musique douce recommandée."
+    },
+    "2025-12-02": {
+      "date": "2025-12-02",
+      "title": "Seuil Intensif (2x20min)",
+      "type": "Threshold",
+      "duration": 90,
+      "tss": 95,
+      "status": "pending",
+      "mode": "Indoor",
+      "description_outdoor": "Non recommandé en extérieur. À effectuer sur home trainer.",
+      "description_indoor": "Échauffement 20 min. Corps de séance: 2 x 20 min en Zone 4 (91-105% FTP, soit 238W en moyenne). Récupération 5 min Z1. Terminer par 10 min Z1."
+    },
+    "2025-12-03": {
+      "date": "2025-12-03",
+      "title": "Repos Complet",
+      "type": "Rest",
+      "duration": 0,
+      "tss": 0,
+      "status": "missed",
+      "mode": "Outdoor",
+      "description_outdoor": "Repos complet.",
+      "description_indoor": "Repos complet."
+    },
+    "2025-12-04": {
+      "date": "2025-12-04",
+      "title": "Rappel Force/Endurance",
+      "type": "Tempo",
+      "duration": 60,
+      "tss": 50,
+      "status": "pending",
+      "mode": "Outdoor",
+      "description_outdoor": "60 min. Inclure 4x5 min en Zone 3 (75-90% FTP) avec un gros braquet (cadence 60-70 RPM) pour la force.",
+      "description_indoor": "60 min. Inclure 4x5 min en Z3 (75-90% FTP) @ 65 RPM. Récupération 5 min Z1."
+    },
+    "2025-12-07": {
+      "date": "2025-12-07",
+      "title": "Longue Sortie Endurance",
+      "type": "Endurance",
+      "duration": 180,
+      "tss": 150,
+      "status": "pending",
+      "mode": "Outdoor",
+      "description_outdoor": "3 heures en Zone 2 (70-85% FTP). Maintenir l'alimentation et l'hydratation. Objectif: améliorer la capacité aérobie.",
+      "description_indoor": "3 heures Z2 sur Kinomap ou Rouvy. Varier les paysages pour éviter l'ennui. Z2 = 70-85% FTP."
+    }
+  },
+  "summary": "Bloc de 3+1 axé sur le Seuil (Z4) et l'Endurance de Force pour préparer votre Gran Fondo. L'IA a planifié deux séances clés par semaine et respecte la disponibilité du Jean Dupont.",
+  "lastGenerated": "2025-11-26"
+}

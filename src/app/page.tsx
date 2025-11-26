@@ -1,65 +1,197 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import React, { useState, useEffect } from 'react';
+// Import des Server Actions (y compris loadInitialData)
+import {
+  saveAthleteProfile,
+  generateNewPlan,
+  updateWorkoutStatus,
+  toggleWorkoutMode,
+  moveWorkout,
+  loadInitialData // <-- NOUVELLE FONCTION IMPORTÉE
+} from '@/app/actions/schedule';
+// Import des types du fichier dédié (Client-safe)
+import { Profile, Schedule, Workout } from '@/lib/data/type';
+import {
+  Nav,
+  ProfileForm,
+  CalendarView,
+  WorkoutDetailView,
+  Card,
+  ChevronLeft,
+  BarChart2
+} from '@/components/ui';
+
+// --- Types pour le composant principal
+type View = 'loading' | 'onboarding' | 'dashboard' | 'workout-detail' | 'settings' | 'stats';
+
+// --- Composant Principal (Client Component pour la gestion des vues)
+// C'est le point d'entrée qui orchestre l'application
+export default function AppClientWrapper() {
+  const [view, setView] = useState<View>('loading');
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [schedule, setSchedule] = useState<Schedule | null>(null);
+  const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fonction pour charger les données (Utilise désormais une Server Action)
+  const loadData = async () => {
+    try {
+      // Utilisation de la Server Action pour éviter d'importer directement 'fs'
+      const { profile: profileData, schedule: scheduleData } = await loadInitialData();
+
+      setProfile(profileData);
+      setSchedule(scheduleData);
+
+      if (!profileData || !profileData.name) {
+        setView('onboarding');
+      } else {
+        setView('dashboard');
+      }
+    } catch (e) {
+      console.error("Erreur de chargement des données:", e);
+      setError("Erreur lors du chargement des données. Veuillez vérifier les fichiers JSON ou la console pour les erreurs serveur.");
+      setView('dashboard');
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      await loadData();
+    })();
+  }, []);
+
+  // Fonction pour gérer la navigation et la sélection de séance
+  const handleViewChange = (newView: View) => {
+    if (newView !== 'workout-detail') setSelectedWorkout(null);
+    setView(newView);
+  };
+
+  const handleViewWorkout = (workout: Workout) => {
+    setSelectedWorkout(workout);
+    setView('workout-detail');
+  };
+
+  // Wrapper pour les Server Actions
+  const handleGenerate = async (blockFocus: string, customTheme: string | null) => {
+    await generateNewPlan(blockFocus, customTheme);
+    await loadData(); // Recharger les données après la mutation
+  };
+
+  const handleSaveProfile = async (data: Profile) => {
+    await saveAthleteProfile(data);
+    await loadData();
+  };
+
+  // Met à jour le statut, recharge les données, et met à jour l'objet de la séance sélectionnée
+  const handleUpdateStatus = async (dateKey: string, status: 'pending' | 'completed' | 'missed', feedback?: { rpe: number, avgPower: number, notes: string }) => {
+    await updateWorkoutStatus(dateKey, status, feedback);
+    await loadData();
+    // Simuler la mise à jour de la séance sélectionnée (important pour la vue détail)
+    setSchedule(prev => {
+      if (prev) {
+        const updatedWorkout = { ...prev.workouts[dateKey], status, completedData: feedback };
+        setSelectedWorkout(updatedWorkout);
+      }
+      return prev;
+    });
+  };
+
+  // Bascule le mode, recharge les données, et met à jour l'objet de la séance sélectionnée
+  const handleToggleMode = async (dateKey: string) => {
+    await toggleWorkoutMode(dateKey);
+    await loadData();
+    setSchedule(prev => {
+      if (prev) {
+        const currentMode = prev.workouts[dateKey].mode;
+        const newMode = (currentMode === 'Outdoor' ? 'Indoor' : 'Outdoor') as 'Outdoor' | 'Indoor';
+        const updatedWorkout = { ...prev.workouts[dateKey], mode: newMode };
+        setSelectedWorkout(updatedWorkout);
+      }
+      return prev;
+    });
+  };
+
+  const handleMoveWorkout = async (originalDateStr: string, newDateStr: string) => {
+    await moveWorkout(originalDateStr, newDateStr);
+    await loadData();
+  };
+
+  // --- Rendu basé sur l'état de la vue ---
+
+  if (view === 'loading') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-white">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-slate-400 animate-pulse">Chargement de l&apos;application Next.js...</p>
+      </div>
+    );
+  }
+
+  const showNav = view !== 'onboarding';
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <>
+      {showNav && <Nav onViewChange={handleViewChange} currentView={view} />}
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        {error && (
+          <Card className="bg-red-900/50 border-red-500/50 mb-6">
+            <p className="text-red-300 font-bold">Erreur Critique: {error}</p>
+            <p className="text-red-400 text-sm mt-1">Veuillez vérifier vos logs et la configuration de la clé API ou des fichiers JSON.</p>
+          </Card>
+        )}
+        {view === 'onboarding' && (
+          <div className="max-w-2xl mx-auto py-8">
+            <ProfileForm
+              initialProfileData={profile}
+              onSave={handleSaveProfile}
+              onSuccess={() => handleViewChange('dashboard')}
+              onCancel={() => handleViewChange('dashboard')}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+          </div>
+        )}
+        {view === 'settings' && (
+          <div className="max-w-2xl mx-auto py-8 animate-in fade-in duration-300">
+            <button onClick={() => handleViewChange('dashboard')} className="mb-4 flex items-center text-slate-400 hover:text-white">
+              <ChevronLeft size={20} className="mr-1" /> Retour Dashboard
+            </button>
+            <ProfileForm
+              initialProfileData={profile}
+              onSave={handleSaveProfile}
+              onSuccess={() => handleViewChange('dashboard')}
+              onCancel={() => handleViewChange('dashboard')}
+              isSettings={true}
+            />
+          </div>
+        )}
+        {view === 'dashboard' && schedule && (
+          <CalendarView
+            scheduleData={schedule}
+            onViewWorkout={handleViewWorkout}
+            onGenerate={handleGenerate}
+          />
+        )}
+        {view === 'workout-detail' && selectedWorkout && profile && (
+          <WorkoutDetailView
+            workout={selectedWorkout}
+            profile={profile}
+            onClose={() => handleViewChange('dashboard')}
+            onUpdate={handleUpdateStatus}
+            onToggleMode={handleToggleMode}
+            onMoveWorkout={handleMoveWorkout}
+          />
+        )}
+        {view === 'stats' && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <button onClick={() => handleViewChange('dashboard')} className="mb-4 flex items-center text-slate-400 hover:text-white">
+              <ChevronLeft size={20} className="mr-1" /> Retour Dashboard
+            </button>
+            <Card className="min-h-[400px] flex items-center justify-center">
+              <p className="text-2xl text-slate-400"><BarChart2 size={32} className="inline mr-2" />Vue Statistiques (à implémenter)</p>
+            </Card>
+          </div>
+        )}
       </main>
-    </div>
+    </>
   );
 }
