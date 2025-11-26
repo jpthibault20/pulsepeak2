@@ -1,14 +1,13 @@
 'use server';
 
+// Import de la fonction generatePlanFromAI
+import { generatePlanFromAI } from '@/lib/ai/coach-api'; 
 import { getProfile, getSchedule, saveProfile, saveSchedule } from '@/lib/data/crud';
 import { Schedule, Profile, Workout } from '@/lib/data/type'; 
 
 // --- Fonctions de lecture (initialisation)
-// Cette fonction est désormais le seul point d'entrée pour les composants client
-// souhaitant récupérer le profil et le calendrier, car elle est exécutée sur le serveur.
 export async function loadInitialData(): Promise<{ profile: Profile | null, schedule: Schedule | null }> {
     try {
-        // Ces appels sont sécurisés car ils sont exécutés sur le serveur
         const profile = await getProfile();
         const schedule = await getSchedule();
         return { profile, schedule };
@@ -20,15 +19,14 @@ export async function loadInitialData(): Promise<{ profile: Profile | null, sche
 
 
 // --- Fonctions d'écriture (mutation)
-// (Le code existant pour les actions d'écriture est maintenu ci-dessous)
 
 export async function saveAthleteProfile(data: Profile) {
     await saveProfile(data);
 }
 
+// CORRECTION MAJEURE: Appel effectif à generatePlanFromAI
 export async function generateNewPlan(blockFocus: string, customTheme: string | null) {
-    // Simuler la logique complexe de l'IA (qui utiliserait l'API Gemini pour générer le JSON)
-    console.log(`[IA] Génération d'un plan axé sur: ${blockFocus}. Thème custom: ${customTheme}`);
+    console.log(`[Plan Generation] Focus: ${blockFocus}. Theme custom: ${customTheme}`);
 
     const existingSchedule = await getSchedule();
     const existingProfile = await getProfile();
@@ -36,45 +34,50 @@ export async function generateNewPlan(blockFocus: string, customTheme: string | 
     if (!existingProfile) {
         throw new Error("Impossible de générer un plan sans profil athlète.");
     }
-
-    // Données fictives pour la démonstration
-    const nextWeekWorkouts: { [key: string]: Workout } = {
-        '2025-12-01': {
-            date: '2025-12-01', title: 'Récupération Active', type: 'Recovery', duration: 45, tss: 30, status: 'pending', mode: 'Outdoor', 
-            description_outdoor: '45 min de vélo en Zone 1 (55-70% FTP) sur terrain plat. Fréquence cardiaque basse et effort très léger. Concentrez-vous sur la fluidité du pédalage.',
-            description_indoor: '45 min Z1 (55-70% FTP) sur Zwift. Maintenez une cadence > 90 RPM. Musique douce recommandée.',
-        },
-        '2025-12-02': {
-            date: '2025-12-02', title: 'Seuil Intensif (2x20min)', type: 'Threshold', duration: 90, tss: 95, status: 'pending', mode: 'Indoor', 
-            description_outdoor: 'Non recommandé en extérieur. À effectuer sur home trainer.',
-            description_indoor: `Échauffement 20 min. Corps de séance: 2 x 20 min en Zone 4 (91-105% FTP, soit ${Math.round(existingProfile.ftp * 0.95)}W en moyenne). Récupération 5 min Z1. Terminer par 10 min Z1.`,
-        },
-        '2025-12-03': {
-            date: '2025-12-03', title: 'Repos Complet', type: 'Rest', duration: 0, tss: 0, status: 'missed', mode: 'Outdoor', 
-            description_outdoor: 'Repos complet.', description_indoor: 'Repos complet.',
-        },
-        '2025-12-04': {
-            date: '2025-12-04', title: 'Rappel Force/Endurance', type: 'Tempo', duration: 60, tss: 50, status: 'pending', mode: 'Outdoor', 
-            description_outdoor: '60 min. Inclure 4x5 min en Zone 3 (75-90% FTP) avec un gros braquet (cadence 60-70 RPM) pour la force.',
-            description_indoor: '60 min. Inclure 4x5 min en Z3 (75-90% FTP) @ 65 RPM. Récupération 5 min Z1.',
-        },
-        '2025-12-07': {
-            date: '2025-12-07', title: 'Longue Sortie Endurance', type: 'Endurance', duration: 180, tss: 150, status: 'pending', mode: 'Outdoor', 
-            description_outdoor: '3 heures en Zone 2 (70-85% FTP). Maintenir l\'alimentation et l\'hydratation. Objectif: améliorer la capacité aérobie.',
-            description_indoor: '3 heures Z2 sur Kinomap ou Rouvy. Varier les paysages pour éviter l\'ennui. Z2 = 70-85% FTP.',
-        },
-    };
     
-    // Simuler un résumé IA basé sur le focus
-    const summary = `Bloc de 3+1 axé sur le Seuil (Z4) et l'Endurance de Force pour préparer votre Gran Fondo. L'IA a planifié deux séances clés par semaine et respecte la disponibilité du ${existingProfile.name}.`;
+    // --- Préparez l'historique (simulation) ---
+    // Vous devez ici générer une chaîne d'historique factice ou réelle.
+    // Pour l'instant, utilisons une simulation simple de l'historique de l'athlète.
+    const history = "L'athlète est en bonne forme. Dernière semaine : 10h de Z2, 3 séances d'intervalles (Z4/Z5). Pas de blessure. Cherche à monter en puissance.";
 
-    const newSchedule: Schedule = {
-        workouts: { ...existingSchedule.workouts, ...nextWeekWorkouts },
-        summary: summary,
-        lastGenerated: new Date().toISOString().split('T')[0]
-    };
+    
+    try {
+        // 1. Appel EFFECTIF à l'API Gemini
+        const aiResponse = await generatePlanFromAI(
+            existingProfile, 
+            history, 
+            blockFocus, 
+            customTheme
+        );
+        
+        // 2. Traitement et formatage des données de l'IA
+        const nextWorkouts: { [key: string]: Workout } = {};
+        
+        aiResponse.workouts.forEach(w => {
+            // Assurez-vous que l'objet Workout est complet selon le type
+            nextWorkouts[w.date] = {
+                ...w,
+                status: 'pending', // Statut par défaut
+            };
+        });
 
-    await saveSchedule(newSchedule);
+        // 3. Construction du nouveau Schedule
+        const newSchedule: Schedule = {
+            // Fusionner les anciens et les nouveaux entraînements.
+            // Les nouveaux écraseront les anciens si les dates se chevauchent.
+            workouts: { ...existingSchedule.workouts, ...nextWorkouts },
+            summary: aiResponse.synthesis, // Récupérer la synthèse de l'IA
+            lastGenerated: new Date().toISOString().split('T')[0]
+        };
+
+        // 4. Sauvegarde
+        await saveSchedule(newSchedule);
+
+    } catch (error) {
+        // Transmettre l'erreur au client pour affichage
+        console.error("Échec de la génération de plan via l'IA:", error);
+        throw new Error(`Échec de la génération du plan par l'IA. Vérifiez la console pour les détails. Détail: ${error}`);
+    }
 }
 
 export async function updateWorkoutStatus(dateKey: string, status: 'pending' | 'completed' | 'missed', feedback?: { rpe: number, avgPower: number, notes: string }) {

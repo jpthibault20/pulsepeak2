@@ -10,6 +10,7 @@ function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// NOTE: Le type Workout est importé depuis data/types, non data/crud
 /**
  * Génère un plan d'entraînement complet pour 4 semaines ou 7 jours via l'API Gemini.
  */
@@ -20,10 +21,16 @@ export async function generatePlanFromAI(
   customTheme: string | null
 ): Promise<{ synthesis: string, workouts: Omit<Workout, 'status' | 'completedData'>[] }> {
   
+  // LOG CRITIQUE POUR DÉBOGUER LE PROBLÈME DE CONNEXION
   if (!GEMINI_API_KEY) {
+    console.error("ERREUR CRITIQUE: GEMINI_API_KEY est NULL ou UNDEFINED. Veuillez vérifier votre fichier .env.local ou les variables d'environnement de déploiement.");
     throw new Error("GEMINI_API_KEY is not set in environment variables.");
+  } else {
+    // Ne pas logguer la clé, mais confirmer sa présence
+    console.log("INFO: GEMINI_API_KEY détectée. Tentative d'appel à l'API Gemini...");
   }
-
+  // FIN LOG CRITIQUE
+ console.log(`Appel à l'API Gemini avec la clé: ${GEMINI_API_KEY.substring(0, 5)}...`);
   // --- Logique de Périodisation ---
   const startDate = new Date();
   let numDays = 28; // 4 semaines par défaut
@@ -114,7 +121,7 @@ export async function generatePlanFromAI(
   const payload = {
     contents: [{ parts: [{ text: userPrompt }] }],
     systemInstruction: { parts: [{ text: systemPrompt }] },
-    config: {
+    generationConfig: {
         responseMimeType: "application/json",
         responseSchema: responseSchema,
     },
@@ -128,13 +135,24 @@ export async function generatePlanFromAI(
         body: JSON.stringify(payload)
       });
 
+      // Vérifiez si la réponse HTTP est OK avant de lire le JSON
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+         // Tentative de lire le corps de l'erreur si possible
+        const errorBody = await response.text();
+        console.error(`Erreur API Gemini (Tentative ${attempt + 1}): Statut ${response.status}. Corps de l'erreur: ${errorBody}`);
+        // Afficher l'erreur complète si c'est un statut 4xx ou 5xx
+        throw new Error(`HTTP error! status: ${response.status}. API Error Body: ${errorBody.substring(0, 500)}`);
       }
 
       const data = await response.json();
       const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!jsonText) throw new Error("AI response structure invalid or empty.");
+      
+      // Nouvelle vérification de la présence de JSONText
+      if (!jsonText || jsonText.trim() === '') {
+        // Log l'objet de réponse complet de l'API pour débogage
+        console.error("AI response content is empty or invalid. Full API Response:", JSON.stringify(data, null, 2));
+        throw new Error("AI response structure invalid or empty.");
+      }
 
       // Le modèle doit retourner directement un JSON valide
       const result = JSON.parse(jsonText);
@@ -143,10 +161,12 @@ export async function generatePlanFromAI(
     } catch (error) {
       if (attempt < MAX_RETRIES - 1) {
         // Logique de backoff
+        // Log l'erreur pour le débogage de la boucle de retry
+        console.warn(`Tentative ${attempt + 1} échouée. Retraitement dans ${Math.pow(2, attempt)}s. Erreur: ${error}`);
         await delay(Math.pow(2, attempt) * 1000 + Math.random() * 1000); 
       } else {
-        console.error("AI Generation Failed after multiple retries:", error);
-        throw new Error("Failed to generate training plan from AI.");
+        console.error("AI Generation Failed after multiple retries (Max Retries Reached):", error);
+        throw new Error(`Échec de la génération du plan par l'IA après ${MAX_RETRIES} tentatives. Cause probable: ${error}`);
       }
     }
   }

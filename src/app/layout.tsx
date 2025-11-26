@@ -4,7 +4,7 @@ import { Inter } from 'next/font/google';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'CycloIA Coach - Next.js',
+  title: 'PulsePeak Coach - Next.js',
   description: 'Coach cycliste intelligent utilisant Gemini et Next.js Server Actions.',
 };
 

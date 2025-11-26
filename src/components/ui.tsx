@@ -133,7 +133,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialProfileData, is
         <div className={`space-y-6 ${isSettings ? 'pb-20' : ''}`}>
             {!isSettings && (
                 <div className="text-center mb-10">
-                    <h1 className="text-4xl font-bold text-white mb-2">Configuration CycloIA</h1>
+                    <h1 className="text-4xl font-bold text-white mb-2">Configuration PulsePeak</h1>
                     <p className="text-slate-400">Pour un coaching de précision (Blocs 3+1, Affûtage, etc.)</p>
                 </div>
             )}
