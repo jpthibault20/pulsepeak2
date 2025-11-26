@@ -1,6 +1,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { Profile, Schedule } from './type'; 
+import { Profile, Schedule } from './type';
 
 // ATTENTION: CE FICHIER UTILISE DES MODULES NODE.JS (fs, path). 
 // SES EXPORTS NE DOIVENT JAMAIS ÊTRE IMPORTÉS DIRECTEMENT DANS UN COMPOSANT CLIENT ('use client').
@@ -14,19 +14,19 @@ const dataDir = path.join(process.cwd(), 'src', 'lib', 'data');
  * @returns Le contenu JSON parsé.
  */
 export async function readJsonFile<T>(filename: string): Promise<T> {
-  const filePath = path.join(dataDir, filename);
-  try {
-    const data = await fs.readFile(filePath, 'utf-8');
-    return JSON.parse(data) as T;
-  } catch (error) {
-    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
-      console.warn(`File ${filename} not found. Returning empty object or array.`);
-      // Retourne une structure initiale si le fichier n'existe pas encore
-      return (filename.includes('schedule') ? { workouts: {}, summary: null } : {}) as T;
+    const filePath = path.join(dataDir, filename);
+    try {
+        const data = await fs.readFile(filePath, 'utf-8');
+        return JSON.parse(data) as T;
+    } catch (error) {
+        if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+            console.warn(`File ${filename} not found. Returning empty object or array.`);
+            // Retourne une structure initiale si le fichier n'existe pas encore
+            return (filename.includes('schedule') ? { workouts: {}, summary: null } : {}) as T;
+        }
+        console.error(`Error reading ${filename}:`, error);
+        throw new Error(`Failed to read data from ${filename}`);
     }
-    console.error(`Error reading ${filename}:`, error);
-    throw new Error(`Failed to read data from ${filename}`);
-  }
 }
 
 /**
@@ -35,13 +35,13 @@ export async function readJsonFile<T>(filename: string): Promise<T> {
  * @param data L'objet à écrire.
  */
 export async function writeJsonFile<T>(filename: string, data: T): Promise<void> {
-  const filePath = path.join(dataDir, filename);
-  try {
-    await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (error) {
-    console.error(`Error writing to ${filename}:`, error);
-    throw new Error(`Failed to write data to ${filename}`);
-  }
+    const filePath = path.join(dataDir, filename);
+    try {
+        await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
+    } catch (error) {
+        console.error(`Error writing to ${filename}:`, error);
+        throw new Error(`Failed to write data to ${filename}`);
+    }
 }
 
 export async function getProfile(): Promise<Profile | null> {
