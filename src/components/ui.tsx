@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     User, Settings, Activity, Clock, Zap, Home, Mountain,
     ChevronLeft, ChevronRight, CheckCircle, XCircle,
-    BrainCircuit, Plus, Save, Info, Dumbbell, BarChart2, CalendarDays, Target
+    BrainCircuit, Plus, Save, Info, Dumbbell, BarChart2, CalendarDays, Target,
+    TrendingUp, MapPin, Calculator
 } from 'lucide-react';
 import { Profile, Workout } from '@/lib/data/type';
 
@@ -13,11 +14,8 @@ const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 };
 
-// --- Composants de Base (Button, Card, Badge)
-// (Inclut tout le code des composants UI: Button, Card, Badge, ProfileForm, GenerationModal, Nav, CalendarView, WorkoutDetailView)
-// Ceci est un exemple de segmentation pour la lecture, dans un vrai projet, chaque composant serait un fichier séparé.
+// --- Composants de Base ---
 
-// --- Button (Client Component) ---
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     children: React.ReactNode;
     variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'success' | 'ghost';
@@ -56,14 +54,12 @@ export const Button: React.FC<ButtonProps> = ({
     );
 };
 
-// --- Card (Client Component) ---
 export const Card: React.FC<{ children: React.ReactNode, className?: string }> = ({ children, className = '' }) => (
     <div className={`bg-slate-800/50 backdrop-blur-md border border-slate-700 rounded-2xl p-6 ${className}`}>
         {children}
     </div>
 );
 
-// --- Badge (Client Component) ---
 export const Badge: React.FC<{ type: string }> = ({ type }) => {
     const styles: { [key: string]: string } = {
         Endurance: "bg-green-500/20 text-green-400 border-green-500/30",
@@ -87,7 +83,8 @@ export const Badge: React.FC<{ type: string }> = ({ type }) => {
     );
 };
 
-// --- ProfileForm (Client Component) ---
+// --- ProfileForm ---
+
 interface ProfileFormProps {
     initialProfileData: Profile | null;
     isSettings?: boolean;
@@ -98,7 +95,13 @@ interface ProfileFormProps {
 
 export const ProfileForm: React.FC<ProfileFormProps> = ({ initialProfileData, isSettings = false, onSave, onSuccess, onCancel }) => {
     const defaultData: Profile = {
-        name: '', ftp: 200, experience: 'Intermédiaire', goal: 'Améliorer mon endurance', objectiveDate: '', weaknesses: 'Grimpeur', targetWeeklyHours: 6,
+        name: '',
+        ftp: 200,
+        weight: 70,
+        experience: 'Intermédiaire',
+        goal: 'Améliorer mon endurance',
+        objectiveDate: '',
+        weaknesses: 'Grimpeur',
         weeklyAvailability: {
             'Lundi': 60, 'Mardi': 60, 'Mercredi': 90, 'Jeudi': 60, 'Vendredi': 60, 'Samedi': 180, 'Dimanche': 120
         }
@@ -117,6 +120,11 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialProfileData, is
         }));
     };
 
+    // Calcul du total hebdomadaire
+    const totalWeeklyMinutes = Object.values(formData.weeklyAvailability).reduce((acc, val) => acc + val, 0);
+    const totalWeeklyHours = Math.floor(totalWeeklyMinutes / 60);
+    const totalWeeklyMinutesRemainder = totalWeeklyMinutes % 60;
+
     const handleSubmit = async () => {
         setIsSaving(true);
         try {
@@ -133,7 +141,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialProfileData, is
         <div className={`space-y-6 ${isSettings ? 'pb-20' : ''}`}>
             {!isSettings && (
                 <div className="text-center mb-10">
-                    <h1 className="text-4xl font-bold text-white mb-2">Configuration PulsePeak</h1>
+                    <h1 className="text-4xl font-bold text-white mb-2">Configuration CycloIA</h1>
                     <p className="text-slate-400">Pour un coaching de précision (Blocs 3+1, Affûtage, etc.)</p>
                 </div>
             )}
@@ -162,14 +170,15 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialProfileData, is
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1">Objectif Volume Hebdo (Heures)</label>
+                        <label className="block text-sm font-medium text-slate-400 mb-1">Poids (kg)</label>
                         <input
                             type="number"
-                            value={formData.targetWeeklyHours}
-                            onChange={e => setFormData({ ...formData, targetWeeklyHours: parseInt(e.target.value) })}
+                            value={formData.weight}
+                            onChange={e => setFormData({ ...formData, weight: parseInt(e.target.value) })}
                             className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none"
                         />
                     </div>
+                    {/* Le champ "Objectif Volume Hebdo" manuel a été supprimé ici */}
                 </div>
 
                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center border-t border-slate-700 pt-6">
@@ -195,6 +204,17 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialProfileData, is
                         </div>
                     ))}
                     <p className="text-xs text-slate-500 mt-2 italic text-center">Glissez à 0 pour définir un jour de repos forcé.</p>
+
+                    {/* Affichage du total calculé */}
+                    <div className="mt-4 pt-4 border-t border-slate-700 flex items-center justify-between bg-slate-800/50 p-3 rounded-lg">
+                        <div className="flex items-center text-slate-300">
+                            <Calculator size={18} className="mr-2 text-blue-400" />
+                            <span className="font-medium text-sm">Volume Total Possible :</span>
+                        </div>
+                        <span className="text-xl font-bold text-white">
+                            {totalWeeklyHours}h<span className="text-sm text-slate-400">{totalWeeklyMinutesRemainder > 0 ? totalWeeklyMinutesRemainder : '00'}</span>
+                        </span>
+                    </div>
                 </div>
 
                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center border-t border-slate-700 pt-6">
@@ -247,19 +267,31 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialProfileData, is
     );
 };
 
-// --- GenerationModal (Client Component) ---
+// --- GenerationModal ---
+
 interface GenerationModalProps {
     onClose: () => void;
-    onGenerate: (blockFocus: string, customTheme: string | null) => Promise<void>;
+    onGenerate: (blockFocus: string, customTheme: string | null, startDate: string | null) => Promise<void>;
     isGenerating: boolean;
 }
 
 export const GenerationModal: React.FC<GenerationModalProps> = ({ onClose, onGenerate, isGenerating }) => {
-    const [blockFocus, setBlockFocus] = useState('Objectif Principal');
+    const [blockFocus, setBlockFocus] = useState('Endurance');
     const [customTheme, setCustomTheme] = useState('');
+    const [startDate, setStartDate] = useState(() => {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return tomorrow.toISOString().split('T')[0];
+    });
+
+    const themes = [
+        'Endurance', 'PMA', 'Seuil', 'Fartlek',
+        'Semaine de Tests (FTP, VO2max)',
+        'Sprint', 'Force', 'Cadence', 'Sweet Spot', 'Ascension', 'Personnalisé'
+    ];
 
     const handleGenerate = async () => {
-        await onGenerate(blockFocus, blockFocus === 'Personnalisé' ? customTheme : null);
+        await onGenerate(blockFocus, blockFocus === 'Personnalisé' ? customTheme : null, startDate);
         onClose();
     };
 
@@ -268,33 +300,42 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ onClose, onGen
             <Card className="max-w-md w-full animate-in zoom-in-95">
                 <h2 className="text-2xl font-bold text-white mb-4">Créer un Nouveau Bloc</h2>
                 <p className="text-slate-400 mb-6 text-sm">
-                    L&apos;IA va analyser votre historique récent pour calibrer l&apos;intensité et la périodisation.
+                    L&apos;IA va analyser votre historique récent pour calibrer l&apos;intensité et la périodisation (3+1 par défaut).
                 </p>
 
                 <div className="mb-6">
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Date de début du bloc</label>
+                    <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-2 mb-4 focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+
                     <label className="block text-sm font-medium text-slate-300 mb-2">Thème / Focus du bloc</label>
                     <div className="grid grid-cols-2 gap-2 mb-3">
-                        {['Objectif Principal', 'PMA / VO2max', 'Seuil (Threshold)', 'Endurance Fondamentale', 'Semaine de Tests (FTP, VO2max)', 'Personnalisé'].map((focus) => (
+                        {themes.map((focus) => (
                             <button
                                 key={focus}
                                 onClick={() => setBlockFocus(focus)}
-                                className={`p-3 rounded-lg text-sm text-left transition-all border ${blockFocus === focus
+                                className={`p-3 rounded-lg text-sm text-left transition-all border truncate ${blockFocus === focus
                                     ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-900/20'
                                     : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'
                                     }`}
+                                title={focus}
                             >
-                                {focus}
+                                {focus === 'Semaine de Tests (FTP, VO2max)' ? 'Semaine de Tests' : focus}
                             </button>
                         ))}
                     </div>
 
                     {blockFocus === 'Personnalisé' && (
                         <div className="animate-in fade-in slide-in-from-top-2 mt-4">
-                            <label className="block text-xs text-blue-400 mb-1">Décrivez votre thème (ex: &apos;Semaine choc montagne&apos;, &apos;Vitesse Piste&apos;, &apos;Retour de blessure&apos;)</label>
+                            <label className="block text-xs text-blue-400 mb-1">Décrivez votre thème</label>
                             <textarea
                                 value={customTheme}
                                 onChange={(e) => setCustomTheme(e.target.value)}
-                                placeholder="L'IA choisira les meilleurs exercices et la structure (ex: 2+1, 3+1) pour ce thème..."
+                                placeholder="Ex: Semaine choc montagne, Vitesse Piste..."
                                 className="w-full bg-slate-900 border border-blue-500/50 rounded-lg p-3 text-white text-sm h-24 resize-none focus:ring-1 focus:ring-blue-500 outline-none"
                                 autoFocus
                             />
@@ -319,7 +360,8 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ onClose, onGen
     );
 };
 
-// --- Nav (Client Component) ---
+// --- Nav ---
+
 interface NavProps {
     onViewChange: (view: 'dashboard' | 'settings' | 'stats') => void;
     currentView: string;
@@ -355,11 +397,12 @@ export const Nav: React.FC<NavProps> = ({ onViewChange, currentView }) => (
     </nav>
 );
 
-// --- CalendarView (Client Component) ---
+// --- CalendarView ---
+
 interface CalendarViewProps {
     scheduleData: { workouts: { [key: string]: Workout }, summary: string | null };
     onViewWorkout: (workout: Workout) => void;
-    onGenerate: (blockFocus: string, customTheme: string | null) => Promise<void>;
+    onGenerate: (blockFocus: string, customTheme: string | null, startDate: string | null) => Promise<void>;
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({ scheduleData, onViewWorkout, onGenerate }) => {
@@ -369,20 +412,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ scheduleData, onView
 
     const year = selectedDate.getFullYear();
     const month = selectedDate.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const firstDayOfMonth = new Date(year, month, 1).getDay();
-    const startOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
-
-    const days = Array(startOffset).fill(null);
-    for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, month, i));
-
-    const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
-
-    const getWorkoutForDate = (dateObj: Date | null) => {
-        if (!dateObj) return null;
-        const dKey = formatDateKey(dateObj);
-        return scheduleData.workouts?.[dKey];
-    };
 
     const formatDateKey = (date: Date) => {
         const d = new Date(date);
@@ -392,14 +421,76 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ scheduleData, onView
         return `${year}-${month}-${day}`;
     };
 
+    const getWorkoutForDate = (dateObj: Date | null) => {
+        if (!dateObj) return null;
+        const dKey = formatDateKey(dateObj);
+        return scheduleData.workouts?.[dKey];
+    };
+
     const getModeIcon = (mode: string) => {
         return mode === 'Indoor' ? <Home size={12} className="text-sky-400" /> : <Mountain size={12} className="text-green-400" />;
     };
 
-    const handleGeneratePlan = async (blockFocus: string, customTheme: string | null) => {
+    // Nouvelle logique : Génération des semaines pour l'affichage en grille
+    const weeks = useMemo(() => {
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        // Le 1er du mois (0 = Dimanche, 1 = Lundi, etc.)
+        const firstDayOfMonth = new Date(year, month, 1).getDay();
+        // Ajustement pour que Lundi soit 0 (Lundi=1 -> 0, Dimanche=0 -> 6)
+        const startOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
+
+        const weekRows: (Date | null)[][] = [];
+        let currentWeek: (Date | null)[] = Array(startOffset).fill(null);
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            currentWeek.push(new Date(year, month, i));
+            // Si la semaine est pleine (7 jours), on l'ajoute et on recommence
+            if (currentWeek.length === 7) {
+                weekRows.push(currentWeek);
+                currentWeek = [];
+            }
+        }
+        // Ajouter la dernière semaine incomplète si nécessaire
+        if (currentWeek.length > 0) {
+            while (currentWeek.length < 7) currentWeek.push(null);
+            weekRows.push(currentWeek);
+        }
+        return weekRows;
+    }, [year, month]);
+
+    // Fonction pour calculer les stats d'une semaine
+    const getWeekStats = (weekDays: (Date | null)[]) => {
+        let plannedTSS = 0;
+        let actualDuration = 0; // Durée totale réalisée
+        let plannedDuration = 0; // Durée totale planifiée
+        let distance = 0;
+        let completed = 0;
+        let total = 0;
+
+        weekDays.forEach(date => {
+            const workout = getWorkoutForDate(date);
+            if (workout) {
+                total++;
+                plannedTSS += workout.tss || 0;
+                plannedDuration += workout.duration || 0;
+                if (workout.status === 'completed') {
+                    completed++;
+                    actualDuration += workout.completedData?.actualDuration
+                        ? Number(workout.completedData.actualDuration)
+                        : (workout.duration || 0);
+                    distance += workout.completedData?.distance
+                        ? Number(workout.completedData.distance)
+                        : 0;
+                }
+            }
+        });
+        return { plannedTSS, plannedDuration, actualDuration, distance, completed, total };
+    };
+
+    const handleGeneratePlan = async (blockFocus: string, customTheme: string | null, startDate: string | null) => {
         setIsGenerating(true);
         try {
-            await onGenerate(blockFocus, customTheme);
+            await onGenerate(blockFocus, customTheme, startDate);
         } catch (e) {
             console.error("Erreur de génération du plan:", e);
         } finally {
@@ -407,6 +498,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ scheduleData, onView
         }
     };
 
+    const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -443,7 +535,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ scheduleData, onView
                     <Button
                         variant="outline"
                         icon={BrainCircuit}
-                        onClick={() => handleGeneratePlan('Objectif Principal', null)} // Recalculation basée sur l'objectif principal
+                        onClick={() => handleGeneratePlan('Objectif Principal', null, null)} // null startDate means "use logic to find next date"
                         disabled={isGenerating}
                         className="text-sm"
                     >
@@ -467,61 +559,100 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ scheduleData, onView
                 </div>
             )}
 
-            {/* Grille Calendrier */}
+            {/* Grille Calendrier - GRID-COLS-8 */}
             <div className="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden shadow-2xl">
-                <div className="grid grid-cols-7 bg-slate-800/50 border-b border-slate-700">
-                    {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map(d => (
-                        <div key={d} className="py-3 text-center text-sm font-semibold text-slate-400">
+                <div className="grid grid-cols-8 bg-slate-800/50 border-b border-slate-700">
+                    {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim', 'Bilan'].map(d => (
+                        <div key={d} className={`py-3 text-center text-sm font-semibold ${d === 'Bilan' ? 'text-blue-400 bg-slate-800/80' : 'text-slate-400'}`}>
                             {d}
                         </div>
                     ))}
                 </div>
 
-                <div className="grid grid-cols-7 auto-rows-fr">
-                    {days.map((date, idx) => {
-                        const workout = getWorkoutForDate(date);
-                        const isToday = date && formatDateKey(date) === formatDateKey(new Date());
+                <div className="grid grid-cols-8 auto-rows-fr">
+                    {weeks.map((week, wIdx) => {
+                        const stats = getWeekStats(week);
 
                         return (
-                            <div
-                                key={idx}
-                                onClick={() => date && workout ? onViewWorkout(workout) : null}
-                                className={`
-                    min-h-[100px] md:min-h-[140px] border-b border-r border-slate-800 p-2 relative transition-colors
-                    ${!date ? 'bg-slate-950' : workout ? 'bg-slate-900 hover:bg-slate-800 cursor-pointer' : 'bg-slate-900/50'}
-                    ${isToday ? 'ring-1 ring-inset ring-blue-500/50 bg-blue-900/5' : ''}
-                  `}
-                            >
-                                {date && (
-                                    <>
-                                        <span className={`text-sm font-medium ${isToday ? 'text-blue-400' : 'text-slate-500'}`}>
-                                            {date.getDate()}
-                                        </span>
+                            <React.Fragment key={wIdx}>
+                                {week.map((date, dIdx) => {
+                                    const workout = getWorkoutForDate(date);
+                                    const isToday = date && formatDateKey(date) === formatDateKey(new Date());
 
-                                        {workout && (
-                                            <div className="mt-2 flex flex-col gap-1.5 animate-in fade-in zoom-in duration-300">
-                                                <div className="flex justify-between items-center">
-                                                    <span className={`text-[10px] px-1.5 rounded-sm font-bold uppercase truncate
-                                ${workout.type === 'Rest' ? 'text-slate-500' :
-                                                            workout.type === 'HIIT' || workout.type === 'PMA' ? 'text-orange-400 bg-orange-950/30' :
-                                                                workout.type === 'VO2max' ? 'text-purple-400 bg-purple-950/30' :
-                                                                    workout.type === 'Test' ? 'text-cyan-400 bg-cyan-950/30' :
-                                                                        'text-blue-300 bg-blue-950/30'}
-                             `}>
-                                                        {workout.type}
+                                    return (
+                                        <div
+                                            key={dIdx}
+                                            onClick={() => date && workout ? onViewWorkout(workout) : null}
+                                            className={`
+                                                min-h-[100px] md:min-h-[140px] border-b border-r border-slate-800 p-2 relative transition-colors
+                                                ${!date ? 'bg-slate-950' : workout ? 'bg-slate-900 hover:bg-slate-800 cursor-pointer' : 'bg-slate-900/50'}
+                                                ${isToday ? 'ring-1 ring-inset ring-blue-500/50 bg-blue-900/5' : ''}
+                                            `}
+                                        >
+                                            {date && (
+                                                <>
+                                                    <span className={`text-sm font-medium ${isToday ? 'text-blue-400' : 'text-slate-500'}`}>
+                                                        {date.getDate()}
                                                     </span>
-                                                    {workout.mode && <div className='p-0.5 rounded-full bg-slate-700'>{getModeIcon(workout.mode)}</div>}
-                                                </div>
-                                                <span className="text-xs text-slate-200 leading-tight line-clamp-2">{workout.title}</span>
-                                                {workout.duration && <span className="text-[10px] text-slate-500">{workout.duration} min</span>}
 
-                                                {workout.status === 'completed' && <CheckCircle size={14} className="absolute top-2 right-2 text-emerald-500" />}
-                                                {workout.status === 'missed' && <XCircle size={14} className="absolute top-2 right-2 text-red-500" />}
+                                                    {workout && (
+                                                        <div className="mt-2 flex flex-col gap-1.5 animate-in fade-in zoom-in duration-300">
+                                                            <div className="flex justify-between items-center">
+                                                                <span className={`text-[10px] px-1.5 rounded-sm font-bold uppercase truncate
+                                                                    ${workout.type === 'Rest' ? 'text-slate-500' :
+                                                                        workout.type === 'HIIT' || workout.type === 'PMA' ? 'text-orange-400 bg-orange-950/30' :
+                                                                            workout.type === 'VO2max' ? 'text-purple-400 bg-purple-950/30' :
+                                                                                workout.type === 'Test' ? 'text-cyan-400 bg-cyan-950/30' :
+                                                                                    'text-blue-300 bg-blue-950/30'}
+                                                                `}>
+                                                                    {workout.type}
+                                                                </span>
+                                                                {workout.mode && <div className='p-0.5 rounded-full bg-slate-700'>{getModeIcon(workout.mode)}</div>}
+                                                            </div>
+                                                            <span className="text-xs text-slate-200 leading-tight line-clamp-2">{workout.title}</span>
+                                                            {workout.duration && <span className="text-[10px] text-slate-500">{workout.duration} min</span>}
+
+                                                            {workout.status === 'completed' && <CheckCircle size={14} className="absolute top-2 right-2 text-emerald-500" />}
+                                                            {workout.status === 'missed' && <XCircle size={14} className="absolute top-2 right-2 text-red-500" />}
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                                {/* Cellule Bilan de la Semaine */}
+                                <div className="min-h-[100px] md:min-h-[140px] border-b border-slate-700 bg-slate-800/40 p-2 flex flex-col justify-center gap-2">
+                                    <div className="flex items-center justify-between text-xs text-slate-400">
+                                        <span className="flex items-center"><Zap size={12} className="mr-1 text-yellow-500" /> TSS</span>
+                                        <span className="font-mono text-white">{stats.plannedTSS}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-xs text-slate-400">
+                                        <span className="flex items-center"><Clock size={12} className="mr-1 text-blue-500" /> Durée</span>
+                                        <span className="font-mono text-white">{Math.floor(stats.plannedDuration / 60)}h{stats.plannedDuration % 60 > 0 ? stats.plannedDuration % 60 : ''}</span>
+                                    </div>
+                                    {(stats.actualDuration > 0 || stats.distance > 0) && (
+                                        <div className="mt-1 pt-1 border-t border-slate-700">
+                                            <div className="flex items-center justify-between text-xs text-emerald-400">
+                                                <span className="flex items-center"><TrendingUp size={12} className="mr-1" /> Réel</span>
+                                                <span className="font-mono">{Math.floor(stats.actualDuration / 60)}h</span>
                                             </div>
-                                        )}
-                                    </>
-                                )}
-                            </div>
+                                            <div className="flex items-center justify-between text-xs text-emerald-400">
+                                                <span className="flex items-center"><MapPin size={12} className="mr-1" /> Dist.</span>
+                                                <span className="font-mono">{stats.distance.toFixed(0)}km</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {stats.total > 0 && (
+                                        <div className="mt-1 w-full bg-slate-700 rounded-full h-1.5">
+                                            <div
+                                                className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500"
+                                                style={{ width: `${(stats.completed / stats.total) * 100}%` }}
+                                            ></div>
+                                        </div>
+                                    )}
+                                </div>
+                            </React.Fragment>
                         );
                     })}
                 </div>
@@ -538,32 +669,25 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ scheduleData, onView
     );
 };
 
-// --- WorkoutDetailView (Client Component) ---
-interface WorkoutDetailViewProps {
-    workout: Workout;
-    profile: Profile;
-    onClose: () => void;
-    onUpdate: (dateKey: string, status: 'pending' | 'completed' | 'missed', feedback?: { rpe: number, avgPower: number, notes: string }) => Promise<void>;
-    onToggleMode: (dateKey: string) => Promise<void>;
-    onMoveWorkout: (originalDateStr: string, newDateStr: string) => Promise<void>;
-}
+// --- FeedbackForm (Resté identique mais inclus pour complétude) ---
 
 const FeedbackForm: React.FC<{
     workout: Workout;
     profile: Profile;
-    onSave: (feedback: { rpe: number, avgPower: number, notes: string }) => Promise<void>;
+    onSave: (feedback: { rpe: number, avgPower: number, actualDuration: number, distance: number, notes: string }) => Promise<void>;
     onCancel: () => void;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
 }> = ({ workout, profile, onSave, onCancel }) => {
     const [rpe, setRpe] = useState(6);
     const [avgPower, setAvgPower] = useState(profile.ftp ? Math.round(profile.ftp * 0.7) : 150);
     const [notes, setNotes] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+    const [actualDuration, setActualDuration] = useState(workout.duration);
+    const [distance, setDistance] = useState(0);
 
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            await onSave({ rpe, avgPower, notes });
+            await onSave({ rpe, avgPower, actualDuration, distance, notes });
         } catch (e) {
             console.error("Erreur d'enregistrement du feedback:", e);
         } finally {
@@ -594,6 +718,27 @@ const FeedbackForm: React.FC<{
                     />
                 </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label className="block text-xs text-slate-400 mb-1">Durée Réelle (min)</label>
+                    <input
+                        type="number"
+                        value={actualDuration} onChange={(e) => setActualDuration(parseInt(e.target.value))}
+                        className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white"
+                    />
+                </div>
+                <div>
+                    <label className="block text-xs text-slate-400 mb-1">Distance (km)</label>
+                    <input
+                        type="number"
+                        step="0.1"
+                        value={distance} onChange={(e) => setDistance(parseFloat(e.target.value))}
+                        className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white"
+                    />
+                </div>
+            </div>
+
             <div className="mb-4">
                 <label className="block text-xs text-slate-400 mb-1">Sensations / Notes</label>
                 <textarea
@@ -616,6 +761,17 @@ const FeedbackForm: React.FC<{
         </div>
     );
 };
+
+// --- WorkoutDetailView ---
+
+interface WorkoutDetailViewProps {
+    workout: Workout;
+    profile: Profile;
+    onClose: () => void;
+    onUpdate: (dateKey: string, status: 'pending' | 'completed' | 'missed', feedback?: { rpe: number, avgPower: number, actualDuration: number, distance: number, notes: string }) => Promise<void>;
+    onToggleMode: (dateKey: string) => Promise<void>;
+    onMoveWorkout: (originalDateStr: string, newDateStr: string) => Promise<void>;
+}
 
 export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
     workout,
@@ -661,7 +817,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
         }
     };
 
-    const handleStatusUpdate = async (status: 'pending' | 'completed' | 'missed', feedback?: { rpe: number, avgPower: number, notes: string }) => {
+    const handleStatusUpdate = async (status: 'pending' | 'completed' | 'missed', feedback?: { rpe: number, avgPower: number, actualDuration: number, distance: number, notes: string }) => {
         setIsMutating(true);
         try {
             await onUpdate(workout.date, status, feedback);
@@ -760,7 +916,6 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                         <Activity size={20} className="mr-2 text-blue-400" />
                         Structure de la séance ({workout.mode})
                     </h3>
-                    {/* Utilisez whitespace-pre-line pour respecter les sauts de ligne de l'IA */}
                     <div className="prose prose-invert max-w-none text-slate-300 whitespace-pre-line leading-relaxed font-mono text-sm">
                         {currentDescription}
                     </div>

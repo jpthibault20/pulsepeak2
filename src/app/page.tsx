@@ -8,7 +8,7 @@ import {
   updateWorkoutStatus,
   toggleWorkoutMode,
   moveWorkout,
-  loadInitialData // <-- NOUVELLE FONCTION IMPORTÉE
+  loadInitialData
 } from '@/app/actions/schedule';
 // Import des types du fichier dédié (Client-safe)
 import { Profile, Schedule, Workout } from '@/lib/data/type';
@@ -73,8 +73,9 @@ export default function AppClientWrapper() {
   };
 
   // Wrapper pour les Server Actions
-  const handleGenerate = async (blockFocus: string, customTheme: string | null) => {
-    await generateNewPlan(blockFocus, customTheme);
+  // MISE À JOUR : Ajout du paramètre startDate pour correspondre à la nouvelle signature dans schedule.ts
+  const handleGenerate = async (blockFocus: string, customTheme: string | null, startDate: string | null) => {
+    await generateNewPlan(blockFocus, customTheme, startDate);
     await loadData(); // Recharger les données après la mutation
   };
 
@@ -84,7 +85,7 @@ export default function AppClientWrapper() {
   };
 
   // Met à jour le statut, recharge les données, et met à jour l'objet de la séance sélectionnée
-  const handleUpdateStatus = async (dateKey: string, status: 'pending' | 'completed' | 'missed', feedback?: { rpe: number, avgPower: number, notes: string }) => {
+  const handleUpdateStatus = async (dateKey: string, status: 'pending' | 'completed' | 'missed', feedback?: { rpe: number, avgPower: number, actualDuration: number, distance: number, notes: string }) => {
     await updateWorkoutStatus(dateKey, status, feedback);
     await loadData();
     // Simuler la mise à jour de la séance sélectionnée (important pour la vue détail)

@@ -1,18 +1,19 @@
 {
-    "name": "JEANPIERRE Thibault",
-    "ftp": 219,
-    "experience": "Avancé",
-    "goal": "Gran Fondo / Cyclosportive",
-    "objectiveDate": "",
-    "weaknesses": "",
-    "targetWeeklyHours": 10,
-    "weeklyAvailability": {
-        "Lundi": 0,
-        "Mardi": 90,
-        "Mercredi": 0,
-        "Jeudi": 90,
-        "Vendredi": 0,
-        "Samedi": 150,
-        "Dimanche": 210
-    }
+  "name": "JEANPIERRE Thibault",
+  "ftp": 219,
+  "experience": "Avancé",
+  "goal": "Gran Fondo / Cyclosportive",
+  "objectiveDate": "",
+  "weaknesses": "",
+  "targetWeeklyHours": 10,
+  "weeklyAvailability": {
+    "Lundi": 0,
+    "Mardi": 90,
+    "Mercredi": 0,
+    "Jeudi": 90,
+    "Vendredi": 0,
+    "Samedi": 150,
+    "Dimanche": 210
+  },
+  "weight": 58
 }
