@@ -1,7 +1,7 @@
 {
   "workouts": {
-    "2025-11-29": {
-      "date": "2025-11-29",
+    "2025-11-27": {
+      "date": "2025-11-27",
       "title": "Endurance & Drills Cadence",
       "type": "Neuromusculaire/Endurance",
       "duration": 150,
@@ -9,18 +9,14 @@
       "mode": "Outdoor",
       "description_outdoor": "150 min en Zone 2. Intégrez 4x (30 sec max cadence (>120 RPM) / 30 sec Z1/récupération) après la première heure. Concentrez-vous sur la fluidité du coup de pédale.",
       "description_indoor": "2h30 Z2. Inclure 3 sets de 5 min Z3 / 5 min Z2, avec des sprints de cadence intégrés dans les 5 min Z2 (4 répétitions de 30s Z7/30s Z1).",
-      "status": "pending"
-    },
-    "2025-11-30": {
-      "date": "2025-11-30",
-      "title": "Longue Sortie Z2/Z3",
-      "type": "Endurance Fondamentale",
-      "duration": 210,
-      "tss": 150,
-      "mode": "Outdoor",
-      "description_outdoor": "3h30 en Zone 2 (65-75% FTP). Maintenez une puissance constante. Terminez par 30 minutes en Zone 3 (Tempo) si les sensations sont excellentes.",
-      "description_indoor": "3h30 en Zone 2. Intégrez 3x15 min de Tempo Z3 (80% FTP) toutes les heures, en maintenant un IF (Intensity Factor) stable autour de 0.75.",
-      "status": "pending"
+      "status": "completed",
+      "completedData": {
+        "rpe": 6,
+        "avgPower": 180,
+        "actualDuration": 150,
+        "distance": 70,
+        "notes": ""
+      }
     },
     "2025-12-01": {
       "date": "2025-12-01",
@@ -307,6 +303,24 @@
       "description_outdoor": "Journée de repos complète. Prêt pour le prochain bloc.",
       "description_indoor": "Journée de repos complète.",
       "status": "pending"
+    },
+    "2025-11-24": {
+      "date": "2025-11-24",
+      "title": "Longue Sortie Z2/Z3",
+      "type": "Endurance Fondamentale",
+      "duration": 210,
+      "tss": 150,
+      "mode": "Outdoor",
+      "description_outdoor": "3h30 en Zone 2 (65-75% FTP). Maintenez une puissance constante. Terminez par 30 minutes en Zone 3 (Tempo) si les sensations sont excellentes.",
+      "description_indoor": "3h30 en Zone 2. Intégrez 3x15 min de Tempo Z3 (80% FTP) toutes les heures, en maintenant un IF (Intensity Factor) stable autour de 0.75.",
+      "status": "completed",
+      "completedData": {
+        "rpe": 8,
+        "avgPower": 153,
+        "actualDuration": 210,
+        "distance": 120,
+        "notes": ""
+      }
     }
   },
   "summary": "Ce bloc de 4 semaines (3+1) est axé sur la préparation hivernale avec un focus spécifique sur le thème 'Sprint'. Étant donné que c'est un premier bloc, nous respectons le volume cible de 9 heures hebdomadaires, parfaitement aligné avec vos contraintes de temps. Les entraînements sont courts mais intenses (Mardi/Jeudi) pour développer la puissance neuromusculaire (Force/Vitesse Z7) et intègrent ces efforts dans des sorties d'endurance solides (Samedi/Dimanche). La Semaine 4 est une semaine de récupération active et d'activation.",

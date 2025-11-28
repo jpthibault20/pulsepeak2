@@ -19,7 +19,8 @@ import {
   WorkoutDetailView,
   Card,
   ChevronLeft,
-  BarChart2
+  BarChart2,
+  StatsView
 } from '@/components/ui';
 
 // --- Types pour le composant principal
@@ -182,15 +183,19 @@ export default function AppClientWrapper() {
             onMoveWorkout={handleMoveWorkout}
           />
         )}
-        {view === 'stats' && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <button onClick={() => handleViewChange('dashboard')} className="mb-4 flex items-center text-slate-400 hover:text-white">
-              <ChevronLeft size={20} className="mr-1" /> Retour Dashboard
-            </button>
-            <Card className="min-h-[400px] flex items-center justify-center">
-              <p className="text-2xl text-slate-400"><BarChart2 size={32} className="inline mr-2" />Vue Statistiques (à implémenter)</p>
-            </Card>
-          </div>
+        {view === 'stats' && schedule && profile && (
+          <StatsView
+            scheduleData={schedule}
+            profile={profile}
+          />
+          // <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          //   <button onClick={() => handleViewChange('dashboard')} className="mb-4 flex items-center text-slate-400 hover:text-white">
+          //     <ChevronLeft size={20} className="mr-1" /> Retour Dashboard
+          //   </button>
+          //   <Card className="min-h-[400px] flex items-center justify-center">
+          //     <p className="text-2xl text-slate-400"><BarChart2 size={32} className="inline mr-2" />Vue Statistiques (à implémenter)</p>
+          //   </Card>
+          // </div>
         )}
       </main>
     </>

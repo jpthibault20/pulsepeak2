@@ -50,84 +50,6 @@ async function callGeminiAPI(payload: unknown) {
 }
 
 /**
- * Génère une SEULE séance de remplacement.
- */
-export async function generateSingleWorkoutFromAI(
-    profile: Profile,
-    date: string,
-    currentBlockFocus: string
-): Promise<Workout> {
-    
-    // Trouver le jour de la semaine pour la dispo
-    const d = new Date(date);
-    const daysMap = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
-    const dayName = daysMap[d.getDay()];
-    const availability = profile.weeklyAvailability[dayName];
-
-    const systemPrompt = "Tu es un coach cycliste expert. Tu dois générer une séance de remplacement.";
-    
-    const userPrompt = `
-    CONTEXTE:
-    L'athlète souhaite remplacer sa séance du ${date} (${dayName}).
-    
-    PROFIL:
-    - Niveau: ${profile.experience}
-    - FTP: ${profile.ftp} W
-    - Poids: ${profile.weight || 70} kg
-    - Points Faibles: ${profile.weaknesses}
-    
-    CONTRAINTES DU JOUR:
-    - Durée Max Disponible: ${availability} minutes (Si 0, génère du Repos).
-    - Focus du Bloc Actuel: ${currentBlockFocus}
-    
-    MISSION:
-    Propose une séance alternative pertinente.
-    
-    RÈGLES IMPORTANTES:
-    1. La durée ("duration") doit être un nombre entier en MINUTES (ex: 90 pour 1h30). PAS d'heures, PAS de décimales.
-    2. Génère les versions Indoor et Outdoor.
-    `;
-
-    const responseSchema = {
-        type: "OBJECT",
-        properties: {
-            "workout": {
-                "type": "OBJECT",
-                "properties": {
-                    "title": { "type": "STRING", "description": "Titre Court & Pro." },
-                    "type": { "type": "STRING", "description": "Type d'effort." },
-                    "duration": { "type": "NUMBER", "description": "Durée en MINUTES (ex: 60, 90, 120)." },
-                    "tss": { "type": "NUMBER", "description": "TSS estimé." },
-                    "mode": { "type": "STRING", "enum": ["Outdoor", "Indoor"], "description": "Mode recommandé." },
-                    "description_outdoor": { "type": "STRING", "description": "Détails extérieur." },
-                    "description_indoor": { "type": "STRING", "description": "Détails home trainer." }
-                },
-                "required": ["title", "type", "duration", "tss", "mode", "description_outdoor", "description_indoor"]
-            }
-        },
-        "required": ["workout"]
-    };
-
-    const payload = {
-        contents: [{ parts: [{ text: userPrompt }] }],
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: responseSchema,
-        },
-    };
-
-    const result = await callGeminiAPI(payload);
-    
-    // On retourne un objet Workout complet en fusionnant avec la date
-    return {
-        date: date,
-        status: 'pending',
-        ...result.workout
-    } as Workout;
-}
-
-/**
  * Génère un plan d'entraînement complet.
  */
 export async function generatePlanFromAI(
@@ -175,7 +97,7 @@ export async function generatePlanFromAI(
     const finalFocus = blockFocus === 'Personnalisé' ? customTheme : blockFocus;
     const blockDuration = blockFocus === 'Semaine de Tests (FTP, VO2max)' ? "7 jours (Semaine de Tests)" : "4 semaines (28 jours)";
 
-    const systemPrompt = "Tu es un Directeur Sportif et Entraîneur de Cyclisme 'World Tour'. Tu réponds toujours UNIQUEMENT au format JSON strict.";
+    const systemPrompt = "Tu es un Entraîneur de Cyclisme 'World Tour'. Tu réponds toujours UNIQUEMENT au format JSON strict.";
     const userPrompt = `
     PROFIL ATHLÈTE:
     - Niveau: ${profile.experience}

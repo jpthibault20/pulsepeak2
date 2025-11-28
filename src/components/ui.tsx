@@ -669,7 +669,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ scheduleData, onView
     );
 };
 
-// --- FeedbackForm (Resté identique mais inclus pour complétude) ---
+// --- FeedbackForm
 
 const FeedbackForm: React.FC<{
     workout: Workout;
@@ -980,4 +980,357 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
     );
 };
 
+
+// ... (Gardez tous les imports et composants précédents : Button, Card, Badge, ProfileForm, GenerationModal, Nav, CalendarView, WorkoutDetailView, FeedbackForm)
+
+// --- StatsView (COMPOSANT MIS À JOUR) ---
+
+interface StatsViewProps {
+    scheduleData: { workouts: { [key: string]: Workout } };
+    profile: Profile;
+}
+
+export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile }) => {
+    const [viewMode, setViewMode] = useState<'annual' | 'custom'>('custom');
+
+    // Dates par défaut pour le mode custom : 30 derniers jours jusqu'à aujourd'hui + 7 jours
+    const [dateRange, setDateRange] = useState(() => {
+        const end = new Date();
+        end.setDate(end.getDate() + 7);
+        const start = new Date();
+        start.setDate(start.getDate() - 30);
+        return {
+            start: start.toISOString().split('T')[0],
+            end: end.toISOString().split('T')[0]
+        };
+    });
+
+    // 1. Filtrage des données selon le mode
+    const filteredWorkouts = useMemo(() => {
+        const allWorkouts = Object.values(scheduleData.workouts);
+        const currentYear = new Date().getFullYear();
+
+        return allWorkouts.filter(w => {
+            const wDate = new Date(w.date);
+            if (viewMode === 'annual') {
+                return wDate.getFullYear() === currentYear;
+            } else {
+                return wDate >= new Date(dateRange.start) && wDate <= new Date(dateRange.end);
+            }
+        }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }, [scheduleData, viewMode, dateRange]);
+
+    // 2. Calcul des statistiques avancées
+    const stats = useMemo(() => {
+        const now = new Date();
+        const todayStr = now.toISOString().split('T')[0]; // Comparaison date stricte
+
+        let totalPlannedDuration = 0;
+        let totalActualDuration = 0;
+        let totalPlannedDistance = 0;
+        let totalActualDistance = 0;
+        let totalPlannedTSS = 0;
+        let totalActualTSS = 0;
+        let totalRPE = 0;
+        let rpeCount = 0;
+        let completedCount = 0;
+        let missedCount = 0;
+        let plannedCountSoFar = 0; // Nombre de séances prévues jusqu'à aujourd'hui
+
+        // Pour le calcul de monotonie (Charge journalière)
+        const dailyLoads: number[] = [];
+
+        // Stats mensuelles (Toujours calculées sur l'année entière pour le graph)
+        const monthlyStats = new Array(12).fill(0).map(() => ({ plannedTss: 0, actualTss: 0 }));
+
+        filteredWorkouts.forEach(w => {
+            const wDate = new Date(w.date);
+            const isPastOrToday = w.date <= todayStr;
+            const month = wDate.getMonth();
+
+            // 1. Remplissage Graphique Annuel (Planned vs Actual)
+            // On ajoute toujours le TSS planifié au graphique, peu importe la date
+            monthlyStats[month].plannedTss += w.tss || 0;
+
+            if (w.status === 'completed') {
+                // Estimation TSS Réalisé pour le graph
+                const actualTssVal = w.completedData?.actualDuration
+                    ? (w.completedData.actualDuration / (w.duration || 1)) * (w.tss || 0)
+                    : (w.tss || 0);
+                monthlyStats[month].actualTss += actualTssVal;
+            }
+
+            // 2. Calcul des KPIs (Seulement pour les séances passées ou aujourd'hui)
+            if (isPastOrToday) {
+                plannedCountSoFar++;
+
+                // Consignes (Jusqu'à aujourd'hui)
+                totalPlannedDuration += w.duration || 0;
+                totalPlannedTSS += w.tss || 0;
+                totalPlannedDistance += (w.duration / 60) * 28; // Estim 28km/h
+
+                // Réalisé
+                let currentLoad = 0;
+                if (w.status === 'completed' && w.completedData) {
+                    completedCount++;
+                    const actualDur = Number(w.completedData.actualDuration) || w.duration;
+                    totalActualDuration += actualDur;
+                    totalActualDistance += Number(w.completedData.distance) || 0;
+
+                    // Estimation TSS Réalisé
+                    const tssVal = w.duration > 0 ? (actualDur / w.duration) * (w.tss || 0) : 0;
+                    totalActualTSS += tssVal;
+                    currentLoad = tssVal;
+
+                    totalRPE += Number(w.completedData.rpe) || 0;
+                    if (w.completedData.rpe > 0) rpeCount++;
+                } else if (w.status === 'missed') {
+                    missedCount++;
+                }
+
+                if (currentLoad > 0) dailyLoads.push(currentLoad);
+            }
+        });
+
+        // Calcul Monotonie
+        let monotony = 0;
+        if (dailyLoads.length > 1) {
+            const mean = dailyLoads.reduce((a, b) => a + b, 0) / dailyLoads.length;
+            const variance = dailyLoads.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / dailyLoads.length;
+            const stdDev = Math.sqrt(variance);
+            monotony = stdDev > 0 ? mean / stdDev : 0;
+        }
+
+        return {
+            // Taux de réalisation basé uniquement sur ce qui DEVAIT être fait
+            complianceRate: plannedCountSoFar > 0 ? Math.round((completedCount / plannedCountSoFar) * 100) : 0,
+            avgRpe: rpeCount > 0 ? (totalRPE / rpeCount).toFixed(1) : '-',
+            totalActualDuration,
+            totalPlannedDuration,
+            totalActualDistance,
+            totalPlannedDistance,
+            totalPlannedTSS,
+            totalActualTSS,
+            completedCount,
+            missedCount,
+            plannedCountSoFar,
+            monotony: monotony.toFixed(1),
+            intensityFactor: totalActualDuration > 0 ? (totalActualTSS / (totalActualDuration / 60)).toFixed(0) : 0,
+            monthlyStats
+        };
+    }, [filteredWorkouts]);
+
+    // Helpers UI
+    const formatDuration = (mins: number) => {
+        const h = Math.floor(mins / 60);
+        const m = Math.round(mins % 60);
+        return `${h}h${m > 0 ? m : ''}`;
+    };
+
+    const monthNamesShort = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
+
+    return (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+            {/* Header & Contrôles */}
+            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-800">
+                <div>
+                    <h2 className="text-2xl font-bold text-white flex items-center">
+                        <BarChart2 className="mr-2 text-blue-400" /> Analyse de la Performance
+                    </h2>
+                    <p className="text-slate-400 text-sm">Données consolidées (au {new Date().toLocaleDateString('fr-FR')})</p>
+                </div>
+
+                <div className="flex bg-slate-800 rounded-lg p-1">
+                    <button
+                        onClick={() => setViewMode('custom')}
+                        className={`px-4 py-2 text-sm rounded-md transition-all ${viewMode === 'custom' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                    >
+                        Analyse Ciblée
+                    </button>
+                    <button
+                        onClick={() => setViewMode('annual')}
+                        className={`px-4 py-2 text-sm rounded-md transition-all ${viewMode === 'annual' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                    >
+                        Saison {new Date().getFullYear()}
+                    </button>
+                </div>
+            </div>
+
+            {/* Sélecteur de date (Mode Custom uniquement) */}
+            {viewMode === 'custom' && (
+                <div className="flex items-center gap-4 bg-slate-800/30 p-3 rounded-xl border border-slate-700/50 mb-6 w-fit mx-auto">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-slate-400">Du</span>
+                        <input
+                            type="date"
+                            value={dateRange.start}
+                            onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                            className="bg-slate-900 border border-slate-600 text-white rounded px-2 py-1 text-sm outline-none focus:border-blue-500"
+                        />
+                    </div>
+                    <div className="w-4 h-[1px] bg-slate-600"></div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-slate-400">Au</span>
+                        <input
+                            type="date"
+                            value={dateRange.end}
+                            onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                            className="bg-slate-900 border border-slate-600 text-white rounded px-2 py-1 text-sm outline-none focus:border-blue-500"
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* KPI Principaux */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card className="flex flex-col items-center justify-center p-6 bg-slate-800/80 border-blue-500/30 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-2 opacity-10"><Activity size={64} /></div>
+                    <span className="text-3xl font-bold text-white">{stats.totalActualTSS.toFixed(0)}</span>
+                    <span className="text-xs text-blue-300 uppercase tracking-wider mt-1">Charge Réelle (TSS)</span>
+                    <span className="text-[10px] text-slate-500 mt-1">Planifié à date: {stats.totalPlannedTSS}</span>
+                </Card>
+                <Card className="flex flex-col items-center justify-center p-6 bg-slate-800/80 border-emerald-500/30 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-2 opacity-10"><Clock size={64} /></div>
+                    <span className="text-3xl font-bold text-white">{formatDuration(stats.totalActualDuration)}</span>
+                    <span className="text-xs text-emerald-300 uppercase tracking-wider mt-1">Volume Horaire</span>
+                    <span className="text-[10px] text-slate-500 mt-1">Planifié à date: {formatDuration(stats.totalPlannedDuration)}</span>
+                </Card>
+                <Card className="flex flex-col items-center justify-center p-6 bg-slate-800/80 border-purple-500/30 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-2 opacity-10"><MapPin size={64} /></div>
+                    <span className="text-3xl font-bold text-white">{stats.totalActualDistance.toFixed(0)}<span className="text-sm">km</span></span>
+                    <span className="text-xs text-purple-300 uppercase tracking-wider mt-1">Distance</span>
+                </Card>
+                <Card className="flex flex-col items-center justify-center p-6 bg-slate-800/80 border-orange-500/30 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-2 opacity-10"><TrendingUp size={64} /></div>
+                    <span className="text-3xl font-bold text-white">{stats.monotony}</span>
+                    <span className="text-xs text-orange-300 uppercase tracking-wider mt-1">Monotonie</span>
+                    <span className="text-[10px] text-slate-500 mt-1">{Number(stats.monotony) > 2 ? "⚠️ Risque Élevé" : "✅ Charge Variée"}</span>
+                </Card>
+            </div>
+
+            {/* Vue Graphique Annuelle */}
+            {viewMode === 'annual' && (
+                <Card className="p-6">
+                    <h3 className="text-lg font-semibold text-white mb-6 flex items-center">
+                        <CalendarDays className="mr-2 text-blue-400" size={20} /> Progression Saisonnière (TSS / Mois)
+                    </h3>
+                    <div className="flex items-end justify-between h-48 gap-2">
+                        {stats.monthlyStats.map((m, idx) => {
+                            // On base l'échelle sur le max planifié ou réalisé
+                            const maxTss = Math.max(...stats.monthlyStats.map(s => Math.max(s.plannedTss, s.actualTss)), 100);
+                            const heightPlanned = Math.max((m.plannedTss / maxTss) * 100, 2);
+                            const heightActual = Math.max((m.actualTss / maxTss) * 100, 0);
+
+                            return (
+                                <div key={idx} className="flex-1 flex flex-col items-center group relative">
+                                    <div className="w-full bg-slate-800/50 rounded-t-sm relative h-full flex flex-col justify-end">
+                                        {/* Barre Planifiée (Fond grisé/bleuté) */}
+                                        <div
+                                            className="w-full rounded-t-sm bg-slate-700/50 absolute bottom-0 transition-all duration-700 border-t border-slate-500"
+                                            style={{ height: `${heightPlanned}%` }}
+                                        ></div>
+
+                                        {/* Barre Réalisée (Premier plan coloré) */}
+                                        <div
+                                            className={`w-full rounded-t-sm z-10 transition-all duration-700 ${m.actualTss > 0 ? 'bg-blue-500 group-hover:bg-blue-400' : 'bg-transparent'}`}
+                                            style={{ height: `${heightActual}%` }}
+                                        ></div>
+
+                                        {/* Tooltip */}
+                                        {(m.plannedTss > 0 || m.actualTss > 0) && (
+                                            <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 border border-slate-700 pointer-events-none">
+                                                <div>Prévu: {Math.round(m.plannedTss)}</div>
+                                                <div>Fait: {Math.round(m.actualTss)}</div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <span className="text-[10px] text-slate-500 mt-2 uppercase">{monthNamesShort[idx]}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className="flex justify-center gap-4 mt-4 text-xs text-slate-400">
+                        <div className="flex items-center"><div className="w-3 h-3 bg-slate-700 border-t border-slate-500 mr-1"></div> Planifié</div>
+                        <div className="flex items-center"><div className="w-3 h-3 bg-blue-500 mr-1"></div> Réalisé</div>
+                    </div>
+                </Card>
+            )}
+
+            {/* Vue Détails "Coach" (Custom ou Annual) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Analyse Qualité */}
+                <Card className="p-6">
+                    <h3 className="text-lg font-semibold text-white mb-6 flex items-center">
+                        <Zap className="mr-2 text-yellow-400" size={20} /> Qualité de l&apos;Entraînement
+                    </h3>
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center border-b border-slate-700 pb-2">
+                            <span className="text-slate-400 text-sm">Intensité Moyenne (TSS/h)</span>
+                            <div className="text-right">
+                                <span className="text-white font-bold text-lg">{stats.intensityFactor}</span>
+                                <span className="text-xs text-slate-500 block">Objectif endurance: 40-60</span>
+                            </div>
+                        </div>
+                        <div className="flex justify-between items-center border-b border-slate-700 pb-2">
+                            <span className="text-slate-400 text-sm">RPE Moyen</span>
+                            <div className="text-right">
+                                <span className={`font-bold text-lg ${Number(stats.avgRpe) > 7 ? 'text-red-400' : 'text-white'}`}>{stats.avgRpe}/10</span>
+                                <span className="text-xs text-slate-500 block">Ressenti global</span>
+                            </div>
+                        </div>
+                        <div className="flex justify-between items-center pt-2">
+                            <span className="text-slate-400 text-sm">Taux de réalisation (Jusqu&apos;à ce jour)</span>
+                            <div className="text-right">
+                                <span className={`font-bold text-lg ${stats.complianceRate < 80 ? 'text-orange-400' : 'text-emerald-400'}`}>{stats.complianceRate}%</span>
+                                <span className="text-xs text-slate-500 block">{stats.completedCount} / {stats.plannedCountSoFar} séances</span>
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+
+                {/* Analyse Quantité */}
+                <Card className="p-6">
+                    <h3 className="text-lg font-semibold text-white mb-6 flex items-center">
+                        <Target className="mr-2 text-purple-400" size={20} /> Charge vs Objectif (À date)
+                    </h3>
+                    <div className="space-y-6">
+                        <div>
+                            <div className="flex justify-between text-sm mb-2">
+                                <span className="text-slate-400">Durée Réalisée</span>
+                                <span className="text-white font-mono">{Math.round((stats.totalActualDuration / (stats.totalPlannedDuration || 1)) * 100)}%</span>
+                            </div>
+                            <div className="w-full bg-slate-700 rounded-full h-3">
+                                <div
+                                    className={`h-3 rounded-full transition-all duration-1000 ${stats.totalActualDuration >= stats.totalPlannedDuration ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                                    style={{ width: `${Math.min(100, (stats.totalActualDuration / (stats.totalPlannedDuration || 1)) * 100)}%` }}
+                                ></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div className="flex justify-between text-sm mb-2">
+                                <span className="text-slate-400">Charge Physiologique (TSS)</span>
+                                <span className="text-white font-mono">{Math.round((stats.totalActualTSS / (stats.totalPlannedTSS || 1)) * 100)}%</span>
+                            </div>
+                            <div className="w-full bg-slate-700 rounded-full h-3">
+                                <div
+                                    className={`h-3 rounded-full transition-all duration-1000 ${stats.totalActualTSS > stats.totalPlannedTSS * 1.1 ? 'bg-red-500' : 'bg-yellow-500'}`}
+                                    style={{ width: `${Math.min(100, (stats.totalActualTSS / (stats.totalPlannedTSS || 1)) * 100)}%` }}
+                                ></div>
+                            </div>
+                            {stats.totalActualTSS > stats.totalPlannedTSS * 1.1 && (
+                                <p className="text-xs text-red-400 mt-2 flex items-center">
+                                    <Info size={12} className="mr-1" /> Attention : Surcharge (+10%) détectée.
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </Card>
+            </div>
+        </div>
+    );
+};
+
 export { ChevronLeft, BarChart2 };
+
+
