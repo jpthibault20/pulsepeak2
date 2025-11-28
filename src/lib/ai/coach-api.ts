@@ -5,6 +5,7 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent";
 const MAX_RETRIES = 5;
 
+// Fonction utilitaire pour le backoff exponentiel
 function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -80,9 +81,11 @@ export async function generateSingleWorkoutFromAI(
     - Focus du Bloc Actuel: ${currentBlockFocus}
     
     MISSION:
-    Propose une séance alternative pertinente qui s'inscrit bien dans le bloc actuel mais varie par rapport à une séance standard. 
-    Sois créatif tout en restant scientifique (Zones Coggan).
-    Génère les versions Indoor et Outdoor.
+    Propose une séance alternative pertinente.
+    
+    RÈGLES IMPORTANTES:
+    1. La durée ("duration") doit être un nombre entier en MINUTES (ex: 90 pour 1h30). PAS d'heures, PAS de décimales.
+    2. Génère les versions Indoor et Outdoor.
     `;
 
     const responseSchema = {
@@ -93,7 +96,7 @@ export async function generateSingleWorkoutFromAI(
                 "properties": {
                     "title": { "type": "STRING", "description": "Titre Court & Pro." },
                     "type": { "type": "STRING", "description": "Type d'effort." },
-                    "duration": { "type": "NUMBER", "description": "Durée en minutes." },
+                    "duration": { "type": "NUMBER", "description": "Durée en MINUTES (ex: 60, 90, 120)." },
                     "tss": { "type": "NUMBER", "description": "TSS estimé." },
                     "mode": { "type": "STRING", "enum": ["Outdoor", "Indoor"], "description": "Mode recommandé." },
                     "description_outdoor": { "type": "STRING", "description": "Détails extérieur." },
@@ -125,7 +128,7 @@ export async function generateSingleWorkoutFromAI(
 }
 
 /**
- * Génère un plan d'entraînement complet (Fonction existante conservée et refactorisée pour utiliser callGeminiAPI).
+ * Génère un plan d'entraînement complet.
  */
 export async function generatePlanFromAI(
     profile: Profile,
@@ -151,7 +154,7 @@ export async function generatePlanFromAI(
     const daysMap = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
     let dateConstraints = "";
     
-    // Calcul volume hebdo (même logique qu'avant)
+    // Calcul volume hebdo
     let totalWeeklyMinutesAvailable = 0;
     if (profile.weeklyAvailability) {
         totalWeeklyMinutesAvailable = Object.values(profile.weeklyAvailability).reduce((acc, val) => acc + val, 0);
@@ -192,6 +195,9 @@ export async function generatePlanFromAI(
     2. Périodisation (3+1 par défaut).
     3. Génère plan jour par jour avec versions Indoor/Outdoor.
     
+    RÈGLES CRITIQUES:
+    - La durée ("duration") doit TOUJOURS être exprimée en MINUTES (ex: 90, 120, 180). Ne jamais mettre "1.5" pour 1h30.
+    
     CONTRAINTES:
     ${dateConstraints}
     
@@ -210,7 +216,7 @@ export async function generatePlanFromAI(
                         "date": { "type": "STRING" },
                         "title": { "type": "STRING" },
                         "type": { "type": "STRING" },
-                        "duration": { "type": "NUMBER" },
+                        "duration": { "type": "NUMBER", "description": "Durée en MINUTES (Entier, ex: 90)." },
                         "tss": { "type": "NUMBER" },
                         "mode": { "type": "STRING", "enum": ["Outdoor", "Indoor"] },
                         "description_outdoor": { "type": "STRING" },
