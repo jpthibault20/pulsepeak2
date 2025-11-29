@@ -28,6 +28,7 @@ export interface Workout {
   title: string;
   type: string; // Type d'effort (ex: Endurance, Threshold, VO2max)
   duration: number; // Durée prévue en minutes
+  distance?: number; // Distance prévue en kilomètres
   tss: number; // Training Stress Score estimé
   mode: 'Outdoor' | 'Indoor';
   description_outdoor: string;

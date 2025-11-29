@@ -8,7 +8,8 @@ import {
   updateWorkoutStatus,
   toggleWorkoutMode,
   moveWorkout,
-  loadInitialData
+  loadInitialData,
+  addManualWorkout
 } from '@/app/actions/schedule';
 // Import des types du fichier dédié (Client-safe)
 import { Profile, Schedule, Workout } from '@/lib/data/type';
@@ -19,7 +20,6 @@ import {
   WorkoutDetailView,
   Card,
   ChevronLeft,
-  BarChart2,
   StatsView
 } from '@/components/ui';
 
@@ -119,6 +119,12 @@ export default function AppClientWrapper() {
     await loadData();
   };
 
+  // Handler pour l'ajout manuel
+  const handleAddManualWorkout = async (workout: Workout) => {
+    await addManualWorkout(workout);
+    await loadData(); // Recharger les données pour voir la nouvelle séance
+  };
+
   // --- Rendu basé sur l'état de la vue ---
 
   if (view === 'loading') {
@@ -171,6 +177,7 @@ export default function AppClientWrapper() {
             scheduleData={schedule}
             onViewWorkout={handleViewWorkout}
             onGenerate={handleGenerate}
+            onAddManualWorkout={handleAddManualWorkout} // <--- PROP CONNECTÉE ICI
           />
         )}
         {view === 'workout-detail' && selectedWorkout && profile && (
@@ -188,14 +195,6 @@ export default function AppClientWrapper() {
             scheduleData={schedule}
             profile={profile}
           />
-          // <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          //   <button onClick={() => handleViewChange('dashboard')} className="mb-4 flex items-center text-slate-400 hover:text-white">
-          //     <ChevronLeft size={20} className="mr-1" /> Retour Dashboard
-          //   </button>
-          //   <Card className="min-h-[400px] flex items-center justify-center">
-          //     <p className="text-2xl text-slate-400"><BarChart2 size={32} className="inline mr-2" />Vue Statistiques (à implémenter)</p>
-          //   </Card>
-          // </div>
         )}
       </main>
     </>

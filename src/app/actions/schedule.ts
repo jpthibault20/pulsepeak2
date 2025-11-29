@@ -4,6 +4,7 @@
 import { generatePlanFromAI } from '@/lib/ai/coach-api'; 
 import { getProfile, getSchedule, saveProfile, saveSchedule } from '@/lib/data/crud';
 import { Schedule, Profile, Workout } from '@/lib/data/type'; 
+import { revalidatePath } from 'next/cache';
 
 // --- Helpers ---
 
@@ -139,4 +140,16 @@ export async function moveWorkout(originalDateStr: string, newDateStr: string) {
     } else {
          console.warn(`Impossible de déplacer la séance.`);
     }
+}
+/**
+ * Action 6: Ajouter manuellement une séance au calendrier
+ */
+export async function addManualWorkout(workout: Workout) {
+    const schedule = await getSchedule();
+    
+    // On écrase s'il y a déjà quelque chose (ou on pourrait vérifier avant)
+    schedule.workouts[workout.date] = workout;
+
+    await saveSchedule(schedule);
+    revalidatePath('/');
 }
