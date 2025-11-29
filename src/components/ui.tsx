@@ -6,7 +6,6 @@ import {
     ChevronLeft, ChevronRight, CheckCircle, XCircle,
     BrainCircuit, Plus, Save, Info, Dumbbell, BarChart2, CalendarDays, Target,
     TrendingUp, MapPin, Calculator,
-    RefreshCw,
     Edit
 } from 'lucide-react';
 import { Profile, Workout } from '@/lib/data/type';
