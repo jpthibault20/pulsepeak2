@@ -10,7 +10,14 @@
       "mode": "Outdoor",
       "status": "completed",
       "description_outdoor": "",
-      "description_indoor": "Non spécifié"
+      "description_indoor": "Non spécifié",
+      "completedData": {
+        "rpe": 6,
+        "avgPower": 153,
+        "actualDuration": 100,
+        "distance": 0,
+        "notes": ""
+      }
     },
     "2025-11-10": {
       "date": "2025-11-10",

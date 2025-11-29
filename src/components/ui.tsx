@@ -5,7 +5,9 @@ import {
     User, Settings, Activity, Clock, Zap, Home, Mountain,
     ChevronLeft, ChevronRight, CheckCircle, XCircle,
     BrainCircuit, Plus, Save, Info, Dumbbell, BarChart2, CalendarDays, Target,
-    TrendingUp, MapPin, Calculator, RefreshCw
+    TrendingUp, MapPin, Calculator,
+    RefreshCw,
+    Edit
 } from 'lucide-react';
 import { Profile, Workout } from '@/lib/data/type';
 
@@ -817,7 +819,7 @@ interface StatsViewProps {
     profile: Profile;
 }
 
-export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile }) => {
+export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
     const [viewMode, setViewMode] = useState<'annual' | 'custom'>('custom');
     const [dateRange, setDateRange] = useState(() => {
         const end = new Date();
@@ -1000,7 +1002,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile }) =
                             className="bg-slate-900 border border-slate-600 text-white rounded px-2 py-1 text-sm outline-none focus:border-blue-500"
                         />
                     </div>
-                    <div className="w-4 h-[1px] bg-slate-600"></div>
+                    <div className="w-4 h-1px bg-slate-600"></div>
                     <div className="flex items-center gap-2">
                         <span className="text-sm text-slate-400">Au</span>
                         <input
@@ -1167,12 +1169,14 @@ const FeedbackForm: React.FC<{
     onSave: (feedback: { rpe: number, avgPower: number, actualDuration: number, distance: number, notes: string }) => Promise<void>;
     onCancel: () => void;
 }> = ({ workout, profile, onSave, onCancel }) => {
-    const [rpe, setRpe] = useState(6);
-    const [avgPower, setAvgPower] = useState(profile.ftp ? Math.round(profile.ftp * 0.7) : 150);
-    const [notes, setNotes] = useState('');
+    // Modification ici pour utiliser les valeurs existantes si on est en mode édition
+    const [rpe, setRpe] = useState(workout.completedData?.rpe || 6);
+    const [avgPower, setAvgPower] = useState(workout.completedData?.avgPower || (profile.ftp ? Math.round(profile.ftp * 0.7) : 150));
+    const [notes, setNotes] = useState(workout.completedData?.notes || '');
+    const [actualDuration, setActualDuration] = useState(workout.completedData?.actualDuration || workout.duration);
+    const [distance, setDistance] = useState(workout.completedData?.distance || 0);
+
     const [isSaving, setIsSaving] = useState(false);
-    const [actualDuration, setActualDuration] = useState(workout.duration);
-    const [distance, setDistance] = useState(0);
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -1251,6 +1255,9 @@ const FeedbackForm: React.FC<{
         </div>
     );
 };
+
+
+
 interface WorkoutDetailViewProps {
     workout: Workout;
     profile: Profile;
@@ -1269,6 +1276,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
     onMoveWorkout,
 }) => {
     const [isCompleting, setIsCompleting] = useState(false);
+    const [isEditing, setIsEditing] = useState(false); // Nouvel état
     const [isMoving, setIsMoving] = useState(false);
     const [newMoveDate, setNewMoveDate] = useState('');
     const [isMutating, setIsMutating] = useState(false);
@@ -1295,7 +1303,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
         setIsMutating(true);
         try {
             await onMoveWorkout(workout.date, newMoveDate);
-            onClose(); // Ferme après le déplacement
+            onClose();
         } catch (e) {
             console.error("Erreur de déplacement:", e);
         } finally {
@@ -1308,6 +1316,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
         try {
             await onUpdate(workout.date, status, feedback);
             setIsCompleting(false);
+            setIsEditing(false); // Sortir du mode édition après sauvegarde
         } catch (e) {
             console.error("Erreur de mise à jour du statut:", e);
         } finally {
@@ -1410,11 +1419,11 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                     </div>
                 </div>
 
-                {isCompleting ? (
+                {isCompleting || isEditing ? (
                     <FeedbackForm
                         workout={workout}
                         profile={profile}
-                        onCancel={() => setIsCompleting(false)}
+                        onCancel={() => { setIsCompleting(false); setIsEditing(false); }}
                         onSave={(data) => handleStatusUpdate('completed', data)}
                     />
                 ) : (
@@ -1431,13 +1440,23 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                         )}
 
                         {workout.status === 'completed' && (
-                            <Button
-                                variant="outline"
-                                onClick={() => handleStatusUpdate('pending')}
-                                disabled={isMutating}
-                            >
-                                Réinitialiser
-                            </Button>
+                            <>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => handleStatusUpdate('pending')}
+                                    disabled={isMutating}
+                                >
+                                    Réinitialiser
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    onClick={() => setIsEditing(true)}
+                                    disabled={isMutating}
+                                    icon={Edit}
+                                >
+                                    Modifier
+                                </Button>
+                            </>
                         )}
 
                         {/* Bouton Déplacer */}
