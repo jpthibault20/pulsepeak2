@@ -836,22 +836,53 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
     const annualStats = useMemo(() => {
         const currentYear = new Date().getFullYear();
         const allWorkouts = Object.values(scheduleData.workouts);
-        const stats = new Array(12).fill(0).map(() => ({ plannedTss: 0, actualTss: 0 }));
+
+        // Initialisation propre pour éviter les références partagées
+        const stats = new Array(12).fill(null).map(() => ({ plannedTss: 0, actualTss: 0 }));
+
+        console.group("DEBUG ANNUAL STATS");
+        console.log("Current Year:", currentYear);
+        console.log("Total Workouts found:", allWorkouts.length);
 
         allWorkouts.forEach(w => {
             const date = new Date(w.date);
+
+            // Vérification validité date
+            if (isNaN(date.getTime())) {
+                console.warn("Invalid date found:", w.date, w);
+                return;
+            }
+
+            // Vérification année
             if (date.getFullYear() === currentYear) {
                 const month = date.getMonth();
-                stats[month].plannedTss += w.tss || 0;
+                const tssToAdd = w.tss || 0;
+
+                stats[month].plannedTss += tssToAdd;
+
+                if (tssToAdd > 0) {
+                    // console.log(`Mois ${month+1}: Ajout ${tssToAdd} TSS Planifié (Date: ${w.date})`);
+                }
 
                 if (w.status === 'completed') {
-                    const actualTssVal = w.completedData?.actualDuration
-                        ? (w.completedData.actualDuration / (w.duration || 1)) * (w.tss || 0)
-                        : (w.tss || 0);
+                    const durationRatio = w.completedData?.actualDuration
+                        ? (w.completedData.actualDuration / (w.duration || 1))
+                        : 1;
+
+                    const actualTssVal = durationRatio * (w.tss || 0);
+
+                    console.log(`Mois ${month + 1} [COMPLETED]: TSS Réel calculé: ${actualTssVal.toFixed(1)} (Ratio durée: ${durationRatio.toFixed(2)})`);
+
                     stats[month].actualTss += actualTssVal;
                 }
+            } else {
+                // console.log(`Ignored workout from wrong year: ${date.getFullYear()}`);
             }
         });
+
+        console.log("Final Stats Array:", JSON.parse(JSON.stringify(stats))); // Deep copy log
+        console.groupEnd();
+
         return stats;
     }, [scheduleData]);
 
@@ -1042,49 +1073,54 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
             </div>
 
             {/* Vue Graphique Annuelle (TOUJOURS CALCULÉ SUR TOUTE L'ANNÉE) */}
-            <Card className="p-6">
-                <h3 className="text-lg font-semibold text-white mb-6 flex items-center">
-                    <CalendarDays className="mr-2 text-blue-400" size={20} /> Progression Saisonnière (TSS / Mois)
-                </h3>
-                <div className="flex items-end justify-between h-48 gap-2">
-                    {annualStats.map((m, idx) => {
-                        const maxTss = Math.max(...annualStats.map(s => Math.max(s.plannedTss, s.actualTss)), 100);
-                        const heightPlanned = Math.max((m.plannedTss / maxTss) * 100, 2);
-                        const heightActual = Math.max((m.actualTss / maxTss) * 100, 0);
+            {viewMode === 'annual' && (
+                <Card className="p-6">
+                    <h3 className="text-lg font-semibold text-white mb-6 flex items-center">
+                        <CalendarDays className="mr-2 text-blue-400" size={20} /> Progression Saisonnière (TSS / Mois)
+                    </h3>
+                    {/* CORRECTION: suppression de items-end pour permettre l'étirement */}
+                    <div className="flex justify-between h-48 gap-2">
+                        {annualStats.map((m, idx) => {
+                            const maxTss = Math.max(...annualStats.map(s => Math.max(s.plannedTss, s.actualTss)), 100);
+                            const heightPlanned = Math.max((m.plannedTss / maxTss) * 100, 2);
+                            const heightActual = Math.max((m.actualTss / maxTss) * 100, 0);
 
-                        return (
-                            <div key={idx} className="flex-1 flex flex-col items-center group relative">
-                                <div className="w-full bg-slate-800/50 rounded-t-sm relative h-full flex flex-col justify-end">
-                                    {/* Barre Planifiée (Fond grisé/bleuté) */}
-                                    <div
-                                        className="w-full rounded-t-sm bg-slate-700/50 absolute bottom-0 transition-all duration-700 border-t border-slate-500"
-                                        style={{ height: `${heightPlanned}%` }}
-                                    ></div>
+                            return (
+                                <div key={idx} className="flex-1 flex flex-col items-center group relative">
+                                    {/* CORRECTION: flex-1 pour remplir la hauteur, w-full */}
+                                    <div className="w-full flex-1 bg-slate-800/50 rounded-t-sm relative flex flex-col justify-end">
+                                        {/* Barre Planifiée (Fond grisé/bleuté) */}
+                                        <div
+                                            className="w-full rounded-t-sm bg-slate-700/50 absolute bottom-0 transition-all duration-700 border-t border-slate-500"
+                                            style={{ height: `${heightPlanned}%` }}
+                                        ></div>
 
-                                    {/* Barre Réalisée (Premier plan coloré) */}
-                                    <div
-                                        className={`w-full rounded-t-sm z-10 transition-all duration-700 ${m.actualTss > 0 ? 'bg-blue-500 group-hover:bg-blue-400' : 'bg-transparent'}`}
-                                        style={{ height: `${heightActual}%` }}
-                                    ></div>
+                                        {/* Barre Réalisée (Premier plan coloré) */}
+                                        <div
+                                            className={`w-full rounded-t-sm z-10 transition-all duration-700 ${m.actualTss > 0 ? 'bg-blue-500 group-hover:bg-blue-400' : 'bg-transparent'}`}
+                                            style={{ height: `${heightActual}%` }}
+                                        ></div>
 
-                                    {/* Tooltip */}
-                                    {(m.plannedTss > 0 || m.actualTss > 0) && (
-                                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 border border-slate-700 pointer-events-none">
-                                            <div>Prévu: {Math.round(m.plannedTss)}</div>
-                                            <div>Fait: {Math.round(m.actualTss)}</div>
-                                        </div>
-                                    )}
+                                        {/* Tooltip */}
+                                        {(m.plannedTss > 0 || m.actualTss > 0) && (
+                                            <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 border border-slate-700 pointer-events-none">
+                                                <div>Prévu: {Math.round(m.plannedTss)}</div>
+                                                <div>Fait: {Math.round(m.actualTss)}</div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <span className="text-[10px] text-slate-500 mt-2 uppercase">{monthNamesShort[idx]}</span>
                                 </div>
-                                <span className="text-[10px] text-slate-500 mt-2 uppercase">{monthNamesShort[idx]}</span>
-                            </div>
-                        );
-                    })}
-                </div>
-                <div className="flex justify-center gap-4 mt-4 text-xs text-slate-400">
-                    <div className="flex items-center"><div className="w-3 h-3 bg-slate-700 border-t border-slate-500 mr-1"></div> Planifié</div>
-                    <div className="flex items-center"><div className="w-3 h-3 bg-blue-500 mr-1"></div> Réalisé</div>
-                </div>
-            </Card>
+                            );
+                        })}
+                    </div>
+                    <div className="flex justify-center gap-4 mt-4 text-xs text-slate-400">
+                        <div className="flex items-center"><div className="w-3 h-3 bg-slate-700 border-t border-slate-500 mr-1"></div> Planifié</div>
+                        <div className="flex items-center"><div className="w-3 h-3 bg-blue-500 mr-1"></div> Réalisé</div>
+                    </div>
+                </Card>
+            )}
+
 
             {/* Vue Détails "Coach" */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

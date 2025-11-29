@@ -6,7 +6,7 @@
       "type": "Endurance",
       "duration": 100,
       "distance": 100,
-      "tss": 0,
+      "tss": 100,
       "mode": "Outdoor",
       "status": "completed",
       "description_outdoor": "",
@@ -124,6 +124,25 @@
       "completedData": {
         "actualDuration": 69,
         "distance": 39,
+        "rpe": 5,
+        "avgPower": 0,
+        "notes": ""
+      }
+    },
+    "2025-10-15": {
+      "date": "2025-10-15",
+      "title": "Sortie Libre",
+      "type": "Endurance",
+      "duration": 240,
+      "distance": 200,
+      "tss": 10,
+      "mode": "Outdoor",
+      "status": "completed",
+      "description_outdoor": "",
+      "description_indoor": "Non spécifié",
+      "completedData": {
+        "actualDuration": 240,
+        "distance": 200,
         "rpe": 5,
         "avgPower": 0,
         "notes": ""
