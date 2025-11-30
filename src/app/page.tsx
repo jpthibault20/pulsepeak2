@@ -13,15 +13,14 @@ import {
 } from '@/app/actions/schedule';
 // Import des types du fichier dédié (Client-safe)
 import { Profile, Schedule, Workout } from '@/lib/data/type';
-import {
-  Nav,
-  ProfileForm,
-  CalendarView,
-  WorkoutDetailView,
-  Card,
-  ChevronLeft,
-  StatsView
-} from '@/components/ui';
+import { CalendarView } from '@/components/features/calendar/CalendarView';
+import { ProfileForm } from '@/components/features/profile/ProfileForm';
+import { StatsView } from '@/components/features/stats/StatsView';
+import { WorkoutDetailView } from '@/components/features/workout/WorkoutDetailView';
+import { Nav } from '@/components/layout/nav';
+import { Card } from '@/components/ui';
+import { ChevronLeft } from 'lucide-react';
+
 
 // --- Types pour le composant principal
 type View = 'loading' | 'onboarding' | 'dashboard' | 'workout-detail' | 'settings' | 'stats';
