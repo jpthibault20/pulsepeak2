@@ -74,8 +74,8 @@ export default function AppClientWrapper() {
 
   // Wrapper pour les Server Actions
   // MISE À JOUR : Ajout du paramètre startDate pour correspondre à la nouvelle signature dans schedule.ts
-  const handleGenerate = async (blockFocus: string, customTheme: string | null, startDate: string | null) => {
-    await generateNewPlan(blockFocus, customTheme, startDate);
+  const handleGenerate = async (blockFocus: string, customTheme: string | null, startDate: string | null, numWeeks?: number) => {
+    await generateNewPlan(blockFocus, customTheme, startDate, numWeeks);
     await loadData(); // Recharger les données après la mutation
   };
 
@@ -176,7 +176,7 @@ export default function AppClientWrapper() {
             scheduleData={schedule}
             onViewWorkout={handleViewWorkout}
             onGenerate={handleGenerate}
-            onAddManualWorkout={handleAddManualWorkout} // <--- PROP CONNECTÉE ICI
+            onAddManualWorkout={handleAddManualWorkout}
           />
         )}
         {view === 'workout-detail' && selectedWorkout && profile && (

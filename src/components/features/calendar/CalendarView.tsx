@@ -15,7 +15,7 @@ import { GenerationModal } from './GenerationModal';
 interface CalendarViewProps {
     scheduleData: { workouts: { [key: string]: Workout }, summary: string | null };
     onViewWorkout: (workout: Workout) => void;
-    onGenerate: (blockFocus: string, customTheme: string | null, startDate: string | null) => Promise<void>;
+    onGenerate: (blockFocus: string, customTheme: string | null, startDate: string | null, numWeeks?: number) => Promise<void>;
     onAddManualWorkout: (workout: Workout) => Promise<void>;
 }
 
@@ -97,10 +97,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ scheduleData, onView
         return { plannedTSS, plannedDuration, actualDuration, distance, completed, total };
     };
 
-    const handleGeneratePlan = async (blockFocus: string, customTheme: string | null, startDate: string | null) => {
+    const handleGeneratePlan = async (blockFocus: string, customTheme: string | null, startDate: string | null, numWeeks?: number) => {
         setIsGenerating(true);
         try {
-            await onGenerate(blockFocus, customTheme, startDate);
+            await onGenerate(blockFocus, customTheme, startDate, numWeeks);
         } catch (e) {
             console.error("Erreur de génération du plan:", e);
         } finally {
@@ -217,15 +217,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ scheduleData, onView
                                                         </span>
 
                                                         {/* BOUTON AJOUT MANUEL */}
-                                                        {!workout && (
-                                                            <button
-                                                                onClick={(e) => handleOpenManualModal(e, date)}
-                                                                className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-blue-400 transition-opacity p-1"
-                                                                title="Ajouter une séance"
-                                                            >
-                                                                <Plus size={16} />
-                                                            </button>
-                                                        )}
+                                                        {/* {!workout && ( */}
+                                                        <button
+                                                            onClick={(e) => handleOpenManualModal(e, date)}
+                                                            className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-blue-400 transition-opacity p-1"
+                                                            title="Ajouter une séance"
+                                                        >
+                                                            <Plus size={16} />
+                                                        </button>
+                                                        {/* )} */}
                                                     </div>
 
                                                     {workout && (
@@ -293,6 +293,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ scheduleData, onView
 
             {showGenModal && (
                 <GenerationModal
+                    isOpen={showGenModal}
                     onClose={() => setShowGenModal(false)}
                     onGenerate={handleGeneratePlan}
                     isGenerating={isGenerating}
