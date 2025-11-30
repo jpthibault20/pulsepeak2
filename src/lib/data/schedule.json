@@ -1,5 +1,255 @@
 {
-  "workouts": {},
-  "summary": "Ce bloc de reprise est conçu pour un athlète expérimenté revenant après une coupure d'un mois. L'objectif est une réactivation progressive du système aérobie et neuromusculaire. Les deux semaines sont basées exclusivement sur l'Endurance Fondamentale (Zone 2), en respectant strictement les contraintes de volume maximal (semaine 1 : 7.5h, semaine 2 : 8.75h). Aucune intensité au-delà de Z2 n'est prévue pour assurer une transition en douceur et prévenir toute blessure ou fatigue excessive. Le volume est volontairement inférieur au volume cible (9h) la première semaine pour garantir l'adaptation.",
+  "workouts": {
+    "2025-11-11": {
+      "date": "2025-11-11",
+      "title": "Sortie Libre",
+      "type": "Endurance",
+      "duration": 111,
+      "distance": 50,
+      "tss": 123,
+      "mode": "Outdoor",
+      "status": "completed",
+      "description_outdoor": "",
+      "description_indoor": "Non spécifié",
+      "completedData": {
+        "actualDuration": 111,
+        "distance": 50,
+        "rpe": 5,
+        "avgPower": 0,
+        "notes": ""
+      }
+    },
+    "2025-11-18": {
+      "date": "2025-11-18",
+      "title": "Sortie Libre",
+      "type": "Endurance",
+      "duration": 80,
+      "distance": 38,
+      "tss": 74,
+      "mode": "Outdoor",
+      "status": "completed",
+      "description_outdoor": "",
+      "description_indoor": "Non spécifié",
+      "completedData": {
+        "actualDuration": 80,
+        "distance": 38,
+        "rpe": 5,
+        "avgPower": 0,
+        "notes": ""
+      }
+    },
+    "2025-11-20": {
+      "date": "2025-11-20",
+      "title": "Sortie Libre",
+      "type": "Endurance",
+      "duration": 103,
+      "distance": 47,
+      "tss": 120,
+      "mode": "Outdoor",
+      "status": "completed",
+      "description_outdoor": "",
+      "description_indoor": "Non spécifié",
+      "completedData": {
+        "actualDuration": 103,
+        "distance": 47,
+        "rpe": 5,
+        "avgPower": 0,
+        "notes": ""
+      }
+    },
+    "2025-11-27": {
+      "date": "2025-11-27",
+      "title": "Sortie Libre",
+      "type": "Endurance",
+      "duration": 87,
+      "distance": 35,
+      "tss": 50,
+      "mode": "Outdoor",
+      "status": "completed",
+      "description_outdoor": "",
+      "description_indoor": "Non spécifié",
+      "completedData": {
+        "actualDuration": 87,
+        "distance": 35,
+        "rpe": 5,
+        "avgPower": 0,
+        "notes": ""
+      }
+    },
+    "2025-11-29": {
+      "date": "2025-11-29",
+      "title": "Sortie Libre",
+      "type": "Endurance",
+      "duration": 190,
+      "distance": 92,
+      "tss": 250,
+      "mode": "Outdoor",
+      "status": "completed",
+      "description_outdoor": "",
+      "description_indoor": "Non spécifié",
+      "completedData": {
+        "actualDuration": 190,
+        "distance": 92,
+        "rpe": 5,
+        "avgPower": 0,
+        "notes": ""
+      }
+    },
+    "2025-12-01": {
+      "date": "2025-12-01",
+      "title": "Repos Complet",
+      "type": "Repos",
+      "duration": 0,
+      "tss": 0,
+      "mode": "Outdoor",
+      "description_outdoor": "Jour de repos obligatoire. Repos physique et mental total.",
+      "description_indoor": "Jour de repos obligatoire. Repos physique et mental total.",
+      "status": "pending"
+    },
+    "2025-12-02": {
+      "date": "2025-12-02",
+      "title": "SSP Reintroduction",
+      "type": "Seuil (Sweet Spot)",
+      "duration": 90,
+      "tss": 81,
+      "mode": "Outdoor",
+      "description_outdoor": "Échauffement (15 min Z2). Corps de séance : 3 répétitions de (10 min @ Sweet Spot (88-93% FTP, env. 220-233W) / 5 min Récupération Z2). Retour au calme (15 min Z2). Concentration sur la régularité de la puissance.",
+      "description_indoor": "Échauffement (15 min Z2). 3 x [10 min @ 225W / 5 min @ 165W]. Retour au calme (15 min Z2). IF cible: 0.90.",
+      "status": "pending"
+    },
+    "2025-12-03": {
+      "date": "2025-12-03",
+      "title": "Repos Complet",
+      "type": "Repos",
+      "duration": 0,
+      "tss": 0,
+      "mode": "Outdoor",
+      "description_outdoor": "Jour de repos obligatoire. Repos physique et mental total.",
+      "description_indoor": "Jour de repos obligatoire. Repos physique et mental total.",
+      "status": "pending"
+    },
+    "2025-12-04": {
+      "date": "2025-12-04",
+      "title": "Force Endurance (BFR)",
+      "type": "Force",
+      "duration": 90,
+      "tss": 75,
+      "mode": "Outdoor",
+      "description_outdoor": "Échauffement (20 min Z2). Corps de séance : 4 répétitions de (8 min en Z3 bas/Tempo (env. 200W) à basse cadence (50-60 RPM) / 4 min Récupération Z2). Terminer par 22 min en Z2.",
+      "description_indoor": "Échauffement (20 min Z2). 4 x [8 min @ 200W (55 RPM max) / 4 min @ 165W]. Fin Z2. Cet entraînement vise à améliorer votre recrutement musculaire à puissance sub-maximale.",
+      "status": "pending"
+    },
+    "2025-12-05": {
+      "date": "2025-12-05",
+      "title": "Repos Complet",
+      "type": "Repos",
+      "duration": 0,
+      "tss": 0,
+      "mode": "Outdoor",
+      "description_outdoor": "Jour de repos obligatoire. Repos physique et mental total.",
+      "description_indoor": "Jour de repos obligatoire. Repos physique et mental total.",
+      "status": "pending"
+    },
+    "2025-12-06": {
+      "date": "2025-12-06",
+      "title": "Endurance Rythmée et Cadence",
+      "type": "Endurance / Tempo",
+      "duration": 150,
+      "tss": 120,
+      "mode": "Outdoor",
+      "description_outdoor": "30 min Z2. Puis 2 x [30 min en Z3 bas (78-82% FTP) / 15 min Z2]. Durant les phases Z2, inclure toutes les 15 minutes des sprints de cadence maximaux (30s) pour débloquer les jambes. Terminer par 30 min Z2.",
+      "description_indoor": "30 min Z2. 2 x [30 min @ 195W / 15 min @ 165W]. Inclure des pointes de cadence de 30s pendant la récupération Z2. Maintenir une cadence élevée durant les efforts Z3.",
+      "status": "pending"
+    },
+    "2025-12-07": {
+      "date": "2025-12-07",
+      "title": "Sortie Longue Récupération Active",
+      "type": "Endurance",
+      "duration": 210,
+      "tss": 147,
+      "mode": "Outdoor",
+      "description_outdoor": "Sortie longue de 3h30. Maintenir strictement la zone Z2 (65-75% FTP). C'est un jour d'accumulation de volume. Focus sur la nutrition et l'hydratation régulières.",
+      "description_indoor": "3h30 en Z2 (165-188W). Utiliser un parcours virtuel ou une séance Z2 uniforme. Garder la fréquence cardiaque stable et la cadence naturelle.",
+      "status": "pending"
+    },
+    "2025-12-08": {
+      "date": "2025-12-08",
+      "title": "Repos Complet",
+      "type": "Repos",
+      "duration": 0,
+      "tss": 0,
+      "mode": "Outdoor",
+      "description_outdoor": "Jour de repos obligatoire. Repos physique et mental total.",
+      "description_indoor": "Jour de repos obligatoire. Repos physique et mental total.",
+      "status": "pending"
+    },
+    "2025-12-09": {
+      "date": "2025-12-09",
+      "title": "Seuil FTP - Bloc 1",
+      "type": "Seuil (Threshold)",
+      "duration": 90,
+      "tss": 90,
+      "mode": "Outdoor",
+      "description_outdoor": "Échauffement (15 min Z2). Corps de séance : 3 répétitions de (12 min @ Seuil FTP (95-100% FTP, env. 238-250W) / 3 min Récupération Z1/Z2). Ces efforts sont soutenus. Terminer par 15 min Z2.",
+      "description_indoor": "Échauffement (15 min Z2). 3 x [12 min @ 245W / 3 min @ 130W]. Retour au calme (15 min Z2). L'objectif est d'accumuler du temps de qualité proche de votre FTP (IF cible 0.95).",
+      "status": "pending"
+    },
+    "2025-12-10": {
+      "date": "2025-12-10",
+      "title": "Repos Complet",
+      "type": "Repos",
+      "duration": 0,
+      "tss": 0,
+      "mode": "Outdoor",
+      "description_outdoor": "Jour de repos obligatoire. Repos physique et mental total.",
+      "description_indoor": "Jour de repos obligatoire. Repos physique et mental total.",
+      "status": "pending"
+    },
+    "2025-12-11": {
+      "date": "2025-12-11",
+      "title": "Sweet Spot / Force Maximale",
+      "type": "Force / Sweet Spot",
+      "duration": 90,
+      "tss": 85,
+      "mode": "Outdoor",
+      "description_outdoor": "Échauffement (15 min Z2). 3 x [10 min @ Sweet Spot (88-93% FTP) / 5 min Z2]. Durant les 5 min de récupération Z2, inclure 4 x 15s de sprints en force maximale (Max Force) à très basse cadence (50 RPM), repos 45s entre chaque. Finir par 15 min Z2.",
+      "description_indoor": "Échauffement (15 min Z2). 3 x [10 min @ 225W / 5 min @ 165W]. Durant la récupération Z2, effectuez 4 départs arrêtés ou efforts Max Force 15s (50 RPM). Concentration sur le recrutement musculaire.",
+      "status": "pending"
+    },
+    "2025-12-12": {
+      "date": "2025-12-12",
+      "title": "Repos Complet",
+      "type": "Repos",
+      "duration": 0,
+      "tss": 0,
+      "mode": "Outdoor",
+      "description_outdoor": "Jour de repos obligatoire. Repos physique et mental total.",
+      "description_indoor": "Jour de repos obligatoire. Repos physique et mental total.",
+      "status": "pending"
+    },
+    "2025-12-13": {
+      "date": "2025-12-13",
+      "title": "Endurance Longue avec Tempo",
+      "type": "Endurance / Tempo",
+      "duration": 150,
+      "tss": 135,
+      "mode": "Outdoor",
+      "description_outdoor": "30 min Z2. Puis 3 x [20 min en Z3 bas (78-82% FTP) / 10 min Z2]. Cet entraînement augmente la densité du travail au Tempo. Maintenir une cadence stable et efficace. Terminer par 30 min Z2.",
+      "description_indoor": "30 min Z2. 3 x [20 min @ 195W / 10 min @ 165W]. Objectif de ne pas laisser chuter la puissance entre les intervalles. IF cible ~0.85.",
+      "status": "pending"
+    },
+    "2025-12-14": {
+      "date": "2025-12-14",
+      "title": "Sortie Longue Récupération Active",
+      "type": "Endurance",
+      "duration": 210,
+      "tss": 147,
+      "mode": "Outdoor",
+      "description_outdoor": "Sortie longue de 3h30. Maintenir strictement la zone Z2 (65-75% FTP). Dernière sortie longue de base de ce micro-cycle. Profitez-en pour pratiquer votre ravitaillement dans des conditions réelles.",
+      "description_indoor": "3h30 en Z2 (165-188W). Concentration sur la position, la fluidité du pédalage et le volume de travail aérobique. Ne pas dépasser Z2.",
+      "status": "pending"
+    }
+  },
+  "summary": "L'athlète a maintenu une excellente base d'endurance sur les semaines précédentes, respectant un volume d'environ 9h. Ce bloc de deux semaines est conçu pour réintroduire l'intensité de manière progressive. La Semaine 1 se concentre sur le Sweet Spot et la Force Endurance pour réhabituer le corps aux efforts sub-maximaux. La Semaine 2 augmente la durée passée au Seuil (Z4) et maintient un fort travail de force, tout en conservant les sorties longues d'endurance nécessaires. Le volume total reste constant à 9h/semaine, conformément aux contraintes et à la cible hebdomadaire.",
   "lastGenerated": "2025-11-30"
 }
