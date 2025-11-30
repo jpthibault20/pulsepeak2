@@ -57,7 +57,8 @@ export async function generatePlanFromAI(
     history: string,
     blockFocus: string,
     customTheme: string | null,
-    startDateInput: string | null
+    startDateInput: string | null,
+    numWeeks?: number
 ): Promise<{ synthesis: string, workouts: Omit<Workout, 'status' | 'completedData'>[] }> {
 
     // --- Logique de Date et Durée ---
@@ -95,7 +96,9 @@ export async function generatePlanFromAI(
 
     const startDateString = startD.toISOString().split('T')[0];
     const finalFocus = blockFocus === 'Personnalisé' ? customTheme : blockFocus;
-    const blockDuration = blockFocus === 'Semaine de Tests (FTP, VO2max)' ? "7 jours (Semaine de Tests)" : "4 semaines (28 jours)";
+    const blockDuration = blockFocus === 'Semaine de Tests (FTP, VO2max)' ? "7 jours (Semaine de Tests)" : 
+                                                blockFocus == 'Personnalisé' ? `${numWeeks} semaines (${numWeeks || 0 * 7} jours)` :
+                                                "4 semaines (28 jours)";
 
     const systemPrompt = "Tu es un Entraîneur de Cyclisme 'World Tour'. Tu réponds toujours UNIQUEMENT au format JSON strict.";
     const userPrompt = `

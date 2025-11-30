@@ -48,7 +48,7 @@ export async function saveAthleteProfile(data: Profile) {
 }
 
 // MISE À JOUR : Ajout du paramètre startDate (optionnel, string format YYYY-MM-DD)
-export async function generateNewPlan(blockFocus: string, customTheme: string | null, startDate: string | null) {
+export async function generateNewPlan(blockFocus: string, customTheme: string | null, startDate: string | null, numWeeks?: number) {
     console.log(`[Plan Generation] Focus: ${blockFocus}. Theme custom: ${customTheme}. Start Date: ${startDate}`);
 
     const existingSchedule = await getSchedule();
@@ -67,7 +67,8 @@ export async function generateNewPlan(blockFocus: string, customTheme: string | 
             history, 
             blockFocus, 
             customTheme,
-            startDate // Passage de la date
+            startDate, 
+            numWeeks
         );
         
         const nextWorkouts: { [key: string]: Workout } = {};

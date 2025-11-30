@@ -13,15 +13,14 @@ import {
 } from '@/app/actions/schedule';
 // Import des types du fichier dédié (Client-safe)
 import { Profile, Schedule, Workout } from '@/lib/data/type';
-import {
-  Nav,
-  ProfileForm,
-  CalendarView,
-  WorkoutDetailView,
-  Card,
-  ChevronLeft,
-  StatsView
-} from '@/components/ui';
+import { CalendarView } from '@/components/features/calendar/CalendarView';
+import { ProfileForm } from '@/components/features/profile/ProfileForm';
+import { StatsView } from '@/components/features/stats/StatsView';
+import { WorkoutDetailView } from '@/components/features/workout/WorkoutDetailView';
+import { Nav } from '@/components/layout/nav';
+import { Card } from '@/components/ui';
+import { ChevronLeft } from 'lucide-react';
+
 
 // --- Types pour le composant principal
 type View = 'loading' | 'onboarding' | 'dashboard' | 'workout-detail' | 'settings' | 'stats';
@@ -75,8 +74,8 @@ export default function AppClientWrapper() {
 
   // Wrapper pour les Server Actions
   // MISE À JOUR : Ajout du paramètre startDate pour correspondre à la nouvelle signature dans schedule.ts
-  const handleGenerate = async (blockFocus: string, customTheme: string | null, startDate: string | null) => {
-    await generateNewPlan(blockFocus, customTheme, startDate);
+  const handleGenerate = async (blockFocus: string, customTheme: string | null, startDate: string | null, numWeeks?: number) => {
+    await generateNewPlan(blockFocus, customTheme, startDate, numWeeks);
     await loadData(); // Recharger les données après la mutation
   };
 
@@ -177,7 +176,7 @@ export default function AppClientWrapper() {
             scheduleData={schedule}
             onViewWorkout={handleViewWorkout}
             onGenerate={handleGenerate}
-            onAddManualWorkout={handleAddManualWorkout} // <--- PROP CONNECTÉE ICI
+            onAddManualWorkout={handleAddManualWorkout}
           />
         )}
         {view === 'workout-detail' && selectedWorkout && profile && (
