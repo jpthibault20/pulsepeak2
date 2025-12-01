@@ -127,20 +127,49 @@ export async function toggleWorkoutMode(dateKey: string) {
 
 export async function moveWorkout(originalDateStr: string, newDateStr: string) {
     const schedule = await getSchedule();
-    if (schedule.workouts[originalDateStr] && !schedule.workouts[newDateStr]) {
-        const movedWorkout = { 
-            ...schedule.workouts[originalDateStr], 
-            date: newDateStr,
-            status: 'pending' as const // Reset status
-        };
-        
-        schedule.workouts[newDateStr] = movedWorkout;
-        delete schedule.workouts[originalDateStr];
+    
+    // On récupère les deux séances potentielles
+    const sourceWorkout = schedule.workouts[originalDateStr];
+    const targetWorkout = schedule.workouts[newDateStr];
 
-        await saveSchedule(schedule);
-    } else {
-         console.warn(`Impossible de déplacer la séance.`);
+    if (!sourceWorkout) {
+        throw new Error("Séance à déplacer non trouvée.");
     }
+
+    // On prépare la version "déplacée" de la séance source
+    // On réinitialise le statut à 'pending' car changer de date implique souvent de refaire la séance
+    const movedSourceWorkout = { 
+        ...sourceWorkout, 
+        date: newDateStr,
+        status: 'pending' as const,
+        completedData: undefined 
+    };
+
+    if (targetWorkout) {
+        // --- CAS 1 : ÉCHANGE (SWAP) ---
+        // Il y a déjà une séance à l'arrivée, on l'envoie à la date de départ
+        const movedTargetWorkout = {
+            ...targetWorkout,
+            date: originalDateStr,
+            status: 'pending' as const, // On réinitialise aussi celle-ci par précaution
+            completedData: undefined
+        };
+
+        // Mise à jour de la map : A va en B, et B va en A
+        schedule.workouts[newDateStr] = movedSourceWorkout;
+        schedule.workouts[originalDateStr] = movedTargetWorkout;
+
+    } else {
+        // --- CAS 2 : DÉPLACEMENT SIMPLE ---
+        // La case d'arrivée est vide
+        schedule.workouts[newDateStr] = movedSourceWorkout;
+        
+        // On supprime l'ancienne entrée
+        delete schedule.workouts[originalDateStr];
+    }
+
+    await saveSchedule(schedule);
+    revalidatePath('/');
 }
 /**
  * Action 6: Ajouter manuellement une séance au calendrier
