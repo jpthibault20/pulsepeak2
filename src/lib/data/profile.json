@@ -1,6 +1,6 @@
 {
   "name": "JEANPIERRE Thibault",
-  "ftp": 250,
+  "ftp": 247,
   "experience": "Avancé",
   "goal": "Gran Fondo / Cyclosportive",
   "objectiveDate": "",
@@ -15,5 +15,50 @@
     "Samedi": 150,
     "Dimanche": 210
   },
-  "weight": 58
+  "weight": 58,
+  "powerTests": {
+    "p5min": 0,
+    "p8min": 0,
+    "p15min": 266,
+    "p20min": 0
+  },
+  "zones": {
+    "z1": {
+      "min": 0,
+      "max": 136
+    },
+    "z2": {
+      "min": 138,
+      "max": 185
+    },
+    "z3": {
+      "min": 188,
+      "max": 222
+    },
+    "z4": {
+      "min": 225,
+      "max": 259
+    },
+    "z5": {
+      "min": 262,
+      "max": 296
+    },
+    "z6": {
+      "min": 299,
+      "max": 371
+    },
+    "z7": {
+      "min": 372,
+      "max": 2000
+    }
+  },
+  "seasonData": {
+    "calculatedAt": "2025-12-01T20:37:24.271Z",
+    "wPrime": 0,
+    "criticalPower": 247,
+    "method": "Single Test Estimation",
+    "sourceTests": [
+      "15min"
+    ]
+  }
 }
