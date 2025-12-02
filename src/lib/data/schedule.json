@@ -112,10 +112,17 @@
       "type": "Seuil (Sweet Spot)",
       "duration": 90,
       "tss": 81,
-      "mode": "Outdoor",
+      "mode": "Indoor",
       "description_outdoor": "Échauffement (15 min Z2). Corps de séance : 3 répétitions de (10 min @ Sweet Spot (88-93% FTP, env. 220-233W) / 5 min Récupération Z2). Retour au calme (15 min Z2). Concentration sur la régularité de la puissance.",
       "description_indoor": "Échauffement (15 min Z2). 3 x [10 min @ 225W / 5 min @ 165W]. Retour au calme (15 min Z2). IF cible: 0.90.",
-      "status": "pending"
+      "status": "completed",
+      "completedData": {
+        "rpe": 6,
+        "avgPower": 174,
+        "actualDuration": 75,
+        "distance": 36,
+        "notes": ""
+      }
     },
     "2025-12-03": {
       "date": "2025-12-03",
