@@ -95,17 +95,6 @@
         "notes": ""
       }
     },
-    "2025-12-01": {
-      "date": "2025-12-01",
-      "title": "Repos Complet",
-      "type": "Repos",
-      "duration": 0,
-      "tss": 0,
-      "mode": "Outdoor",
-      "description_outdoor": "Jour de repos obligatoire. Repos physique et mental total.",
-      "description_indoor": "Jour de repos obligatoire. Repos physique et mental total.",
-      "status": "pending"
-    },
     "2025-12-02": {
       "date": "2025-12-02",
       "title": "SSP Reintroduction",
@@ -124,17 +113,6 @@
         "notes": ""
       }
     },
-    "2025-12-03": {
-      "date": "2025-12-03",
-      "title": "Repos Complet",
-      "type": "Repos",
-      "duration": 0,
-      "tss": 0,
-      "mode": "Outdoor",
-      "description_outdoor": "Jour de repos obligatoire. Repos physique et mental total.",
-      "description_indoor": "Jour de repos obligatoire. Repos physique et mental total.",
-      "status": "pending"
-    },
     "2025-12-04": {
       "date": "2025-12-04",
       "title": "Force Endurance (BFR)",
@@ -144,17 +122,6 @@
       "mode": "Outdoor",
       "description_outdoor": "Échauffement (20 min Z2). Corps de séance : 4 répétitions de (8 min en Z3 bas/Tempo (env. 200W) à basse cadence (50-60 RPM) / 4 min Récupération Z2). Terminer par 22 min en Z2.",
       "description_indoor": "Échauffement (20 min Z2). 4 x [8 min @ 200W (55 RPM max) / 4 min @ 165W]. Fin Z2. Cet entraînement vise à améliorer votre recrutement musculaire à puissance sub-maximale.",
-      "status": "pending"
-    },
-    "2025-12-05": {
-      "date": "2025-12-05",
-      "title": "Repos Complet",
-      "type": "Repos",
-      "duration": 0,
-      "tss": 0,
-      "mode": "Outdoor",
-      "description_outdoor": "Jour de repos obligatoire. Repos physique et mental total.",
-      "description_indoor": "Jour de repos obligatoire. Repos physique et mental total.",
       "status": "pending"
     },
     "2025-12-06": {
@@ -179,17 +146,6 @@
       "description_indoor": "3h30 en Z2 (165-188W). Utiliser un parcours virtuel ou une séance Z2 uniforme. Garder la fréquence cardiaque stable et la cadence naturelle.",
       "status": "pending"
     },
-    "2025-12-08": {
-      "date": "2025-12-08",
-      "title": "Repos Complet",
-      "type": "Repos",
-      "duration": 0,
-      "tss": 0,
-      "mode": "Outdoor",
-      "description_outdoor": "Jour de repos obligatoire. Repos physique et mental total.",
-      "description_indoor": "Jour de repos obligatoire. Repos physique et mental total.",
-      "status": "pending"
-    },
     "2025-12-09": {
       "date": "2025-12-09",
       "title": "Seuil FTP - Bloc 1",
@@ -201,17 +157,6 @@
       "description_indoor": "Échauffement (15 min Z2). 3 x [12 min @ 245W / 3 min @ 130W]. Retour au calme (15 min Z2). L'objectif est d'accumuler du temps de qualité proche de votre FTP (IF cible 0.95).",
       "status": "pending"
     },
-    "2025-12-10": {
-      "date": "2025-12-10",
-      "title": "Repos Complet",
-      "type": "Repos",
-      "duration": 0,
-      "tss": 0,
-      "mode": "Outdoor",
-      "description_outdoor": "Jour de repos obligatoire. Repos physique et mental total.",
-      "description_indoor": "Jour de repos obligatoire. Repos physique et mental total.",
-      "status": "pending"
-    },
     "2025-12-11": {
       "date": "2025-12-11",
       "title": "Sweet Spot / Force Maximale",
@@ -221,17 +166,6 @@
       "mode": "Outdoor",
       "description_outdoor": "Échauffement (15 min Z2). 3 x [10 min @ Sweet Spot (88-93% FTP) / 5 min Z2]. Durant les 5 min de récupération Z2, inclure 4 x 15s de sprints en force maximale (Max Force) à très basse cadence (50 RPM), repos 45s entre chaque. Finir par 15 min Z2.",
       "description_indoor": "Échauffement (15 min Z2). 3 x [10 min @ 225W / 5 min @ 165W]. Durant la récupération Z2, effectuez 4 départs arrêtés ou efforts Max Force 15s (50 RPM). Concentration sur le recrutement musculaire.",
-      "status": "pending"
-    },
-    "2025-12-12": {
-      "date": "2025-12-12",
-      "title": "Repos Complet",
-      "type": "Repos",
-      "duration": 0,
-      "tss": 0,
-      "mode": "Outdoor",
-      "description_outdoor": "Jour de repos obligatoire. Repos physique et mental total.",
-      "description_indoor": "Jour de repos obligatoire. Repos physique et mental total.",
       "status": "pending"
     },
     "2025-12-13": {

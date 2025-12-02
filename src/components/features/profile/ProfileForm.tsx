@@ -4,6 +4,7 @@ import {
 } from 'lucide-react';
 import { Profile, PowerZones } from '@/lib/data/type';
 import { Card, Button } from '@/components/ui';
+import { saveAthleteProfile } from '@/app/actions/schedule';
 
 interface ProfileFormProps {
     initialProfileData: Profile | null;
@@ -123,9 +124,8 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialProfileData, is
             z7: { min: (p5 > 0 ? p5 : Math.round(estimatedFtp * 1.50)) + 1, max: 2000 } // Neuromusculaire (Sprint)
         };
 
-        // Mise à jour du state avec les données de saison
-        setFormData(prev => ({
-            ...prev,
+        const updatedProfile: Profile = {
+            ...formData,
             ftp: estimatedFtp,
             zones: newZones,
             seasonData: {
@@ -135,7 +135,11 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialProfileData, is
                 method: methodUsed,
                 sourceTests: testsUsed
             }
-        }));
+        };
+
+        setFormData(updatedProfile);
+
+        saveAthleteProfile(updatedProfile);
 
         console.log(`Zones calculées via ${sourceUsed}. FTP: ${estimatedFtp}W, W': ${wPrime}J`);
     };
