@@ -90,7 +90,7 @@ export async function generatePlanFromAI(
     `;
     }
 
-    const systemPrompt = "Tu es un Directeur Sportif et Entraîneur de Cyclisme 'World Tour'. Tu réponds toujours UNIQUEMENT au format JSON strict.";
+    const systemPrompt = "Tu es Entraîneur de Cyclisme 'World Tour'. Tu réponds toujours UNIQUEMENT au format JSON strict.";
 
     const userPrompt = `
     PROFIL ATHLÈTE:
@@ -111,11 +111,12 @@ export async function generatePlanFromAI(
     MISSION:
     1. Analyse conformité (si retard, réduis volume).
     2. Périodisation (3+1 par défaut).
-    3. Génère plan jour par jour avec versions Indoor/Outdoor.
+    3. Génère plan jour par jour avec versions Indoor/Outdoor la version indor doit etre différente de la version outdoor pour etre plus ludique.
     4. **IMPORTANT:** Dans les descriptions ("description_outdoor" et "description_indoor"), indique TOUJOURS les watts cibles basés sur les zones fournies ci-dessus (ex: "3x10min Z4 (${profile.zones?.z4.min || '...'}W-${profile.zones?.z4.max || '...'}W)").
     
     RÈGLES CRITIQUES:
     - La durée ("duration") doit TOUJOURS être exprimée en MINUTES (ex: 90, 120, 180). Ne jamais mettre "1.5" pour 1h30.
+    - Pour les journée de repos, ne génère pas de séance
     
     CONTRAINTES:
     ${dateConstraints}
