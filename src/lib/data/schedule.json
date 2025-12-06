@@ -122,7 +122,14 @@
       "mode": "Outdoor",
       "description_outdoor": "Échauffement (20 min Z2). Corps de séance : 4 répétitions de (8 min en Z3 bas/Tempo (env. 200W) à basse cadence (50-60 RPM) / 4 min Récupération Z2). Terminer par 22 min en Z2.",
       "description_indoor": "Échauffement (20 min Z2). 4 x [8 min @ 200W (55 RPM max) / 4 min @ 165W]. Fin Z2. Cet entraînement vise à améliorer votre recrutement musculaire à puissance sub-maximale.",
-      "status": "pending"
+      "status": "completed",
+      "completedData": {
+        "rpe": 5,
+        "avgPower": 142,
+        "actualDuration": 85,
+        "distance": 38,
+        "notes": ""
+      }
     },
     "2025-12-06": {
       "date": "2025-12-06",
