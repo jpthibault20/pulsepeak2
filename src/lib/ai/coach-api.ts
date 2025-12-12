@@ -196,20 +196,27 @@ async function callGeminiAPI(payload: unknown) {
 }
 
 /**
- * Génère une SEULE séance de remplacement.
- * (Reprend la logique de zonesContext pour la cohérence)
+ * Génère une SEULE séance de remplacement en prenant en compte le contexte
+ * (séances autour, ancienne séance, fatigue estimée via history).
  */
 export async function generateSingleWorkoutFromAI(
     profile: Profile,
+    history: unknown, // On passe l'historique (même si on l'utilise peu ici, c'est bon pour le contexte futur)
     date: string,
-    currentBlockFocus: string
+    surroundingWorkouts: Record<string, string>,
+    oldWorkout?: Workout,
+    currentBlockFocus: string = "General Fitness", // Valeur par défaut si non fournie
+    userInstruction?: string
 ): Promise<Workout> {
     
+    console.log("theme : ", currentBlockFocus);
     const d = new Date(date);
     const daysMap = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
     const dayName = daysMap[d.getDay()];
-    const availability = profile.weeklyAvailability[dayName];
+    // On récupère la dispo, par défaut 60min si non trouvée
+    const availability = profile.weeklyAvailability[dayName] || 60;
 
+    // 1. Construction du contexte des Zones
     let zonesContext = "";
     if (profile.zones) {
         const z = profile.zones;
@@ -225,25 +232,59 @@ export async function generateSingleWorkoutFromAI(
         `;
     }
 
-    const systemPrompt = "Tu es un coach cycliste expert. Tu dois générer une séance de remplacement.";
+    // 2. Construction du contexte des séances environnantes
+    const scheduleContextStr = Object.entries(surroundingWorkouts)
+        .map(([d, desc]) => `- ${d}: ${desc}`)
+        .join('\n');
+
+    // 3. Construction du contexte de l'ancienne séance (celle qu'on supprime/régénère)
+    let oldWorkoutContext = "Aucune séance précédente n'existait.";
+    if (oldWorkout) {
+        oldWorkoutContext = `
+        SÉANCE ORIGINALE (à remplacer) :
+        - Titre : ${oldWorkout.title}
+        - Type : ${oldWorkout.type}
+        - Durée : ${oldWorkout.duration} min
+        - TSS : ${oldWorkout.tss}
+        `;
+    }
+
+    // Gestion de l'instruction utilisateur
+    let userDirective = "";
+    if (userInstruction && userInstruction.trim() !== "") {
+        userDirective = `
+        🚨 DEMANDE SPÉCIFIQUE DE L'UTILISATEUR (Priorité Absolue) : "${userInstruction}"
+        Adapte l'intensité (TSS), la durée ou le type de séance pour respecter scrupuleusement cette demande.
+        `;
+    } else {
+        userDirective = "Propose une alternative pertinente et équilibrée par rapport à la séance originale.";
+    }
+
+    const systemPrompt = "Tu es un coach cycliste expert. Ton but est de générer une séance d'entraînement unique précise.";
     
     const userPrompt = `
-    CONTEXTE: Remplacement séance du ${date} (${dayName}).
+    CONTEXTE: Remplacement / Génération unique pour le ${date}.
     
-    PROFIL:
+    PROFIL ATHLÈTE:
     - FTP: ${profile.ftp} W
-    - Poids: ${profile.weight || 70} kg
     ${zonesContext}
     
-    CONTRAINTES DU JOUR:
-    - Durée Max: ${availability} min (0 = Repos).
+    CONTRAINTES:
+    - Durée Max dispo: ${availability} min.
     - Focus Bloc: ${currentBlockFocus}
     
+    ${oldWorkoutContext}
+
+    ${userDirective} <--- INJECTION DE LA DEMANDE
+    
+    CALENDRIER ALENTOUR:
+    ${scheduleContextStr}
+    
     MISSION:
-    Propose une séance alternative pertinente. Utilise les plages de watts spécifiques ci-dessus dans les descriptions.
-    La durée doit être un entier en MINUTES.
+    Génère un objet JSON pour cette nouvelle séance.
     `;
 
+    // 4. Définition du Schema de réponse (Strict pour Gemini)
     const responseSchema = {
         type: "OBJECT",
         properties: {
@@ -251,12 +292,12 @@ export async function generateSingleWorkoutFromAI(
                 "type": "OBJECT",
                 "properties": {
                     "title": { "type": "STRING" },
-                    "type": { "type": "STRING" },
-                    "duration": { "type": "NUMBER", "description": "Durée en MINUTES." },
-                    "tss": { "type": "NUMBER" },
+                    "type": { "type": "STRING", "enum": ["Endurance", "Tempo", "SweetSpot", "Threshold", "VO2Max", "Anaerobic", "Recovery", "Rest"] },
+                    "duration": { "type": "NUMBER", "description": "Durée totale en minutes." },
+                    "tss": { "type": "NUMBER", "description": "Score de stress estimé." },
                     "mode": { "type": "STRING", "enum": ["Outdoor", "Indoor"] },
-                    "description_outdoor": { "type": "STRING" },
-                    "description_indoor": { "type": "STRING" }
+                    "description_outdoor": { "type": "STRING", "description": "Structure de la séance pour l'extérieur." },
+                    "description_indoor": { "type": "STRING", "description": "Structure de la séance pour Zwift/Home trainer." }
                 },
                 "required": ["title", "type", "duration", "tss", "mode", "description_outdoor", "description_indoor"]
             }
@@ -267,11 +308,17 @@ export async function generateSingleWorkoutFromAI(
     const payload = {
         contents: [{ parts: [{ text: userPrompt }] }],
         systemInstruction: { parts: [{ text: systemPrompt }] },
-        generationConfig: { responseMimeType: "application/json", responseSchema: responseSchema },
+        generationConfig: { 
+            responseMimeType: "application/json", 
+            responseSchema: responseSchema,
+            temperature: 0.7 // Un peu de créativité pour varier de l'ancienne séance
+        },
     };
 
+    // Appel API
     const result = await callGeminiAPI(payload);
     
+    // Retour formaté
     return {
         date: date,
         status: 'pending',
