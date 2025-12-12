@@ -140,7 +140,14 @@
       "mode": "Outdoor",
       "description_outdoor": "30 min Z2. Puis 2 x [30 min en Z3 bas (78-82% FTP) / 15 min Z2]. Durant les phases Z2, inclure toutes les 15 minutes des sprints de cadence maximaux (30s) pour débloquer les jambes. Terminer par 30 min Z2.",
       "description_indoor": "30 min Z2. 2 x [30 min @ 195W / 15 min @ 165W]. Inclure des pointes de cadence de 30s pendant la récupération Z2. Maintenir une cadence élevée durant les efforts Z3.",
-      "status": "pending"
+      "status": "completed",
+      "completedData": {
+        "rpe": 5,
+        "avgPower": 148,
+        "actualDuration": 96,
+        "distance": 34,
+        "notes": ""
+      }
     },
     "2025-12-07": {
       "date": "2025-12-07",
@@ -151,7 +158,14 @@
       "mode": "Outdoor",
       "description_outdoor": "Sortie longue de 3h30. Maintenir strictement la zone Z2 (65-75% FTP). C'est un jour d'accumulation de volume. Focus sur la nutrition et l'hydratation régulières.",
       "description_indoor": "3h30 en Z2 (165-188W). Utiliser un parcours virtuel ou une séance Z2 uniforme. Garder la fréquence cardiaque stable et la cadence naturelle.",
-      "status": "pending"
+      "status": "completed",
+      "completedData": {
+        "rpe": 8,
+        "avgPower": 149,
+        "actualDuration": 229,
+        "distance": 104,
+        "notes": ""
+      }
     },
     "2025-12-09": {
       "date": "2025-12-09",
@@ -162,7 +176,14 @@
       "mode": "Outdoor",
       "description_outdoor": "Échauffement (15 min Z2). Corps de séance : 3 répétitions de (12 min @ Seuil FTP (95-100% FTP, env. 238-250W) / 3 min Récupération Z1/Z2). Ces efforts sont soutenus. Terminer par 15 min Z2.",
       "description_indoor": "Échauffement (15 min Z2). 3 x [12 min @ 245W / 3 min @ 130W]. Retour au calme (15 min Z2). L'objectif est d'accumuler du temps de qualité proche de votre FTP (IF cible 0.95).",
-      "status": "pending"
+      "status": "completed",
+      "completedData": {
+        "rpe": 6,
+        "avgPower": 154,
+        "actualDuration": 140,
+        "distance": 66,
+        "notes": ""
+      }
     },
     "2025-12-11": {
       "date": "2025-12-11",
@@ -173,18 +194,18 @@
       "mode": "Outdoor",
       "description_outdoor": "Échauffement (15 min Z2). 3 x [10 min @ Sweet Spot (88-93% FTP) / 5 min Z2]. Durant les 5 min de récupération Z2, inclure 4 x 15s de sprints en force maximale (Max Force) à très basse cadence (50 RPM), repos 45s entre chaque. Finir par 15 min Z2.",
       "description_indoor": "Échauffement (15 min Z2). 3 x [10 min @ 225W / 5 min @ 165W]. Durant la récupération Z2, effectuez 4 départs arrêtés ou efforts Max Force 15s (50 RPM). Concentration sur le recrutement musculaire.",
-      "status": "pending"
+      "status": "missed"
     },
     "2025-12-13": {
       "date": "2025-12-13",
-      "title": "Endurance Longue avec Tempo",
-      "type": "Endurance / Tempo",
-      "duration": 150,
-      "tss": 135,
+      "status": "pending",
+      "title": "PMA Intense: 2x (4x4 min @ VO2Max)",
+      "type": "VO2Max",
+      "duration": 105,
+      "tss": 125,
       "mode": "Outdoor",
-      "description_outdoor": "30 min Z2. Puis 3 x [20 min en Z3 bas (78-82% FTP) / 10 min Z2]. Cet entraînement augmente la densité du travail au Tempo. Maintenir une cadence stable et efficace. Terminer par 30 min Z2.",
-      "description_indoor": "30 min Z2. 3 x [20 min @ 195W / 10 min @ 165W]. Objectif de ne pas laisser chuter la puissance entre les intervalles. IF cible ~0.85.",
-      "status": "pending"
+      "description_outdoor": "Échauffement (20 min): 15 min en Z2 (135-181 W). 5 min progressifs incluant 3 sprints courts (30s) en Z4 (219-253 W).\r\nCorps de séance (75 min):\r\nBloc 1 (32 min): 4 répétitions de 4 min à intensité PMA (Z5: 255-289 W), suivies de 4 min de récupération active en Z3 (183-217 W). Concentrez-vous sur une cadence élevée (90-100 RPM) pour les efforts.\r\nRécupération intermédiaire (10 min): Rouler en Z2 (135-181 W).\r\nBloc 2 (32 min): Répétez le Bloc 1 (4x4 min Z5 / 4 min Z3).\r\nRetour au calme (10 min): Z1/Z2 léger (< 181 W).",
+      "description_indoor": "Échauffement (20 min): 15 min @ 60-75% FTP (Z2). Inclure 3 accélérations de 1 min @ 90-105% FTP (Z4: 219-253 W) avec 1 min de repos Z2.\r\nCorps de séance (75 min):\r\nBloc 1 (32 min): 4x (4 min @ 106-120% FTP [Z5: 255-289 W] / 4 min @ 76-90% FTP [Z3: 183-217 W]). Maintenez une cadence élevée (95 RPM et plus) durant les intervalles.\r\nRécupération intermédiaire (10 min): 60-75% FTP (145-181 W).\r\nBloc 2 (32 min): Répétez le Bloc 1.\r\nRetour au calme (10 min): 45-60% FTP (< 145 W)."
     },
     "2025-12-14": {
       "date": "2025-12-14",
