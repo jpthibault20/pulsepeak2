@@ -1,9 +1,9 @@
 'use server';
 
 // Import de la fonction generatePlanFromAI
-import { generatePlanFromAI } from '@/lib/ai/coach-api'; 
+import { generatePlanFromAI, generateSingleWorkoutFromAI } from '@/lib/ai/coach-api';
 import { getProfile, getSchedule, saveProfile, saveSchedule } from '@/lib/data/crud';
-import { Schedule, Profile, Workout } from '@/lib/data/type'; 
+import { Schedule, Profile, Workout } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
 
 // --- Helpers ---
@@ -11,14 +11,14 @@ import { revalidatePath } from 'next/cache';
 // Calcul de l'historique pour le prompt AI
 const getRecentPerformanceHistory = (schedule: Schedule): string => {
     const workouts = Object.values(schedule.workouts || {})
-      .filter(w => w.status === 'completed' && w.completedData)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 10);
+        .filter(w => w.status === 'completed' && w.completedData)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 10);
 
     if (workouts.length === 0) return "Aucune donnée récente. (Premier bloc)";
 
     return workouts.map(w => {
-        const data = w.completedData!; 
+        const data = w.completedData!;
         return `
       - Date: ${w.date}
       - Type: ${w.type} (Prévu: ${w.duration} min)
@@ -57,22 +57,22 @@ export async function generateNewPlan(blockFocus: string, customTheme: string | 
     if (!existingProfile) {
         throw new Error("Impossible de générer un plan sans profil athlète.");
     }
-    
+
     const history = getRecentPerformanceHistory(existingSchedule);
-    
+
     try {
         // Appel à l'IA avec la date de début choisie
         const aiResponse = await generatePlanFromAI(
-            existingProfile, 
-            history, 
-            blockFocus, 
+            existingProfile,
+            history,
+            blockFocus,
             customTheme,
-            startDate, 
+            startDate,
             numWeeks
         );
-        
+
         const nextWorkouts: { [key: string]: Workout } = {};
-        
+
         aiResponse.workouts.forEach(w => {
             nextWorkouts[w.date] = {
                 ...w,
@@ -95,9 +95,77 @@ export async function generateNewPlan(blockFocus: string, customTheme: string | 
     }
 }
 
+export async function regenerateWorkout(dateKey: string, instruction?: string) {
+    console.log(`[Workout Regeneration] Date: ${dateKey}, Instruction: ${instruction || 'None'}`);
+
+    const existingSchedule = await getSchedule();
+    const existingProfile = await getProfile();
+
+    if (!existingProfile) throw new Error("Profil manquant");
+
+    const history = getRecentPerformanceHistory(existingSchedule);
+    const surroundingWorkouts = getSurroundingWorkouts(existingSchedule, dateKey);
+    const oldWorkout = existingSchedule.workouts[dateKey];
+
+    // Valeur par défaut ou récupérée depuis le schedule
+    const blockFocus = "General Fitness";
+
+    try {
+        const newWorkoutData = await generateSingleWorkoutFromAI(
+            existingProfile,
+            history,
+            dateKey,
+            surroundingWorkouts,
+            oldWorkout,
+            blockFocus,
+            instruction // <--- ON PASSE L'ARGUMENT ICI
+        );
+
+        const replacementWorkout: Workout = {
+            ...newWorkoutData,
+            date: dateKey,
+            status: 'pending',
+            completedData: undefined
+        };
+
+        const newSchedule: Schedule = {
+            ...existingSchedule,
+            workouts: {
+                ...existingSchedule.workouts,
+                [dateKey]: replacementWorkout
+            }
+        };
+
+        await saveSchedule(newSchedule);
+
+    } catch (error) {
+        console.error("Échec régénération:", error);
+        throw new Error("L'IA n'a pas pu créer la séance.");
+    }
+}
+
+// Helper pour donner du contexte à l'IA (jours avant/après)
+function getSurroundingWorkouts(schedule: Schedule, targetDate: string) {
+    const target = new Date(targetDate);
+    const context: Record<string, string> = {}; // Date -> Titre/Type
+
+    // On regarde 2 jours avant et 2 jours après
+    for (let i = -2; i <= 2; i++) {
+        if (i === 0) continue;
+        const d = new Date(target);
+        d.setDate(d.getDate() + i);
+        const dateStr = d.toISOString().split('T')[0];
+
+        if (schedule.workouts[dateStr]) {
+            context[dateStr] = `${schedule.workouts[dateStr].type} - ${schedule.workouts[dateStr].title}`;
+        }
+    }
+    return context;
+}
+
 export async function updateWorkoutStatus(
-    dateKey: string, 
-    status: 'pending' | 'completed' | 'missed', 
+    dateKey: string,
+    status: 'pending' | 'completed' | 'missed',
     feedback?: { rpe: number, avgPower: number, notes: string, actualDuration: number, distance: number }
 ) {
     const schedule = await getSchedule();
@@ -127,7 +195,7 @@ export async function toggleWorkoutMode(dateKey: string) {
 
 export async function moveWorkout(originalDateStr: string, newDateStr: string) {
     const schedule = await getSchedule();
-    
+
     // On récupère les deux séances potentielles
     const sourceWorkout = schedule.workouts[originalDateStr];
     const targetWorkout = schedule.workouts[newDateStr];
@@ -138,11 +206,11 @@ export async function moveWorkout(originalDateStr: string, newDateStr: string) {
 
     // On prépare la version "déplacée" de la séance source
     // On réinitialise le statut à 'pending' car changer de date implique souvent de refaire la séance
-    const movedSourceWorkout = { 
-        ...sourceWorkout, 
+    const movedSourceWorkout = {
+        ...sourceWorkout,
         date: newDateStr,
         status: 'pending' as const,
-        completedData: undefined 
+        completedData: undefined
     };
 
     if (targetWorkout) {
@@ -163,7 +231,7 @@ export async function moveWorkout(originalDateStr: string, newDateStr: string) {
         // --- CAS 2 : DÉPLACEMENT SIMPLE ---
         // La case d'arrivée est vide
         schedule.workouts[newDateStr] = movedSourceWorkout;
-        
+
         // On supprime l'ancienne entrée
         delete schedule.workouts[originalDateStr];
     }
@@ -176,10 +244,23 @@ export async function moveWorkout(originalDateStr: string, newDateStr: string) {
  */
 export async function addManualWorkout(workout: Workout) {
     const schedule = await getSchedule();
-    
+
     // On écrase s'il y a déjà quelque chose (ou on pourrait vérifier avant)
     schedule.workouts[workout.date] = workout;
 
     await saveSchedule(schedule);
     revalidatePath('/');
+}
+
+/**
+ * Action 7: Supprimer une séance
+ */
+export async function deleteWorkout(dateKey: string) {
+    const schedule = await getSchedule();
+
+    if (schedule.workouts[dateKey]) {
+        delete schedule.workouts[dateKey];
+        await saveSchedule(schedule);
+        revalidatePath('/');
+    }
 }

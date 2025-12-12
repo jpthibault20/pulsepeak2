@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-// Import des Server Actions (y compris loadInitialData)
+// Import des Server Actions
 import {
   saveAthleteProfile,
   generateNewPlan,
@@ -9,9 +9,12 @@ import {
   toggleWorkoutMode,
   moveWorkout,
   loadInitialData,
-  addManualWorkout
+  addManualWorkout,
+  // --- NOUVEAUX IMPORTS ---
+  deleteWorkout,      // À créer dans server actions
+  regenerateWorkout   // À créer dans server actions
 } from '@/app/actions/schedule';
-// Import des types du fichier dédié (Client-safe)
+
 import { Profile, Schedule, Workout } from '@/lib/data/type';
 import { CalendarView } from '@/components/features/calendar/CalendarView';
 import { ProfileForm } from '@/components/features/profile/ProfileForm';
@@ -21,12 +24,8 @@ import { Nav } from '@/components/layout/nav';
 import { Card } from '@/components/ui';
 import { ChevronLeft } from 'lucide-react';
 
-
-// --- Types pour le composant principal
 type View = 'loading' | 'onboarding' | 'dashboard' | 'workout-detail' | 'settings' | 'stats';
 
-// --- Composant Principal (Client Component pour la gestion des vues)
-// C'est le point d'entrée qui orchestre l'application
 export default function AppClientWrapper() {
   const [view, setView] = useState<View>('loading');
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -34,12 +33,9 @@ export default function AppClientWrapper() {
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Fonction pour charger les données (Utilise désormais une Server Action)
   const loadData = async () => {
     try {
-      // Utilisation de la Server Action pour éviter d'importer directement 'fs'
       const { profile: profileData, schedule: scheduleData } = await loadInitialData();
-
       setProfile(profileData);
       setSchedule(scheduleData);
 
@@ -50,7 +46,7 @@ export default function AppClientWrapper() {
       }
     } catch (e) {
       console.error("Erreur de chargement des données:", e);
-      setError("Erreur lors du chargement des données. Veuillez vérifier les fichiers JSON ou la console pour les erreurs serveur.");
+      setError("Erreur lors du chargement des données.");
       setView('dashboard');
     }
   };
@@ -61,7 +57,6 @@ export default function AppClientWrapper() {
     })();
   }, []);
 
-  // Fonction pour gérer la navigation et la sélection de séance
   const handleViewChange = (newView: View) => {
     if (newView !== 'workout-detail') setSelectedWorkout(null);
     setView(newView);
@@ -72,11 +67,9 @@ export default function AppClientWrapper() {
     setView('workout-detail');
   };
 
-  // Wrapper pour les Server Actions
-  // MISE À JOUR : Ajout du paramètre startDate pour correspondre à la nouvelle signature dans schedule.ts
   const handleGenerate = async (blockFocus: string, customTheme: string | null, startDate: string | null, numWeeks?: number) => {
     await generateNewPlan(blockFocus, customTheme, startDate, numWeeks);
-    await loadData(); // Recharger les données après la mutation
+    await loadData();
   };
 
   const handleSaveProfile = async (data: Profile) => {
@@ -84,11 +77,9 @@ export default function AppClientWrapper() {
     await loadData();
   };
 
-  // Met à jour le statut, recharge les données, et met à jour l'objet de la séance sélectionnée
   const handleUpdateStatus = async (dateKey: string, status: 'pending' | 'completed' | 'missed', feedback?: { rpe: number, avgPower: number, actualDuration: number, distance: number, notes: string }) => {
     await updateWorkoutStatus(dateKey, status, feedback);
     await loadData();
-    // Simuler la mise à jour de la séance sélectionnée (important pour la vue détail)
     setSchedule(prev => {
       if (prev) {
         const updatedWorkout = { ...prev.workouts[dateKey], status, completedData: feedback };
@@ -98,7 +89,6 @@ export default function AppClientWrapper() {
     });
   };
 
-  // Bascule le mode, recharge les données, et met à jour l'objet de la séance sélectionnée
   const handleToggleMode = async (dateKey: string) => {
     await toggleWorkoutMode(dateKey);
     await loadData();
@@ -118,13 +108,37 @@ export default function AppClientWrapper() {
     await loadData();
   };
 
-  // Handler pour l'ajout manuel
   const handleAddManualWorkout = async (workout: Workout) => {
     await addManualWorkout(workout);
-    await loadData(); // Recharger les données pour voir la nouvelle séance
+    await loadData();
   };
 
-  // --- Rendu basé sur l'état de la vue ---
+  // --- NOUVELLES FONCTIONS ---
+
+  // 1. Suppression d'une séance
+  const handleDeleteWorkout = async (dateKey: string) => {
+    // Optionnel : Ajouter une confirmation UI ici ou dans le composant enfant
+    await deleteWorkout(dateKey);
+    await loadData();
+    // Après suppression, on ferme la vue détail car la séance n'existe plus
+    setView('dashboard');
+    setSelectedWorkout(null);
+  };
+
+  // 2. Régénération d'une séance
+  const handleRegenerateWorkout = async (dateKey: string, instruction?: string) => { // Ajout instruction
+    await regenerateWorkout(dateKey, instruction); // Passage instruction
+
+    const { schedule: newSchedule } = await loadInitialData();
+    setSchedule(newSchedule);
+
+    if (newSchedule && newSchedule.workouts[dateKey]) {
+      setSelectedWorkout(newSchedule.workouts[dateKey]);
+    }
+  };
+
+
+  // --- Rendu ---
 
   if (view === 'loading') {
     return (
@@ -144,9 +158,10 @@ export default function AppClientWrapper() {
         {error && (
           <Card className="bg-red-900/50 border-red-500/50 mb-6">
             <p className="text-red-300 font-bold">Erreur Critique: {error}</p>
-            <p className="text-red-400 text-sm mt-1">Veuillez vérifier vos logs et la configuration de la clé API ou des fichiers JSON.</p>
           </Card>
         )}
+
+        {/* ... (Blocs onboarding et settings inchangés) ... */}
         {view === 'onboarding' && (
           <div className="max-w-2xl mx-auto py-8">
             <ProfileForm
@@ -157,6 +172,7 @@ export default function AppClientWrapper() {
             />
           </div>
         )}
+
         {view === 'settings' && (
           <div className="max-w-2xl mx-auto py-8 animate-in fade-in duration-300">
             <button onClick={() => handleViewChange('dashboard')} className="mb-4 flex items-center text-slate-400 hover:text-white">
@@ -171,6 +187,7 @@ export default function AppClientWrapper() {
             />
           </div>
         )}
+
         {view === 'dashboard' && schedule && (
           <CalendarView
             scheduleData={schedule}
@@ -179,6 +196,7 @@ export default function AppClientWrapper() {
             onAddManualWorkout={handleAddManualWorkout}
           />
         )}
+
         {view === 'workout-detail' && selectedWorkout && profile && (
           <WorkoutDetailView
             workout={selectedWorkout}
@@ -187,8 +205,12 @@ export default function AppClientWrapper() {
             onUpdate={handleUpdateStatus}
             onToggleMode={handleToggleMode}
             onMoveWorkout={handleMoveWorkout}
+            // --- PASSAGE DES NOUVELLES PROPS ---
+            onDelete={handleDeleteWorkout}
+            onRegenerate={handleRegenerateWorkout}
           />
         )}
+
         {view === 'stats' && schedule && profile && (
           <StatsView
             scheduleData={schedule}
