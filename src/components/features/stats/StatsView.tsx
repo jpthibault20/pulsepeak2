@@ -3,7 +3,6 @@
 import React, { useState, useMemo } from 'react';
 import {
     Activity, Clock, Zap,
-
     Info, BarChart2, CalendarDays, Target,
     TrendingUp, MapPin
 } from 'lucide-react';
@@ -14,6 +13,7 @@ interface StatsViewProps {
     scheduleData: { workouts: { [key: string]: Workout } };
     profile: Profile;
 }
+
 export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
     const [viewMode, setViewMode] = useState<'annual' | 'custom'>('custom');
     const [dateRange, setDateRange] = useState(() => {
@@ -27,61 +27,54 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
         };
     });
 
-    // 1. Données pour le Graphique Annuel (TOUTE L'ANNÉE)
+    // Helper pour formater les minutes en "2h30"
+    const formatDuration = (mins: number) => {
+        const h = Math.floor(mins / 60);
+        const m = Math.round(mins % 60);
+        return `${h}h${m > 0 ? (m < 10 ? '0' + m : m) : ''}`;
+    };
+
+    // 1. Données pour le Graphique Annuel (MODIFIÉ : Basé sur la Durée en minutes)
     const annualStats = useMemo(() => {
         const currentYear = new Date().getFullYear();
         const allWorkouts = Object.values(scheduleData.workouts);
 
-        // Initialisation propre pour éviter les références partagées
-        const stats = new Array(12).fill(null).map(() => ({ plannedTss: 0, actualTss: 0 }));
+        // On stocke maintenant les minutes et non le TSS
+        const stats = new Array(12).fill(null).map(() => ({ plannedMinutes: 0, actualMinutes: 0 }));
 
-        console.group("DEBUG ANNUAL STATS");
-        console.log("Current Year:", currentYear);
-        console.log("Total Workouts found:", allWorkouts.length);
+        console.group("DEBUG ANNUAL STATS (HOURS)");
 
         allWorkouts.forEach(w => {
             const date = new Date(w.date);
 
-            // Vérification validité date
-            if (isNaN(date.getTime())) {
-                console.warn("Invalid date found:", w.date, w);
-                return;
-            }
+            if (isNaN(date.getTime())) return;
 
-            // Vérification année
             if (date.getFullYear() === currentYear) {
                 const month = date.getMonth();
-                const tssToAdd = w.tss || 0;
 
-                stats[month].plannedTss += tssToAdd;
+                // 1. Planifié : Durée prévue
+                const durationToAdd = w.duration || 0;
+                stats[month].plannedMinutes += durationToAdd;
 
-                if (tssToAdd > 0) {
-                    // console.log(`Mois ${month+1}: Ajout ${tssToAdd} TSS Planifié (Date: ${w.date})`);
-                }
-
+                // 2. Réalisé : Durée réelle si complété
                 if (w.status === 'completed') {
-                    const durationRatio = w.completedData?.actualDuration
-                        ? (w.completedData.actualDuration / (w.duration || 1))
-                        : 1;
+                    // Si actualDuration existe, on prend, sinon on fallback sur duration prévue
+                    const actualDur = w.completedData?.actualDuration
+                        ? Number(w.completedData.actualDuration)
+                        : (w.duration || 0);
 
-                    const actualTssVal = durationRatio * (w.tss || 0);
-
-                    console.log(`Mois ${month + 1} [COMPLETED]: TSS Réel calculé: ${actualTssVal.toFixed(1)} (Ratio durée: ${durationRatio.toFixed(2)})`);
-
-                    stats[month].actualTss += actualTssVal;
+                    stats[month].actualMinutes += actualDur;
                 }
-            } else {
-                // console.log(`Ignored workout from wrong year: ${date.getFullYear()}`);
             }
         });
 
-        console.log("Final Stats Array:", JSON.parse(JSON.stringify(stats))); // Deep copy log
+        console.log("Final Stats Array (Minutes):", JSON.parse(JSON.stringify(stats)));
         console.groupEnd();
 
         return stats;
     }, [scheduleData]);
 
-    // 2. Données filtrées pour les KPIs (Période Custom)
+    // 2. Données filtrées pour les KPIs (Période Custom) - Inchangé
     const filteredWorkouts = useMemo(() => {
         const allWorkouts = Object.values(scheduleData.workouts);
         return allWorkouts.filter(w => {
@@ -95,7 +88,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
         }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     }, [scheduleData, viewMode, dateRange]);
 
-    // 3. Calcul des KPIs
+    // 3. Calcul des KPIs - Inchangé
     const kpis = useMemo(() => {
         const now = new Date();
         const todayStr = now.toISOString().split('T')[0];
@@ -117,16 +110,13 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
         filteredWorkouts.forEach(w => {
             const isPastOrToday = w.date <= todayStr;
 
-            // 1. Totaux PLANIFIÉS (Sur toute la période)
             totalPlannedDuration += w.duration || 0;
             totalPlannedTSS += w.tss || 0;
 
-            // 2. Totaux "À DATE"
             if (isPastOrToday) {
                 plannedCountSoFar++;
             }
 
-            // 3. Totaux RÉALISÉS
             if (w.status === 'completed') {
                 completedCount++;
                 const actualDur = w.completedData?.actualDuration ? Number(w.completedData.actualDuration) : (w.duration || 0);
@@ -174,11 +164,6 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
         };
     }, [filteredWorkouts]);
 
-    const formatDuration = (mins: number) => {
-        const h = Math.floor(mins / 60);
-        const m = Math.round(mins % 60);
-        return `${h}h${m > 0 ? m : ''}`;
-    };
 
     const formatDateShort = (dateStr: string | null) => {
         if (!dateStr) return '-';
@@ -267,40 +252,40 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
                 </Card>
             </div>
 
-            {/* Vue Graphique Annuelle (TOUJOURS CALCULÉ SUR TOUTE L'ANNÉE) */}
+            {/* Vue Graphique Annuelle (MODIFIÉ: HEURES / MOIS) */}
             {viewMode === 'annual' && (
                 <Card className="p-6">
                     <h3 className="text-lg font-semibold text-white mb-6 flex items-center">
-                        <CalendarDays className="mr-2 text-blue-400" size={20} /> Progression Saisonnière (TSS / Mois)
+                        <CalendarDays className="mr-2 text-blue-400" size={20} /> Progression Saisonnière (Heures / Mois)
                     </h3>
-                    {/* CORRECTION: suppression de items-end pour permettre l'étirement */}
                     <div className="flex justify-between h-48 gap-2">
                         {annualStats.map((m, idx) => {
-                            const maxTss = Math.max(...annualStats.map(s => Math.max(s.plannedTss, s.actualTss)), 100);
-                            const heightPlanned = Math.max((m.plannedTss / maxTss) * 100, 2);
-                            const heightActual = Math.max((m.actualTss / maxTss) * 100, 0);
+                            // Calcul du max en minutes pour l'échelle (Minimum 600 min = 10h pour éviter les barres géantes si peu de données)
+                            const maxMinutes = Math.max(...annualStats.map(s => Math.max(s.plannedMinutes, s.actualMinutes)), 600);
+
+                            const heightPlanned = Math.max((m.plannedMinutes / maxMinutes) * 100, 2);
+                            const heightActual = Math.max((m.actualMinutes / maxMinutes) * 100, 0);
 
                             return (
                                 <div key={idx} className="flex-1 flex flex-col items-center group relative">
-                                    {/* CORRECTION: flex-1 pour remplir la hauteur, w-full */}
                                     <div className="w-full flex-1 bg-slate-800/50 rounded-t-sm relative flex flex-col justify-end">
-                                        {/* Barre Planifiée (Fond grisé/bleuté) */}
+                                        {/* Barre Planifiée */}
                                         <div
                                             className="w-full rounded-t-sm bg-slate-700/50 absolute bottom-0 transition-all duration-700 border-t border-slate-500"
                                             style={{ height: `${heightPlanned}%` }}
                                         ></div>
 
-                                        {/* Barre Réalisée (Premier plan coloré) */}
+                                        {/* Barre Réalisée */}
                                         <div
-                                            className={`w-full rounded-t-sm z-10 transition-all duration-700 ${m.actualTss > 0 ? 'bg-blue-500 group-hover:bg-blue-400' : 'bg-transparent'}`}
+                                            className={`w-full rounded-t-sm z-10 transition-all duration-700 ${m.actualMinutes > 0 ? 'bg-blue-500 group-hover:bg-blue-400' : 'bg-transparent'}`}
                                             style={{ height: `${heightActual}%` }}
                                         ></div>
 
-                                        {/* Tooltip */}
-                                        {(m.plannedTss > 0 || m.actualTss > 0) && (
+                                        {/* Tooltip (Affichage en Heures) */}
+                                        {(m.plannedMinutes > 0 || m.actualMinutes > 0) && (
                                             <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 border border-slate-700 pointer-events-none">
-                                                <div>Prévu: {Math.round(m.plannedTss)}</div>
-                                                <div>Fait: {Math.round(m.actualTss)}</div>
+                                                <div>Prévu: {formatDuration(m.plannedMinutes)}</div>
+                                                <div>Fait: {formatDuration(m.actualMinutes)}</div>
                                             </div>
                                         )}
                                     </div>
@@ -310,14 +295,14 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
                         })}
                     </div>
                     <div className="flex justify-center gap-4 mt-4 text-xs text-slate-400">
-                        <div className="flex items-center"><div className="w-3 h-3 bg-slate-700 border-t border-slate-500 mr-1"></div> Planifié</div>
-                        <div className="flex items-center"><div className="w-3 h-3 bg-blue-500 mr-1"></div> Réalisé</div>
+                        <div className="flex items-center"><div className="w-3 h-3 bg-slate-700 border-t border-slate-500 mr-1"></div> Planifié (Heures)</div>
+                        <div className="flex items-center"><div className="w-3 h-3 bg-blue-500 mr-1"></div> Réalisé (Heures)</div>
                     </div>
                 </Card>
             )}
 
 
-            {/* Vue Détails "Coach" */}
+            {/* Vue Détails "Coach" - Inchangé */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="p-6">
                     <h3 className="text-lg font-semibold text-white mb-6 flex items-center">
