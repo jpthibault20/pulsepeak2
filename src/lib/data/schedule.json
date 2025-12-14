@@ -196,17 +196,6 @@
       "description_indoor": "Échauffement (15 min Z2). 3 x [10 min @ 225W / 5 min @ 165W]. Durant la récupération Z2, effectuez 4 départs arrêtés ou efforts Max Force 15s (50 RPM). Concentration sur le recrutement musculaire.",
       "status": "missed"
     },
-    "2025-12-13": {
-      "date": "2025-12-13",
-      "status": "pending",
-      "title": "PMA Intense: 2x (4x4 min @ VO2Max)",
-      "type": "VO2Max",
-      "duration": 105,
-      "tss": 125,
-      "mode": "Outdoor",
-      "description_outdoor": "Échauffement (20 min): 15 min en Z2 (135-181 W). 5 min progressifs incluant 3 sprints courts (30s) en Z4 (219-253 W).\r\nCorps de séance (75 min):\r\nBloc 1 (32 min): 4 répétitions de 4 min à intensité PMA (Z5: 255-289 W), suivies de 4 min de récupération active en Z3 (183-217 W). Concentrez-vous sur une cadence élevée (90-100 RPM) pour les efforts.\r\nRécupération intermédiaire (10 min): Rouler en Z2 (135-181 W).\r\nBloc 2 (32 min): Répétez le Bloc 1 (4x4 min Z5 / 4 min Z3).\r\nRetour au calme (10 min): Z1/Z2 léger (< 181 W).",
-      "description_indoor": "Échauffement (20 min): 15 min @ 60-75% FTP (Z2). Inclure 3 accélérations de 1 min @ 90-105% FTP (Z4: 219-253 W) avec 1 min de repos Z2.\r\nCorps de séance (75 min):\r\nBloc 1 (32 min): 4x (4 min @ 106-120% FTP [Z5: 255-289 W] / 4 min @ 76-90% FTP [Z3: 183-217 W]). Maintenez une cadence élevée (95 RPM et plus) durant les intervalles.\r\nRécupération intermédiaire (10 min): 60-75% FTP (145-181 W).\r\nBloc 2 (32 min): Répétez le Bloc 1.\r\nRetour au calme (10 min): 45-60% FTP (< 145 W)."
-    },
     "2025-12-14": {
       "date": "2025-12-14",
       "title": "Sortie Longue Récupération Active",
@@ -216,9 +205,192 @@
       "mode": "Outdoor",
       "description_outdoor": "Sortie longue de 3h30. Maintenir strictement la zone Z2 (65-75% FTP). Dernière sortie longue de base de ce micro-cycle. Profitez-en pour pratiquer votre ravitaillement dans des conditions réelles.",
       "description_indoor": "3h30 en Z2 (165-188W). Concentration sur la position, la fluidité du pédalage et le volume de travail aérobique. Ne pas dépasser Z2.",
+      "status": "completed",
+      "completedData": {
+        "rpe": 7,
+        "avgPower": 106,
+        "actualDuration": 264,
+        "distance": 107,
+        "notes": ""
+      }
+    },
+    "2025-12-16": {
+      "date": "2025-12-16",
+      "title": "PMA - Micro-Intervalles (Introduction)",
+      "type": "PMA/VO2max",
+      "duration": 90,
+      "tss": 80,
+      "mode": "Outdoor",
+      "description_outdoor": "Échauffement: 20 min en Z2 (135-181W) incluant quelques sprints rapides de 10s. Corps de séance: 3 séries de 6 répétitions de [30s Z5 (255-289W) / 30s Z2 (135-181W)]. Récupération entre séries: 5 min en Z2. Retour au calme: 15 min en Z2.",
+      "description_indoor": "Échauffement: 20 min Z2 (135-181W). Corps de séance: 'Séance Commando' - 3 blocs de 6 minutes. Chaque minute est décomposée en 30s à haute intensité Z5 (255-289W) en danseuse, puis 30s Z2 (135-181W) assis. Récupération entre blocs: 5 min à Z1 (moins de 133W). Retour au calme: 10 min Z2.",
+      "status": "pending"
+    },
+    "2025-12-18": {
+      "date": "2025-12-18",
+      "title": "Tempo Progressif",
+      "type": "Tempo/Sweet Spot",
+      "duration": 90,
+      "tss": 85,
+      "mode": "Outdoor",
+      "description_outdoor": "Échauffement: 20 min Z2 (135-181W). Corps de séance: 2 x 20 minutes en Z3 (183-217W). Récupération entre les efforts: 10 min en Z2. Les 5 dernières minutes de chaque effort peuvent monter vers le bas Z4 (219W). Retour au calme: 20 min Z2.",
+      "description_indoor": "Échauffement: 20 min Z2 (135-181W). Corps de séance: 2 x 20 minutes 'Progression'. Commencez chaque effort à 183W (bas Z3) et augmentez de 5W toutes les 5 minutes pour finir proche de 217W (haut Z3). Récupération : 10 min Z2. Retour au calme: 20 min Z2.",
+      "status": "pending"
+    },
+    "2025-12-20": {
+      "date": "2025-12-20",
+      "title": "Endurance Fondamentale",
+      "type": "Endurance",
+      "duration": 150,
+      "tss": 105,
+      "mode": "Outdoor",
+      "description_outdoor": "Sortie longue de 2h30 en Z2 (135-181W). Maintenir une cadence confortable (85-95 RPM). Se concentrer sur l'apport hydrique et nutritionnel.",
+      "description_indoor": "2h30 de roulage en Z2 (135-181W). Intégrer 5 minutes de pédalage sur une jambe (chaque jambe) toutes les heures. Maintenir un environnement frais.",
+      "status": "pending"
+    },
+    "2025-12-21": {
+      "date": "2025-12-21",
+      "title": "Endurance Longue",
+      "type": "Endurance",
+      "duration": 210,
+      "tss": 150,
+      "mode": "Outdoor",
+      "description_outdoor": "Sortie très longue de 3h30 principalement en Z2 (135-181W). Utiliser le dénivelé pour de courtes montées en Z3 maximum. Assurer un ravitaillement régulier.",
+      "description_indoor": "3h30 en Z2 (135-181W). Pour rendre la séance plus ludique, utiliser une application de simulation et chercher à maintenir la puissance Z2 quelles que soient les pentes. Changer de position régulièrement.",
+      "status": "pending"
+    },
+    "2025-12-23": {
+      "date": "2025-12-23",
+      "title": "PMA - Volume Accru (45s ON)",
+      "type": "PMA/VO2max",
+      "duration": 90,
+      "tss": 85,
+      "mode": "Outdoor",
+      "description_outdoor": "Échauffement: 20 min Z2. Corps de séance: 3 séries de 5 répétitions de [45s Z5 (255-289W) / 45s Z2 (135-181W)]. Récupération entre séries: 5 min Z2. Retour au calme: 15 min Z2.",
+      "description_indoor": "Échauffement: 20 min Z2. Corps de séance: 'Pyramide Inversée' - Répéter 3 fois la séquence (1 min Z5 / 1 min Z2 ; 45s Z5 / 45s Z2 ; 30s Z5 / 30s Z2). L'objectif est d'accumuler le temps en Z5 (255-289W). Récupération entre les séquences : 4 min Z2 (135-181W). Retour au calme: 15 min Z2.",
+      "status": "pending"
+    },
+    "2025-12-25": {
+      "date": "2025-12-25",
+      "title": "Seuil - Maintien",
+      "type": "Seuil (Threshold)",
+      "duration": 90,
+      "tss": 90,
+      "mode": "Outdoor",
+      "description_outdoor": "Échauffement: 20 min Z2. Corps de séance: 2 x 15 minutes en Z4 (219-253W). Récupération entre les efforts: 10 min en Z2. Le but est d'être stable en Z4. Retour au calme: 20 min Z2.",
+      "description_indoor": "Échauffement: 20 min Z2. Corps de séance: 3 x 10 minutes en Z4 (219-253W) suivies immédiatement de 5 minutes à bas Z3 (183W). Récupération entre les blocs (15min de travail): 5 min Z2. Retour au calme: 15 min Z2.",
+      "status": "pending"
+    },
+    "2025-12-27": {
+      "date": "2025-12-27",
+      "title": "Endurance + Sprints",
+      "type": "Endurance/Anaérobie",
+      "duration": 150,
+      "tss": 110,
+      "mode": "Outdoor",
+      "description_outdoor": "2h30 en Z2 (135-181W). Toutes les 30 minutes, réaliser 4 sprints de 15s en Z7 (plus de 318W) départ arrêté ou basse vitesse, avec 45s de récupération Z2 entre chaque sprint. Finir le reste du temps en Z2.",
+      "description_indoor": "2h30 en Z2 (135-181W). Toutes les 30 minutes, réaliser 4 'Attaques' de 15s en Z7 (plus de 318W) à haute cadence, suivies de 45s de Z2. Le reste du temps, maintenir Z2.",
+      "status": "pending"
+    },
+    "2025-12-28": {
+      "date": "2025-12-28",
+      "title": "Endurance Longue",
+      "type": "Endurance",
+      "duration": 210,
+      "tss": 150,
+      "mode": "Outdoor",
+      "description_outdoor": "Sortie de 3h30 en Z2 (135-181W). Maintenir une intensité constante et régulière. C'est une journée de fond, évitez les accélérations inutiles.",
+      "description_indoor": "3h30 en Z2 (135-181W). Utiliser un film ou une course sur route. Changer de position (assis/danseuse) pendant 30s toutes les 10 minutes pour éviter l'ennui.",
+      "status": "pending"
+    },
+    "2025-12-30": {
+      "date": "2025-12-30",
+      "title": "PMA - Intervalles Longs (4 min)",
+      "type": "PMA/VO2max",
+      "duration": 90,
+      "tss": 95,
+      "mode": "Indoor",
+      "description_outdoor": "Échauffement: 20 min Z2. Corps de séance: 5 x 4 minutes en Z5 (255-289W). Récupération entre les intervalles: 4 minutes en Z2 (135-181W). Retour au calme: 14 min Z2.",
+      "description_indoor": "Échauffement: 20 min Z2. Corps de séance: 5 x 4 minutes en Z5 (255-289W). Chaque intervalle de Z5 doit être réalisé avec une cadence > 95 RPM. Récupération : 4 minutes Z2 (135-181W) à très faible résistance. Retour au calme: 14 min Z2.",
+      "status": "pending"
+    },
+    "2026-01-01": {
+      "date": "2026-01-01",
+      "title": "Over-Unders Seuil",
+      "type": "Seuil/PMA",
+      "duration": 90,
+      "tss": 95,
+      "mode": "Outdoor",
+      "description_outdoor": "Échauffement: 20 min Z2. Corps de séance: 3 x 8 minutes Over-Unders. Chaque bloc se compose de 1 min Z5 (255-289W) / 3 min Z4 (219-253W). Récupération entre blocs: 6 min Z2 (135-181W). Retour au calme: 16 min Z2.",
+      "description_indoor": "Échauffement: 20 min Z2. Corps de séance: 3 x 8 minutes de variation. 1 minute en 'montée' Z5 (255-289W) suivie de 3 minutes en 'faux-plat' Z4 (219-253W). Ces 8 minutes doivent être sans pause. Récupération entre blocs: 6 min Z2. Retour au calme: 16 min Z2.",
+      "status": "pending"
+    },
+    "2026-01-03": {
+      "date": "2026-01-03",
+      "title": "Endurance + Cadence",
+      "type": "Endurance/Technique",
+      "duration": 150,
+      "tss": 100,
+      "mode": "Outdoor",
+      "description_outdoor": "2h30 en Z2 (135-181W). Intégrer 3 x 10 minutes de travail de haute cadence (maintenir >100 RPM) au milieu de la séance, en maintenant la puissance en Z2. Récupération active entre chaque bloc de cadence: 5 min Z2 à cadence normale.",
+      "description_indoor": "2h30 en Z2 (135-181W). Après 60 minutes, réaliser 3 blocs de 10 minutes de 'Spin-ups': Augmenter progressivement la cadence jusqu'à la limite sans rebondir sur la selle, tout en maintenant la puissance Z2. Récupération active entre: 5 min Z2 normale.",
+      "status": "pending"
+    },
+    "2026-01-04": {
+      "date": "2026-01-04",
+      "title": "Endurance Longue",
+      "type": "Endurance",
+      "duration": 210,
+      "tss": 150,
+      "mode": "Outdoor",
+      "description_outdoor": "3h30 en Z2 (135-181W). Dernière longue sortie de charge. Maintenir une intensité constante et confortable. Se concentrer sur la fluidité du pédalage.",
+      "description_indoor": "3h30 en Z2 (135-181W). Rouler en Z2 et toutes les 45 minutes, faire 5 minutes de Z3 (183-217W) pour simuler un petit effort, avant de revenir à Z2.",
+      "status": "pending"
+    },
+    "2026-01-06": {
+      "date": "2026-01-06",
+      "title": "Récupération Active/Endurance Légère (W4)",
+      "type": "Récupération",
+      "duration": 90,
+      "tss": 50,
+      "mode": "Outdoor",
+      "description_outdoor": "90 minutes de récupération active. Rouler uniquement en Z1 (moins de 133W) ou début Z2, très facile. Éviter toute difficulté ou accélération.",
+      "description_indoor": "90 minutes de 'Décrassage'. Rouler en Z1 (moins de 133W). Regarder un flux vidéo ou écouter un podcast. Maintenir une cadence élevée (90+ RPM) sans forcer la puissance.",
+      "status": "pending"
+    },
+    "2026-01-08": {
+      "date": "2026-01-08",
+      "title": "Tempo Léger (W4)",
+      "type": "Tempo Léger",
+      "duration": 90,
+      "tss": 70,
+      "mode": "Outdoor",
+      "description_outdoor": "Échauffement 20 min Z2. 2 x 15 minutes en bas de Z3 (183W-195W). Récupération : 10 min Z2. Le but est de solliciter légèrement le système sans accumuler de fatigue. Retour au calme Z2.",
+      "description_indoor": "Échauffement 20 min Z2. 3 x 10 minutes 'Spinning Class Style': Maintenir la puissance entre 183W et 195W tout en alternant 5 minutes assis / 5 minutes en danseuse. Récupération : 5 min Z2. Retour au calme Z2.",
+      "status": "pending"
+    },
+    "2026-01-10": {
+      "date": "2026-01-10",
+      "title": "Endurance Courte Récupération (W4)",
+      "type": "Endurance",
+      "duration": 150,
+      "tss": 90,
+      "mode": "Outdoor",
+      "description_outdoor": "2h30 en Z2 (135-181W). Rouler tranquillement et rester dans la première moitié de la zone Z2. Concentration maximale sur la récupération.",
+      "description_indoor": "2h30 en Z2 (135-181W). Rouler avec une résistance constante et regarder un film. Toutes les 20 minutes, faire 1 minute de haute cadence (>100 RPM) en Z2, puis revenir à une cadence normale.",
+      "status": "pending"
+    },
+    "2026-01-11": {
+      "date": "2026-01-11",
+      "title": "Endurance Moyenne Récupération (W4)",
+      "type": "Endurance",
+      "duration": 210,
+      "tss": 120,
+      "mode": "Outdoor",
+      "description_outdoor": "3h30 de sortie. Maintenir l'intensité stricte Z2 (135-181W), en privilégiant le bas de la zone. C'est la fin du microcycle, la fatigue doit diminuer.",
+      "description_indoor": "3h30 en Z2 (135-181W). Se concentrer sur un pédalage parfaitement rond et relâché. Utiliser une séance de simulation de course à faible intensité (Z2) pour maintenir l'engagement mental.",
       "status": "pending"
     }
   },
-  "summary": "L'athlète a maintenu une excellente base d'endurance sur les semaines précédentes, respectant un volume d'environ 9h. Ce bloc de deux semaines est conçu pour réintroduire l'intensité de manière progressive. La Semaine 1 se concentre sur le Sweet Spot et la Force Endurance pour réhabituer le corps aux efforts sub-maximaux. La Semaine 2 augmente la durée passée au Seuil (Z4) et maintient un fort travail de force, tout en conservant les sorties longues d'endurance nécessaires. Le volume total reste constant à 9h/semaine, conformément aux contraintes et à la cible hebdomadaire.",
-  "lastGenerated": "2025-11-30"
+  "summary": "Votre bloc précédent a montré une excellente résilience avec un volume élevé et des sorties longues dépassant régulièrement la durée prévue. Étant donné que vous entrez dans une phase de reprise et que vous souhaitez réintroduire la Puissance Maximale Aérobie (PMA), j'ai structuré ce plan sur 4 semaines (3 semaines de charge progressive PMA + 1 semaine de récupération active). Nous allons utiliser des intervalles courts et progressifs en Z5 (255W-289W) pour réadapter l'organisme à l'intensité sans surcharger, tout en maintenant le volume cible de 9 heures par semaine. Les jours de repos imposés sont respectés. Les zones de puissance sont utilisées telles quelles, avec la conscience que vous êtes en phase de reprise.",
+  "lastGenerated": "2025-12-14"
 }
