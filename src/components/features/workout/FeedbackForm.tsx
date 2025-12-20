@@ -1,7 +1,7 @@
 import { Workout, Profile } from "@/lib/data/type";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Activity, Timer, TrendingUp, StickyNote } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui";
+import { Button } from "@/components/ui/Button"; // Assure-toi que le chemin est bon
 
 export const FeedbackForm: React.FC<{
     workout: Workout;
@@ -30,66 +30,97 @@ export const FeedbackForm: React.FC<{
     };
 
     return (
-        <div className="bg-slate-800/50 p-4 rounded-xl border border-emerald-500/30 mt-4 animate-in fade-in slide-in-from-top-2">
-            <h4 className="text-emerald-400 font-bold mb-4 flex items-center">
-                <CheckCircle size={18} className="mr-2" /> Rapport de séance
+        <div className="bg-slate-800/90 backdrop-blur-sm p-4 sm:p-5 rounded-xl border border-emerald-500/30 mt-4 animate-in fade-in slide-in-from-top-2 shadow-xl">
+            <h4 className="text-emerald-400 font-bold mb-4 flex items-center text-base sm:text-lg">
+                <CheckCircle size={20} className="mr-2" /> Rapport de séance
             </h4>
-            <div className="grid grid-cols-2 gap-4 mb-4">
+
+            {/* DESIGN: grid-cols-1 sur mobile pour des inputs larges, grid-cols-2 sur sm (tablette/desktop) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+
+                {/* RPE */}
                 <div>
-                    <label className="block text-xs text-slate-400 mb-1">RPE (1-10)</label>
+                    <label className="flex items-center gap-1.5 text-xs font-medium text-slate-300 mb-1.5">
+                        <Activity size={12} className="text-slate-500" /> RPE (Difficulté 1-10)
+                    </label>
                     <input
                         type="number" min="1" max="10"
                         value={rpe} onChange={(e) => setRpe(parseInt(e.target.value))}
-                        className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white"
+                        // DESIGN: h-11 pour le tactile
+                        className="w-full h-11 bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all font-mono text-lg"
                     />
                 </div>
+
+                {/* Puissance */}
                 <div>
-                    <label className="block text-xs text-slate-400 mb-1">Puissance Moyenne (W)</label>
+                    <label className="flex items-center gap-1.5 text-xs font-medium text-slate-300 mb-1.5">
+                        <TrendingUp size={12} className="text-slate-500" /> Puissance Moy. (Watts)
+                    </label>
                     <input
                         type="number"
                         value={avgPower} onChange={(e) => setAvgPower(parseInt(e.target.value))}
-                        className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white"
+                        className="w-full h-11 bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all font-mono text-lg"
                     />
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                {/* Durée */}
                 <div>
-                    <label className="block text-xs text-slate-400 mb-1">Durée Réelle (min)</label>
+                    <label className="flex items-center gap-1.5 text-xs font-medium text-slate-300 mb-1.5">
+                        <Timer size={12} className="text-slate-500" /> Durée Réelle (min)
+                    </label>
                     <input
                         type="number"
                         value={actualDuration} onChange={(e) => setActualDuration(parseInt(e.target.value))}
-                        className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white"
+                        className="w-full h-11 bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all font-mono text-lg"
                     />
                 </div>
+
+                {/* Distance */}
                 <div>
-                    <label className="block text-xs text-slate-400 mb-1">Distance (km)</label>
+                    <label className="flex items-center gap-1.5 text-xs font-medium text-slate-300 mb-1.5">
+                        Distance (km)
+                    </label>
                     <input
                         type="number"
                         step="0.1"
                         value={distance} onChange={(e) => setDistance(parseFloat(e.target.value))}
-                        className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white"
+                        className="w-full h-11 bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all font-mono text-lg"
                     />
                 </div>
             </div>
 
-            <div className="mb-4">
-                <label className="block text-xs text-slate-400 mb-1">Sensations / Notes</label>
+            {/* Notes */}
+            <div className="mb-5">
+                <label className="flex items-center gap-1.5 text-xs font-medium text-slate-300 mb-1.5">
+                    <StickyNote size={12} className="text-slate-500" /> Sensations / Notes
+                </label>
                 <textarea
                     value={notes} onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Commentaires..."
-                    className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-sm h-20 resize-none"
+                    placeholder="Commentaires sur la forme, la météo, la douleur..."
+                    // DESIGN: h-24 sur mobile pour écrire confortablement
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-sm h-24 resize-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none"
                 />
             </div>
-            <div className="flex gap-2">
-                <Button variant="ghost" onClick={onCancel} className="flex-1 h-10 py-0 text-sm" disabled={isSaving}>Annuler</Button>
+
+            {/* Actions */}
+            <div className="flex gap-3">
                 <Button
-                    variant="success"
-                    className="flex-1 h-10 py-0 text-sm"
+                    variant="ghost"
+                    onClick={onCancel}
+                    className="flex-1 h-11 sm:h-10 text-sm border border-slate-700 hover:bg-slate-800"
+                    disabled={isSaving}
+                >
+                    Annuler
+                </Button>
+                <Button
+                    variant="success" // Assure-toi que ta variante 'success' existe dans ton UI kit, sinon utilise 'primary' + classe bg-emerald
+                    className="flex-1 h-11 sm:h-10 text-sm font-semibold shadow-lg shadow-emerald-900/20 bg-emerald-600 hover:bg-emerald-500 text-white"
                     onClick={handleSave}
                     disabled={isSaving}
                 >
-                    {isSaving ? "Enregistrement..." : "Enregistrer"}
+                    {isSaving ? "Enregistrement..." : "Valider la séance"}
                 </Button>
             </div>
         </div>

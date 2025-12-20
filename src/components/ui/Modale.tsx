@@ -1,15 +1,13 @@
-'use client';
-
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
-import { Card } from './Card'; // Import du composant Card situé dans le même dossier
+import { Card } from './Card';
 
 interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
     title?: string;
     children: React.ReactNode;
-    className?: string; // Pour surcharger la largeur si besoin (ex: max-w-lg)
+    className?: string;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -17,26 +15,21 @@ export const Modal: React.FC<ModalProps> = ({
     onClose,
     title,
     children,
-    className = 'max-w-md'
+    className = 'max-w-lg' // J'ai un peu élargi le défaut pour être confortable
 }) => {
 
-    // Gestion de la touche "Échap" pour fermer la modale
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                onClose();
-            }
+            if (e.key === 'Escape') onClose();
         };
 
         if (isOpen) {
             window.addEventListener('keydown', handleKeyDown);
-            // Empêche le défilement de la page principale quand la modale est ouverte
             document.body.style.overflow = 'hidden';
         }
 
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
-            // Rétablit le défilement à la fermeture
             document.body.style.overflow = 'unset';
         };
     }, [isOpen, onClose]);
@@ -44,33 +37,43 @@ export const Modal: React.FC<ModalProps> = ({
     if (!isOpen) return null;
 
     return (
+        // z-50 est le standard Tailwind pour passer au-dessus de tout
         <div
-            className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm transition-all"
-            onClick={onClose} // Ferme la modale si on clique sur l'arrière-plan grisé
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm transition-all"
+            onClick={onClose}
         >
-            {/* Conteneur de la modale : on arrête la propagation du clic ici pour éviter de fermer en cliquant DANS la boîte */}
+            {/* DESIGN:
+               - max-h-[90dvh] : Utilise la hauteur dynamique (viewport height) pour éviter les soucis sur mobile
+               - flex flex-col : Essentiel pour le sticky header
+            */}
             <div
-                className={`w-full ${className} animate-in zoom-in-95 duration-200`}
+                className={`w-full ${className} max-h-[90dvh] flex flex-col animate-in zoom-in-95 duration-200`}
                 onClick={(e) => e.stopPropagation()}
             >
-                <Card className="relative shadow-2xl border-slate-700">
-                    {/* En-tête avec Titre et Bouton de fermeture */}
-                    <div className="flex justify-between items-start mb-4">
-                        {title && <h2 className="text-xl font-bold text-white">{title}</h2>}
+                {/* On utilise noPadding pour gérer nous-mêmes l'espacement Header vs Body */}
+                <Card className="flex flex-col h-full overflow-hidden shadow-2xl border-slate-700" noPadding>
+
+                    {/* EN-TÊTE FIXE */}
+                    <div className="flex justify-between items-center p-4 md:p-5 border-b border-slate-800 bg-slate-900/50 shrink-0">
+                        {title && <h2 className="text-lg md:text-xl font-bold text-white truncate pr-4">{title}</h2>}
 
                         <button
                             onClick={onClose}
-                            className="text-slate-400 hover:text-white transition-colors p-1 rounded-full hover:bg-slate-800"
+                            className="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-slate-800 shrink-0"
                             aria-label="Fermer"
                         >
                             <X size={20} />
                         </button>
                     </div>
 
-                    {/* Contenu principal de la modale */}
-                    <div className="text-slate-300">
-                        {children}
+                    {/* CORPS DÉFILANT */}
+                    {/* overflow-y-auto : C'est ici que le scroll se fait */}
+                    <div className="p-4 md:p-5 overflow-y-auto custom-scrollbar">
+                        <div className="text-slate-300">
+                            {children}
+                        </div>
                     </div>
+
                 </Card>
             </div>
         </div>
