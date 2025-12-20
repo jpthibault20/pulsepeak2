@@ -223,7 +223,14 @@
       "mode": "Outdoor",
       "description_outdoor": "Échauffement: 20 min en Z2 (135-181W) incluant quelques sprints rapides de 10s. Corps de séance: 3 séries de 6 répétitions de [30s Z5 (255-289W) / 30s Z2 (135-181W)]. Récupération entre séries: 5 min en Z2. Retour au calme: 15 min en Z2.",
       "description_indoor": "Échauffement: 20 min Z2 (135-181W). Corps de séance: 'Séance Commando' - 3 blocs de 6 minutes. Chaque minute est décomposée en 30s à haute intensité Z5 (255-289W) en danseuse, puis 30s Z2 (135-181W) assis. Récupération entre blocs: 5 min à Z1 (moins de 133W). Retour au calme: 10 min Z2.",
-      "status": "pending"
+      "status": "completed",
+      "completedData": {
+        "rpe": 7,
+        "avgPower": 161,
+        "actualDuration": 85,
+        "distance": 33,
+        "notes": ""
+      }
     },
     "2025-12-18": {
       "date": "2025-12-18",
@@ -234,7 +241,7 @@
       "mode": "Outdoor",
       "description_outdoor": "Échauffement: 20 min Z2 (135-181W). Corps de séance: 2 x 20 minutes en Z3 (183-217W). Récupération entre les efforts: 10 min en Z2. Les 5 dernières minutes de chaque effort peuvent monter vers le bas Z4 (219W). Retour au calme: 20 min Z2.",
       "description_indoor": "Échauffement: 20 min Z2 (135-181W). Corps de séance: 2 x 20 minutes 'Progression'. Commencez chaque effort à 183W (bas Z3) et augmentez de 5W toutes les 5 minutes pour finir proche de 217W (haut Z3). Récupération : 10 min Z2. Retour au calme: 20 min Z2.",
-      "status": "pending"
+      "status": "missed"
     },
     "2025-12-20": {
       "date": "2025-12-20",
@@ -245,7 +252,14 @@
       "mode": "Outdoor",
       "description_outdoor": "Sortie longue de 2h30 en Z2 (135-181W). Maintenir une cadence confortable (85-95 RPM). Se concentrer sur l'apport hydrique et nutritionnel.",
       "description_indoor": "2h30 de roulage en Z2 (135-181W). Intégrer 5 minutes de pédalage sur une jambe (chaque jambe) toutes les heures. Maintenir un environnement frais.",
-      "status": "pending"
+      "status": "completed",
+      "completedData": {
+        "rpe": 5,
+        "avgPower": 155,
+        "actualDuration": 147,
+        "distance": 71,
+        "notes": ""
+      }
     },
     "2025-12-21": {
       "date": "2025-12-21",
