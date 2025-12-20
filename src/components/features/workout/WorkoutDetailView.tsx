@@ -62,16 +62,13 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
     const ModeIcon = workout.mode === 'Outdoor' ? Mountain : Home;
 
     // --- HANDLERS ---
+    // (J'ai gardé tes handlers tels quels, ils sont parfaits pour la logique)
 
     const handleToggle = async () => {
         setIsMutating(true);
-        try {
-            await onToggleMode(workout.date);
-        } catch (e) {
-            console.error("Erreur bascule de mode:", e);
-        } finally {
-            setIsMutating(false);
-        }
+        try { await onToggleMode(workout.date); }
+        catch (e) { console.error("Erreur bascule de mode:", e); }
+        finally { setIsMutating(false); }
     };
 
     const handleMove = async () => {
@@ -80,24 +77,19 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
         try {
             await onMoveWorkout(workout.date, newMoveDate);
             onClose();
-        } catch (e) {
-            console.error("Erreur de déplacement:", e);
-        } finally {
-            setIsMutating(false);
-        }
+        } catch (e) { console.error("Erreur de déplacement:", e); }
+        finally { setIsMutating(false); }
     };
 
     const handleRegenerateClick = async () => {
         setIsMutating(true);
         setIsRegenerating(true);
         try {
-            // On passe l'instruction à la fonction parente
             await onRegenerate(workout.date, regenInstruction);
-            setShowRegenInput(false); // On ferme l'input après succès
-            setRegenInstruction('');  // On vide le champ
-        } catch (e) {
-            console.error("Erreur régénération:", e);
-        } finally {
+            setShowRegenInput(false);
+            setRegenInstruction('');
+        } catch (e) { console.error("Erreur régénération:", e); }
+        finally {
             setIsMutating(false);
             setIsRegenerating(false);
         }
@@ -105,10 +97,8 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
 
     const handleDeleteClick = async () => {
         setIsMutating(true);
-        try {
-            await onDelete(workout.date);
-            // La fermeture est gérée par le parent ou implicite car l'objet disparait
-        } catch (e) {
+        try { await onDelete(workout.date); }
+        catch (e) {
             console.error("Erreur suppression:", e);
             setIsMutating(false);
         }
@@ -120,178 +110,151 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
             await onUpdate(workout.date, status, feedback);
             setIsCompleting(false);
             setIsEditing(false);
-        } catch (e) {
-            console.error("Erreur de mise à jour du statut:", e);
-        } finally {
-            setIsMutating(false);
-        }
+        } catch (e) { console.error("Erreur de mise à jour du statut:", e); }
+        finally { setIsMutating(false); }
     };
 
     // --- RENDER ---
 
     return (
-        <div className="max-w-3xl mx-auto py-8 animate-in zoom-in-95 duration-300">
+        // DESIGN: max-w-3xl est bien pour desktop, mais sur mobile on veut que ça prenne toute la largeur
+        <div className="w-full max-w-3xl mx-auto py-4 md:py-8 animate-in zoom-in-95 duration-300 pb-24 md:pb-8">
+
+            {/* Bouton Retour Mobile-First */}
             <button
                 onClick={onClose}
-                className="flex items-center text-slate-400 hover:text-white mb-6 transition-colors"
+                className="flex items-center text-slate-400 hover:text-white mb-4 md:mb-6 transition-colors px-1"
             >
-                <ChevronLeft size={20} className="mr-1" /> Retour
+                <ChevronLeft size={20} className="mr-1" /> Retour au calendrier
             </button>
 
-            <Card className="border-t-4 border-t-blue-500 shadow-2xl relative">
-                <div className="flex justify-between items-start mb-6">
-                    <div>
-                        <div className="flex items-center gap-3 mb-2">
+            <Card className="border-t-4 border-t-blue-500 shadow-2xl relative overflow-hidden">
+
+                {/* Header de la Card */}
+                <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
+                    <div className="w-full">
+                        {/* Badges et Métadonnées */}
+                        <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-3">
                             <Badge type={workout.type} />
-                            <span className="text-slate-500 text-sm flex items-center">
-                                <Clock size={14} className="mr-1" /> {workout.duration} min
-                            </span>
-                            <span className="text-slate-500 text-sm flex items-center">
-                                <Zap size={14} className="mr-1" /> TSS: {workout.tss || '-'}
-                            </span>
+                            <div className="flex items-center gap-3 text-slate-400 bg-slate-800/50 rounded-full px-3 py-1 text-xs md:text-sm">
+                                <span className="flex items-center"><Clock size={12} className="mr-1.5" /> {workout.duration} min</span>
+                                <div className="w-px h-3 bg-slate-600"></div>
+                                <span className="flex items-center"><Zap size={12} className="mr-1.5" /> TSS: {workout.tss || '-'}</span>
+                            </div>
                         </div>
-                        <h1 className="text-3xl font-bold text-white mb-1">{workout.title}</h1>
-                        <p className="text-slate-400 text-sm">{formatDate(workout.date)}</p>
+
+                        {/* Titre et Date */}
+                        <h1 className="text-2xl md:text-3xl font-bold text-white mb-1 leading-tight">{workout.title}</h1>
+                        <p className="text-slate-400 text-sm flex items-center gap-2">
+                            <CalendarDays size={14} /> {formatDate(workout.date)}
+                        </p>
                     </div>
 
+                    {/* Badge "Accompli" (Mobile: en haut à droite via flex, Desktop: à droite) */}
                     {workout.status === 'completed' && workout.completedData && (
-                        <div className="bg-emerald-900/30 border border-emerald-500/30 rounded-lg p-2 text-right">
-                            <div className="text-xs text-emerald-400 font-bold uppercase mb-1">Accompli</div>
-                            <div className="text-white text-sm font-mono">{workout.completedData.avgPower}W</div>
-                            <div className="text-slate-400 text-xs">RPE: {workout.completedData.rpe}/10</div>
+                        <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-xl p-3 text-right shrink-0 w-full md:w-auto flex justify-between md:block items-center">
+                            <div className="text-xs text-emerald-400 font-bold uppercase md:mb-1 flex items-center gap-1">
+                                <CheckCircle size={12} /> Accompli
+                            </div>
+                            <div className="flex items-center gap-3 md:block">
+                                <div className="text-white text-base md:text-sm font-mono font-bold">{workout.completedData.avgPower}W <span className="text-xs font-normal text-slate-500">Moy.</span></div>
+                                <div className="text-slate-300 text-xs">RPE: <span className={workout.completedData.rpe > 7 ? 'text-red-400' : 'text-emerald-400'}>{workout.completedData.rpe}/10</span></div>
+                            </div>
                         </div>
                     )}
                 </div>
 
-                {/* Barre d'outils secondaire : Mode, Déplacer, Régénérer */}
+                {/* Barre d'outils secondaire */}
                 {workout.type !== 'Rest' && (
-                    <div className="flex justify-between items-center mb-4 border-b border-slate-700 pb-4 flex-wrap gap-2 min-h-[50px]">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-slate-800 pb-6 gap-4">
 
-                        {/* Si on est en mode "Input Régénération", on affiche le formulaire ici */}
-                        {showRegenInput ? (
-                            <div className="flex-1 flex items-center gap-2 animate-in fade-in slide-in-from-right-5">
-                                <input
-                                    type="text"
-                                    placeholder="Ex: Plus facile, 30min max, VO2 Max..."
-                                    className="flex-1 bg-slate-800 border border-slate-600 rounded text-sm px-3 py-1 text-white focus:border-amber-500 focus:outline-none"
-                                    value={regenInstruction}
-                                    onChange={(e) => setRegenInstruction(e.target.value)}
-                                    autoFocus
-                                    onKeyDown={(e) => e.key === 'Enter' && handleRegenerateClick()}
-                                />
-                                <Button
-                                    variant="ghost"
-                                    className="text-slate-400 hover:text-white"
-                                    onClick={() => setShowRegenInput(false)}
-                                    disabled={isMutating}
-                                >
-                                    <X size={16} />
-                                </Button>
-                                <Button
-                                    variant="ghost" // ou un style spécial genre bg-amber-600
-                                    className="text-amber-400 hover:text-amber-300 bg-amber-900/20 hover:bg-amber-900/40"
-                                    onClick={handleRegenerateClick}
-                                    disabled={isMutating}
-                                >
-                                    {isRegenerating ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
-                                </Button>
-                            </div>
-                        ) : (
-                            /* Sinon on affiche les boutons normaux */
-                            <>
-                                <div className="flex gap-2">
-                                    {/* ... Boutons Mode et Déplacer inchangés ... */}
-                                    <Button variant="ghost" className="..." onClick={handleToggle} icon={ModeIcon} disabled={isMutating}>
-                                        Mode: {workout.mode === 'Outdoor' ? 'Extérieur' : 'Home Trainer'}
+                        {/* Zone Régénération / Actions Principales */}
+                        <div className="w-full md:w-auto">
+                            {showRegenInput ? (
+                                <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 w-full md:w-auto">
+                                    <input
+                                        type="text"
+                                        placeholder="Ex: Moins long, plus dur..."
+                                        className="flex-1 md:w-64 bg-slate-900 border border-blue-500/50 rounded-lg text-sm px-3 py-2 text-white focus:ring-1 focus:ring-blue-500 outline-none"
+                                        value={regenInstruction}
+                                        onChange={(e) => setRegenInstruction(e.target.value)}
+                                        autoFocus
+                                        onKeyDown={(e) => e.key === 'Enter' && handleRegenerateClick()}
+                                    />
+                                    <Button variant="ghost" onClick={() => setShowRegenInput(false)} disabled={isMutating} className="shrink-0">
+                                        <X size={18} />
                                     </Button>
-                                    <Button variant="ghost" className="..." onClick={() => setIsMoving(!isMoving)} icon={CalendarDays} disabled={isMutating}>
-                                        Déplacer
+                                    <Button variant="primary" onClick={handleRegenerateClick} disabled={isMutating} className="shrink-0 bg-blue-600 hover:bg-blue-500">
+                                        {isRegenerating ? <RefreshCw size={18} className="animate-spin" /> : <Send size={18} />}
                                     </Button>
                                 </div>
-
-                                {workout.status === 'pending' && (
-                                    <Button
-                                        variant="ghost"
-                                        className="text-sm h-8 text-amber-400 hover:text-amber-300 hover:bg-amber-900/20"
-                                        onClick={() => setShowRegenInput(true)} // On active le mode input au lieu de lancer direct
-                                        disabled={isMutating}
-                                    >
-                                        <RefreshCw size={14} className="mr-2" />
-                                        Régénérer
+                            ) : (
+                                /* Boutons d'actions rapides (Scrollable horizontalement sur très petits écrans) */
+                                <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 hide-scrollbar w-full">
+                                    <Button variant="secondary" className="whitespace-nowrap h-9 text-xs" onClick={handleToggle} icon={ModeIcon} disabled={isMutating}>
+                                        {workout.mode === 'Outdoor' ? 'Extérieur' : 'Home Tr.'}
                                     </Button>
-                                )}
-                            </>
-                        )}
+                                    <Button variant="secondary" className="whitespace-nowrap h-9 text-xs" onClick={() => setIsMoving(!isMoving)} icon={CalendarDays} disabled={isMutating}>
+                                        Déplacer
+                                    </Button>
+
+                                    {workout.status === 'pending' && (
+                                        <Button
+                                            variant="ghost"
+                                            className="whitespace-nowrap h-9 text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
+                                            onClick={() => setShowRegenInput(true)}
+                                            disabled={isMutating}
+                                        >
+                                            <RefreshCw size={14} className="mr-1.5" /> Régénérer l&apos;IA
+                                        </Button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
 
-                {/* Modal de déplacement */}
+                {/* Modal de déplacement INLINE */}
                 {isMoving && (
-                    <div className="mb-6 bg-slate-900 border border-slate-700 p-4 rounded-xl animate-in fade-in slide-in-from-top-2">
-                        <h4 className="text-sm font-bold text-white mb-2 flex items-center">
-                            <CalendarDays size={16} className="mr-2 text-blue-400" /> Déplacer la séance
+                    <div className="mb-6 bg-slate-900/80 border border-blue-500/30 p-4 rounded-xl animate-in fade-in slide-in-from-top-2">
+                        <h4 className="text-sm font-bold text-white mb-3 flex items-center">
+                            <CalendarDays size={16} className="mr-2 text-blue-400" /> Choisir une nouvelle date
                         </h4>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 items-center">
                             <input
                                 type="date"
-                                className="bg-slate-800 border border-slate-700 text-white rounded px-3 py-2 text-sm flex-1"
+                                className="bg-slate-950 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm flex-1 outline-none focus:border-blue-500"
                                 onChange={(e) => setNewMoveDate(e.target.value)}
                             />
-                            <Button
-                                variant="secondary"
-                                className="py-1 text-sm"
-                                onClick={() => setIsMoving(false)}
-                                disabled={isMutating}
-                            >
-                                Annuler
-                            </Button>
-                            <Button
-                                variant="primary"
-                                className="py-1 text-sm"
-                                disabled={isMutating || !newMoveDate || newMoveDate === workout.date}
-                                onClick={handleMove}
-                            >
-                                {isMutating ? "Valider" : "Déplacer"}
-                            </Button>
+                            <Button variant="ghost" onClick={() => setIsMoving(false)} disabled={isMutating}>Annuler</Button>
+                            <Button variant="primary" disabled={isMutating || !newMoveDate} onClick={handleMove}>Confirmer</Button>
                         </div>
                     </div>
                 )}
 
-                {/* Modal de Confirmation Suppression */}
+                {/* Modal de Confirmation Suppression INLINE */}
                 {showDeleteConfirm && (
-                    <div className="mb-6 bg-red-900/20 border border-red-500/50 p-4 rounded-xl animate-in fade-in slide-in-from-top-2">
+                    <div className="mb-6 bg-red-900/10 border border-red-500/30 p-4 rounded-xl animate-in fade-in slide-in-from-top-2">
                         <h4 className="text-sm font-bold text-red-400 mb-2 flex items-center">
-                            <AlertTriangle size={16} className="mr-2" /> Êtes-vous sûr de vouloir supprimer cette séance ?
+                            <AlertTriangle size={16} className="mr-2" /> Supprimer cette séance ?
                         </h4>
-                        <p className="text-xs text-red-300 mb-3">Cette action est irréversible.</p>
+                        <p className="text-xs text-red-300/70 mb-4">Cette action est irréversible et supprimera les données associées.</p>
                         <div className="flex gap-2 justify-end">
-                            <Button
-                                variant="secondary"
-                                className="py-1 text-sm"
-                                onClick={() => setShowDeleteConfirm(false)}
-                                disabled={isMutating}
-                            >
-                                Annuler
-                            </Button>
-                            <Button
-                                variant="danger"
-                                className="py-1 text-sm bg-red-600 hover:bg-red-700 text-white"
-                                onClick={handleDeleteClick}
-                                disabled={isMutating}
-                                icon={Trash2}
-                            >
-                                {isMutating ? "Suppression..." : "Confirmer la suppression"}
+                            <Button variant="secondary" className="h-8 text-xs" onClick={() => setShowDeleteConfirm(false)} disabled={isMutating}>Annuler</Button>
+                            <Button variant="danger" className="h-8 text-xs bg-red-600 hover:bg-red-500 text-white border-0" onClick={handleDeleteClick} disabled={isMutating} icon={Trash2}>
+                                {isMutating ? "..." : "Supprimer définitivement"}
                             </Button>
                         </div>
                     </div>
                 )}
 
-                <div className="bg-slate-900/50 rounded-xl p-6 mb-8 border border-slate-700/50">
-                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                        <Activity size={20} className="mr-2 text-blue-400" />
-                        Structure de la séance ({workout.mode})
+                {/* Description de la séance */}
+                <div className="bg-slate-900/50 rounded-xl p-4 md:p-6 mb-8 border border-slate-800">
+                    <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4 flex items-center">
+                        <Activity size={18} className="mr-2 text-blue-400" />
+                        Structure de la séance
                     </h3>
-                    <div className="prose prose-invert max-w-none text-slate-300 whitespace-pre-line leading-relaxed font-mono text-sm">
+                    <div className="prose prose-invert prose-sm max-w-none text-slate-300 whitespace-pre-line leading-relaxed font-mono">
                         {currentDescription}
                     </div>
                 </div>
@@ -305,68 +268,47 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                         onSave={(data) => handleStatusUpdate('completed', data)}
                     />
                 ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 border-t border-slate-700">
-                        {/* Boutons Status standard */}
+                    /* Footer Actions Principales */
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-slate-800">
                         {workout.status !== 'completed' && !showDeleteConfirm && (
                             <Button
                                 variant="success"
                                 onClick={() => setIsCompleting(true)}
-                                className="flex items-center justify-center md:col-span-2"
+                                className="w-full sm:col-span-2 h-12 md:h-10 text-base font-semibold shadow-lg shadow-emerald-900/20"
                                 disabled={isMutating}
                             >
-                                <CheckCircle size={16} className="mr-2" /> J&apos;ai fait la séance
+                                <CheckCircle size={18} className="mr-2" /> Marquer comme fait
                             </Button>
                         )}
 
                         {workout.status === 'completed' && !showDeleteConfirm && (
                             <>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => handleStatusUpdate('pending')}
-                                    disabled={isMutating}
-                                >
+                                <Button variant="outline" onClick={() => handleStatusUpdate('pending')} disabled={isMutating}>
                                     Réinitialiser
                                 </Button>
-                                <Button
-                                    variant="secondary"
-                                    onClick={() => setIsEditing(true)}
-                                    disabled={isMutating}
-                                    icon={Edit}
-                                >
-                                    Modifier
+                                <Button variant="secondary" onClick={() => setIsEditing(true)} disabled={isMutating} icon={Edit}>
+                                    Modifier le feedback
                                 </Button>
                             </>
                         )}
 
-                        {/* Boutons Missed et Delete (Affichés si pas de confirmation en cours) */}
+                        {/* Boutons secondaires (Raté / Supprimer) */}
                         {!showDeleteConfirm && workout.status !== 'completed' && (
-                            <>
+                            <div className="flex gap-3 sm:col-span-2 mt-2">
                                 {workout.status !== 'missed' ? (
-                                    <Button
-                                        variant="danger"
-                                        onClick={() => handleStatusUpdate('missed')}
-                                        disabled={isMutating}
-                                    >
+                                    <Button variant="danger" className="flex-1 bg-red-950/30 border-red-900/50 text-red-400 hover:bg-red-900/50" onClick={() => handleStatusUpdate('missed')} disabled={isMutating}>
                                         <XCircle size={16} className="mr-2" /> Raté
                                     </Button>
                                 ) : (
-                                    // Placeholder si déjà raté pour garder l'alignement ou bouton reactiver
-                                    <Button variant="outline" onClick={() => handleStatusUpdate('pending')} disabled={isMutating}>
+                                    <Button variant="outline" className="flex-1" onClick={() => handleStatusUpdate('pending')} disabled={isMutating}>
                                         Réactiver
                                     </Button>
                                 )}
 
-                                {/* Bouton Supprimer */}
-                                <Button
-                                    variant="ghost"
-                                    className="text-slate-400 hover:text-red-400 hover:bg-red-900/10 border border-transparent hover:border-red-900/30"
-                                    onClick={() => setShowDeleteConfirm(true)}
-                                    disabled={isMutating}
-                                    icon={Trash2}
-                                >
-                                    Supprimer
+                                <Button variant="ghost" className="px-3 text-slate-500 hover:text-red-400" onClick={() => setShowDeleteConfirm(true)} disabled={isMutating}>
+                                    <Trash2 size={18} />
                                 </Button>
-                            </>
+                            </div>
                         )}
                     </div>
                 )}

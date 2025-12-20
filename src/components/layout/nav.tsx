@@ -6,7 +6,7 @@ import {
     ChevronLeft,
     LucideIcon,
 } from 'lucide-react';
-import Image from 'next/image'; // Importation du composant Image de Next.js
+import Image from 'next/image';
 
 // Définition des vues acceptées
 type View = 'dashboard' | 'settings' | 'stats' | 'workout-detail' | 'onboarding' | 'loading';
@@ -26,79 +26,109 @@ export const Nav: React.FC<NavProps> = ({
     showBack = false,
     onBack
 }) => {
+    
+    // Cette fonction aide à déterminer si un bouton est actif
+    const isActive = (viewName: View) => currentView === viewName;
+
     return (
-        <nav className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 px-4 py-3">
-            <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <>
+            {/* --- TOP BAR (Desktop & Mobile Header) --- */}
+            <nav className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 px-4 py-3">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
 
-                {/* CÔTÉ GAUCHE : Logo OU Bouton Retour */}
-                <div className="flex items-center">
-                    {showBack && onBack ? (
-                        // Mode Retour (pour Stats / Settings)
-                        <button
-                            onClick={onBack}
-                            className="flex items-center text-slate-400 hover:text-white transition-colors group"
-                        >
-                            <div className="bg-slate-800 p-1 rounded-full mr-2 group-hover:bg-slate-700 transition-colors">
-                                <ChevronLeft size={20} />
+                    {/* CÔTÉ GAUCHE : Logo OU Bouton Retour */}
+                    <div className="flex items-center">
+                        {showBack && onBack ? (
+                            <button
+                                onClick={onBack}
+                                className="flex items-center text-slate-400 hover:text-white transition-colors group"
+                            >
+                                <div className="bg-slate-800 p-1 rounded-full mr-2 group-hover:bg-slate-700 transition-colors">
+                                    <ChevronLeft size={20} />
+                                </div>
+                                <span className="font-medium text-sm md:text-base">Retour</span>
+                            </button>
+                        ) : (
+                            <div
+                                className="flex items-center gap-2 cursor-pointer group"
+                                onClick={() => onViewChange('dashboard')}
+                            >
+                                <div className="relative w-8 h-8">
+                                    <Image
+                                        src="/image_0.png"
+                                        alt="PulsePeak Logo"
+                                        width={32}
+                                        height={32}
+                                        className="object-contain"
+                                    />
+                                </div>
+                                <span className="text-xl font-bold bg-linear-to-r from-white to-slate-400 bg-clip-text text-transparent">
+                                    {appName}
+                                </span>
                             </div>
-                            <span className="font-medium">Retour</span>
-                        </button>
-                    ) : (
-                        // Mode Logo (Dashboard)
-                        <div
-                            className="flex items-center gap-2 cursor-pointer group"
+                        )}
+                    </div>
+
+                    {/* CÔTÉ DROIT : Navigation DESKTOP (Cachée sur mobile) */}
+                    <div className="hidden md:flex items-center gap-4">
+                        <NavButton
+                            active={isActive('dashboard')}
                             onClick={() => onViewChange('dashboard')}
-                        >
-                            <div className="">
-                                {/* Utilisation du composant Image de Next.js */}
-                                <Image
-                                    src="/image_0.png" // Assurez-vous que le nom du fichier dans /public est correct
-                                    alt="PulsePeak Logo"
-                                    // MODIFICATION : Augmentation des props width/height intrinsèques (24 -> 32)
-                                    width={32}
-                                    height={32}
-                                    // MODIFICATION : Augmentation des classes Tailwind (w-5 h-5 -> w-8 h-8) soit 32px
-                                    className="w-8 h-8 object-contain"
-                                />
-                            </div>
-                            <span className="text-xl font-bold bg-linear-to-r from-white to-slate-400 bg-clip-text text-transparent">
-                                {appName}
-                            </span>
-                        </div>
-                    )}
+                            icon={LayoutDashboard}
+                            label="Agenda"
+                        />
+                        <NavButton
+                            active={isActive('stats')}
+                            onClick={() => onViewChange('stats')}
+                            icon={BarChart2}
+                            label="Stats"
+                        />
+                        <NavButton
+                            active={isActive('settings')}
+                            onClick={() => onViewChange('settings')}
+                            icon={Settings}
+                            label="Réglages"
+                        />
+                    </div>
+                    
+                    {/* Placeholder Mobile (pour équilibrer le layout si besoin, vide ici) */}
+                    <div className="md:hidden w-8"></div> 
                 </div>
+            </nav>
 
-                {/* CÔTÉ DROIT : Liens de Navigation */}
-                <div className="flex items-center gap-2 md:gap-4">
-                    <NavButton
-                        active={currentView === 'dashboard'}
+            {/* --- BOTTOM BAR (Mobile Only) --- */}
+            {/* DESIGN: fixed bottom-0, prend toute la largeur, z-index élevé */}
+            <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-950 border-t border-slate-800 pb-safe-area">
+                <div className="flex justify-around items-center h-16">
+                    <MobileNavButton 
+                        active={isActive('dashboard')}
                         onClick={() => onViewChange('dashboard')}
                         icon={LayoutDashboard}
                         label="Agenda"
                     />
-                    <NavButton
-                        active={currentView === 'stats'}
+                    <MobileNavButton 
+                        active={isActive('stats')}
                         onClick={() => onViewChange('stats')}
                         icon={BarChart2}
                         label="Stats"
                     />
-                    <NavButton
-                        active={currentView === 'settings'}
+                    <MobileNavButton 
+                        active={isActive('settings')}
                         onClick={() => onViewChange('settings')}
                         icon={Settings}
                         label="Réglages"
                     />
                 </div>
             </div>
-        </nav>
+        </>
     );
 };
 
-// --- CORRECTION DU TYPE ICI ---
+// --- BOUTON DESKTOP ---
 interface NavButtonProps {
     active: boolean;
     onClick: () => void;
-    icon: LucideIcon; // Utilisation du type précis au lieu de 'any'
+    icon: LucideIcon;
     label: string;
 }
 
@@ -111,7 +141,25 @@ const NavButton: React.FC<NavButtonProps> = ({ active, onClick, icon: Icon, labe
             }`}
     >
         <Icon size={18} />
-        <span className="hidden md:inline text-sm font-medium">{label}</span>
+        <span className="text-sm font-medium">{label}</span>
+    </button>
+);
+
+// --- BOUTON MOBILE ---
+const MobileNavButton: React.FC<NavButtonProps> = ({ active, onClick, icon: Icon, label }) => (
+    <button
+        onClick={onClick}
+        className={`flex flex-col items-center justify-center w-full h-full transition-colors duration-200 ${
+            active ? 'text-blue-400' : 'text-slate-500 hover:text-slate-300'
+        }`}
+    >
+        {/* L'icône change légèrement de taille ou d'effet si active */}
+        <div className={`mb-1 transition-transform duration-200 ${active ? '-translate-y-1' : ''}`}>
+            <Icon size={active ? 24 : 22} strokeWidth={active ? 2.5 : 2} />
+        </div>
+        <span className={`text-[10px] font-medium transition-opacity duration-200 ${active ? 'opacity-100' : 'opacity-70'}`}>
+            {label}
+        </span>
     </button>
 );
 
