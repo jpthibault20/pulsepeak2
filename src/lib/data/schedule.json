@@ -270,7 +270,14 @@
       "mode": "Outdoor",
       "description_outdoor": "Sortie très longue de 3h30 principalement en Z2 (135-181W). Utiliser le dénivelé pour de courtes montées en Z3 maximum. Assurer un ravitaillement régulier.",
       "description_indoor": "3h30 en Z2 (135-181W). Pour rendre la séance plus ludique, utiliser une application de simulation et chercher à maintenir la puissance Z2 quelles que soient les pentes. Changer de position régulièrement.",
-      "status": "pending"
+      "status": "completed",
+      "completedData": {
+        "rpe": 8,
+        "avgPower": 117,
+        "actualDuration": 270,
+        "distance": 115,
+        "notes": ""
+      }
     },
     "2025-12-23": {
       "date": "2025-12-23",
