@@ -281,36 +281,21 @@
     },
     "2025-12-23": {
       "date": "2025-12-23",
-      "title": "PMA - Volume Accru (45s ON)",
-      "type": "PMA/VO2max",
-      "duration": 90,
-      "tss": 85,
-      "mode": "Outdoor",
-      "description_outdoor": "Échauffement: 20 min Z2. Corps de séance: 3 séries de 5 répétitions de [45s Z5 (255-289W) / 45s Z2 (135-181W)]. Récupération entre séries: 5 min Z2. Retour au calme: 15 min Z2.",
-      "description_indoor": "Échauffement: 20 min Z2. Corps de séance: 'Pyramide Inversée' - Répéter 3 fois la séquence (1 min Z5 / 1 min Z2 ; 45s Z5 / 45s Z2 ; 30s Z5 / 30s Z2). L'objectif est d'accumuler le temps en Z5 (255-289W). Récupération entre les séquences : 4 min Z2 (135-181W). Retour au calme: 15 min Z2.",
-      "status": "pending"
-    },
-    "2025-12-25": {
-      "date": "2025-12-25",
-      "title": "Seuil - Maintien",
-      "type": "Seuil (Threshold)",
-      "duration": 90,
-      "tss": 90,
-      "mode": "Outdoor",
-      "description_outdoor": "Échauffement: 20 min Z2. Corps de séance: 2 x 15 minutes en Z4 (219-253W). Récupération entre les efforts: 10 min en Z2. Le but est d'être stable en Z4. Retour au calme: 20 min Z2.",
-      "description_indoor": "Échauffement: 20 min Z2. Corps de séance: 3 x 10 minutes en Z4 (219-253W) suivies immédiatement de 5 minutes à bas Z3 (183W). Récupération entre les blocs (15min de travail): 5 min Z2. Retour au calme: 15 min Z2.",
-      "status": "pending"
-    },
-    "2025-12-27": {
-      "date": "2025-12-27",
-      "title": "Endurance + Sprints",
-      "type": "Endurance/Anaérobie",
-      "duration": 150,
-      "tss": 110,
-      "mode": "Outdoor",
-      "description_outdoor": "2h30 en Z2 (135-181W). Toutes les 30 minutes, réaliser 4 sprints de 15s en Z7 (plus de 318W) départ arrêté ou basse vitesse, avec 45s de récupération Z2 entre chaque sprint. Finir le reste du temps en Z2.",
-      "description_indoor": "2h30 en Z2 (135-181W). Toutes les 30 minutes, réaliser 4 'Attaques' de 15s en Z7 (plus de 318W) à haute cadence, suivies de 45s de Z2. Le reste du temps, maintenir Z2.",
-      "status": "pending"
+      "status": "completed",
+      "title": "SweetSpot - 3 x 25 min (Home Trainer)",
+      "type": "SweetSpot",
+      "duration": 120,
+      "tss": 95,
+      "mode": "Indoor",
+      "description_outdoor": "Étant donné la demande spécifique pour une séance sur home trainer, la structure d'intensité est optimisée pour l'intérieur. Si elle devait être réalisée en extérieur : trouvez un parcours plat ou faux-plat ascendant régulier. Échauffement (15 min) en Z1/Z2. Corps de séance : 3 blocs de 25 min en SweetSpot (Z4 bas, 220-225 W), séparés par 7.5 min de Tempo/Récupération (Z2, 160-175 W). Retour au calme (15 min) en Z1.",
+      "description_indoor": "Séance de 2 heures axée sur l'accumulation de temps en SweetSpot (Z3/Z4 bas) pour améliorer la condition physique générale. FTP: 241 W. Z4: 219-253 W. Z2: 135-181 W.\r\n\r\n1. Échauffement (15 min): 10 min en Z1/Z2 progressif (120-170 W). Terminer par 5 min d'activation : 3 x (30 sec @ Z3/20 sec @ Z1).\r\n2. Corps de Séance (90 min): Répéter 3 fois la séquence suivante :\r\n    - 25 min @ SweetSpot (Z4 bas, 220-225 W). Visez 88-95% de la FTP. Maintenez une cadence de 85-95 RPM.\r\n    - 7.5 min @ Récupération Active/Tempo (Z2, 160-175 W). Cadence libre.\r\n3. Retour au calme (15 min): 15 min de pédalage facile en Z2/Z1, terminant sous 133 W.",
+      "completedData": {
+        "rpe": 5,
+        "avgPower": 167,
+        "actualDuration": 120,
+        "distance": 67,
+        "notes": ""
+      }
     },
     "2025-12-28": {
       "date": "2025-12-28",
@@ -409,6 +394,17 @@
       "mode": "Outdoor",
       "description_outdoor": "3h30 de sortie. Maintenir l'intensité stricte Z2 (135-181W), en privilégiant le bas de la zone. C'est la fin du microcycle, la fatigue doit diminuer.",
       "description_indoor": "3h30 en Z2 (135-181W). Se concentrer sur un pédalage parfaitement rond et relâché. Utiliser une séance de simulation de course à faible intensité (Z2) pour maintenir l'engagement mental.",
+      "status": "pending"
+    },
+    "2025-12-26": {
+      "date": "2025-12-26",
+      "title": "Endurance + Sprints",
+      "type": "Endurance/Anaérobie",
+      "duration": 150,
+      "tss": 110,
+      "mode": "Outdoor",
+      "description_outdoor": "2h30 en Z2 (135-181W). Toutes les 30 minutes, réaliser 4 sprints de 15s en Z7 (plus de 318W) départ arrêté ou basse vitesse, avec 45s de récupération Z2 entre chaque sprint. Finir le reste du temps en Z2.",
+      "description_indoor": "2h30 en Z2 (135-181W). Toutes les 30 minutes, réaliser 4 'Attaques' de 15s en Z7 (plus de 318W) à haute cadence, suivies de 45s de Z2. Le reste du temps, maintenir Z2.",
       "status": "pending"
     }
   },
