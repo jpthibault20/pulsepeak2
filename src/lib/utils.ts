@@ -9,7 +9,7 @@ import type { CompletedData, SportType } from '@/lib/data/type';
 interface FeedbackInput {
   rpe: number;
   avgPower?: number;
- normalizedPower?: number;
+  normalizedPower?: number;
   avgPace?: string;
   avgHeartRate?: number;
   actualDuration: number;
@@ -28,6 +28,8 @@ interface FeedbackInput {
   strokeType?: string | null;
   avgStrokeRate?: number | null;
   avgSwolf?: number | null;
+  poolLengthMeters?: number | null;
+  totalStrokes?: number | null;
 }
 
 export function createCompletedData(feedback: FeedbackInput): CompletedData {
@@ -94,6 +96,8 @@ export function createCompletedData(feedback: FeedbackInput): CompletedData {
             strokeType: feedback.strokeType ?? null,
             avgStrokeRate: feedback.avgStrokeRate ?? null,
             avgSwolf: feedback.avgSwolf ?? null,
+            poolLengthMeters: feedback.poolLengthMeters ?? null,
+            totalStrokes: feedback.totalStrokes ?? null,
           },
         },
       };

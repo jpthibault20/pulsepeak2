@@ -34,6 +34,8 @@ export interface CompletedDataFeedback {
   strokeType?: string;
   avgStrokeRate?: number;
   avgSwolf?: number;
+  poolLengthMeters?: number;
+  totalStrokes?: number;
 }
 
 // Définition complète des 7 zones de Coggan

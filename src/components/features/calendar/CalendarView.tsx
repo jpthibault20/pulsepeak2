@@ -4,7 +4,10 @@ import React, { useState, useMemo, useCallback } from 'react';
 import {
     Clock, Zap, Home, Mountain,
     ChevronLeft, ChevronRight, CheckCircle, XCircle,
-    BrainCircuit, Plus, Info, Bike, User as Running, Waves
+    BrainCircuit, Plus, Info, Bike, User as Running, Waves,
+    Activity,
+    User,
+    BedDouble
 } from 'lucide-react';
 import type { Workout, Schedule, SportType } from '@/lib/data/type';
 import { Button } from '@/components/ui/Button';
@@ -88,8 +91,8 @@ export function CalendarView({
 
     const getWorkoutsForDate = useCallback((date: Date | null): Workout[] => {
         if (!date) return [];
-        const key = formatDateKey(date);
-        return scheduleData.workouts.filter(w => w.date === key);
+        const dateStr = formatDateKey(date);
+        return scheduleData.workouts.filter(w => w.date === dateStr);
     }, [scheduleData.workouts]);
 
     const formatDuration = (mins: number): string => {
@@ -418,17 +421,121 @@ export function CalendarView({
                                             {/* Workouts */}
                                             <div className="flex-1 space-y-1.5 overflow-y-auto custom-scrollbar">
                                                 {workouts.length > 0 ? (
-                                                    workouts.map(workout => (
-                                                        <div key={workout.id}>
-                                                            {renderWorkoutCard(workout, true)}
-                                                        </div>
-                                                    ))
+                                                    <>
+                                                        {/* Header avec compteur si plusieurs activités */}
+                                                        {workouts.length > 1 && (
+                                                            <div className="flex items-center gap-2 px-2 py-1.5 bg-slate-800/50 rounded-lg border border-slate-700/50 mb-2">
+                                                                <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                                                                    <Activity size={12} className="text-blue-400" />
+                                                                    <span className="font-medium">{workouts.length} séances</span>
+                                                                </div>
+
+                                                                {/* Breakdown par sport */}
+                                                                <div className="flex gap-2 ml-auto">
+                                                                    {(() => {
+                                                                        const sportCounts = workouts.reduce((acc, w) => {
+                                                                            acc[w.sportType] = (acc[w.sportType] || 0) + 1;
+                                                                            return acc;
+                                                                        }, {} as Record<string, number>);
+
+                                                                        return Object.entries(sportCounts).map(([sport, count]) => {
+                                                                            const Icon = sport === 'cycling' ? Bike
+                                                                                : sport === 'running' ? User
+                                                                                    : Waves;
+
+                                                                            return (
+                                                                                <div
+                                                                                    key={sport}
+                                                                                    className="flex items-center gap-1 text-[10px] text-slate-500"
+                                                                                    title={`${count} ${sport}`}
+                                                                                >
+                                                                                    <Icon size={10} />
+                                                                                    <span>×{count}</span>
+                                                                                </div>
+                                                                            );
+                                                                        });
+                                                                    })()}
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Liste des workouts */}
+                                                        {workouts.map((workout, index) => (
+                                                            <div
+                                                                key={workout.id}
+                                                                className="relative"
+                                                            >
+                                                                {/* Indicateur de séquence si multiple activités */}
+                                                                {workouts.length > 1 && (
+                                                                    <div className="absolute -left-2 top-1/2 -translate-y-1/2 z-10">
+                                                                        <div className="w-5 h-5 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center">
+                                                                            <span className="text-[10px] font-bold text-slate-400">
+                                                                                {index + 1}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Card du workout */}
+                                                                <div className={workouts.length > 1 ? 'ml-4' : ''}>
+                                                                    {renderWorkoutCard(workout, true)}
+                                                                </div>
+
+                                                                {/* Connecteur visuel entre activités */}
+                                                                {workouts.length > 1 && index < workouts.length - 1 && (
+                                                                    <div className="absolute -left-2 top-full w-0.5 h-1.5 bg-slate-700/50 translate-x-[9px]" />
+                                                                )}
+                                                            </div>
+                                                        ))}
+
+                                                        {/* Stats du jour (si plusieurs activités) */}
+                                                        {workouts.length > 1 && (
+                                                            <div className="mt-3 pt-3 border-t border-slate-800/50">
+                                                                <div className="grid grid-cols-3 gap-2 text-center">
+                                                                    <div className="bg-slate-800/30 rounded-lg p-2">
+                                                                        <div className="text-[10px] text-slate-500 mb-0.5">Durée</div>
+                                                                        <div className="text-sm font-bold text-white">
+                                                                            {Math.round(
+                                                                                workouts.reduce((sum, w) =>
+                                                                                    sum + (w.completedData?.actualDurationMinutes || w.plannedData?.durationMinutes || 0), 0
+                                                                                )
+                                                                            )}min
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div className="bg-slate-800/30 rounded-lg p-2">
+                                                                        <div className="text-[10px] text-slate-500 mb-0.5">Distance</div>
+                                                                        <div className="text-sm font-bold text-white">
+                                                                            {workouts.reduce((sum, w) =>
+                                                                                sum + (w.completedData?.distanceKm || w.plannedData?.distanceKm || 0), 0
+                                                                            ).toFixed(1)}km
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div className="bg-slate-800/30 rounded-lg p-2">
+                                                                        <div className="text-[10px] text-slate-500 mb-0.5">TSS</div>
+                                                                        <div className="text-sm font-bold text-blue-400">
+                                                                            {Math.round(
+                                                                                workouts.reduce((sum, w) =>
+                                                                                    sum + (w.completedData?.metrics.cycling?.tss || w.plannedData?.plannedTSS || 0), 0
+                                                                                )
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </>
                                                 ) : (
-                                                    <div className="flex items-center justify-center h-full text-xs text-slate-600">
-                                                        Repos
+                                                    <div className="flex flex-col items-center justify-center h-full text-slate-600 gap-3">
+                                                        <div className="w-12 h-12 rounded-full bg-slate-800/50 flex items-center justify-center">
+                                                            <BedDouble size={20} className="text-slate-700" />
+                                                        </div>
+                                                        <div className="text-xs font-medium">Jour de repos</div>
                                                     </div>
                                                 )}
                                             </div>
+
                                         </div>
                                     );
                                 })}

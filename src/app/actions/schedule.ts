@@ -260,7 +260,9 @@ function transformFeedbackToCompletedData(
                 bestPace100m: null,
                 strokeType: feedback.strokeType ?? null,
                 avgStrokeRate: feedback.avgStrokeRate ?? null,
-                avgSwolf: feedback.avgSwolf ?? null
+                avgSwolf: feedback.avgSwolf ?? null,
+                poolLengthMeters: feedback.poolLengthMeters ?? null,
+                totalStrokes: feedback.totalStrokes ?? null
             } : null
         }
     };
@@ -390,21 +392,25 @@ export async function moveWorkout(originalDateOrId: string, newDateStr: string) 
 export async function addManualWorkout(workout: Workout) {
     const schedule = await getSchedule();
 
-    // Gestion des conflits : 
-    // Si une séance existe déjà à cette date, on l'écrase (choix de design) 
-    // OU on l'ajoute à côté.
-    // Ici, pour simplifier, on supprime l'ancienne s'il y en a une à la même date
-    const conflictingIndex = schedule.workouts.findIndex(w => w.date === workout.date);
+    // ✅ Validation : vérifier que l'ID est unique (sécurité)
+    const existingWorkout = schedule.workouts.find(w => w.id === workout.id);
     
-    if (conflictingIndex !== -1) {
-        schedule.workouts[conflictingIndex] = workout;
-    } else {
-        schedule.workouts.push(workout);
+    if (existingWorkout) {
+        throw new Error(`Un workout avec l'ID ${workout.id} existe déjà`);
     }
+
+    // ✅ Validation : vérifier le format de date
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(workout.date)) {
+        throw new Error(`Format de date invalide: ${workout.date}. Attendu: YYYY-MM-DD`);
+    }
+
+    // ✅ Ajout du workout
+    schedule.workouts.push(workout);
 
     await saveSchedule(schedule);
     revalidatePath('/');
 }
+
 
 export async function deleteWorkout(workoutIdOrDate: string) {
     const schedule = await getSchedule();
