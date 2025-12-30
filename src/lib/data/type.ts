@@ -1,5 +1,28 @@
-// --- ZONES & PROFIL (Conservé de votre version) ---
-
+export interface FeedbackInput {
+  rpe: number;
+  avgPower?: number;
+  normalizedPower?: number;
+  avgPace?: string;
+  avgHeartRate?: number;
+  actualDuration: number;
+  distance: number;
+  notes: string;
+  sportType: SportType;
+  // Optionnels selon le sport
+  tss?: number | null;
+  calories?: number | null;
+  elevation?: number | null;
+  avgCadence?: number | null;
+  maxCadence?: number | null;
+  avgSpeed?: number | null;
+  maxSpeed?: number | null;
+  maxPower?: number | null;
+  strokeType?: string | null;
+  avgStrokeRate?: number | null;
+  avgSwolf?: number | null;
+  poolLengthMeters?: number | null;
+  totalStrokes?: number | null;
+}
 // Définition d'une zone unique (plage de puissance)
 export interface PowerZone {
   min: number;

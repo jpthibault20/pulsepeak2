@@ -1,36 +1,8 @@
+import type { CompletedData, FeedbackInput } from '@/lib/data/type';
+
 export const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 };
-
-// 📁 lib/utils/workoutHelpers.ts
-
-import type { CompletedData, SportType } from '@/lib/data/type';
-
-interface FeedbackInput {
-  rpe: number;
-  avgPower?: number;
-  normalizedPower?: number;
-  avgPace?: string;
-  avgHeartRate?: number;
-  actualDuration: number;
-  distance: number;
-  notes: string;
-  sportType: SportType;
-  // Optionnels selon le sport
-  tss?: number | null;
-  calories?: number | null;
-  elevation?: number | null;
-  avgCadence?: number | null;
-  maxCadence?: number | null;
-  avgSpeed?: number | null;
-  maxSpeed?: number | null;
-  maxPower?: number | null;
-  strokeType?: string | null;
-  avgStrokeRate?: number | null;
-  avgSwolf?: number | null;
-  poolLengthMeters?: number | null;
-  totalStrokes?: number | null;
-}
 
 export function createCompletedData(feedback: FeedbackInput): CompletedData {
   const baseData = {
@@ -113,4 +85,28 @@ export function createCompletedData(feedback: FeedbackInput): CompletedData {
         },
       };
   }
+}
+
+export const MONTH_NAMES = [
+    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+] as const;
+
+export const DAY_NAMES_SHORT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'] as const;
+
+// ✅ Exporter les types
+export type MonthName = typeof MONTH_NAMES[number];
+export type DayName = typeof DAY_NAMES_SHORT[number];
+
+export function formatDateKey(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+export function formatDuration(minutes: number): string {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return hours > 0 ? `${hours}h${mins > 0 ? mins.toString().padStart(2, '0') : ''}` : `${mins}min`;
 }
