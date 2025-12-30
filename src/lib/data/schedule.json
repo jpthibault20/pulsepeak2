@@ -306,7 +306,14 @@
       "mode": "Outdoor",
       "description_outdoor": "Sortie de 3h30 en Z2 (135-181W). Maintenir une intensité constante et régulière. C'est une journée de fond, évitez les accélérations inutiles.",
       "description_indoor": "3h30 en Z2 (135-181W). Utiliser un film ou une course sur route. Changer de position (assis/danseuse) pendant 30s toutes les 10 minutes pour éviter l'ennui.",
-      "status": "pending"
+      "status": "completed",
+      "completedData": {
+        "rpe": 5,
+        "avgPower": 143,
+        "actualDuration": 150,
+        "distance": 70,
+        "notes": ""
+      }
     },
     "2025-12-30": {
       "date": "2025-12-30",
@@ -314,7 +321,7 @@
       "type": "PMA/VO2max",
       "duration": 90,
       "tss": 95,
-      "mode": "Indoor",
+      "mode": "Outdoor",
       "description_outdoor": "Échauffement: 20 min Z2. Corps de séance: 5 x 4 minutes en Z5 (255-289W). Récupération entre les intervalles: 4 minutes en Z2 (135-181W). Retour au calme: 14 min Z2.",
       "description_indoor": "Échauffement: 20 min Z2. Corps de séance: 5 x 4 minutes en Z5 (255-289W). Chaque intervalle de Z5 doit être réalisé avec une cadence > 95 RPM. Récupération : 4 minutes Z2 (135-181W) à très faible résistance. Retour au calme: 14 min Z2.",
       "status": "pending"
@@ -405,7 +412,14 @@
       "mode": "Outdoor",
       "description_outdoor": "2h30 en Z2 (135-181W). Toutes les 30 minutes, réaliser 4 sprints de 15s en Z7 (plus de 318W) départ arrêté ou basse vitesse, avec 45s de récupération Z2 entre chaque sprint. Finir le reste du temps en Z2.",
       "description_indoor": "2h30 en Z2 (135-181W). Toutes les 30 minutes, réaliser 4 'Attaques' de 15s en Z7 (plus de 318W) à haute cadence, suivies de 45s de Z2. Le reste du temps, maintenir Z2.",
-      "status": "pending"
+      "status": "completed",
+      "completedData": {
+        "rpe": 2,
+        "avgPower": 78,
+        "actualDuration": 156,
+        "distance": 57,
+        "notes": ""
+      }
     }
   },
   "summary": "Votre bloc précédent a montré une excellente résilience avec un volume élevé et des sorties longues dépassant régulièrement la durée prévue. Étant donné que vous entrez dans une phase de reprise et que vous souhaitez réintroduire la Puissance Maximale Aérobie (PMA), j'ai structuré ce plan sur 4 semaines (3 semaines de charge progressive PMA + 1 semaine de récupération active). Nous allons utiliser des intervalles courts et progressifs en Z5 (255W-289W) pour réadapter l'organisme à l'intensité sans surcharger, tout en maintenant le volume cible de 9 heures par semaine. Les jours de repos imposés sont respectés. Les zones de puissance sont utilisées telles quelles, avec la conscience que vous êtes en phase de reprise.",
