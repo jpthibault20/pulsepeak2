@@ -3,7 +3,6 @@ import type { Schedule, Workout } from '@/lib/data/type';
 import { DayCell } from './DayCell';
 import { WeekSummaryCell } from './WeekSummaryCell';
 import { formatDateKey, DAY_NAMES_SHORT, type DayName } from '@/lib/utils';
-import type { WeekStats } from '@/hooks/useWeekStats'; // Assurez-vous que ce type est exporté ou redéfini ici
 
 interface CalendarGridProps {
     weekRows: (Date | null)[][];

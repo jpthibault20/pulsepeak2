@@ -96,11 +96,11 @@ export function DayCell({
                         <button
                             onClick={() => setShowPopover(!showPopover)}
                             className={`
-                w-full bg-slate-800/80 hover:bg-slate-700/90
-                border border-slate-700/50 hover:border-slate-600
-                rounded-md p-2 text-left transition-all group/stack
-                shadow-sm
-              `}
+                                w-full bg-slate-800/80 hover:bg-slate-700/90
+                                border border-slate-700/50 hover:border-slate-600
+                                rounded-md p-2 text-left transition-all group/stack
+                                shadow-sm
+                            `}
                         >
                             <div className="flex items-center gap-2 mb-2">
                                 <div className="p-1 bg-indigo-500/20 rounded text-indigo-400">

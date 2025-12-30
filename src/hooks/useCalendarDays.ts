@@ -7,7 +7,7 @@ export function useCalendarDays(selectedDate: Date) {
     const weekRows = useMemo(() => {
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
-        const startDayOfWeek = firstDay.getDay();
+        const startDayOfWeek = (firstDay.getDay() + 6) % 7; // 6 = dimanche
         const daysInMonth = lastDay.getDate();
 
         const rows: (Date | null)[][] = [];

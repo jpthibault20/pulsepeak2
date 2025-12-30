@@ -126,7 +126,7 @@ export function WorkoutPopover({ workouts, onClose, onViewWorkout }: WorkoutPopo
                 {workouts.map((workout, index) => (
                     <div key={workout.id} className="relative group">
                         {index !== workouts.length - 1 && (
-                            <div className="absolute top-8 left-[11px] w-[2px] h-full bg-slate-700/50 -z-10" />
+                            <div className="absolute top-8 left-[11px] w-0.5 h-full bg-slate-700/50 -z-10" />
                         )}
                         <div className="flex gap-3">
                             <div className="flex flex-col items-center pt-1">
