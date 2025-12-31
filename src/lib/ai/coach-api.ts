@@ -78,7 +78,6 @@ export async function generatePlanFromAI(
     // --- 2. Construction du Prompt ---
     
     // On récupère les contraintes de dispo
-    const daysMap = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
     let dateConstraints = "";
     
     // Pour l'instant on regarde la dispo globale, mais on prépare le terrain
@@ -110,14 +109,48 @@ export async function generatePlanFromAI(
     const finalFocus = blockFocus === 'Personnalisé' ? customTheme : blockFocus;
 
     // Contexte Zones
-    let zonesContext = "ZONES: Utilise les % FTP/VMA standard.";
+    // Contexte Zones
+    let zonesContext = "ZONES: Utilise les % FTP/VMA standard car les zones exactes ne sont pas définies.";
+    
     if (profile.zones) {
         const z = profile.zones;
-        zonesContext = `ZONES CYCLISME (Watts): Z2 ${z.z2.min}-${z.z2.max}, Z4 (Seuil) ${z.z4.min}-${z.z4.max}.`;
+        zonesContext = `
+        ZONES CYCLISME ATHLÈTE (Watts) - À RESPECTER IMPÉRATIVEMENT :
+        - Z1 (Récupération): < ${z.z1.max} W
+        - Z2 (Endurance): ${z.z2.min} - ${z.z2.max} W
+        - Z3 (Tempo): ${z.z3.min} - ${z.z3.max} W
+        - Z4 (Seuil/FTP): ${z.z4.min} - ${z.z4.max} W
+        - Z5 (VO2 Max): ${z.z5.min} - ${z.z5.max} W
+        - Z6 (Anaérobie): ${z.z6.min} - ${z.z6.max} W
+        - Z7 (Neuromusculaire): > ${z.z7.min} W
+        `;
     }
 
+
     // Prompt système orienté Coach Triathlon/Cyclisme
-    const systemPrompt = "Tu es un entraîneur Expert (Cyclisme & Triathlon). Tu génères des plans d'entraînement structurés au format JSON strict.";
+const systemPrompt = `
+RÔLE: Tu es le Directeur de la Performance d'une équipe World Tour et Triathlon Élite. Ta méthodologie est basée sur la science (Coggan, Friel, Seiler) et la périodisation moderne.
+
+MISSION: Générer un calendrier d'entraînement JSON strict pour un athlète, en respectant son profil, ses zones de puissance/FC et ses contraintes de temps.
+
+RÈGLES D'OR :
+1. **Physiologie avant tout** : Chaque séance doit avoir un but physiologique clair (Endurance, Seuil, VO2max, Récupération, Neuromusculaire).
+2. **Respect des Zones** : Utilise les valeurs de watts/fréquence cardiaque fournies dans le prompt. Ne les invente pas.
+3. **Gestion de la Charge** : Alterne les jours difficiles et faciles. Si le volume est élevé, l'intensité baisse, et vice-versa.
+4. **Multisport Intelligent** : Pour le triathlon, gère la fatigue croisée (ex: pas de VMA course à pied le lendemain d'un gros seuil vélo si l'athlète est fatigué).
+5. **Réalisme** :
+   - Si "Indoor" : Séances structurées, courtes, intenses (intervalles).
+   - Si "Outdoor" : Plus de volume, gestion du terrain, descriptions axées sur le pilotage ou la route.
+6. **Contraintes Horaire** : NE JAMAIS programmer une séance plus longue que la disponibilité indiquée pour ce jour-là.
+7. **Jours de Repos** : Si nécessaire, n'hésite pas à laisser des jours vides (pas de JSON généré pour ce jour) pour la récupération.
+8. **Descriptions OBLIGATOIRES** : 
+   - description_indoor : DOIT contenir la structure précise des intervalles (ex: "10min Z1, 5x(30s Z5/30s Z1)...") pour TOUTES les séances, même celles prévues Outdoor (pour export Zwift/Garmin). JAMAIS de "N/A".
+   - description_outdoor : DOIT contenir les conseils de route/terrain (ex: "Route vallonnée, maintiens la cadence dans les bosses").
+FORMAT DE RÉPONSE :
+- Tu dois répondre UNIQUEMENT avec le JSON validé par le schéma fourni.
+- Aucune phrase d'introduction ou de conclusion.
+- Les descriptions des séances doivent être techniques mais motivantes (style coach).
+`;
 
     const userPrompt = `
     PROFIL ATHLÈTE:
@@ -174,8 +207,8 @@ export async function generatePlanFromAI(
                         "target_pace": { "type": "STRING", "nullable": true, "description": "Allure cible (Min/km ou min/100m)" },
                         "target_hr": { "type": "NUMBER", "nullable": true, "description": "BPM cible moyen" },
 
-                        "description_outdoor": { "type": "STRING" },
-                        "description_indoor": { "type": "STRING" }
+                        "description_outdoor": { "type": "STRING", "description": "Consignes de terrain et sensations (Ne jamais mettre N/A)"},
+                        "description_indoor": { "type": "STRING", "description": "Structure technique PAS À PAS des blocs et intervalles (Ne jamais mettre N/A, même si mode=Outdoor)"}
                     },
                     "required": ["date", "sport", "title", "type", "duration", "mode", "description_outdoor", "description_indoor"]
                 }
@@ -200,7 +233,7 @@ export async function generatePlanFromAI(
     const structuredWorkouts: Workout[] = rawResponse.workouts
         // Sécurité 1: On filtre les objets invalides ou les jours de repos explicites si l'IA s'est trompée
         .filter(w => w.duration > 0 && w.title.toLowerCase() !== "repos")
-        .map((w, index) => {
+        .map((w) => {
             // Génération ID unique : Type + Date + RandomString (pour gérer le multi-séance le même jour)
             // ex: cycling_2023-10-10_abc12
             const uniqueSuffix = Math.random().toString(36).substring(2, 7);
