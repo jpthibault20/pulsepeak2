@@ -1,5 +1,9 @@
 {
   "name": "JEANPIERRE Thibault",
+  "sports": [
+    "cycling",
+    "running"
+  ],
   "ftp": 247,
   "experience": "Avancé",
   "goal": "Course sur route (Compétition)",

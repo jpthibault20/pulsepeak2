@@ -18,6 +18,7 @@ interface ProfileFormProps {
 export const ProfileForm: React.FC<ProfileFormProps> = ({ initialProfileData, isSettings = false, onSave, onSuccess, onCancel }) => {
     const defaultData: Profile = {
         name: '',
+        sports: ['cycling'],
         ftp: 200,
         weight: 70,
         experience: 'Intermédiaire',

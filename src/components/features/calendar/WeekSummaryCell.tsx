@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { BarChart3, Zap } from 'lucide-react';
 import { WeekStatsPopover } from './WeekStatsPopover';
 import type { WeekStats } from '@/hooks/useWeekStats';
@@ -9,8 +9,21 @@ interface WeekSummaryCellProps {
 
 export function WeekSummaryCell({ stats }: WeekSummaryCellProps) {
     const [showPopover, setShowPopover] = useState(false);
+    const [openUpward, setOpenUpward] = useState(false);
+    const buttonRef = useRef<HTMLButtonElement>(null);
 
-    // Fonction utilitaire pour formater minutes -> XhYY
+    // ✅ Détection de la position
+    useEffect(() => {
+        if (showPopover && buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect();
+            const windowHeight = window.innerHeight;
+            const spaceBelow = windowHeight - rect.bottom;
+
+            // Si moins de 400px en dessous, ouvrir vers le haut
+            setOpenUpward(spaceBelow < 400);
+        }
+    }, [showPopover]);
+
     const formatDuration = (totalMinutes: number) => {
         if (!totalMinutes) return '0h00';
         const hours = Math.floor(totalMinutes / 60);
@@ -18,17 +31,14 @@ export function WeekSummaryCell({ stats }: WeekSummaryCellProps) {
         return `${hours}h${minutes.toString().padStart(2, '0')}`;
     };
 
-    // Calcul du pourcentage basé sur le TEMPS (et non plus le nombre de séances)
     const durationPercentage = stats.plannedDuration > 0
-        ? Math.min((stats.actualDuration / stats.plannedDuration) * 100, 100) // Cap à 100% visuellement
+        ? Math.min((stats.actualDuration / stats.plannedDuration) * 100, 100)
         : 0;
-
-    // Calcul de l'écart (optionnel, pour montrer si on est en avance/retard)
-    // const delta = stats.actualDuration - stats.plannedDuration;
 
     return (
         <div className="relative h-full w-full">
             <button
+                ref={buttonRef}
                 onClick={() => setShowPopover(!showPopover)}
                 className="w-full h-full p-2 flex flex-col justify-between hover:bg-slate-800/40 transition-all duration-200 group text-left"
             >
@@ -42,10 +52,8 @@ export function WeekSummaryCell({ stats }: WeekSummaryCellProps) {
 
                 {/* Main Stats Block */}
                 <div className="flex flex-col gap-3 py-1">
-
-                    {/* TSS Score (Indicateur d'intensité) */}
                     <div className="flex items-end gap-1.5">
-                        <div className="text-2xl  text-white leading-none tracking-tight">
+                        <div className="text-2xl text-white leading-none tracking-tight">
                             {Math.round(stats.plannedTSS)}
                         </div>
                         <div className="text-[10px] font-medium text-slate-500 mb-0.5 flex items-center gap-0.5">
@@ -53,9 +61,7 @@ export function WeekSummaryCell({ stats }: WeekSummaryCellProps) {
                         </div>
                     </div>
 
-                    {/* Section Progression Temporelle (Indicateur de volume) */}
                     <div className="w-full space-y-1.5">
-                        {/* Barre de progression */}
                         <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden border border-slate-700/50">
                             <div
                                 className={`h-full rounded-full transition-all duration-500 ease-out ${durationPercentage >= 100
@@ -66,7 +72,6 @@ export function WeekSummaryCell({ stats }: WeekSummaryCellProps) {
                             />
                         </div>
 
-                        {/* Labels de temps : Fait / Prévu */}
                         <div className="flex items-center justify-between text-[10px] leading-none">
                             <span className={`font-semibold ${stats.actualDuration > 0 ? 'text-blue-200' : 'text-slate-500'}`}>
                                 {formatDuration(stats.actualDuration)}
@@ -78,21 +83,19 @@ export function WeekSummaryCell({ stats }: WeekSummaryCellProps) {
                     </div>
                 </div>
 
-                {/* Footer discret (nombre de séances) */}
                 <div className="mt-auto pt-2 flex items-center gap-1 text-[9px] text-slate-600 font-medium border-t border-slate-800/50 w-full">
                     <div className={`w-1.5 h-1.5 rounded-full ${stats.completed >= stats.total ? 'bg-emerald-500/50' : 'bg-slate-700'}`} />
                     {stats.completed}/{stats.total} séances
                 </div>
             </button>
 
-            {/* Popover */}
+            {/* ✅ POPUP avec ancrage conditionnel */}
             {showPopover && (
-                <div className="absolute right-full top-0 z-50 mr-2">
-                    <WeekStatsPopover
-                        stats={stats}
-                        onClose={() => setShowPopover(false)}
-                    />
-                </div>
+                <WeekStatsPopover
+                    stats={stats}
+                    onClose={() => setShowPopover(false)}
+                    openUpward={openUpward}
+                />
             )}
         </div>
     );

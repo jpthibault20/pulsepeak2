@@ -36,7 +36,13 @@ export function CalendarGrid({
                     cycling: 0,
                     running: 0,
                     swimming: 0
-                } as Record<string, number> // 'as' permet un peu de souplesse si d'autres sports arrivent
+                } as Record<string, number>, // 'as' permet un peu de souplesse si d'autres sports arrivent
+                // ✅ NOUVEAU : On initialise aussi les durées cumulées
+                sportDuration: {
+                    cycling: 0,
+                    running: 0,
+                    swimming: 0
+                } as Record<string, number>
             };
 
             week.forEach(date => {
@@ -58,6 +64,17 @@ export function CalendarGrid({
                     } else {
                         // Cas où un sport inconnu arrive (fallback)
                         stats.sportBreakdown[sport] = 1;
+                    }
+
+                    // ✅ NOUVEAU : On calcule aussi les durées cumulées
+                    if (stats.sportDuration[sport] !== undefined) {
+                        stats.sportDuration[sport] += workout?.completedData?.actualDurationMinutes ?? 0;
+                    }
+                    // Stats Réalisées
+                    if (workout.status === 'completed' && workout.completedData) {
+                        stats.completed++;
+                        stats.actualDuration += workout.completedData.actualDurationMinutes ?? 0;
+                        stats.distance += workout.completedData.distanceKm ?? 0;
                     }
 
                     if (workout.status === 'completed' && workout.completedData) {
@@ -120,7 +137,7 @@ export function CalendarGrid({
                                         key={dateKey}
                                         className={`
                                             min-h-[120px] relative transition-colors duration-200
-                                            ${!isCurrentMonth ? 'bg-slate-950/60' : 'bg-slate-900 hover:bg-slate-800'}
+                                            ${!isCurrentMonth ? 'bg-slate-950/60 opacity-50' : 'bg-slate-900 hover:bg-slate-800'}
                                             ${isToday ? 'ring-inset ring-1 ring-blue-500/30 bg-blue-500/5' : ''}
                                         `}
                                     >

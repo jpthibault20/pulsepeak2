@@ -154,6 +154,7 @@ FORMAT DE RÉPONSE :
 
     const userPrompt = `
     PROFIL ATHLÈTE:
+    - Sport pratiqué: ${profile.sports.join(', ')}
     - Niveau: ${profile.experience}
     - FTP (Vélo): ${profile.ftp}W
     - Poids: ${profile.weight || '?'}kg

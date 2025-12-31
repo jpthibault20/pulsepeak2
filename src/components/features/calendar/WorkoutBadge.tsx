@@ -1,5 +1,9 @@
 import React from 'react';
-import { Zap, CheckCircle2, XCircle, Bike, Footprints, Waves, Dumbbell, Activity } from 'lucide-react';
+import {
+    Clock, Zap, Check, X,
+    Bike, Footprints, Waves, Dumbbell, Activity,
+    Home, Sun
+} from 'lucide-react';
 import type { Workout } from '@/lib/data/type';
 
 interface WorkoutBadgeProps {
@@ -8,145 +12,125 @@ interface WorkoutBadgeProps {
     isCompact?: boolean;
 }
 
-// 1. Définition précise du type pour le style
-type SportStyleConfig = {
-    icon: React.ElementType; // On remplace 'any' par React.ElementType (le type d'un composant)
-    color: string;
-    bg: string;
-    border: string;
-};
-
-// 2. Configuration utilisant le type défini
-const SPORT_CONFIG: Record<string, SportStyleConfig> = {
-    cycling: {
-        icon: Bike,
-        color: 'text-blue-400',
-        bg: 'bg-blue-500/10',
-        border: 'border-l-blue-500'
-    },
-    running: {
-        icon: Footprints,
-        color: 'text-emerald-400',
-        bg: 'bg-emerald-500/10',
-        border: 'border-l-emerald-500'
-    },
-    swimming: {
-        icon: Waves,
-        color: 'text-cyan-400',
-        bg: 'bg-cyan-500/10',
-        border: 'border-l-cyan-500'
-    },
-    strength: {
-        icon: Dumbbell,
-        color: 'text-purple-400',
-        bg: 'bg-purple-500/10',
-        border: 'border-l-purple-500'
-    },
-    default: {
-        icon: Activity,
-        color: 'text-slate-400',
-        bg: 'bg-slate-700/30',
-        border: 'border-l-slate-500'
-    }
+// 1. Configuration des styles par Sport (Couleur + Icone)
+const SPORT_CONFIG: Record<string, { icon: React.ElementType, color: string, bg: string }> = {
+    cycling: { icon: Bike, color: 'text-sky-400', bg: 'bg-sky-500' },
+    running: { icon: Footprints, color: 'text-orange-400', bg: 'bg-orange-500' },
+    swimming: { icon: Waves, color: 'text-cyan-400', bg: 'bg-cyan-500' },
+    strength: { icon: Dumbbell, color: 'text-purple-400', bg: 'bg-purple-500' },
+    default: { icon: Activity, color: 'text-slate-400', bg: 'bg-slate-500' }
 };
 
 export function WorkoutBadge({ workout, onClick, isCompact = false }: WorkoutBadgeProps) {
-    // Sécurisation de la clé sport
-    const sportKey = (workout.sportType || '').toLowerCase();
+    // --- Extraction des données ---
+    const sportKey = workout.sportType?.toLowerCase() || 'default';
+    const config = SPORT_CONFIG[sportKey] || SPORT_CONFIG.default;
+    const SportIcon = config.icon;
 
-    // Recherche intelligente de la configuration (match partiel, ex: "road cycling" -> "cycling")
-    const configKey = Object.keys(SPORT_CONFIG).find(k => sportKey.includes(k) && k !== 'default') || 'default';
-
-    const style = SPORT_CONFIG[configKey];
-    const Icon = style.icon;
-
-    // Formatage de la durée
-    const hours = Math.floor(workout.plannedData.durationMinutes / 60);
-    const mins = workout.plannedData.durationMinutes % 60;
-    const durationLabel = hours > 0
-        ? `${hours}h${mins > 0 ? mins.toString().padStart(2, '0') : ''}`
-        : `${mins}m`;
-
-    const tss = workout.plannedData.plannedTSS ?? 0;
-    const isDone = workout.status === 'completed';
+    const isIndoor = workout.mode?.toLowerCase() === 'indoor';
+    const isCompleted = workout.status === 'completed';
     const isMissed = workout.status === 'missed';
 
-    // --- RENDU COMPACT ---
-    if (isCompact) {
-        return (
-            <div
-                onClick={onClick}
-                className={`
-          flex items-center gap-3 p-2 rounded-md
-          hover:bg-slate-800 transition-colors cursor-pointer group
-          border border-transparent hover:border-slate-700
-        `}
-            >
-                <div className={`p-1.5 rounded-full ${style.bg} ${style.color}`}>
-                    <Icon size={14} />
-                </div>
-                <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-200 truncate group-hover:text-white">
-                        {workout.title || workout.workoutType}
-                    </p>
-                    <p className="text-xs text-slate-500 flex items-center gap-2">
-                        <span>{durationLabel}</span>
-                        {tss > 0 && <span className="text-slate-600">• TSS {tss}</span>}
-                    </p>
-                </div>
-                {isDone && <CheckCircle2 size={16} className="text-emerald-500" />}
-                {isMissed && <XCircle size={16} className="text-red-500/50" />}
-            </div>
-        );
+    const duration = workout.plannedData?.durationMinutes || 0;
+    const tss = workout.plannedData?.plannedTSS;
+
+    // --- Style dynamique du conteneur ---
+    // Si manqué : fond rougeatre très léger + bordure rouge
+    // Si fait : fond vert très léger
+    let containerStyle = "border-l-2 bg-slate-800 border-slate-700 hover:border-slate-500 hover:bg-slate-750";
+
+    if (isCompleted) {
+        containerStyle = "border-l-2 border-emerald-500 bg-emerald-950/10 hover:bg-emerald-950/20";
+    } else if (isMissed) {
+        containerStyle = "border-l-2 border-red-500 bg-red-950/10 hover:bg-red-950/20";
+    } else {
+        // En attente : on utlise la couleur du sport pour la bordure gauche
+        containerStyle = `border-l-2 border-blue-500 bg-slate-800 hover:bg-slate-750`;
     }
 
-    // --- RENDU CARTE CLASSIQUE ---
     return (
         <div
             onClick={onClick}
             className={`
-        relative overflow-hidden rounded-r-md rounded-l-xs
-        bg-slate-800/80 hover:bg-slate-800 border-y border-r border-slate-700/50
-        border-l-[3px] ${style.border}
-        p-2 cursor-pointer transition-all duration-200
-        hover:shadow-lg hover:shadow-black/20 hover:translate-x-0.5
-        group
-      `}
+                relative flex flex-col gap-1
+                w-full rounded-r-md shadow-sm transition-all duration-200 cursor-pointer
+                overflow-hidden group
+                ${containerStyle}
+                ${isCompact ? 'p-1.5' : 'p-2'}
+                mb-1.5
+            `}
         >
-            {/* Header : Titre et Statut */}
-            <div className="flex justify-between items-start mb-1.5 gap-2">
-                <h4 className={`
-          text-[11px] font-semibold leading-tight line-clamp-2
-          ${isDone ? 'text-slate-200  decoration-slate-600' : 'text-slate-400'}
-        `}>
-                    {workout.workoutType}
-                </h4>
+            {/* --- EN-TÊTE : Icone Sport + Titre + Badge Indoor --- */}
+            <div className="flex items-start justify-between gap-1.5">
+                <div className="flex items-center gap-2 min-w-0">
+                    {/* Icône Sport (Colorée) */}
+                    <div className={`shrink-0 ${config.color} opacity-90`}>
+                        <SportIcon size={isCompact ? 13 : 15} strokeWidth={2.5} />
+                    </div>
 
-                <div className="shrink-0">
-                    {isDone && <CheckCircle2 size={14} className="text-emerald-500" />}
-                    {isMissed && <XCircle size={14} className="text-red-400/60" />}
+                    {/* Titre tronqué */}
+                    <span className={`truncate font-medium text-slate-200 ${isCompact ? 'text-[10px]' : 'text-xs'}`}>
+                        {workout.title}
+                    </span>
+                </div>
+
+                {/* --- BADGE INDOOR / OUTDOOR --- */}
+                {/* C'est ici que l'UI fait la différence : une petite pilule visuelle */}
+                <div
+                    title={isIndoor ? "Indoor / Home Trainer" : "Extérieur"}
+                    className={`
+                        shrink-0 flex items-center justify-center rounded-sm px-1 py-0.5
+                        text-[9px] font-bold uppercase tracking-wider border
+                        ${isIndoor
+                            ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20'
+                            : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                        }
+                    `}
+                >
+                    {isIndoor ? (
+                        <Home size={10} className="mr-0.5" />
+                    ) : (
+                        <Sun size={10} className="mr-0.5" />
+                    )}
                 </div>
             </div>
 
-            {/* Footer : Métriques */}
-            <div className="flex items-center justify-between text-[10px] text-slate-400">
-                <div className="flex items-center gap-2">
-                    <div className={`flex items-center gap-1 ${style.color}`}>
-                        <Icon size={12} />
-                        <span className="font-medium">{durationLabel}</span>
+            {/* --- LIGNE DE DÉTAILS (Temps, TSS, Statut) --- */}
+            {!isCompact && (
+                <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1">
+
+                    {/* Groupe Metrics */}
+                    <div className="flex items-center gap-3">
+                        {/* Temps */}
+                        <div className="flex items-center gap-1 hover:text-slate-300 transition-colors">
+                            <Clock size={11} />
+                            <span>{duration}&apos;</span>
+                        </div>
+
+                        {/* TSS (Affiché seulement si > 0) */}
+                        {tss ? (
+                            <div className="flex items-center gap-1 hover:text-yellow-500/80 transition-colors">
+                                <Zap size={11} className={isCompleted ? "text-yellow-600" : "text-slate-500"} />
+                                <span>{tss}</span>
+                            </div>
+                        ) : null}
+                    </div>
+
+                    {/* Indicateur de Statut (Icone seule) */}
+                    <div>
+                        {isCompleted && (
+                            <div className="flex items-center gap-1 text-emerald-500 bg-emerald-500/10 px-1.5 rounded-full">
+                                <Check size={10} strokeWidth={3} />
+                            </div>
+                        )}
+                        {isMissed && (
+                            <div className="flex items-center text-red-500 bg-red-500/10 px-1 rounded-full">
+                                <X size={10} strokeWidth={3} />
+                            </div>
+                        )}
                     </div>
                 </div>
-
-                {tss > 0 && (
-                    <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
-                        <Zap size={10} className="text-yellow-500" fill="currentColor" />
-                        <span>{tss}</span>
-                    </div>
-                )}
-            </div>
-
-            {/* Effet "Glass" au survol */}
-            <div className="absolute inset-0 pointer-events-none bg-white/0 group-hover:bg-white/2 transition-colors" />
+            )}
         </div>
     );
 }

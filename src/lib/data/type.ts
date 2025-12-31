@@ -72,9 +72,12 @@ export interface PowerZones {
   z7: PowerZone; // Neuromusculaire
 }
 
+export type SportKey = 'cycling' | 'running' | 'swimming';
+
 // Définition de l'interface pour le profil athlète
 export interface Profile {
   name: string;
+  sports: SportKey[];
   weight?: number;
   experience: 'Débutant' | 'Intermédiaire' | 'Avancé' | string;
   ftp: number;
