@@ -30,6 +30,25 @@ function generateWorkoutId(date: string, sport: SportType): string {
 /**
  * Génère un plan d'entraînement complet via l'API Gemini.
  */
+// On définit l'interface de ce que l'IA va nous renvoyer (Flat Structure)
+interface RawAIWorkout {
+    date: string;
+    sport: 'cycling' | 'running' | 'swimming';
+    title: string;
+    type: string;
+    duration: number; // en minutes
+    tss: number;
+    mode: 'Outdoor' | 'Indoor';
+    target_power: number | null;      // Spécifique vélo
+    target_pace: string | null;       // Spécifique course/natation (ex: "5:30/km")
+    target_hr: number | null;         // Universel
+    description_outdoor: string;
+    description_indoor: string;
+}
+
+/**
+ * Génère un plan d'entraînement (Compatible Multisport & Multi-séance)
+ */
 export async function generatePlanFromAI(
     profile: Profile,
     history: string,
@@ -43,9 +62,7 @@ export async function generatePlanFromAI(
         throw new Error("GEMINI_API_KEY is not set.");
     }
 
-    console.log(`Appel à l'API Gemini...`);
-
-    // --- Logique de Périodisation ---
+    // --- 1. Calcul de la durée du bloc ---
     let startD = new Date();
     if (startDateInput) {
         startD = new Date(startDateInput);
@@ -53,76 +70,88 @@ export async function generatePlanFromAI(
         startD.setDate(startD.getDate() + 1);
     }
 
-    let numDays = 28; // 4 semaines par défaut
+    let numDays = 28; // Défaut 4 semaines
+    if (blockFocus === 'Semaine de Tests (FTP, VO2max)') numDays = 7;
+    else if (blockFocus === 'Personnalisé' && numWeeks) numDays = numWeeks * 7;
 
-    if (blockFocus === 'Semaine de Tests (FTP, VO2max)') {
-        numDays = 7;
-    }
-
-    const daysMap = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+    
+    // --- 2. Construction du Prompt ---
+    
+    // On récupère les contraintes de dispo
+    const daysMap = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
     let dateConstraints = "";
-
-    // TODO: Multisport Evolution - Calculer la dispo par sport si nécessaire à l'avenir
-    let totalWeeklyMinutesAvailable = 0;
+    
+    // Pour l'instant on regarde la dispo globale, mais on prépare le terrain
     if (profile.weeklyAvailability) {
-        totalWeeklyMinutesAvailable = Object.values(profile.weeklyAvailability).reduce((acc, val) => acc + val, 0);
-    }
-    const targetHoursFromAvailability = Math.floor(totalWeeklyMinutesAvailable / 60);
+        for (let i = 0; i < numDays; i++) {
+            const d = new Date(startD);
+            d.setDate(d.getDate() + i);
+            const dayIndex = d.getDay(); 
+            // Attention: getDay() renvoie 0=Dimanche, 1=Lundi. 
+            // Ton mapping daysMap est 0=Lundi. Il faut aligner ça. 
+            // JS standard: 0=Sun, 1=Mon...6=Sat.
+            // Si ton objet profile utilise "Lundi",... il faut convertir.
+            // Supposons ici une conversion simple pour matcher tes clés:
+            const standardDays = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+            const dayName = standardDays[dayIndex]; // Clé exacte dans profile.weeklyAvailability
+            
+            const availability = profile.weeklyAvailability[dayName] || 0;
+            const dateStr = d.toISOString().split('T')[0];
 
-    for (let i = 0; i < numDays; i++) {
-        const d = new Date(startD);
-        d.setDate(d.getDate() + i);
-        const dayIndex = d.getDay();
-        const dayName = daysMap[dayIndex];
-        const availability = profile.weeklyAvailability[dayName];
-        const dateStr = d.toISOString().split('T')[0];
-
-        // TODO: Multisport Evolution - Préciser ici si un jour est dédié au Running ou Swimming
-        dateConstraints += `- ${dateStr} (${dayName}): Max ${availability} minutes. ${availability === 0 ? "INTERDICTION DE ROULER (Repos)" : ""}\n`;
+            if (availability === 0) {
+                dateConstraints += `- ${dateStr} (${dayName}): REPOS OBLIGATOIRE (0 min dispo).\n`;
+            } else {
+                dateConstraints += `- ${dateStr} (${dayName}): Max ${availability} min dispo.\n`;
+            }
+        }
     }
 
     const startDateString = startD.toISOString().split('T')[0];
     const finalFocus = blockFocus === 'Personnalisé' ? customTheme : blockFocus;
-    const blockDuration = blockFocus === 'Semaine de Tests (FTP, VO2max)' ? "7 jours" :
-        blockFocus == 'Personnalisé' ? `${numWeeks} semaines` : "4 semaines";
 
-    // --- Contextes ---
-    let zonesContext = "ZONES: Utilise les % FTP standard.";
+    // Contexte Zones
+    let zonesContext = "ZONES: Utilise les % FTP/VMA standard.";
     if (profile.zones) {
         const z = profile.zones;
-        zonesContext = `ZONES ATHLÈTE (W): Z1 <${z.z1.max}, Z2 ${z.z2.min}-${z.z2.max}, Z3 ${z.z3.min}-${z.z3.max}, Z4 ${z.z4.min}-${z.z4.max}, Z5 ${z.z5.min}-${z.z5.max}`;
+        zonesContext = `ZONES CYCLISME (Watts): Z2 ${z.z2.min}-${z.z2.max}, Z4 (Seuil) ${z.z4.min}-${z.z4.max}.`;
     }
 
-    const systemPrompt = "Tu es Entraîneur de Cyclisme 'World Tour'. Tu réponds toujours UNIQUEMENT au format JSON strict.";
+    // Prompt système orienté Coach Triathlon/Cyclisme
+    const systemPrompt = "Tu es un entraîneur Expert (Cyclisme & Triathlon). Tu génères des plans d'entraînement structurés au format JSON strict.";
 
     const userPrompt = `
-    PROFIL: Niveau ${profile.experience}, FTP ${profile.ftp}W, Poids ${profile.weight || '?'}kg.
-    Volume hebdo max: ~${targetHoursFromAvailability}h.
-    
+    PROFIL ATHLÈTE:
+    - Niveau: ${profile.experience}
+    - FTP (Vélo): ${profile.ftp}W
+    - Poids: ${profile.weight || '?'}kg
     ${zonesContext}
+
+    HISTORIQUE RÉCENT:
+    ${history}
+
+    COMMANDE:
+    - Date de début du plan: ${startDateString}
+    - Durée totale: ${numDays} jours
+    - Objectif du bloc: "${finalFocus}"
+
+    RÈGLES DE GÉNÉRATION:
+    1. **Multisport**: Pour l'instant, concentre-toi sur le CYCLISME (sauf instruction contraire explicite dans l'objectif), mais tu as le droit de proposer du Running ou Swimming si pertinent pour la récupération ou le cross-training.
+    2. **Plusieurs séances**: Tu peux mettre 2 séances le même jour (ex: Matin et Soir) si le volume horaire le permet.
+    3. **Jours de Repos**: Si un jour est "Repos", NE GÉNÈRE PAS d'objet dans le tableau JSON pour ce jour-là. (Le tableau ne doit contenir que les séances actives).
+    4. **Contraintes**: Respecte scrupuleusement les disponibilités ci-dessous.
     
-    HISTORIQUE: ${history}
-    
-    DEMANDE:
-    - Début: ${startDateString}
-    - Durée: ${blockDuration}
-    - Thème: "${finalFocus}"
-    
-    MISSION:
-    1. Génère un plan jour par jour (Sport: CYCLISME uniquement pour l'instant).
-    2. Description Indor et Outdoor avec les WATTS cibles.
-    
-    RÈGLES:
-    - Durée en MINUTES.
-    - Pas de séance les jours de repos (dispo = 0).
-    
-    CONTRAINTES:
+    DISPONIBILITÉS & CONTRAINTES DATE:
     ${dateConstraints}
-    
-    FORMAT JSON ATTENDU (Array 'workouts'):
+
+    FORMAT JSON ATTENDU:
+    Renvoie un objet avec une 'synthesis' (résumé texte) et un tableau 'workouts'.
+    Chaque workout doit avoir:
+    - sport: "cycling", "running" ou "swimming"
+    - target_power: (null si running/swimming)
+    - target_pace: (null si cycling, ex: "5:00/km")
     `;
 
-    // On demande un format plat à l'IA pour simplifier la génération, on transformera en structure complexe après
+    // --- 3. Définition du Schéma JSON pour Gemini ---
     const responseSchema = {
         type: "OBJECT",
         properties: {
@@ -132,16 +161,23 @@ export async function generatePlanFromAI(
                 "items": {
                     "type": "OBJECT",
                     "properties": {
-                        "date": { "type": "STRING" },
+                        "date": { "type": "STRING", "description": "YYYY-MM-DD" },
+                        "sport": { "type": "STRING", "enum": ["cycling", "running", "swimming"] },
                         "title": { "type": "STRING" },
-                        "type": { "type": "STRING" }, // Deviendra workoutType
-                        "duration": { "type": "NUMBER" }, // Deviendra plannedData.durationMinutes
-                        "tss": { "type": "NUMBER" }, // Deviendra plannedData.plannedTSS
+                        "type": { "type": "STRING", "description": "Ex: Endurance, Intervals, Threshold, Recovery" },
+                        "duration": { "type": "NUMBER", "description": "Durée en minutes" },
+                        "tss": { "type": "NUMBER", "nullable": true },
                         "mode": { "type": "STRING", "enum": ["Outdoor", "Indoor"] },
-                        "description_outdoor": { "type": "STRING" }, // Deviendra plannedData.descriptionOutdoor
-                        "description_indoor": { "type": "STRING" }   // Deviendra plannedData.descriptionIndoor
+                        
+                        // Métriques cibles planifiées
+                        "target_power": { "type": "NUMBER", "nullable": true, "description": "Watts cibles (moyenne ou intervalle clé)" },
+                        "target_pace": { "type": "STRING", "nullable": true, "description": "Allure cible (Min/km ou min/100m)" },
+                        "target_hr": { "type": "NUMBER", "nullable": true, "description": "BPM cible moyen" },
+
+                        "description_outdoor": { "type": "STRING" },
+                        "description_indoor": { "type": "STRING" }
                     },
-                    "required": ["date", "title", "type", "duration", "tss", "mode", "description_outdoor", "description_indoor"]
+                    "required": ["date", "sport", "title", "type", "duration", "mode", "description_outdoor", "description_indoor"]
                 }
             }
         },
@@ -154,26 +190,50 @@ export async function generatePlanFromAI(
         generationConfig: { responseMimeType: "application/json", responseSchema: responseSchema },
     };
 
+    console.log("Envoi à Gemini...");
+    
+    // Appel API
     const rawResponse = await callGeminiAPI(payload) as { synthesis: string, workouts: RawAIWorkout[] };
 
-    // Transformation de la réponse de l'IA vers la nouvelle structure de données (Workout[])
-    const structuredWorkouts: Workout[] = rawResponse.workouts.map((w) => ({
-        id: generateWorkoutId(w.date, 'cycling'),
-        date: w.date,
-        sportType: 'cycling',
-        title: w.title,
-        workoutType: w.type, // TS sait maintenant que w.type existe
-        mode: w.mode,
-        status: 'pending',
-        plannedData: {
-            durationMinutes: w.duration,
-            plannedTSS: w.tss,
-            descriptionOutdoor: w.description_outdoor,
-            descriptionIndoor: w.description_indoor,
-            distanceKm: 0
-        },
-        completedData: null
-    }));
+    // --- 4. Transformation et Nettoyage des données ---
+    
+    const structuredWorkouts: Workout[] = rawResponse.workouts
+        // Sécurité 1: On filtre les objets invalides ou les jours de repos explicites si l'IA s'est trompée
+        .filter(w => w.duration > 0 && w.title.toLowerCase() !== "repos")
+        .map((w, index) => {
+            // Génération ID unique : Type + Date + RandomString (pour gérer le multi-séance le même jour)
+            // ex: cycling_2023-10-10_abc12
+            const uniqueSuffix = Math.random().toString(36).substring(2, 7);
+            const id = `${w.sport}_${w.date.replace(/-/g, '')}_${uniqueSuffix}`;
+
+            return {
+                id: id,
+                date: w.date,
+                sportType: w.sport, // 'cycling' | 'running' | 'swimming'
+                title: w.title,
+                workoutType: w.type,
+                mode: w.mode,
+                status: 'pending',
+                
+                // On peuple la nouvelle structure PlannedData
+                plannedData: {
+                    durationMinutes: w.duration,
+                    plannedTSS: w.tss || null,
+                    distanceKm: null, // L'IA ne le devine pas forcément bien, on laisse null
+                    
+                    // Mapping des cibles selon le sport
+                    targetPowerWatts: w.sport === 'cycling' ? w.target_power : null,
+                    targetPaceMinPerKm: w.sport !== 'cycling' ? w.target_pace : null,
+                    targetHeartRateBPM: w.target_hr || null,
+
+                    descriptionOutdoor: w.description_outdoor,
+                    descriptionIndoor: w.description_indoor,
+                },
+                
+                // Pas de données réalisées pour le futur
+                completedData: null 
+            };
+        });
 
     return {
         synthesis: rawResponse.synthesis,
@@ -181,40 +241,6 @@ export async function generatePlanFromAI(
     };
 }
 
-// Fonction générique pour appeler l'API
-async function callGeminiAPI(payload: unknown) {
-    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set.");
-
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-        try {
-            const response = await fetch(`${API_URL}?key=${GEMINI_API_KEY}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                const errorBody = await response.text();
-                throw new Error(`HTTP error! status: ${response.status}. ${errorBody.substring(0, 200)}`);
-            }
-
-            const data = await response.json();
-            const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-            if (!jsonText) throw new Error("AI response empty.");
-
-            return JSON.parse(jsonText);
-
-        } catch (error) {
-            if (attempt < MAX_RETRIES - 1) {
-                console.warn(`Tentative ${attempt + 1} échouée. Retry...`);
-                await delay(Math.pow(2, attempt) * 1000);
-            } else {
-                throw error;
-            }
-        }
-    }
-}
 
 /**
  * Génère une SEULE séance de remplacement.
@@ -318,4 +344,39 @@ export async function generateSingleWorkoutFromAI(
         },
         completedData: null
     } as Workout;
+}
+
+// Fonction générique pour appeler l'API
+async function callGeminiAPI(payload: unknown) {
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set.");
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        try {
+            const response = await fetch(`${API_URL}?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}. ${errorBody.substring(0, 200)}`);
+            }
+
+            const data = await response.json();
+            const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (!jsonText) throw new Error("AI response empty.");
+
+            return JSON.parse(jsonText);
+
+        } catch (error) {
+            if (attempt < MAX_RETRIES - 1) {
+                console.warn(`Tentative ${attempt + 1} échouée. Retry...`);
+                await delay(Math.pow(2, attempt) * 1000);
+            } else {
+                throw error;
+            }
+        }
+    }
 }
