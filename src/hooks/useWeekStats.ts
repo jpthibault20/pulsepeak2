@@ -12,13 +12,11 @@ export interface WeekStats {
     sportBreakdown: Record<SportType, number>; // Nombre de séances
     sportDuration: Record<SportType, number>;  // ✅ NOUVEAU: Durée cumulée (minutes)
 }
-
 export function useWeekStats(
     weekDays: (Date | null)[],
     scheduleData: Schedule
 ): WeekStats {
     return useMemo(() => {
-        // 1. Initialiser la structure avec sportDuration
         const stats: WeekStats = {
             plannedTSS: 0,
             plannedDuration: 0,
@@ -27,44 +25,60 @@ export function useWeekStats(
             completed: 0,
             total: 0,
             sportBreakdown: { cycling: 0, running: 0, swimming: 0 },
-            sportDuration: { cycling: 0, running: 0, swimming: 0 } // ✅ Init à 0
+            sportDuration: { cycling: 0, running: 0, swimming: 0 }
         };
 
-        weekDays.forEach(date => {
-            if (!date) return;
+        const uniqueDates = new Set(
+            weekDays
+                .filter((date): date is Date => date !== null)
+                .map(date => formatDateKey(date))
+        );
 
-            const dateKey = formatDateKey(date);
-            const workouts = scheduleData.workouts.filter(w => w.date === dateKey);
+        console.log('🔍 DEBUG - Dates de la semaine:', Array.from(uniqueDates));
 
-            workouts.forEach(workout => {
-                // Stats globales prévues
-                stats.total++;
-                stats.plannedTSS += workout.plannedData.plannedTSS ?? 0;
-                stats.plannedDuration += workout.plannedData.durationMinutes;
+        scheduleData.workouts.forEach(workout => {
+            if (!uniqueDates.has(workout.date)) return;
+
+            stats.total++;
+            stats.plannedTSS += workout.plannedData.plannedTSS ?? 0;
+            stats.plannedDuration += workout.plannedData.durationMinutes;
+
+            if (stats.sportBreakdown[workout.sportType] !== undefined) {
+                stats.sportBreakdown[workout.sportType]++;
+            } else {
+                stats.sportBreakdown[workout.sportType] = 1;
+                stats.sportDuration[workout.sportType] = 0;
+            }
+
+            if (workout.status === 'completed' && workout.completedData) {
+                stats.completed++;
                 
-                // Compte des séances par type
-                // (On utilise (stats.sportBreakdown as any) si TypeScript rale sur des clés dynamiques manquantes, 
-                // mais idéalement SportType correspond aux clés)
-                if (stats.sportBreakdown[workout.sportType] !== undefined) {
-                    stats.sportBreakdown[workout.sportType]++;
+                // 🐛 DEBUG CRITIQUE
+                console.log('🔥 Workout complété:', {
+                    date: workout.date,
+                    sport: workout.sportType,
+                    actualDurationMinutes: workout.completedData.actualDurationMinutes,
+                    AVANT_actualDuration: stats.actualDuration,
+                });
+
+                stats.actualDuration += workout.completedData.actualDurationMinutes;
+
+                console.log('✅ APRES_actualDuration:', stats.actualDuration);
+
+                stats.distance += workout.completedData.distanceKm ?? 0;
+
+                if (stats.sportDuration[workout.sportType] !== undefined) {
+                    stats.sportDuration[workout.sportType] += workout.completedData.actualDurationMinutes;
                 } else {
-                     // Fallback si un nouveau sport apparaît
-                     stats.sportBreakdown[workout.sportType] = 1;
-                     stats.sportDuration[workout.sportType] = 0;
+                    stats.sportDuration[workout.sportType] = workout.completedData.actualDurationMinutes;
                 }
+            }
+        });
 
-                // Stats Réalisées (Conditionnées au statut)
-                if (workout.status === 'completed' && workout.completedData) {
-                    stats.completed++;
-                    stats.actualDuration += workout.completedData.actualDurationMinutes;
-                    stats.distance += workout.completedData.distanceKm ?? 0;
-
-                    // ✅ AJOUT : Cumul des minutes réalisées par sport
-                    if (stats.sportDuration[workout.sportType] !== undefined) {
-                        stats.sportDuration[workout.sportType] += workout.completedData.actualDurationMinutes;
-                    } 
-                }
-            });
+        console.log('📊 STATS FINALES:', {
+            actualDuration: stats.actualDuration,
+            completed: stats.completed,
+            total: stats.total
         });
 
         return stats;
