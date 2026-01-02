@@ -64,5 +64,11 @@
     "sourceTests": [
       "15min"
     ]
+  },
+  "strava": {
+    "athleteId": 31596042,
+    "accessToken": "19d288d40bdda04210e6420d3f7df657b269fd99",
+    "refreshToken": "35180b31d539959a45bb305fff0171b412a106fc",
+    "expiresAt": 1767406585
   }
 }

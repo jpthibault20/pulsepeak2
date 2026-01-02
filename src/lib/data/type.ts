@@ -77,6 +77,7 @@ export type SportKey = 'cycling' | 'running' | 'swimming';
 // Définition de l'interface pour le profil athlète
 export interface Profile {
   name: string;
+  strava?: StravaConfig; 
   sports: SportKey[];
   weight?: number;
   experience: 'Débutant' | 'Intermédiaire' | 'Avancé' | string;
@@ -195,4 +196,13 @@ export interface Schedule {
   workouts: Workout[]; // NOUVEAU: C'est maintenant un tableau, plus un objet clé/valeur
   summary: string | null;
   lastGenerated: string | null;
+}
+
+
+// strava type 
+export interface StravaConfig {
+  athleteId: number;
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
 }

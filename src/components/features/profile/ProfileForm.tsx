@@ -2,7 +2,9 @@
 
 import React, { useState } from 'react';
 import {
-    User, Clock, Calculator, Target, Save, Zap, TrendingUp, ChevronDown
+    User, Clock, Calculator, Target, Save, Zap, TrendingUp, ChevronDown,
+    Link2,
+    Check
 } from 'lucide-react';
 import { Profile, PowerZones } from '@/lib/data/type';
 import { Card, Button } from '@/components/ui';
@@ -164,6 +166,43 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialProfileData, is
                             onChange={e => setFormData({ ...formData, weight: parseInt(e.target.value) })}
                             className="w-full h-11 bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                         />
+                    </div>
+                </div>
+
+                                {/* --- NOUVEAU BLOC: CONNEXION STRAVA --- */}
+                <div className="mb-6">
+                    <label className="block text-sm font-medium text-slate-400 mb-2">Comptes Connectés</label>
+                    <div className="bg-slate-900 border border-slate-700 rounded-lg p-3 flex items-center justify-between transition-colors hover:border-slate-600">
+                        <div className="flex items-center gap-3">
+                            {/* Logo Strava (SVG Inline pour qualité parfaite) */}
+                            <div className="w-10 h-10 bg-[#FC4C02] rounded-lg flex items-center justify-center text-white shrink-0 shadow-lg shadow-orange-900/20">
+                                <svg role="img" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                                    <title>Strava</title>
+                                    <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div className="text-white font-medium text-sm">Strava</div>
+                                <div className="text-xs text-slate-500">
+                                    {formData.strava ? "Compte connecté et actif" : "Synchronisez vos activités"}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {formData.strava ? (
+                            <div className="px-3 py-1.5 bg-green-500/10 border border-green-500/30 rounded text-green-400 text-xs font-bold flex items-center gap-1.5">
+                                <Check size={14} strokeWidth={3} />
+                                Connecté
+                            </div>
+                        ) : (
+                            <a 
+                                href="/api/strava/login"
+                                className="px-4 py-2 bg-[#FC4C02] hover:bg-[#E34402] text-white text-xs md:text-sm font-bold rounded shadow-md transition-all active:scale-95 flex items-center gap-2"
+                            >
+                                <Link2 size={16} className="text-white/80" />
+                                Connecter
+                            </a>
+                        )}
                     </div>
                 </div>
 

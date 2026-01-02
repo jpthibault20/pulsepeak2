@@ -1,5 +1,15 @@
 import type { CompletedData, FeedbackInput } from '@/lib/data/type';
 
+export type MonthName = typeof MONTH_NAMES[number];
+export type DayName = typeof DAY_NAMES_SHORT[number];
+
+export const MONTH_NAMES = [
+    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+] as const;
+
+export const DAY_NAMES_SHORT = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'] as const;
+
 export const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 };
@@ -86,17 +96,6 @@ export function createCompletedData(feedback: FeedbackInput): CompletedData {
       };
   }
 }
-
-export const MONTH_NAMES = [
-    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-] as const;
-
-export const DAY_NAMES_SHORT = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'] as const;
-
-// ✅ Exporter les types
-export type MonthName = typeof MONTH_NAMES[number];
-export type DayName = typeof DAY_NAMES_SHORT[number];
 
 export function formatDateKey(date: Date): string {
     const year = date.getFullYear();
