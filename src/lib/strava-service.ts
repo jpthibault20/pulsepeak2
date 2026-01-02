@@ -4,17 +4,7 @@ import { getProfile, updateProfileStravaData } from './profile-db';
 const STRAVA_CLIENT_ID = process.env.STRAVA_CLIENT_ID;
 const STRAVA_CLIENT_SECRET = process.env.STRAVA_CLIENT_SECRET;
 
-// Interface simple pour les activités (tu pourras l'enrichir plus tard)
-interface StravaActivity {
-    id: number;
-    name: string;
-    distance: number;
-    moving_time: number;
-    total_elevation_gain: number;
-    type: string;
-    start_date: string;
-    average_watts?: number;
-}
+
 
 /**
  * Cette fonction récupère un token valide.
@@ -71,37 +61,27 @@ async function getValidAccessToken() {
 /**
  * Fonction principale pour récupérer les dernières activités
  */
-export async function getRecentStravaActivities(perPage = 5): Promise<StravaActivity[]> {
-    try {
-        const accessToken = await getValidAccessToken();
+export async function getStravaActivities(after: number | null = null, perPage: number = 30) {
+  const accessToken = await getValidAccessToken();
+  
+  let url = `https://www.strava.com/api/v3/athlete/activities?per_page=${perPage}`;
+  
+  if (after) {
+    url += `&after=${after}`;
+  }
 
-        const response = await fetch(
-            `https://www.strava.com/api/v3/athlete/activities?per_page=${perPage}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-                // Important pour ne pas avoir de cache persistant lors du dev
-                cache: 'no-store'
-            }
-        );
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    next: { revalidate: 0 }, // Important: pas de cache ici car on veut du frais
+  });
 
-        if (!response.ok) {
-            throw new Error(`Erreur API Strava: ${response.statusText}`);
-        }
+  if (!res.ok) {
+    console.error("Erreur fetch activities:", res.statusText);
+    return [];
+  }
 
-        const activities: StravaActivity[] = await response.json();
-        return activities;
-
-    } catch (error) {
-        console.error("Erreur lors de la récupération des activités:", error);
-        return []; // Retourne un tableau vide en cas d'erreur pour ne pas casser l'UI
-    }
+  return res.json();
 }
-
-// lib/strava-service.ts
-
-// ... tes imports existants (getAccessToken, etc.)
 
 export async function getStravaActivityById(id: number) {
   const accessToken = await getValidAccessToken(); // Assure-toi d'utiliser ta fonction de token existante

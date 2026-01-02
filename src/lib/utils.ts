@@ -1,4 +1,4 @@
-import type { CompletedData, FeedbackInput } from '@/lib/data/type';
+import type { CompletedData, CompletedDataFeedback } from '@/lib/data/type';
 
 export type MonthName = typeof MONTH_NAMES[number];
 export type DayName = typeof DAY_NAMES_SHORT[number];
@@ -14,19 +14,32 @@ export const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 };
 
-export function createCompletedData(feedback: FeedbackInput): CompletedData {
+/**
+ * Convertit les données saisies manuellement (Feedback) en objet CompletedData structuré.
+ * Initialise les champs complexes (laps, source, map) avec des valeurs par défaut pour le mode manuel.
+ */
+export function createCompletedData(feedback: CompletedDataFeedback): CompletedData {
+  // 1. Base commune à tous les sports
   const baseData = {
     actualDurationMinutes: feedback.actualDuration,
     distanceKm: feedback.distance,
     perceivedEffort: feedback.rpe,
     notes: feedback.notes,
+    
+    // NOUVEAU : Champs obligatoires pour la compatibilité avec le type riche
+    source: { type: 'manual' as const }, 
+    laps: [], // Pas de tours détaillés en saisie manuelle
+    map: { polyline: null }, // Pas de carte en saisie manuelle
+    
     heartRate: {
       avgBPM: feedback.avgHeartRate ?? null,
-      maxBPM: null,
+      maxBPM: null, // Souvent inconnu en saisie rapide
+      zoneDistribution: [], // Donnée non disponible manuellement
     },
     caloriesBurned: feedback.calories ?? null,
   };
 
+  // 2. Logique spécifique par sport
   switch (feedback.sportType) {
     case 'cycling':
       return {
@@ -37,6 +50,7 @@ export function createCompletedData(feedback: FeedbackInput): CompletedData {
             avgPowerWatts: feedback.avgPower ?? null,
             normalizedPowerWatts: feedback.normalizedPower ?? null,
             maxPowerWatts: feedback.maxPower ?? null,
+            intensityFactor: null, // Calculable si on avait la FTP, mais laissé null ici
             avgCadenceRPM: feedback.avgCadence ?? null,
             maxCadenceRPM: feedback.maxCadence ?? null,
             elevationGainMeters: feedback.elevation ?? null,
@@ -59,8 +73,9 @@ export function createCompletedData(feedback: FeedbackInput): CompletedData {
             elevationGainMeters: feedback.elevation ?? null,
             avgCadenceSPM: feedback.avgCadence ?? null,
             maxCadenceSPM: feedback.maxCadence ?? null,
-            avgSpeedKmH: feedback.avgSpeed ?? null, // ✅ AJOUTÉ
-            maxSpeedKmH: feedback.maxSpeed ?? null, // ✅ AJOUTÉ
+            avgSpeedKmH: feedback.avgSpeed ?? null,
+            maxSpeedKmH: feedback.maxSpeed ?? null,
+            strideLength: null, // Donnée technique avancée (Strava/Garmin uniquement)
           },
           swimming: null,
         },
@@ -73,7 +88,7 @@ export function createCompletedData(feedback: FeedbackInput): CompletedData {
           cycling: null,
           running: null,
           swimming: {
-            avgPace100m: feedback.avgPace ?? null,
+            avgPace100m: feedback.avgPace ?? null, // Réutilisation du champ pace générique
             bestPace100m: null,
             strokeType: feedback.strokeType ?? null,
             avgStrokeRate: feedback.avgStrokeRate ?? null,
@@ -85,7 +100,7 @@ export function createCompletedData(feedback: FeedbackInput): CompletedData {
       };
 
     default:
-      // Fallback avec tous les metrics à null
+      // Fallback de sécurité
       return {
         ...baseData,
         metrics: {

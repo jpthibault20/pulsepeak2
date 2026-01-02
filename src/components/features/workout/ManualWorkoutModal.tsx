@@ -48,6 +48,14 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                 distanceKm: distance,
                 perceivedEffort: rpe,
                 notes: description,
+                source: {
+                    type: 'manual',
+                    fullJson: false
+                },
+                laps: [],
+                map: {
+                    polyline: null
+                },
                 heartRate: avgHeartRate ? {
                     avgBPM: avgHeartRate,
                     maxBPM: null
@@ -63,7 +71,8 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                         maxCadenceRPM: null,
                         elevationGainMeters: null,
                         avgSpeedKmH: distance && duration ? (distance / duration) * 60 : null,
-                        maxSpeedKmH: null
+                        maxSpeedKmH: null,
+                        intensityFactor: null
                     } : null,
                     running: sportType === 'running' ? {
                         avgPaceMinPerKm: null,

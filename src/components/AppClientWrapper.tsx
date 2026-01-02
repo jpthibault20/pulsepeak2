@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 
-// Import des Server Actions (pour les mises à jour futures)
+// Import des Server Actions
 import {
     saveAthleteProfile,
     generateNewPlan,
@@ -12,7 +12,8 @@ import {
     loadInitialData,
     addManualWorkout,
     deleteWorkout,
-    regenerateWorkout
+    regenerateWorkout,
+    syncStravaActivities,
 } from '@/app/actions/schedule';
 
 // Import des types
@@ -37,26 +38,23 @@ interface AppClientWrapperProps {
 export default function AppClientWrapper({ initialProfile, initialSchedule }: AppClientWrapperProps) {
 
     // --- State Management ---
-    // On détermine la vue de départ immédiatement grâce aux props
     const startView: View = initialProfile.name ? 'dashboard' : 'onboarding';
-
     const [view, setView] = useState<View>(startView);
 
-    // On initialise les états avec les données du serveur
     const [profile, setProfile] = useState<Profile | null>(initialProfile);
     const [schedule, setSchedule] = useState<Schedule | null>(initialSchedule);
-
     const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
+    
+    // Etats UI
     const [error, setError] = useState<string | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false); // <-- NOUVEL ETAT
 
     // --- Re-Fetch des données (Utile après une action de l'utilisateur) ---
     const refreshData = useCallback(async () => {
         try {
             setIsRefreshing(true);
-            // On recharge depuis le serveur pour être sûr d'avoir la DB à jour
             const { profile: profileData, schedule: scheduleData } = await loadInitialData();
-
             setProfile(profileData);
             setSchedule(scheduleData);
             setError(null);
@@ -68,7 +66,42 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
         }
     }, []);
 
-    // NOTE: Plus besoin de useEffect pour charger les données au démarrage !
+    // --- Strava Sync Handler ---
+    const handleSyncStrava = useCallback(async () => {
+        try {
+            setIsSyncing(true);
+            setError(null);
+
+            // 1. Appel Server Action qui récupère les activités Strava, les mappe 
+            // avec mapStravaToCompletedData et met à jour la DB
+            const result = await syncStravaActivities();
+
+            if (result.count) {
+                // 2. Si des nouvelles activités ont été trouvées/liées, on rafraichit l'affichage
+                if (result.count > 0) {
+                    await refreshData();
+                } else {
+                    // Optionnel : Notification "Pas de nouvelle activité"
+                    console.log("Strava : À jour");
+                }
+            } else {
+                setError("Erreur lors de la synchro Strava");
+            }
+
+        } catch (e) {
+            console.error('Erreur synchro Strava:', e);
+            setError('Impossible de synchroniser avec Strava.');
+        } finally {
+            setIsSyncing(false);
+        }
+    }, [refreshData]);
+
+        React.useEffect(() => {
+        if (initialProfile?.name) {
+            handleSyncStrava();
+        }
+    }, []);
+
 
     // --- Navigation Handler ---
     const handleViewChange = useCallback((view: View) => {
@@ -85,7 +118,6 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
     }, []);
 
     // --- Server Actions Handlers ---
-
     const handleGenerate = useCallback(async (
         blockFocus: string,
         customTheme: string | null,
@@ -93,7 +125,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
         numWeeks?: number
     ) => {
         try {
-            setIsRefreshing(true); // Feedback visuel immédiat
+            setIsRefreshing(true);
             await generateNewPlan(blockFocus, customTheme, startDate, numWeeks);
             await refreshData();
         } catch (e) {
@@ -120,8 +152,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
     ) => {
         try {
             await updateWorkoutStatus(workoutIdOrDate, status, feedback);
-
-            // Mise à jour Optimiste (pour que l'UI soit snappy)
+            // Mise à jour optimiste + Refresh
             if (schedule && feedback) {
                 const updatedWorkout = schedule.workouts.find(
                     w => w.id === workoutIdOrDate || w.date === workoutIdOrDate
@@ -134,9 +165,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
                     });
                 }
             }
-            // Puis synchronisation réelle
             await refreshData();
-
         } catch (e) {
             console.error('Erreur mise à jour statut:', e);
             setError('Impossible de mettre à jour le statut.');
@@ -146,7 +175,6 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
     const handleToggleMode = useCallback(async (workoutIdOrDate: string) => {
         try {
             await toggleWorkoutMode(workoutIdOrDate);
-
             // Optimiste
             if (schedule) {
                 const workout = schedule.workouts.find(
@@ -164,10 +192,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
         }
     }, [refreshData, schedule]);
 
-    const handleMoveWorkout = useCallback(async (
-        originalDateOrId: string,
-        newDateStr: string
-    ) => {
+    const handleMoveWorkout = useCallback(async (originalDateOrId: string, newDateStr: string) => {
         try {
             await moveWorkout(originalDateOrId, newDateStr);
             await refreshData();
@@ -199,16 +224,11 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
         }
     }, [refreshData]);
 
-    const handleRegenerateWorkout = useCallback(async (
-        workoutIdOrDate: string,
-        instruction?: string
-    ) => {
+    const handleRegenerateWorkout = useCallback(async (workoutIdOrDate: string, instruction?: string) => {
         try {
             await regenerateWorkout(workoutIdOrDate, instruction);
-            // Pour regenerate, on a besoin de la nouvelle donnée précise pour l'afficher
             const { schedule: newSchedule } = await loadInitialData();
             setSchedule(newSchedule);
-
             if (newSchedule) {
                 const regeneratedWorkout = newSchedule.workouts.find(
                     w => w.id === workoutIdOrDate || w.date === workoutIdOrDate
@@ -262,22 +282,25 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
                                     </p>
                                     <p className="text-red-400 text-sm mt-1">{error}</p>
                                 </div>
-                                <button
-                                    onClick={() => setError(null)}
-                                    className="text-red-400 hover:text-red-300 transition-colors"
-                                >
-                                    ✕
-                                </button>
+                                <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300 transition-colors">✕</button>
                             </div>
                         </div>
                     </Card>
                 )}
 
-                {/* Refresh Indicator */}
-                {isRefreshing && (
+                {/* Global Loading Indicator (Manual Refresh) */}
+                {isRefreshing && !isSyncing && (
                     <div className="fixed top-20 right-4 z-40 bg-blue-500/90 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in slide-in-from-top-2">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         <span className="text-sm font-medium">Actualisation...</span>
+                    </div>
+                )}
+                
+                {/* Strava Sync Indicator */}
+                {isSyncing && (
+                    <div className="fixed top-20 right-4 z-40 bg-orange-600/90 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in slide-in-from-top-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span className="text-sm font-medium">Synchro Strava...</span>
                     </div>
                 )}
 
@@ -312,6 +335,9 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
                             onViewWorkout={handleViewWorkout}
                             onGenerate={handleGenerate}
                             onAddManualWorkout={handleAddManualWorkout}
+                            // Nouveaux Props pour Strava
+                            onSyncStrava={handleSyncStrava}
+                            isSyncing={isSyncing}
                         />
                     </div>
                 )}
