@@ -871,11 +871,11 @@
       },
       "completedData": {
         "actualDurationMinutes": 60,
-        "distanceKm": 0,
+        "distanceKm": 32,
         "perceivedEffort": 8,
         "notes": "Echèque des exercices sur la deuxième série",
         "heartRate": {
-          "avgBPM": null,
+          "avgBPM": 153,
           "maxBPM": null
         },
         "caloriesBurned": null,
@@ -885,9 +885,9 @@
             "avgPowerWatts": 168,
             "maxPowerWatts": null,
             "normalizedPowerWatts": null,
-            "avgCadenceRPM": null,
+            "avgCadenceRPM": 81,
             "maxCadenceRPM": null,
-            "elevationGainMeters": null,
+            "elevationGainMeters": 294,
             "avgSpeedKmH": null,
             "maxSpeedKmH": null
           },
