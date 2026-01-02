@@ -324,18 +324,14 @@
       "mode": "Outdoor",
       "description_outdoor": "Échauffement: 20 min Z2. Corps de séance: 5 x 4 minutes en Z5 (255-289W). Récupération entre les intervalles: 4 minutes en Z2 (135-181W). Retour au calme: 14 min Z2.",
       "description_indoor": "Échauffement: 20 min Z2. Corps de séance: 5 x 4 minutes en Z5 (255-289W). Chaque intervalle de Z5 doit être réalisé avec une cadence > 95 RPM. Récupération : 4 minutes Z2 (135-181W) à très faible résistance. Retour au calme: 14 min Z2.",
-      "status": "pending"
-    },
-    "2026-01-01": {
-      "date": "2026-01-01",
-      "title": "Over-Unders Seuil",
-      "type": "Seuil/PMA",
-      "duration": 90,
-      "tss": 95,
-      "mode": "Outdoor",
-      "description_outdoor": "Échauffement: 20 min Z2. Corps de séance: 3 x 8 minutes Over-Unders. Chaque bloc se compose de 1 min Z5 (255-289W) / 3 min Z4 (219-253W). Récupération entre blocs: 6 min Z2 (135-181W). Retour au calme: 16 min Z2.",
-      "description_indoor": "Échauffement: 20 min Z2. Corps de séance: 3 x 8 minutes de variation. 1 minute en 'montée' Z5 (255-289W) suivie de 3 minutes en 'faux-plat' Z4 (219-253W). Ces 8 minutes doivent être sans pause. Récupération entre blocs: 6 min Z2. Retour au calme: 16 min Z2.",
-      "status": "pending"
+      "status": "completed",
+      "completedData": {
+        "rpe": 6,
+        "avgPower": 143,
+        "actualDuration": 160,
+        "distance": 70,
+        "notes": ""
+      }
     },
     "2026-01-03": {
       "date": "2026-01-03",
@@ -419,6 +415,24 @@
         "actualDuration": 156,
         "distance": 57,
         "notes": ""
+      }
+    },
+    "2026-01-02": {
+      "date": "2026-01-02",
+      "title": "Over-Unders Seuil",
+      "type": "Seuil/PMA",
+      "duration": 90,
+      "tss": 95,
+      "mode": "Indoor",
+      "description_outdoor": "Échauffement: 20 min Z2. Corps de séance: 3 x 8 minutes Over-Unders. Chaque bloc se compose de 1 min Z5 (255-289W) / 3 min Z4 (219-253W). Récupération entre blocs: 6 min Z2 (135-181W). Retour au calme: 16 min Z2.",
+      "description_indoor": "Échauffement: 20 min Z2. Corps de séance: 3 x 8 minutes de variation. 1 minute en 'montée' Z5 (255-289W) suivie de 3 minutes en 'faux-plat' Z4 (219-253W). Ces 8 minutes doivent être sans pause. Récupération entre blocs: 6 min Z2. Retour au calme: 16 min Z2.",
+      "status": "completed",
+      "completedData": {
+        "rpe": 8,
+        "avgPower": 168,
+        "actualDuration": 60,
+        "distance": 0,
+        "notes": "Echèque des exercices sur la deuxième série"
       }
     }
   },
