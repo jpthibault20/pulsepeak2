@@ -23,7 +23,6 @@ export function CalendarGrid({
 
     const allWeekStats = useMemo(() => {
         return weekRows.map(week => {
-            // 1. Initialisation complète obligatoire pour satisfaire TypeScript
             const stats = {
                 plannedTSS: 0,
                 plannedDuration: 0,
@@ -31,13 +30,11 @@ export function CalendarGrid({
                 distance: 0,
                 completed: 0,
                 total: 0,
-                // ✅ CORRECTION ICI : On initialise toutes les clés requises à 0
                 sportBreakdown: {
                     cycling: 0,
                     running: 0,
                     swimming: 0
-                } as Record<string, number>, // 'as' permet un peu de souplesse si d'autres sports arrivent
-                // ✅ NOUVEAU : On initialise aussi les durées cumulées
+                } as Record<string, number>,
                 sportDuration: {
                     cycling: 0,
                     running: 0,
@@ -52,35 +49,35 @@ export function CalendarGrid({
                 const workouts = scheduleData.workouts.filter(w => w.date === dateKey);
 
                 workouts.forEach(workout => {
+                    const sport = workout.sportType;
+
+                    // Stats planifiées (toujours comptées)
                     stats.total++;
                     stats.plannedTSS += workout.plannedData.plannedTSS ?? 0;
                     stats.plannedDuration += workout.plannedData.durationMinutes ?? 0;
 
-                    // 2. Gestion sécurisée du comptage par sport
-                    const sport = workout.sportType;
-                    // On vérifie si la clé existe déjà, sinon on l'initialise (pour les sports non prévus comme 'musculation')
+                    // Comptage des séances par sport
                     if (stats.sportBreakdown[sport] !== undefined) {
                         stats.sportBreakdown[sport]++;
                     } else {
-                        // Cas où un sport inconnu arrive (fallback)
                         stats.sportBreakdown[sport] = 1;
                     }
 
-                    // ✅ NOUVEAU : On calcule aussi les durées cumulées
-                    if (stats.sportDuration[sport] !== undefined) {
-                        stats.sportDuration[sport] += workout?.completedData?.actualDurationMinutes ?? 0;
-                    }
-                    // Stats Réalisées
+                    // ✅ Stats réalisées (UN SEUL BLOC)
                     if (workout.status === 'completed' && workout.completedData) {
                         stats.completed++;
-                        stats.actualDuration += workout.completedData.actualDurationMinutes ?? 0;
-                        stats.distance += workout.completedData.distanceKm ?? 0;
-                    }
 
-                    if (workout.status === 'completed' && workout.completedData) {
-                        stats.completed++;
-                        stats.actualDuration += workout.completedData.actualDurationMinutes ?? 0;
+                        // Durée totale réalisée
+                        const actualMinutes = workout.completedData.actualDurationMinutes ?? 0;
+                        stats.actualDuration += actualMinutes;
                         stats.distance += workout.completedData.distanceKm ?? 0;
+
+                        // Durée par sport
+                        if (stats.sportDuration[sport] !== undefined) {
+                            stats.sportDuration[sport] += actualMinutes;
+                        } else {
+                            stats.sportDuration[sport] = actualMinutes;
+                        }
                     }
                 });
             });
@@ -88,6 +85,7 @@ export function CalendarGrid({
             return stats;
         });
     }, [weekRows, scheduleData.workouts]);
+
 
     return (
         <div className="flex flex-col rounded-xl overflow-hidden shadow-2xl bg-slate-950 border border-slate-800">

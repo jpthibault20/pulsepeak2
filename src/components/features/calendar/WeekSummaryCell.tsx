@@ -31,7 +31,7 @@ export function WeekSummaryCell({ stats }: WeekSummaryCellProps) {
         return `${hours}h${minutes.toString().padStart(2, '0')}`;
     };
 
-    const durationPercentage = stats.plannedDuration > 0
+    const durationPercentage = 100 / stats.plannedDuration > 0
         ? Math.min((stats.actualDuration / stats.plannedDuration) * 100, 100)
         : 0;
 
@@ -72,6 +72,7 @@ export function WeekSummaryCell({ stats }: WeekSummaryCellProps) {
                             />
                         </div>
 
+                        {/* ✅ CHANGEMENT ICI : Affiche actualDuration partout */}
                         <div className="flex items-center justify-between text-[10px] leading-none">
                             <span className={`font-semibold ${stats.actualDuration > 0 ? 'text-blue-200' : 'text-slate-500'}`}>
                                 {formatDuration(stats.actualDuration)}
