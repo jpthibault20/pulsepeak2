@@ -8,6 +8,7 @@ import { Profile, Schedule } from './type';
 
 // Définition du chemin racine pour les fichiers JSON locaux
 const dataDir = path.join(process.cwd(), 'src', 'lib', 'data');
+
 /**
  * Lit le contenu d'un fichier JSON local.
  * @param filename Le nom du fichier (ex: 'profile.json', 'schedule.json').
@@ -21,8 +22,18 @@ export async function readJsonFile<T>(filename: string): Promise<T> {
     } catch (error) {
         if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
             console.warn(`File ${filename} not found. Returning empty object or array.`);
-            // Retourne une structure initiale si le fichier n'existe pas encore
-            return (filename.includes('schedule') ? { workouts: {}, summary: null } : {}) as T;
+            
+            // MODIFICATION ICI : Initialisation avec la nouvelle structure
+            if (filename.includes('schedule')) {
+                return {
+                    dbVersion: "1.0",
+                    workouts: [], // C'est maintenant un tableau vide, plus un objet
+                    summary: null,
+                    lastGenerated: null
+                } as unknown as T;
+            }
+            
+            return {} as T;
         }
         console.error(`Error reading ${filename}:`, error);
         throw new Error(`Failed to read data from ${filename}`);
@@ -46,7 +57,6 @@ export async function writeJsonFile<T>(filename: string, data: T): Promise<void>
 
 export async function getProfile(): Promise<Profile | null> {
     const data = await readJsonFile<Partial<Profile>>('profile.json');
-    // Vérifie si les données minimales existent pour considérer le profil comme "set up"
     if (data && data.name && data.ftp) {
         return data as Profile;
     }
