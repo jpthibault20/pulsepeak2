@@ -1,5 +1,6 @@
 {
-  "workouts": {},
-  "summary": "Ce bloc de reprise est conçu pour un athlète expérimenté revenant après une coupure d'un mois. L'objectif est une réactivation progressive du système aérobie et neuromusculaire. Les deux semaines sont basées exclusivement sur l'Endurance Fondamentale (Zone 2), en respectant strictement les contraintes de volume maximal (semaine 1 : 7.5h, semaine 2 : 8.75h). Aucune intensité au-delà de Z2 n'est prévue pour assurer une transition en douceur et prévenir toute blessure ou fatigue excessive. Le volume est volontairement inférieur au volume cible (9h) la première semaine pour garantir l'adaptation.",
-  "lastGenerated": "2025-11-30"
+  "dbVersion": "1.0",
+  "workouts": [],
+  "summary": "",
+  "lastGenerated": ""
 }

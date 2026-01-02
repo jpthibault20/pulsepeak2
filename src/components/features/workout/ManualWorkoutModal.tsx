@@ -1,6 +1,9 @@
 import { Card, Button } from "@/components/ui";
-import { Workout } from "@/lib/data/type";
-import { Plus, Calendar, Activity, Timer, TrendingUp, AlignLeft } from "lucide-react";
+import type { Workout, SportType, CompletedData } from "@/lib/data/type";
+import {
+    Plus, Calendar, Activity, Timer, TrendingUp,
+    AlignLeft, Bike, Waves, User
+} from "lucide-react";
 import { useState } from "react";
 
 interface ManualWorkoutModalProps {
@@ -9,14 +12,26 @@ interface ManualWorkoutModalProps {
     onSave: (workout: Workout) => Promise<void>;
 }
 
-export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({ date, onClose, onSave }) => {
+export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
+    date,
+    onClose,
+    onSave
+}) => {
+    // États de base
     const [title, setTitle] = useState('Sortie Libre');
-    const [type, setType] = useState('Endurance');
-    const [duration, setDuration] = useState(60); // Par défaut 1h c'est plus logique que 0
+    const [sportType, setSportType] = useState<SportType>('cycling');
+    const [workoutType, setWorkoutType] = useState('Endurance');
+    const [duration, setDuration] = useState(60);
     const [distance, setDistance] = useState(0);
     const [tss, setTss] = useState(0);
     const [mode, setMode] = useState<'Outdoor' | 'Indoor'>('Outdoor');
     const [description, setDescription] = useState('');
+
+    // Métriques sport-spécifiques
+    const [avgPower, setAvgPower] = useState<number | undefined>();
+    const [avgHeartRate, setAvgHeartRate] = useState<number | undefined>();
+    const [rpe, setRpe] = useState(5);
+
     const [isSaving, setIsSaving] = useState(false);
 
     const handleSave = async () => {
@@ -27,43 +42,97 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({ date, on
             const day = String(date.getDate()).padStart(2, '0');
             const dateStr = `${year}-${month}-${day}`;
 
-            const newWorkout: Workout = {
-                date: dateStr,
-                title,
-                type,
-                duration,
-                distance,
-                tss,
-                mode,
-                status: 'completed',
-                description_outdoor: mode === 'Outdoor' ? description : 'Non spécifié',
-                description_indoor: mode === 'Indoor' ? description : 'Non spécifié',
-                completedData: {
-                    actualDuration: duration,
-                    distance: distance,
-                    rpe: 5,
-                    avgPower: 0,
-                    notes: description
+            // Construction des données complétées
+            const completedData: CompletedData = {
+                actualDurationMinutes: duration,
+                distanceKm: distance,
+                perceivedEffort: rpe,
+                notes: description,
+                heartRate: avgHeartRate ? {
+                    avgBPM: avgHeartRate,
+                    maxBPM: null
+                } : undefined,
+                caloriesBurned: null,
+                metrics: {
+                    cycling: sportType === 'cycling' ? {
+                        tss: tss || null,
+                        avgPowerWatts: avgPower || null,
+                        maxPowerWatts: null,
+                        normalizedPowerWatts: null,
+                        avgCadenceRPM: null,
+                        maxCadenceRPM: null,
+                        elevationGainMeters: null,
+                        avgSpeedKmH: distance && duration ? (distance / duration) * 60 : null,
+                        maxSpeedKmH: null
+                    } : null,
+                    running: sportType === 'running' ? {
+                        avgPaceMinPerKm: null,
+                        bestPaceMinPerKm: null,
+                        elevationGainMeters: null,
+                        avgCadenceSPM: null,
+                        maxCadenceSPM: null,
+                        avgSpeedKmH: distance && duration ? (distance / duration) * 60 : null,
+                        maxSpeedKmH: null
+                    } : null,
+                    swimming: sportType === 'swimming' ? {
+                        avgPace100m: null,
+                        bestPace100m: null,
+                        strokeType: null,
+                        avgStrokeRate: null,
+                        avgSwolf: null,
+                        poolLengthMeters: null,
+                        totalStrokes: null
+                    } : null
                 }
+            };
+
+            const newWorkout: Workout = {
+                title: title || 'Sortie Libre',
+                id: `manual-${Date.now()}`,
+                date: dateStr,
+                sportType,
+                workoutType,
+                status: 'completed',
+                mode: mode,
+                plannedData: {
+                    durationMinutes: duration,
+                    distanceKm: distance,
+                    plannedTSS: tss || null,
+                    targetPowerWatts: null,
+                    targetPaceMinPerKm: null,
+                    targetHeartRateBPM: null,
+                    descriptionIndoor: description || 'Séance manuelle',
+                    descriptionOutdoor: description || 'Séance manuelle',
+                },
+                completedData
             };
 
             await onSave(newWorkout);
             onClose();
         } catch (e) {
-            console.error(e);
+            console.error('Erreur sauvegarde workout manuel:', e);
         } finally {
             setIsSaving(false);
         }
     };
 
-    return (
-        // DESIGN: z-50 est le standard Tailwind pour les modales.
-        // backdrop-blur-sm pour l'effet moderne.
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+    const sportIcons: Record<SportType, React.ReactNode> = {
+        cycling: <Bike size={16} />,
+        running: <User size={16} />,
+        swimming: <Waves size={16} />
+    };
 
-            {/* DESIGN: max-h-[90vh] et overflow-y-auto permettent de scroller dans la modale si l'écran est petit (mode paysage mobile) */}
+    const workoutTypes: Record<SportType, string[]> = {
+        cycling: ['Endurance', 'Tempo', 'Threshold', 'VO2max', 'Sprint', 'Recovery', 'Force'],
+        running: ['Endurance', 'Tempo', 'Threshold', 'Intervals', 'Recovery', 'Long Run'],
+        swimming: ['Endurance', 'Technique', 'Intervals', 'Recovery', 'Sprints']
+    };
+
+    return (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
             <Card className="w-full max-w-lg animate-in zoom-in-95 duration-200 border-slate-800 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
 
+                {/* Header */}
                 <div className="mb-6 border-b border-slate-800 pb-4">
                     <h2 className="text-xl font-bold text-white flex items-center gap-2">
                         <Plus className="text-blue-500" size={24} />
@@ -71,11 +140,47 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({ date, on
                     </h2>
                     <p className="text-slate-400 text-sm mt-1 flex items-center gap-2">
                         <Calendar size={14} />
-                        {date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                        {date.toLocaleDateString('fr-FR', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                        })}
                     </p>
                 </div>
 
                 <div className="space-y-4">
+
+                    {/* Sport Type */}
+                    <div>
+                        <label className="block text-xs font-medium text-slate-300 mb-2">
+                            Type de sport
+                        </label>
+                        <div className="grid grid-cols-3 gap-2">
+                            {(['cycling', 'running', 'swimming'] as SportType[]).map(sport => (
+                                <button
+                                    key={sport}
+                                    type="button"
+                                    onClick={() => {
+                                        setSportType(sport);
+                                        setWorkoutType(workoutTypes[sport][0]);
+                                    }}
+                                    className={`
+                                        h-11 flex items-center justify-center gap-2 rounded-lg border-2 
+                                        transition-all font-medium text-sm capitalize
+                                        ${sportType === sport
+                                            ? 'bg-blue-500/20 border-blue-500 text-blue-400'
+                                            : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
+                                        }
+                                    `}
+                                >
+                                    {sportIcons[sport]}
+                                    <span className="hidden sm:inline">{sport}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     {/* Titre */}
                     <div>
                         <label className="flex items-center gap-2 text-xs font-medium text-slate-300 mb-1.5">
@@ -94,36 +199,43 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({ date, on
                     {/* Grid Type & Mode */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-medium text-slate-300 mb-1.5">Type d&apos;effort</label>
+                            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                                Type d&apos;effort
+                            </label>
                             <div className="relative">
                                 <select
-                                    value={type}
-                                    onChange={e => setType(e.target.value)}
+                                    value={workoutType}
+                                    onChange={e => setWorkoutType(e.target.value)}
                                     className="w-full h-11 appearance-none bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                                 >
-                                    {['Endurance', 'Tempo', 'Threshold', 'HIIT', 'VO2max', 'Recovery', 'PMA', 'Force', 'Sprint'].map(t => (
+                                    {workoutTypes[sportType].map(t => (
                                         <option key={t} value={t}>{t}</option>
                                     ))}
                                 </select>
-                                {/* Custom arrow for select */}
                                 <div className="absolute right-3 top-3.5 pointer-events-none text-slate-500">
-                                    <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                    <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                                        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
                                 </div>
                             </div>
                         </div>
                         <div>
-                            <label className="block text-xs font-medium text-slate-300 mb-1.5">Environnement</label>
+                            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                                Environnement
+                            </label>
                             <div className="relative">
                                 <select
                                     value={mode}
                                     onChange={e => setMode(e.target.value as 'Outdoor' | 'Indoor')}
                                     className="w-full h-11 appearance-none bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                                 >
-                                    <option value="Outdoor">Extérieur (Route/Gravel)</option>
-                                    <option value="Indoor">Intérieur (Home Trainer)</option>
+                                    <option value="outdoor">Extérieur</option>
+                                    <option value="indoor">Intérieur</option>
                                 </select>
                                 <div className="absolute right-3 top-3.5 pointer-events-none text-slate-500">
-                                    <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                    <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                                        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
                                 </div>
                             </div>
                         </div>
@@ -156,17 +268,62 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({ date, on
                         </div>
                     </div>
 
-                    {/* TSS (Input pleine largeur pour le distinguer) */}
-                    <div>
-                        <label className="block text-xs font-medium text-slate-300 mb-1.5">Charge (TSS Estimé)</label>
-                        <input
-                            type="number"
-                            value={tss}
-                            onChange={e => setTss(parseInt(e.target.value) || 0)}
-                            className="w-full h-11 bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-lg"
-                            placeholder="Ex: 50"
-                        />
-                        <p className="text-[10px] text-slate-500 mt-1">Laissez 0 si inconnu. Une heure endurance ≈ 40-50 TSS.</p>
+                    {/* Métriques sport-spécifiques */}
+                    {sportType === 'cycling' && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                                    Puissance Moy. (W)
+                                </label>
+                                <input
+                                    type="number"
+                                    value={avgPower || ''}
+                                    onChange={e => setAvgPower(parseInt(e.target.value) || undefined)}
+                                    placeholder="Optionnel"
+                                    className="w-full h-11 bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-lg"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                                    TSS Estimé
+                                </label>
+                                <input
+                                    type="number"
+                                    value={tss}
+                                    onChange={e => setTss(parseInt(e.target.value) || 0)}
+                                    className="w-full h-11 bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-lg"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* RPE & FC Moyenne */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                                RPE (1-10)
+                            </label>
+                            <input
+                                type="number"
+                                min="1"
+                                max="10"
+                                value={rpe}
+                                onChange={e => setRpe(parseInt(e.target.value) || 5)}
+                                className="w-full h-11 bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-lg"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                                FC Moy. (bpm)
+                            </label>
+                            <input
+                                type="number"
+                                value={avgHeartRate || ''}
+                                onChange={e => setAvgHeartRate(parseInt(e.target.value) || undefined)}
+                                placeholder="Optionnel"
+                                className="w-full h-11 bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-lg"
+                            />
+                        </div>
                     </div>
 
                     {/* Description */}
