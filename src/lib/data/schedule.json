@@ -1,441 +1,1022 @@
 {
-  "workouts": {
-    "2025-11-11": {
+  "dbVersion": "2.0.0",
+  "workouts": [
+    {
+      "id": "cycling_20251111_a1",
       "date": "2025-11-11",
+      "sportType": "cycling",
       "title": "Sortie Libre",
-      "type": "Endurance",
-      "duration": 111,
-      "distance": 50,
-      "tss": 123,
+      "workoutType": "Endurance",
       "mode": "Outdoor",
       "status": "completed",
-      "description_outdoor": "",
-      "description_indoor": "Non spécifié",
+      "plannedData": {
+        "durationMinutes": 111,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": 50,
+        "plannedTSS": 123,
+        "descriptionOutdoor": "",
+        "descriptionIndoor": "Non spécifié"
+      },
       "completedData": {
-        "actualDuration": 111,
-        "distance": 50,
-        "rpe": 5,
-        "avgPower": 0,
-        "notes": ""
+        "actualDurationMinutes": 111,
+        "distanceKm": 50,
+        "perceivedEffort": 5,
+        "notes": "",
+        "heartRate": {
+          "avgBPM": null,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 123,
+            "avgPowerWatts": 0,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": null,
+            "maxSpeedKmH": null
+          },
+          "running": null,
+          "swimming": null
+        }
       }
     },
-    "2025-11-18": {
+    {
+      "id": "cycling_20251118_a1",
       "date": "2025-11-18",
+      "sportType": "cycling",
       "title": "Sortie Libre",
-      "type": "Endurance",
-      "duration": 80,
-      "distance": 38,
-      "tss": 74,
+      "workoutType": "Endurance",
       "mode": "Outdoor",
       "status": "completed",
-      "description_outdoor": "",
-      "description_indoor": "Non spécifié",
+      "plannedData": {
+        "durationMinutes": 80,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": 38,
+        "plannedTSS": 74,
+        "descriptionOutdoor": "",
+        "descriptionIndoor": "Non spécifié"
+      },
       "completedData": {
-        "actualDuration": 80,
-        "distance": 38,
-        "rpe": 5,
-        "avgPower": 0,
-        "notes": ""
+        "actualDurationMinutes": 80,
+        "distanceKm": 38,
+        "perceivedEffort": 5,
+        "notes": "",
+        "heartRate": {
+          "avgBPM": null,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 74,
+            "avgPowerWatts": 0,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": null,
+            "maxSpeedKmH": null
+          },
+          "running": null,
+          "swimming": null
+        }
       }
     },
-    "2025-11-20": {
+    {
+      "id": "cycling_20251120_a1",
       "date": "2025-11-20",
+      "sportType": "cycling",
       "title": "Sortie Libre",
-      "type": "Endurance",
-      "duration": 103,
-      "distance": 47,
-      "tss": 120,
+      "workoutType": "Endurance",
       "mode": "Outdoor",
       "status": "completed",
-      "description_outdoor": "",
-      "description_indoor": "Non spécifié",
+      "plannedData": {
+        "durationMinutes": 103,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": 47,
+        "plannedTSS": 120,
+        "descriptionOutdoor": "",
+        "descriptionIndoor": "Non spécifié"
+      },
       "completedData": {
-        "actualDuration": 103,
-        "distance": 47,
-        "rpe": 5,
-        "avgPower": 0,
-        "notes": ""
+        "actualDurationMinutes": 103,
+        "distanceKm": 47,
+        "perceivedEffort": 5,
+        "notes": "",
+        "heartRate": {
+          "avgBPM": null,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 120,
+            "avgPowerWatts": 0,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": null,
+            "maxSpeedKmH": null
+          },
+          "running": null,
+          "swimming": null
+        }
       }
     },
-    "2025-11-27": {
+    {
+      "id": "cycling_20251127_a1",
       "date": "2025-11-27",
+      "sportType": "cycling",
       "title": "Sortie Libre",
-      "type": "Endurance",
-      "duration": 87,
-      "distance": 35,
-      "tss": 50,
+      "workoutType": "Endurance",
       "mode": "Outdoor",
       "status": "completed",
-      "description_outdoor": "",
-      "description_indoor": "Non spécifié",
+      "plannedData": {
+        "durationMinutes": 87,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": 35,
+        "plannedTSS": 50,
+        "descriptionOutdoor": "",
+        "descriptionIndoor": "Non spécifié"
+      },
       "completedData": {
-        "actualDuration": 87,
-        "distance": 35,
-        "rpe": 5,
-        "avgPower": 0,
-        "notes": ""
+        "actualDurationMinutes": 87,
+        "distanceKm": 35,
+        "perceivedEffort": 5,
+        "notes": "",
+        "heartRate": {
+          "avgBPM": null,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 50,
+            "avgPowerWatts": 0,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": null,
+            "maxSpeedKmH": null
+          },
+          "running": null,
+          "swimming": null
+        }
       }
     },
-    "2025-11-29": {
+    {
+      "id": "cycling_20251129_a1",
       "date": "2025-11-29",
+      "sportType": "cycling",
       "title": "Sortie Libre",
-      "type": "Endurance",
-      "duration": 190,
-      "distance": 92,
-      "tss": 250,
+      "workoutType": "Endurance",
       "mode": "Outdoor",
       "status": "completed",
-      "description_outdoor": "",
-      "description_indoor": "Non spécifié",
+      "plannedData": {
+        "durationMinutes": 190,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": 92,
+        "plannedTSS": 250,
+        "descriptionOutdoor": "",
+        "descriptionIndoor": "Non spécifié"
+      },
       "completedData": {
-        "actualDuration": 190,
-        "distance": 92,
-        "rpe": 5,
-        "avgPower": 0,
-        "notes": ""
+        "actualDurationMinutes": 190,
+        "distanceKm": 92,
+        "perceivedEffort": 5,
+        "notes": "",
+        "heartRate": {
+          "avgBPM": null,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 250,
+            "avgPowerWatts": 0,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": null,
+            "maxSpeedKmH": null
+          },
+          "running": null,
+          "swimming": null
+        }
       }
     },
-    "2025-12-02": {
+    {
+      "id": "cycling_20251202_a1",
       "date": "2025-12-02",
+      "sportType": "cycling",
       "title": "SSP Reintroduction",
-      "type": "Seuil (Sweet Spot)",
-      "duration": 90,
-      "tss": 81,
+      "workoutType": "Seuil (Sweet Spot)",
       "mode": "Indoor",
-      "description_outdoor": "Échauffement (15 min Z2). Corps de séance : 3 répétitions de (10 min @ Sweet Spot (88-93% FTP, env. 220-233W) / 5 min Récupération Z2). Retour au calme (15 min Z2). Concentration sur la régularité de la puissance.",
-      "description_indoor": "Échauffement (15 min Z2). 3 x [10 min @ 225W / 5 min @ 165W]. Retour au calme (15 min Z2). IF cible: 0.90.",
       "status": "completed",
+      "plannedData": {
+        "durationMinutes": 90,
+        "targetPowerWatts": 225,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 81,
+        "descriptionOutdoor": "Échauffement (15 min Z2). Corps de séance : 3 répétitions de (10 min @ Sweet Spot (88-93% FTP, env. 220-233W) / 5 min Récupération Z2). Retour au calme (15 min Z2). Concentration sur la régularité de la puissance.",
+        "descriptionIndoor": "Échauffement (15 min Z2). 3 x [10 min @ 225W / 5 min @ 165W]. Retour au calme (15 min Z2). IF cible: 0.90."
+      },
       "completedData": {
-        "rpe": 6,
-        "avgPower": 174,
-        "actualDuration": 75,
-        "distance": 36,
-        "notes": ""
+        "actualDurationMinutes": 75,
+        "distanceKm": 36,
+        "perceivedEffort": 6,
+        "notes": "",
+        "heartRate": {
+          "avgBPM": null,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 81,
+            "avgPowerWatts": 174,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": null,
+            "maxSpeedKmH": null
+          },
+          "running": null,
+          "swimming": null
+        }
       }
     },
-    "2025-12-04": {
+    {
+      "id": "cycling_20251204_a1",
       "date": "2025-12-04",
+      "sportType": "cycling",
       "title": "Force Endurance (BFR)",
-      "type": "Force",
-      "duration": 90,
-      "tss": 75,
+      "workoutType": "Force",
       "mode": "Outdoor",
-      "description_outdoor": "Échauffement (20 min Z2). Corps de séance : 4 répétitions de (8 min en Z3 bas/Tempo (env. 200W) à basse cadence (50-60 RPM) / 4 min Récupération Z2). Terminer par 22 min en Z2.",
-      "description_indoor": "Échauffement (20 min Z2). 4 x [8 min @ 200W (55 RPM max) / 4 min @ 165W]. Fin Z2. Cet entraînement vise à améliorer votre recrutement musculaire à puissance sub-maximale.",
       "status": "completed",
+      "plannedData": {
+        "durationMinutes": 90,
+        "targetPowerWatts": 200,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 75,
+        "descriptionOutdoor": "Échauffement (20 min Z2). Corps de séance : 4 répétitions de (8 min en Z3 bas/Tempo (env. 200W) à basse cadence (50-60 RPM) / 4 min Récupération Z2). Terminer par 22 min en Z2.",
+        "descriptionIndoor": "Échauffement (20 min Z2). 4 x [8 min @ 200W (55 RPM max) / 4 min @ 165W]. Fin Z2. Cet entraînement vise à améliorer votre recrutement musculaire à puissance sub-maximale."
+      },
       "completedData": {
-        "rpe": 5,
-        "avgPower": 142,
-        "actualDuration": 85,
-        "distance": 38,
-        "notes": ""
+        "actualDurationMinutes": 85,
+        "distanceKm": 38,
+        "perceivedEffort": 5,
+        "notes": "",
+        "heartRate": {
+          "avgBPM": null,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 75,
+            "avgPowerWatts": 142,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": null,
+            "maxSpeedKmH": null
+          },
+          "running": null,
+          "swimming": null
+        }
       }
     },
-    "2025-12-06": {
+    {
+      "id": "cycling_20251206_a1",
       "date": "2025-12-06",
+      "sportType": "cycling",
       "title": "Endurance Rythmée et Cadence",
-      "type": "Endurance / Tempo",
-      "duration": 150,
-      "tss": 120,
+      "workoutType": "Endurance / Tempo",
       "mode": "Outdoor",
-      "description_outdoor": "30 min Z2. Puis 2 x [30 min en Z3 bas (78-82% FTP) / 15 min Z2]. Durant les phases Z2, inclure toutes les 15 minutes des sprints de cadence maximaux (30s) pour débloquer les jambes. Terminer par 30 min Z2.",
-      "description_indoor": "30 min Z2. 2 x [30 min @ 195W / 15 min @ 165W]. Inclure des pointes de cadence de 30s pendant la récupération Z2. Maintenir une cadence élevée durant les efforts Z3.",
       "status": "completed",
+      "plannedData": {
+        "durationMinutes": 150,
+        "targetPowerWatts": 195,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 120,
+        "descriptionOutdoor": "30 min Z2. Puis 2 x [30 min en Z3 bas (78-82% FTP) / 15 min Z2]. Durant les phases Z2, inclure toutes les 15 minutes des sprints de cadence maximaux (30s) pour débloquer les jambes. Terminer par 30 min Z2.",
+        "descriptionIndoor": "30 min Z2. 2 x [30 min @ 195W / 15 min @ 165W]. Inclure des pointes de cadence de 30s pendant la récupération Z2. Maintenir une cadence élevée durant les efforts Z3."
+      },
       "completedData": {
-        "rpe": 5,
-        "avgPower": 148,
-        "actualDuration": 96,
-        "distance": 34,
-        "notes": ""
+        "actualDurationMinutes": 96,
+        "distanceKm": 34,
+        "perceivedEffort": 5,
+        "notes": "",
+        "heartRate": {
+          "avgBPM": null,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 120,
+            "avgPowerWatts": 148,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": null,
+            "maxSpeedKmH": null
+          },
+          "running": null,
+          "swimming": null
+        }
       }
     },
-    "2025-12-07": {
+    {
+      "id": "cycling_20251207_a1",
       "date": "2025-12-07",
+      "sportType": "cycling",
       "title": "Sortie Longue Récupération Active",
-      "type": "Endurance",
-      "duration": 210,
-      "tss": 147,
+      "workoutType": "Endurance",
       "mode": "Outdoor",
-      "description_outdoor": "Sortie longue de 3h30. Maintenir strictement la zone Z2 (65-75% FTP). C'est un jour d'accumulation de volume. Focus sur la nutrition et l'hydratation régulières.",
-      "description_indoor": "3h30 en Z2 (165-188W). Utiliser un parcours virtuel ou une séance Z2 uniforme. Garder la fréquence cardiaque stable et la cadence naturelle.",
       "status": "completed",
+      "plannedData": {
+        "durationMinutes": 210,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 147,
+        "descriptionOutdoor": "Sortie longue de 3h30. Maintenir strictement la zone Z2 (65-75% FTP). C'est un jour d'accumulation de volume. Focus sur la nutrition et l'hydratation régulières.",
+        "descriptionIndoor": "3h30 en Z2 (165-188W). Utiliser un parcours virtuel ou une séance Z2 uniforme. Garder la fréquence cardiaque stable et la cadence naturelle."
+      },
       "completedData": {
-        "rpe": 8,
-        "avgPower": 149,
-        "actualDuration": 229,
-        "distance": 104,
-        "notes": ""
+        "actualDurationMinutes": 229,
+        "distanceKm": 104,
+        "perceivedEffort": 8,
+        "notes": "",
+        "heartRate": {
+          "avgBPM": null,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 147,
+            "avgPowerWatts": 149,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": null,
+            "maxSpeedKmH": null
+          },
+          "running": null,
+          "swimming": null
+        }
       }
     },
-    "2025-12-09": {
+    {
+      "id": "cycling_20251209_a1",
       "date": "2025-12-09",
+      "sportType": "cycling",
       "title": "Seuil FTP - Bloc 1",
-      "type": "Seuil (Threshold)",
-      "duration": 90,
-      "tss": 90,
+      "workoutType": "Seuil (Threshold)",
       "mode": "Outdoor",
-      "description_outdoor": "Échauffement (15 min Z2). Corps de séance : 3 répétitions de (12 min @ Seuil FTP (95-100% FTP, env. 238-250W) / 3 min Récupération Z1/Z2). Ces efforts sont soutenus. Terminer par 15 min Z2.",
-      "description_indoor": "Échauffement (15 min Z2). 3 x [12 min @ 245W / 3 min @ 130W]. Retour au calme (15 min Z2). L'objectif est d'accumuler du temps de qualité proche de votre FTP (IF cible 0.95).",
       "status": "completed",
+      "plannedData": {
+        "durationMinutes": 90,
+        "targetPowerWatts": 245,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 90,
+        "descriptionOutdoor": "Échauffement (15 min Z2). Corps de séance : 3 répétitions de (12 min @ Seuil FTP (95-100% FTP, env. 238-250W) / 3 min Récupération Z1/Z2). Ces efforts sont soutenus. Terminer par 15 min Z2.",
+        "descriptionIndoor": "Échauffement (15 min Z2). 3 x [12 min @ 245W / 3 min @ 130W]. Retour au calme (15 min Z2). L'objectif est d'accumuler du temps de qualité proche de votre FTP (IF cible 0.95)."
+      },
       "completedData": {
-        "rpe": 6,
-        "avgPower": 154,
-        "actualDuration": 140,
-        "distance": 66,
-        "notes": ""
+        "actualDurationMinutes": 140,
+        "distanceKm": 66,
+        "perceivedEffort": 6,
+        "notes": "",
+        "heartRate": {
+          "avgBPM": null,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 90,
+            "avgPowerWatts": 154,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": null,
+            "maxSpeedKmH": null
+          },
+          "running": null,
+          "swimming": null
+        }
       }
     },
-    "2025-12-11": {
+    {
+      "id": "cycling_20251211_a1",
       "date": "2025-12-11",
+      "sportType": "cycling",
       "title": "Sweet Spot / Force Maximale",
-      "type": "Force / Sweet Spot",
-      "duration": 90,
-      "tss": 85,
+      "workoutType": "Force / Sweet Spot",
       "mode": "Outdoor",
-      "description_outdoor": "Échauffement (15 min Z2). 3 x [10 min @ Sweet Spot (88-93% FTP) / 5 min Z2]. Durant les 5 min de récupération Z2, inclure 4 x 15s de sprints en force maximale (Max Force) à très basse cadence (50 RPM), repos 45s entre chaque. Finir par 15 min Z2.",
-      "description_indoor": "Échauffement (15 min Z2). 3 x [10 min @ 225W / 5 min @ 165W]. Durant la récupération Z2, effectuez 4 départs arrêtés ou efforts Max Force 15s (50 RPM). Concentration sur le recrutement musculaire.",
-      "status": "missed"
+      "status": "missed",
+      "plannedData": {
+        "durationMinutes": 90,
+        "targetPowerWatts": 225,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 85,
+        "descriptionOutdoor": "Échauffement (15 min Z2). 3 x [10 min @ Sweet Spot (88-93% FTP) / 5 min Z2]. Durant les 5 min de récupération Z2, inclure 4 x 15s de sprints en force maximale (Max Force) à très basse cadence (50 RPM), repos 45s entre chaque. Finir par 15 min Z2.",
+        "descriptionIndoor": "Échauffement (15 min Z2). 3 x [10 min @ 225W / 5 min @ 165W]. Durant la récupération Z2, effectuez 4 départs arrêtés ou efforts Max Force 15s (50 RPM). Concentration sur le recrutement musculaire."
+      },
+      "completedData": null
     },
-    "2025-12-14": {
+    {
+      "id": "cycling_20251214_a1",
       "date": "2025-12-14",
+      "sportType": "cycling",
       "title": "Sortie Longue Récupération Active",
-      "type": "Endurance",
-      "duration": 210,
-      "tss": 147,
+      "workoutType": "Endurance",
       "mode": "Outdoor",
-      "description_outdoor": "Sortie longue de 3h30. Maintenir strictement la zone Z2 (65-75% FTP). Dernière sortie longue de base de ce micro-cycle. Profitez-en pour pratiquer votre ravitaillement dans des conditions réelles.",
-      "description_indoor": "3h30 en Z2 (165-188W). Concentration sur la position, la fluidité du pédalage et le volume de travail aérobique. Ne pas dépasser Z2.",
       "status": "completed",
+      "plannedData": {
+        "durationMinutes": 210,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 147,
+        "descriptionOutdoor": "Sortie longue de 3h30. Maintenir strictement la zone Z2 (65-75% FTP). Dernière sortie longue de base de ce micro-cycle. Profitez-en pour pratiquer votre ravitaillement dans des conditions réelles.",
+        "descriptionIndoor": "3h30 en Z2 (165-188W). Concentration sur la position, la fluidité du pédalage et le volume de travail aérobique. Ne pas dépasser Z2."
+      },
       "completedData": {
-        "rpe": 7,
-        "avgPower": 106,
-        "actualDuration": 264,
-        "distance": 107,
-        "notes": ""
+        "actualDurationMinutes": 264,
+        "distanceKm": 107,
+        "perceivedEffort": 7,
+        "notes": "",
+        "heartRate": {
+          "avgBPM": null,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 147,
+            "avgPowerWatts": 106,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": null,
+            "maxSpeedKmH": null
+          },
+          "running": null,
+          "swimming": null
+        }
       }
     },
-    "2025-12-16": {
+    {
+      "id": "cycling_20251216_a1",
       "date": "2025-12-16",
+      "sportType": "cycling",
       "title": "PMA - Micro-Intervalles (Introduction)",
-      "type": "PMA/VO2max",
-      "duration": 90,
-      "tss": 80,
+      "workoutType": "PMA/VO2max",
       "mode": "Outdoor",
-      "description_outdoor": "Échauffement: 20 min en Z2 (135-181W) incluant quelques sprints rapides de 10s. Corps de séance: 3 séries de 6 répétitions de [30s Z5 (255-289W) / 30s Z2 (135-181W)]. Récupération entre séries: 5 min en Z2. Retour au calme: 15 min en Z2.",
-      "description_indoor": "Échauffement: 20 min Z2 (135-181W). Corps de séance: 'Séance Commando' - 3 blocs de 6 minutes. Chaque minute est décomposée en 30s à haute intensité Z5 (255-289W) en danseuse, puis 30s Z2 (135-181W) assis. Récupération entre blocs: 5 min à Z1 (moins de 133W). Retour au calme: 10 min Z2.",
       "status": "completed",
+      "plannedData": {
+        "durationMinutes": 90,
+        "targetPowerWatts": 272,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 80,
+        "descriptionOutdoor": "Échauffement: 20 min en Z2 (135-181W) incluant quelques sprints rapides de 10s. Corps de séance: 3 séries de 6 répétitions de [30s Z5 (255-289W) / 30s Z2 (135-181W)]. Récupération entre séries: 5 min en Z2. Retour au calme: 15 min en Z2.",
+        "descriptionIndoor": "Échauffement: 20 min Z2 (135-181W). Corps de séance: 'Séance Commando' - 3 blocs de 6 minutes. Chaque minute est décomposée en 30s à haute intensité Z5 (255-289W) en danseuse, puis 30s Z2 (135-181W) assis. Récupération entre blocs: 5 min à Z1 (moins de 133W). Retour au calme: 10 min Z2."
+      },
       "completedData": {
-        "rpe": 7,
-        "avgPower": 161,
-        "actualDuration": 85,
-        "distance": 33,
-        "notes": ""
+        "actualDurationMinutes": 85,
+        "distanceKm": 33,
+        "perceivedEffort": 7,
+        "notes": "",
+        "heartRate": {
+          "avgBPM": null,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 80,
+            "avgPowerWatts": 161,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": null,
+            "maxSpeedKmH": null
+          },
+          "running": null,
+          "swimming": null
+        }
       }
     },
-    "2025-12-18": {
+    {
+      "id": "cycling_20251218_a1",
       "date": "2025-12-18",
+      "sportType": "cycling",
       "title": "Tempo Progressif",
-      "type": "Tempo/Sweet Spot",
-      "duration": 90,
-      "tss": 85,
+      "workoutType": "Tempo/Sweet Spot",
       "mode": "Outdoor",
-      "description_outdoor": "Échauffement: 20 min Z2 (135-181W). Corps de séance: 2 x 20 minutes en Z3 (183-217W). Récupération entre les efforts: 10 min en Z2. Les 5 dernières minutes de chaque effort peuvent monter vers le bas Z4 (219W). Retour au calme: 20 min Z2.",
-      "description_indoor": "Échauffement: 20 min Z2 (135-181W). Corps de séance: 2 x 20 minutes 'Progression'. Commencez chaque effort à 183W (bas Z3) et augmentez de 5W toutes les 5 minutes pour finir proche de 217W (haut Z3). Récupération : 10 min Z2. Retour au calme: 20 min Z2.",
-      "status": "missed"
+      "status": "missed",
+      "plannedData": {
+        "durationMinutes": 90,
+        "targetPowerWatts": 200,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 85,
+        "descriptionOutdoor": "Échauffement: 20 min Z2 (135-181W). Corps de séance: 2 x 20 minutes en Z3 (183-217W). Récupération entre les efforts: 10 min en Z2. Les 5 dernières minutes de chaque effort peuvent monter vers le bas Z4 (219W). Retour au calme: 20 min Z2.",
+        "descriptionIndoor": "Échauffement: 20 min Z2 (135-181W). Corps de séance: 2 x 20 minutes 'Progression'. Commencez chaque effort à 183W (bas Z3) et augmentez de 5W toutes les 5 minutes pour finir proche de 217W (haut Z3). Récupération : 10 min Z2. Retour au calme: 20 min Z2."
+      },
+      "completedData": null
     },
-    "2025-12-20": {
+    {
+      "id": "cycling_20251220_a1",
       "date": "2025-12-20",
+      "sportType": "cycling",
       "title": "Endurance Fondamentale",
-      "type": "Endurance",
-      "duration": 150,
-      "tss": 105,
+      "workoutType": "Endurance",
       "mode": "Outdoor",
-      "description_outdoor": "Sortie longue de 2h30 en Z2 (135-181W). Maintenir une cadence confortable (85-95 RPM). Se concentrer sur l'apport hydrique et nutritionnel.",
-      "description_indoor": "2h30 de roulage en Z2 (135-181W). Intégrer 5 minutes de pédalage sur une jambe (chaque jambe) toutes les heures. Maintenir un environnement frais.",
       "status": "completed",
+      "plannedData": {
+        "durationMinutes": 150,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 105,
+        "descriptionOutdoor": "Sortie longue de 2h30 en Z2 (135-181W). Maintenir une cadence confortable (85-95 RPM). Se concentrer sur l'apport hydrique et nutritionnel.",
+        "descriptionIndoor": "2h30 de roulage en Z2 (135-181W). Intégrer 5 minutes de pédalage sur une jambe (chaque jambe) toutes les heures. Maintenir un environnement frais."
+      },
       "completedData": {
-        "rpe": 5,
-        "avgPower": 155,
-        "actualDuration": 147,
-        "distance": 71,
-        "notes": ""
+        "actualDurationMinutes": 147,
+        "distanceKm": 71,
+        "perceivedEffort": 5,
+        "notes": "",
+        "heartRate": {
+          "avgBPM": null,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 105,
+            "avgPowerWatts": 155,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": null,
+            "maxSpeedKmH": null
+          },
+          "running": null,
+          "swimming": null
+        }
       }
     },
-    "2025-12-21": {
+    {
+      "id": "cycling_20251221_a1",
       "date": "2025-12-21",
+      "sportType": "cycling",
       "title": "Endurance Longue",
-      "type": "Endurance",
-      "duration": 210,
-      "tss": 150,
+      "workoutType": "Endurance",
       "mode": "Outdoor",
-      "description_outdoor": "Sortie très longue de 3h30 principalement en Z2 (135-181W). Utiliser le dénivelé pour de courtes montées en Z3 maximum. Assurer un ravitaillement régulier.",
-      "description_indoor": "3h30 en Z2 (135-181W). Pour rendre la séance plus ludique, utiliser une application de simulation et chercher à maintenir la puissance Z2 quelles que soient les pentes. Changer de position régulièrement.",
       "status": "completed",
+      "plannedData": {
+        "durationMinutes": 210,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 150,
+        "descriptionOutdoor": "Sortie très longue de 3h30 principalement en Z2 (135-181W). Utiliser le dénivelé pour de courtes montées en Z3 maximum. Assurer un ravitaillement régulier.",
+        "descriptionIndoor": "3h30 en Z2 (135-181W). Pour rendre la séance plus ludique, utiliser une application de simulation et chercher à maintenir la puissance Z2 quelles que soient les pentes. Changer de position régulièrement."
+      },
       "completedData": {
-        "rpe": 8,
-        "avgPower": 117,
-        "actualDuration": 270,
-        "distance": 115,
-        "notes": ""
+        "actualDurationMinutes": 270,
+        "distanceKm": 115,
+        "perceivedEffort": 8,
+        "notes": "",
+        "heartRate": {
+          "avgBPM": null,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 150,
+            "avgPowerWatts": 117,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": null,
+            "maxSpeedKmH": null
+          },
+          "running": null,
+          "swimming": null
+        }
       }
     },
-    "2025-12-23": {
+    {
+      "id": "cycling_20251223_a1",
       "date": "2025-12-23",
-      "status": "completed",
+      "sportType": "cycling",
       "title": "SweetSpot - 3 x 25 min (Home Trainer)",
-      "type": "SweetSpot",
-      "duration": 120,
-      "tss": 95,
+      "workoutType": "SweetSpot",
       "mode": "Indoor",
-      "description_outdoor": "Étant donné la demande spécifique pour une séance sur home trainer, la structure d'intensité est optimisée pour l'intérieur. Si elle devait être réalisée en extérieur : trouvez un parcours plat ou faux-plat ascendant régulier. Échauffement (15 min) en Z1/Z2. Corps de séance : 3 blocs de 25 min en SweetSpot (Z4 bas, 220-225 W), séparés par 7.5 min de Tempo/Récupération (Z2, 160-175 W). Retour au calme (15 min) en Z1.",
-      "description_indoor": "Séance de 2 heures axée sur l'accumulation de temps en SweetSpot (Z3/Z4 bas) pour améliorer la condition physique générale. FTP: 241 W. Z4: 219-253 W. Z2: 135-181 W.\r\n\r\n1. Échauffement (15 min): 10 min en Z1/Z2 progressif (120-170 W). Terminer par 5 min d'activation : 3 x (30 sec @ Z3/20 sec @ Z1).\r\n2. Corps de Séance (90 min): Répéter 3 fois la séquence suivante :\r\n    - 25 min @ SweetSpot (Z4 bas, 220-225 W). Visez 88-95% de la FTP. Maintenez une cadence de 85-95 RPM.\r\n    - 7.5 min @ Récupération Active/Tempo (Z2, 160-175 W). Cadence libre.\r\n3. Retour au calme (15 min): 15 min de pédalage facile en Z2/Z1, terminant sous 133 W.",
-      "completedData": {
-        "rpe": 5,
-        "avgPower": 167,
-        "actualDuration": 120,
-        "distance": 67,
-        "notes": ""
-      }
-    },
-    "2025-12-28": {
-      "date": "2025-12-28",
-      "title": "Endurance Longue",
-      "type": "Endurance",
-      "duration": 210,
-      "tss": 150,
-      "mode": "Outdoor",
-      "description_outdoor": "Sortie de 3h30 en Z2 (135-181W). Maintenir une intensité constante et régulière. C'est une journée de fond, évitez les accélérations inutiles.",
-      "description_indoor": "3h30 en Z2 (135-181W). Utiliser un film ou une course sur route. Changer de position (assis/danseuse) pendant 30s toutes les 10 minutes pour éviter l'ennui.",
       "status": "completed",
+      "plannedData": {
+        "durationMinutes": 120,
+        "targetPowerWatts": 222,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 95,
+        "descriptionOutdoor": "Étant donné la demande spécifique pour une séance sur home trainer, la structure d'intensité est optimisée pour l'intérieur. Si elle devait être réalisée en extérieur : trouvez un parcours plat ou faux-plat ascendant régulier. Échauffement (15 min) en Z1/Z2. Corps de séance : 3 blocs de 25 min en SweetSpot (Z4 bas, 220-225 W), séparés par 7.5 min de Tempo/Récupération (Z2, 160-175 W). Retour au calme (15 min) en Z1.",
+        "descriptionIndoor": "Séance de 2 heures axée sur l'accumulation de temps en SweetSpot (Z3/Z4 bas) pour améliorer la condition physique générale. FTP: 241 W. Z4: 219-253 W. Z2: 135-181 W.\r\n\r\n1. Échauffement (15 min): 10 min en Z1/Z2 progressif (120-170 W). Terminer par 5 min d'activation : 3 x (30 sec @ Z3/20 sec @ Z1).\r\n2. Corps de Séance (90 min): Répéter 3 fois la séquence suivante :\r\n    - 25 min @ SweetSpot (Z4 bas, 220-225 W). Visez 88-95% de la FTP. Maintenez une cadence de 85-95 RPM.\r\n    - 7.5 min @ Récupération Active/Tempo (Z2, 160-175 W). Cadence libre.\r\n3. Retour au calme (15 min): 15 min de pédalage facile en Z2/Z1, terminant sous 133 W."
+      },
       "completedData": {
-        "rpe": 5,
-        "avgPower": 143,
-        "actualDuration": 150,
-        "distance": 70,
-        "notes": ""
+        "actualDurationMinutes": 120,
+        "distanceKm": 67,
+        "perceivedEffort": 5,
+        "notes": "",
+        "heartRate": {
+          "avgBPM": null,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 95,
+            "avgPowerWatts": 167,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": null,
+            "maxSpeedKmH": null
+          },
+          "running": null,
+          "swimming": null
+        }
       }
     },
-    "2025-12-30": {
-      "date": "2025-12-30",
-      "title": "PMA - Intervalles Longs (4 min)",
-      "type": "PMA/VO2max",
-      "duration": 90,
-      "tss": 95,
-      "mode": "Outdoor",
-      "description_outdoor": "Échauffement: 20 min Z2. Corps de séance: 5 x 4 minutes en Z5 (255-289W). Récupération entre les intervalles: 4 minutes en Z2 (135-181W). Retour au calme: 14 min Z2.",
-      "description_indoor": "Échauffement: 20 min Z2. Corps de séance: 5 x 4 minutes en Z5 (255-289W). Chaque intervalle de Z5 doit être réalisé avec une cadence > 95 RPM. Récupération : 4 minutes Z2 (135-181W) à très faible résistance. Retour au calme: 14 min Z2.",
-      "status": "completed",
-      "completedData": {
-        "rpe": 6,
-        "avgPower": 143,
-        "actualDuration": 160,
-        "distance": 70,
-        "notes": ""
-      }
-    },
-    "2026-01-03": {
-      "date": "2026-01-03",
-      "title": "Endurance + Cadence",
-      "type": "Endurance/Technique",
-      "duration": 150,
-      "tss": 100,
-      "mode": "Outdoor",
-      "description_outdoor": "2h30 en Z2 (135-181W). Intégrer 3 x 10 minutes de travail de haute cadence (maintenir >100 RPM) au milieu de la séance, en maintenant la puissance en Z2. Récupération active entre chaque bloc de cadence: 5 min Z2 à cadence normale.",
-      "description_indoor": "2h30 en Z2 (135-181W). Après 60 minutes, réaliser 3 blocs de 10 minutes de 'Spin-ups': Augmenter progressivement la cadence jusqu'à la limite sans rebondir sur la selle, tout en maintenant la puissance Z2. Récupération active entre: 5 min Z2 normale.",
-      "status": "pending"
-    },
-    "2026-01-04": {
-      "date": "2026-01-04",
-      "title": "Endurance Longue",
-      "type": "Endurance",
-      "duration": 210,
-      "tss": 150,
-      "mode": "Outdoor",
-      "description_outdoor": "3h30 en Z2 (135-181W). Dernière longue sortie de charge. Maintenir une intensité constante et confortable. Se concentrer sur la fluidité du pédalage.",
-      "description_indoor": "3h30 en Z2 (135-181W). Rouler en Z2 et toutes les 45 minutes, faire 5 minutes de Z3 (183-217W) pour simuler un petit effort, avant de revenir à Z2.",
-      "status": "pending"
-    },
-    "2026-01-06": {
-      "date": "2026-01-06",
-      "title": "Récupération Active/Endurance Légère (W4)",
-      "type": "Récupération",
-      "duration": 90,
-      "tss": 50,
-      "mode": "Outdoor",
-      "description_outdoor": "90 minutes de récupération active. Rouler uniquement en Z1 (moins de 133W) ou début Z2, très facile. Éviter toute difficulté ou accélération.",
-      "description_indoor": "90 minutes de 'Décrassage'. Rouler en Z1 (moins de 133W). Regarder un flux vidéo ou écouter un podcast. Maintenir une cadence élevée (90+ RPM) sans forcer la puissance.",
-      "status": "pending"
-    },
-    "2026-01-08": {
-      "date": "2026-01-08",
-      "title": "Tempo Léger (W4)",
-      "type": "Tempo Léger",
-      "duration": 90,
-      "tss": 70,
-      "mode": "Outdoor",
-      "description_outdoor": "Échauffement 20 min Z2. 2 x 15 minutes en bas de Z3 (183W-195W). Récupération : 10 min Z2. Le but est de solliciter légèrement le système sans accumuler de fatigue. Retour au calme Z2.",
-      "description_indoor": "Échauffement 20 min Z2. 3 x 10 minutes 'Spinning Class Style': Maintenir la puissance entre 183W et 195W tout en alternant 5 minutes assis / 5 minutes en danseuse. Récupération : 5 min Z2. Retour au calme Z2.",
-      "status": "pending"
-    },
-    "2026-01-10": {
-      "date": "2026-01-10",
-      "title": "Endurance Courte Récupération (W4)",
-      "type": "Endurance",
-      "duration": 150,
-      "tss": 90,
-      "mode": "Outdoor",
-      "description_outdoor": "2h30 en Z2 (135-181W). Rouler tranquillement et rester dans la première moitié de la zone Z2. Concentration maximale sur la récupération.",
-      "description_indoor": "2h30 en Z2 (135-181W). Rouler avec une résistance constante et regarder un film. Toutes les 20 minutes, faire 1 minute de haute cadence (>100 RPM) en Z2, puis revenir à une cadence normale.",
-      "status": "pending"
-    },
-    "2026-01-11": {
-      "date": "2026-01-11",
-      "title": "Endurance Moyenne Récupération (W4)",
-      "type": "Endurance",
-      "duration": 210,
-      "tss": 120,
-      "mode": "Outdoor",
-      "description_outdoor": "3h30 de sortie. Maintenir l'intensité stricte Z2 (135-181W), en privilégiant le bas de la zone. C'est la fin du microcycle, la fatigue doit diminuer.",
-      "description_indoor": "3h30 en Z2 (135-181W). Se concentrer sur un pédalage parfaitement rond et relâché. Utiliser une séance de simulation de course à faible intensité (Z2) pour maintenir l'engagement mental.",
-      "status": "pending"
-    },
-    "2025-12-26": {
+    {
+      "id": "cycling_20251226_a1",
       "date": "2025-12-26",
+      "sportType": "cycling",
       "title": "Endurance + Sprints",
-      "type": "Endurance/Anaérobie",
-      "duration": 150,
-      "tss": 110,
+      "workoutType": "Endurance/Anaérobie",
       "mode": "Outdoor",
-      "description_outdoor": "2h30 en Z2 (135-181W). Toutes les 30 minutes, réaliser 4 sprints de 15s en Z7 (plus de 318W) départ arrêté ou basse vitesse, avec 45s de récupération Z2 entre chaque sprint. Finir le reste du temps en Z2.",
-      "description_indoor": "2h30 en Z2 (135-181W). Toutes les 30 minutes, réaliser 4 'Attaques' de 15s en Z7 (plus de 318W) à haute cadence, suivies de 45s de Z2. Le reste du temps, maintenir Z2.",
       "status": "completed",
+      "plannedData": {
+        "durationMinutes": 150,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 110,
+        "descriptionOutdoor": "2h30 en Z2 (135-181W). Toutes les 30 minutes, réaliser 4 sprints de 15s en Z7 (plus de 318W) départ arrêté ou basse vitesse, avec 45s de récupération Z2 entre chaque sprint. Finir le reste du temps en Z2.",
+        "descriptionIndoor": "2h30 en Z2 (135-181W). Toutes les 30 minutes, réaliser 4 'Attaques' de 15s en Z7 (plus de 318W) à haute cadence, suivies de 45s de Z2. Le reste du temps, maintenir Z2."
+      },
       "completedData": {
-        "rpe": 2,
-        "avgPower": 78,
-        "actualDuration": 156,
-        "distance": 57,
-        "notes": ""
+        "actualDurationMinutes": 156,
+        "distanceKm": 57,
+        "perceivedEffort": 2,
+        "notes": "",
+        "heartRate": {
+          "avgBPM": null,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 110,
+            "avgPowerWatts": 78,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": null,
+            "maxSpeedKmH": null
+          },
+          "running": null,
+          "swimming": null
+        }
       }
     },
-    "2026-01-02": {
-      "date": "2026-01-02",
-      "title": "Over-Unders Seuil",
-      "type": "Seuil/PMA",
-      "duration": 90,
-      "tss": 95,
-      "mode": "Indoor",
-      "description_outdoor": "Échauffement: 20 min Z2. Corps de séance: 3 x 8 minutes Over-Unders. Chaque bloc se compose de 1 min Z5 (255-289W) / 3 min Z4 (219-253W). Récupération entre blocs: 6 min Z2 (135-181W). Retour au calme: 16 min Z2.",
-      "description_indoor": "Échauffement: 20 min Z2. Corps de séance: 3 x 8 minutes de variation. 1 minute en 'montée' Z5 (255-289W) suivie de 3 minutes en 'faux-plat' Z4 (219-253W). Ces 8 minutes doivent être sans pause. Récupération entre blocs: 6 min Z2. Retour au calme: 16 min Z2.",
+    {
+      "id": "cycling_20251228_a1",
+      "date": "2025-12-28",
+      "sportType": "cycling",
+      "title": "Endurance Longue",
+      "workoutType": "Endurance",
+      "mode": "Outdoor",
       "status": "completed",
+      "plannedData": {
+        "durationMinutes": 210,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 150,
+        "descriptionOutdoor": "Sortie de 3h30 en Z2 (135-181W). Maintenir une intensité constante et régulière. C'est une journée de fond, évitez les accélérations inutiles.",
+        "descriptionIndoor": "3h30 en Z2 (135-181W). Utiliser un film ou une course sur route. Changer de position (assis/danseuse) pendant 30s toutes les 10 minutes pour éviter l'ennui."
+      },
       "completedData": {
-        "rpe": 8,
-        "avgPower": 168,
-        "actualDuration": 60,
-        "distance": 0,
-        "notes": "Echèque des exercices sur la deuxième série"
+        "actualDurationMinutes": 150,
+        "distanceKm": 70,
+        "perceivedEffort": 5,
+        "notes": "",
+        "heartRate": {
+          "avgBPM": null,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 150,
+            "avgPowerWatts": 143,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": null,
+            "maxSpeedKmH": null
+          },
+          "running": null,
+          "swimming": null
+        }
       }
+    },
+    {
+      "id": "cycling_20251230_a1",
+      "date": "2025-12-30",
+      "sportType": "cycling",
+      "title": "PMA - Intervalles Longs (4 min)",
+      "workoutType": "PMA/VO2max",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 90,
+        "targetPowerWatts": 272,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 95,
+        "descriptionOutdoor": "Échauffement: 20 min Z2. Corps de séance: 5 x 4 minutes en Z5 (255-289W). Récupération entre les intervalles: 4 minutes en Z2 (135-181W). Retour au calme: 14 min Z2.",
+        "descriptionIndoor": "Échauffement: 20 min Z2. Corps de séance: 5 x 4 minutes en Z5 (255-289W). Chaque intervalle de Z5 doit être réalisé avec une cadence > 95 RPM. Récupération : 4 minutes Z2 (135-181W) à très faible résistance. Retour au calme: 14 min Z2."
+      },
+      "completedData": {
+        "actualDurationMinutes": 160,
+        "distanceKm": 70,
+        "perceivedEffort": 6,
+        "notes": "",
+        "heartRate": {
+          "avgBPM": null,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 95,
+            "avgPowerWatts": 143,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": null,
+            "maxSpeedKmH": null
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
+    },
+    {
+      "id": "cycling_20260102_a1",
+      "date": "2026-01-02",
+      "sportType": "cycling",
+      "title": "Over-Unders Seuil",
+      "workoutType": "Seuil/PMA",
+      "mode": "Indoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 90,
+        "targetPowerWatts": 272,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 95,
+        "descriptionOutdoor": "Échauffement: 20 min Z2. Corps de séance: 3 x 8 minutes Over-Unders. Chaque bloc se compose de 1 min Z5 (255-289W) / 3 min Z4 (219-253W). Récupération entre blocs: 6 min Z2 (135-181W). Retour au calme: 16 min Z2.",
+        "descriptionIndoor": "Échauffement: 20 min Z2. Corps de séance: 3 x 8 minutes de variation. 1 minute en 'montée' Z5 (255-289W) suivie de 3 minutes en 'faux-plat' Z4 (219-253W). Ces 8 minutes doivent être sans pause. Récupération entre blocs: 6 min Z2. Retour au calme: 16 min Z2."
+      },
+      "completedData": {
+        "actualDurationMinutes": 60,
+        "distanceKm": 0,
+        "perceivedEffort": 8,
+        "notes": "Echèque des exercices sur la deuxième série",
+        "heartRate": {
+          "avgBPM": null,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 95,
+            "avgPowerWatts": 168,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": null,
+            "maxSpeedKmH": null
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
+    },
+    {
+      "id": "cycling_20260103_a1",
+      "date": "2026-01-03",
+      "sportType": "cycling",
+      "title": "Endurance + Cadence",
+      "workoutType": "Endurance/Technique",
+      "mode": "Outdoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 150,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 100,
+        "descriptionOutdoor": "2h30 en Z2 (135-181W). Intégrer 3 x 10 minutes de travail de haute cadence (maintenir >100 RPM) au milieu de la séance, en maintenant la puissance en Z2. Récupération active entre chaque bloc de cadence: 5 min Z2 à cadence normale.",
+        "descriptionIndoor": "2h30 en Z2 (135-181W). Après 60 minutes, réaliser 3 blocs de 10 minutes de 'Spin-ups': Augmenter progressivement la cadence jusqu'à la limite sans rebondir sur la selle, tout en maintenant la puissance Z2. Récupération active entre: 5 min Z2 normale."
+      },
+      "completedData": null
+    },
+    {
+      "id": "cycling_20260104_a1",
+      "date": "2026-01-04",
+      "sportType": "cycling",
+      "title": "Endurance Longue",
+      "workoutType": "Endurance",
+      "mode": "Outdoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 210,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 150,
+        "descriptionOutdoor": "3h30 en Z2 (135-181W). Dernière longue sortie de charge. Maintenir une intensité constante et confortable. Se concentrer sur la fluidité du pédalage.",
+        "descriptionIndoor": "3h30 en Z2 (135-181W). Rouler en Z2 et toutes les 45 minutes, faire 5 minutes de Z3 (183-217W) pour simuler un petit effort, avant de revenir à Z2."
+      },
+      "completedData": null
+    },
+    {
+      "id": "cycling_20260106_a1",
+      "date": "2026-01-06",
+      "sportType": "cycling",
+      "title": "Récupération Active/Endurance Légère (W4)",
+      "workoutType": "Récupération",
+      "mode": "Outdoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 90,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 50,
+        "descriptionOutdoor": "90 minutes de récupération active. Rouler uniquement en Z1 (moins de 133W) ou début Z2, très facile. Éviter toute difficulté ou accélération.",
+        "descriptionIndoor": "90 minutes de 'Décrassage'. Rouler en Z1 (moins de 133W). Regarder un flux vidéo ou écouter un podcast. Maintenir une cadence élevée (90+ RPM) sans forcer la puissance."
+      },
+      "completedData": null
+    },
+    {
+      "id": "cycling_20260108_a1",
+      "date": "2026-01-08",
+      "sportType": "cycling",
+      "title": "Tempo Léger (W4)",
+      "workoutType": "Tempo Léger",
+      "mode": "Outdoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 90,
+        "targetPowerWatts": 189,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 70,
+        "descriptionOutdoor": "Échauffement 20 min Z2. 2 x 15 minutes en bas de Z3 (183W-195W). Récupération : 10 min Z2. Le but est de solliciter légèrement le système sans accumuler de fatigue. Retour au calme Z2.",
+        "descriptionIndoor": "Échauffement 20 min Z2. 3 x 10 minutes 'Spinning Class Style': Maintenir la puissance entre 183W et 195W tout en alternant 5 minutes assis / 5 minutes en danseuse. Récupération : 5 min Z2. Retour au calme Z2."
+      },
+      "completedData": null
+    },
+    {
+      "id": "cycling_20260110_a1",
+      "date": "2026-01-10",
+      "sportType": "cycling",
+      "title": "Endurance Courte Récupération (W4)",
+      "workoutType": "Endurance",
+      "mode": "Outdoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 150,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 90,
+        "descriptionOutdoor": "2h30 en Z2 (135-181W). Rouler tranquillement et rester dans la première moitié de la zone Z2. Concentration maximale sur la récupération.",
+        "descriptionIndoor": "2h30 en Z2 (135-181W). Rouler avec une résistance constante et regarder un film. Toutes les 20 minutes, faire 1 minute de haute cadence (>100 RPM) en Z2, puis revenir à une cadence normale."
+      },
+      "completedData": null
+    },
+    {
+      "id": "cycling_20260111_a1",
+      "date": "2026-01-11",
+      "sportType": "cycling",
+      "title": "Endurance Moyenne Récupération (W4)",
+      "workoutType": "Endurance",
+      "mode": "Outdoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 210,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 120,
+        "descriptionOutdoor": "3h30 de sortie. Maintenir l'intensité stricte Z2 (135-181W), en privilégiant le bas de la zone. C'est la fin du microcycle, la fatigue doit diminuer.",
+        "descriptionIndoor": "3h30 en Z2 (135-181W). Se concentrer sur un pédalage parfaitement rond et relâché. Utiliser une séance de simulation de course à faible intensité (Z2) pour maintenir l'engagement mental."
+      },
+      "completedData": null
     }
-  },
+  ],
   "summary": "Votre bloc précédent a montré une excellente résilience avec un volume élevé et des sorties longues dépassant régulièrement la durée prévue. Étant donné que vous entrez dans une phase de reprise et que vous souhaitez réintroduire la Puissance Maximale Aérobie (PMA), j'ai structuré ce plan sur 4 semaines (3 semaines de charge progressive PMA + 1 semaine de récupération active). Nous allons utiliser des intervalles courts et progressifs en Z5 (255W-289W) pour réadapter l'organisme à l'intensité sans surcharger, tout en maintenant le volume cible de 9 heures par semaine. Les jours de repos imposés sont respectés. Les zones de puissance sont utilisées telles quelles, avec la conscience que vous êtes en phase de reprise.",
   "lastGenerated": "2025-12-14"
 }
