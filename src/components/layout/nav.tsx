@@ -9,7 +9,7 @@ import {
 import Image from 'next/image';
 
 // Définition des vues acceptées
-type View = 'dashboard' | 'settings' | 'stats' | 'workout-detail' | 'onboarding' | 'loading';
+export type View = 'dashboard' | 'settings' | 'stats' | 'workout-detail' | 'onboarding' | 'loading';
 
 interface NavProps {
     onViewChange: (view: View) => void;
