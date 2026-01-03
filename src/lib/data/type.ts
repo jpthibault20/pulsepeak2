@@ -203,7 +203,7 @@ export interface PowerZone {
 }
 
 // Définition de l'interface pour le type de sport
-export type SportType = 'cycling' | 'running' | 'swimming';
+export type SportType = 'cycling' | 'running' | 'swimming' | 'other';
 
 // Définition de l'interface pour le profil strava
 export interface StravaConfig {
