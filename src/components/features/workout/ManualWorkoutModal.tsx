@@ -128,13 +128,15 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
     const sportIcons: Record<SportType, React.ReactNode> = {
         cycling: <Bike size={16} />,
         running: <User size={16} />,
-        swimming: <Waves size={16} />
+        swimming: <Waves size={16} />,
+        other: <Activity size={16} />
     };
 
     const workoutTypes: Record<SportType, string[]> = {
         cycling: ['Endurance', 'Tempo', 'Threshold', 'VO2max', 'Sprint', 'Recovery', 'Force'],
         running: ['Endurance', 'Tempo', 'Threshold', 'Intervals', 'Recovery', 'Long Run'],
-        swimming: ['Endurance', 'Technique', 'Intervals', 'Recovery', 'Sprints']
+        swimming: ['Endurance', 'Technique', 'Intervals', 'Recovery', 'Sprints'],
+        other: ['Endurance', 'Intervals', 'Recovery', 'Sprints']
     };
 
     return (
