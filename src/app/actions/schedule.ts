@@ -8,6 +8,14 @@ import { revalidatePath } from 'next/cache';
 // lib/actions/workoutActions.ts
 import type { CompletedData, CompletedDataFeedback } from '@/lib/data/type';
 
+import fs from 'fs/promises';
+import path from 'path';
+import { getStravaActivities, getStravaActivityById } from '@/lib/strava-service';
+import { mapStravaToCompletedData } from '@/lib/strava-mapper';
+
+
+const DB_PATH = path.join(process.cwd(), 'src/lib/data/schedule.json');
+
 // --- Helpers ---
 
 // Calcul de l'historique pour le prompt AI
@@ -218,54 +226,64 @@ function transformFeedbackToCompletedData(
 ): CompletedData {
     const sportType = feedback.sportType;
 
-    return {
-        actualDurationMinutes: feedback.actualDuration,
-        distanceKm: feedback.distance,
-        perceivedEffort: feedback.rpe,
-        notes: feedback.notes,
+return {
+    actualDurationMinutes: Number(feedback.actualDuration),
+    distanceKm: feedback.distance ? Number(feedback.distance) : 0,
+    perceivedEffort: Number(feedback.rpe),
+    notes: feedback.notes || "", // Chaîne vide si null
 
-        // Données optionnelles universelles
-        heartRate: feedback.avgHeartRate ? {
-            avgBPM: feedback.avgHeartRate,
-            maxBPM: null // Pas collecté dans le formulaire pour l'instant
-        } : undefined,
-        caloriesBurned: feedback.calories ?? null,
+    source: {
+        type: 'manual',
+        stravaId: null // Pas de champ pour le moment
+    },
 
-        // Métriques sport-spécifiques
-        metrics: {
-            cycling: sportType === 'cycling' ? {
-                tss: feedback.tss ?? null,
-                avgPowerWatts: feedback.avgPower ?? null,
-                maxPowerWatts: feedback.maxPower ?? null,
-                normalizedPowerWatts: null, // Calculé ultérieurement si besoin
-                avgCadenceRPM: feedback.avgCadence ?? null,
-                maxCadenceRPM: feedback.maxCadence ?? null,
-                elevationGainMeters: feedback.elevation ?? null,
-                avgSpeedKmH: feedback.avgSpeed ?? null,
-                maxSpeedKmH: feedback.maxSpeed ?? null
-            } : null,
+    laps: [], // Pas de tours détaillés en saisie manuelle
 
-            running: sportType === 'running' ? {
-                avgPaceMinPerKm: feedback.avgPace ?? null,
-                bestPaceMinPerKm: null, // Pas collecté actuellement
-                elevationGainMeters: feedback.elevation ?? null,
-                avgCadenceSPM: feedback.avgCadence ?? null,
-                maxCadenceSPM: feedback.maxCadence ?? null,
-                avgSpeedKmH: feedback.avgSpeed ?? null,
-                maxSpeedKmH: feedback.maxSpeed ?? null
-            } : null,
+    // Toujours renvoyer l'objet structurel, champs à null si pas de donnée
+    heartRate: {
+        avgBPM: feedback.avgHeartRate ? Number(feedback.avgHeartRate) : null,
+        maxBPM: null // Valeur explicite null
+    },
+    
+    caloriesBurned: feedback.calories ? Number(feedback.calories) : null,
 
-            swimming: sportType === 'swimming' ? {
-                avgPace100m: null, // Calculé depuis distance/duration si besoin
-                bestPace100m: null,
-                strokeType: feedback.strokeType ?? null,
-                avgStrokeRate: feedback.avgStrokeRate ?? null,
-                avgSwolf: feedback.avgSwolf ?? null,
-                poolLengthMeters: feedback.poolLengthMeters ?? null,
-                totalStrokes: feedback.totalStrokes ?? null
-            } : null
-        }
-    };
+    // Métriques sport-spécifiques
+    metrics: {
+        cycling: sportType === 'cycling' ? {
+            tss: feedback.tss ? Number(feedback.tss) : null,
+            avgPowerWatts: feedback.avgPower ? Number(feedback.avgPower) : null,
+            maxPowerWatts: feedback.maxPower ? Number(feedback.maxPower) : null,
+            normalizedPowerWatts: null, // On garde la clé présente
+            intensityFactor: null,      // Souvent requis dans le type CyclingMetrics
+            avgCadenceRPM: feedback.avgCadence ? Number(feedback.avgCadence) : null,
+            maxCadenceRPM: feedback.maxCadence ? Number(feedback.maxCadence) : null,
+            elevationGainMeters: feedback.elevation ? Number(feedback.elevation) : null,
+            avgSpeedKmH: feedback.avgSpeed ? Number(feedback.avgSpeed) : null,
+            maxSpeedKmH: feedback.maxSpeed ? Number(feedback.maxSpeed) : null,
+        } : null,
+
+        running: sportType === 'running' ? {
+            avgPaceMinPerKm: feedback.avgPace ? Number(feedback.avgPace) : null,
+            bestPaceMinPerKm: null, 
+            elevationGainMeters: feedback.elevation ? Number(feedback.elevation) : null,
+            avgCadenceSPM: feedback.avgCadence ? Number(feedback.avgCadence) : null,
+            maxCadenceSPM: feedback.maxCadence ? Number(feedback.maxCadence) : null,
+            avgSpeedKmH: feedback.avgSpeed ? Number(feedback.avgSpeed) : null,
+            maxSpeedKmH: feedback.maxSpeed ? Number(feedback.maxSpeed) : null
+        } : null,
+
+        swimming: sportType === 'swimming' ? {
+            avgPace100m: null, 
+            bestPace100m: null,
+            strokeType: feedback.strokeType ?? null, // String ou Enum, pas de Number()
+            avgStrokeRate: feedback.avgStrokeRate ? Number(feedback.avgStrokeRate) : null,
+            avgSwolf: feedback.avgSwolf ? Number(feedback.avgSwolf) : null,
+            poolLengthMeters: feedback.poolLengthMeters ? Number(feedback.poolLengthMeters) : null,
+            totalStrokes: feedback.totalStrokes ? Number(feedback.totalStrokes) : null
+        } : null 
+    }
+};
+
 }
 
 /**
@@ -423,4 +441,133 @@ export async function deleteWorkout(workoutIdOrDate: string) {
         await saveSchedule(schedule);
         revalidatePath('/');
     }
+}
+
+export async function syncStravaActivities() {
+  console.log("⚡ Début Sync Strava...");
+  
+  try {
+    // 1. Charger la DB actuelle
+    const data = await fs.readFile(DB_PATH, 'utf-8');
+    const schedule: Schedule = JSON.parse(data);
+    
+    // 2. Trouver la date de la dernière activité Strava importée
+    let lastStravaTimestamp = 0;
+    
+    // On regarde toutes les activités complétées qui viennent de Strava
+    const stravaWorkouts = schedule.workouts.filter(w => 
+      w.status === 'completed' && 
+      w.completedData?.source?.type === 'strava'
+    );
+
+    if (stravaWorkouts.length > 0) {
+      // Trier par date pour trouver la plus récente
+      stravaWorkouts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      
+      const lastWorkout = stravaWorkouts[0];
+      // On convertit la date en Timestamp UNIX (secondes) pour Strava
+      // On ajoute un buffer de quelques heures pour être sûr (ou on prend la date exacte)
+      lastStravaTimestamp = Math.floor(new Date(lastWorkout.date).getTime() / 1000);
+      console.log(`📅 Dernière activité Strava connue : ${lastWorkout.date} (Epoch: ${lastStravaTimestamp})`);
+    } else {
+      console.log("⚠️ Aucune activité Strava trouvée en DB. Récupération des 20 dernières.");
+    }
+
+    // 3. Appeler Strava API
+    // Si lastStravaTimestamp est 0, on envoie null, Strava renverra les plus récents par défaut
+    const activitiesSummary = await getStravaActivities(
+      lastStravaTimestamp > 0 ? lastStravaTimestamp : null, 
+      20 // Max items à sync d'un coup
+    );
+    
+    if (!activitiesSummary || activitiesSummary.length === 0) {
+      console.log("✅ Aucune nouvelle activité à synchroniser.");
+      return { success: true, count: 0 };
+    }
+
+    console.log(`📥 ${activitiesSummary.length} nouvelles activités détectées.`);
+    
+    let newItemsCount = 0;
+
+    // 4. Traiter chaque activité (Boucle)
+    for (const summary of activitiesSummary) {
+        
+        // Vérification de doublon (par ID Strava)
+        const exists = schedule.workouts.some(w => 
+            w.completedData?.source?.type === 'strava' && 
+            w.completedData.source.stravaId === summary.id
+        );
+
+        if (exists) {
+            console.log(`   ⏭  Skip: Activité ${summary.id} déjà présente.`);
+            continue;
+        }
+
+        // 📝 Récupération du DÉTAIL (pour avoir les LAPS)
+        // C'est ici qu'on fait l'appel API individuel
+        const detail = await getStravaActivityById(summary.id);
+        if(!detail) continue;
+
+        const completedData = await mapStravaToCompletedData(detail);
+        const activityDate = summary.start_date.split('T')[0]; // YYYY-MM-DD
+
+        // 🧠 LOGIQUE DE MATCHING : Est-ce qu'un entrainement était prévu ce jour-là ?
+        // On cherche un workout à "pending" ou "missed" à cette date
+        const unplannedId = `strava_${summary.id}`; // ID temporaire par défaut
+        
+        const matchingIndex = schedule.workouts.findIndex(w => 
+            w.date === activityDate && 
+            w.status !== 'completed' // On n'écrase pas un truc déjà fait
+        );
+
+        if (matchingIndex !== -1) {
+            // MATCH TROUVÉ : On met à jour l'entrainement prévu
+            console.log(`   🤝 Match trouvé pour le ${activityDate} -> Mise à jour du plan.`);
+            schedule.workouts[matchingIndex].status = 'completed';
+            schedule.workouts[matchingIndex].completedData = completedData;
+            // Optionnel : On peut renommer le titre ou garder le titre Strava
+            // schedule.workouts[matchingIndex].title = detail.name; 
+        } else {
+            // PAS DE MATCH : On crée une nouvelle entrée "Activité Libre"
+            console.log(`   ➕ Nouvelle activité libre ajoutée : ${activityDate}`);
+            const newWorkout: Workout = {
+                id: unplannedId,
+                date: activityDate,
+                sportType: completedData.metrics.running ? 'running' : 'cycling', // Simplifié
+                title: detail.name, // Titre Strava
+                workoutType: 'Sortie Libre',
+                mode: 'Outdoor', // Hypothèse par défaut
+                status: 'completed',
+                plannedData: { // Pas de plan, donc vide
+                    durationMinutes: 0,
+                    targetPowerWatts: null,
+                    targetPaceMinPerKm: null,
+                    targetHeartRateBPM: null,
+                    distanceKm: null,
+                    plannedTSS: null,
+                    descriptionOutdoor: null,
+                    descriptionIndoor: null
+                },
+                completedData: completedData
+            };
+            schedule.workouts.push(newWorkout);
+        }
+        newItemsCount++;
+    }
+
+    // 5. Sauvegarder si changements
+    if (newItemsCount > 0) {
+        // Re-trier le calendrier par date pour garder l'ordre
+        schedule.workouts.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        
+        await fs.writeFile(DB_PATH, JSON.stringify(schedule, null, 2));
+        console.log("💾 DB mise à jour avec succès.");
+    }
+
+    return { success: true, count: newItemsCount };
+
+  } catch (error) {
+    console.error("❌ Erreur Sync Strava:", error);
+    return { success: false, error: error };
+  }
 }
