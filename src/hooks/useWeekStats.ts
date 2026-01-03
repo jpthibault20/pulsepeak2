@@ -9,6 +9,7 @@ export interface WeekStats {
     distance: number;
     completed: number;
     total: number;
+    completedTSS: number;
     sportBreakdown: Record<SportType, number>; // Nombre de séances
     sportDuration: Record<SportType, number>;  // ✅ NOUVEAU: Durée cumulée (minutes)
 }
@@ -23,6 +24,7 @@ export function useWeekStats(
             actualDuration: 0,
             distance: 0,
             completed: 0,
+            completedTSS: 0,
             total: 0,
             sportBreakdown: { cycling: 0, running: 0, swimming: 0 },
             sportDuration: { cycling: 0, running: 0, swimming: 0 }

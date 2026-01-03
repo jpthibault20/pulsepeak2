@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react'; // Ajout de useMemo
 import {
     Activity, Clock, Zap, Home, Mountain,
     ChevronLeft, CheckCircle, XCircle,
     CalendarDays, Edit, Trash2, RefreshCw,
     AlertTriangle, Send, X,
-    Bike, FootprintsIcon as Running, Waves, Heart
+    Bike, FootprintsIcon as Running, Waves, Heart,
+    Timer // Ajout pour la durée
 } from 'lucide-react';
 import type { Profile, Workout, SportType, CompletedDataFeedback } from '@/lib/data/type';
 import { Badge } from '@/components/ui/Badge';
@@ -55,48 +56,137 @@ const SPORT_CONFIG: Record<SportType, {
         color: 'text-cyan-400',
         label: 'Natation',
         unit: 'min/100m'
-    }
+    },
 };
 
 // --- Helpers ---
+
+// Fonction pour formater la durée en HH:MM:SS ou MM:SS
+const formatDuration = (totalSeconds: number | undefined): string => {
+    if (totalSeconds === undefined || totalSeconds === null) return '-';
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+    if (hours > 0) {
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+};
+
+// Helper pour extraire les métriques communes et spécifiques
 const getSportMetrics = (workout: Workout) => {
     if (!workout.completedData) return null;
 
     const { sportType, completedData } = workout;
     const metrics = completedData.metrics;
 
+    const baseMetrics = {
+        distance: completedData.distanceKm !== undefined && completedData.distanceKm > 0
+            ? `${completedData.distanceKm.toFixed(2)} km`
+            : null,
+        duration: formatDuration(completedData.actualDurationMinutes * 60),
+        calories: completedData.caloriesBurned !== undefined ? `${completedData.caloriesBurned} kcal` : null,
+        heartRate: completedData.heartRate?.avgBPM ? {
+            avg: `${completedData.heartRate.avgBPM} bpm`,
+            max: completedData.heartRate.maxBPM ? `/${completedData.heartRate.maxBPM} bpm` : ''
+        } : null,
+        rpe: completedData.perceivedEffort !== null && completedData.perceivedEffort !== undefined
+            ? completedData.perceivedEffort
+            : null,
+    };
+
+    let sportSpecificMetrics = null;
+
     switch (sportType) {
         case 'cycling':
-            return metrics.cycling ? {
-                primary: `${metrics.cycling.avgPowerWatts}W`,
-                secondary: `TSS: ${metrics.cycling.tss ?? '-'}`,
-                tertiary: metrics.cycling.normalizedPowerWatts
-                    ? `NP: ${metrics.cycling.normalizedPowerWatts}W`
-                    : null
+            sportSpecificMetrics = metrics.cycling ? {
+                primary: metrics.cycling.avgPowerWatts !== undefined ? `${metrics.cycling.avgPowerWatts} W` : '-',
+                secondary: metrics.cycling.tss !== undefined ? `TSS: ${metrics.cycling.tss}` : 'TSS: -',
+                tertiary: metrics.cycling.normalizedPowerWatts !== undefined ? `NP: ${metrics.cycling.normalizedPowerWatts} W` : null,
+                // Ajout Power Curve si disponible
+                // powerCurve: metrics.cycling.?.map((p) => `${p.power} W @ ${p.duration}s`)
             } : null;
+            break;
 
         case 'running':
-            return metrics.running ? {
-                primary: metrics.running.avgPaceMinPerKm || '-',
-                secondary: `${completedData.distanceKm.toFixed(2)} km`,
-                tertiary: metrics.running.elevationGainMeters
-                    ? `D+: ${metrics.running.elevationGainMeters}m`
-                    : null
+            sportSpecificMetrics = metrics.running ? {
+                primary: metrics.running.avgPaceMinPerKm !== undefined ? `${metrics.running.avgPaceMinPerKm} min/km` : '-',
+                secondary: metrics.running.elevationGainMeters !== undefined ? `D+: ${metrics.running.elevationGainMeters} m` : null,
+                tertiary: metrics.running.bestPaceMinPerKm !== undefined ? `Vmax: ${metrics.running.bestPaceMinPerKm} min/km` : null,
             } : null;
+            break;
 
         case 'swimming':
-            return metrics.swimming ? {
-                primary: metrics.swimming.avgPace100m || '-',
-                secondary: `${completedData.distanceKm.toFixed(2)} km`,
-                tertiary: metrics.swimming.strokeType
-                    ? `Style: ${metrics.swimming.strokeType}`
-                    : null
+            sportSpecificMetrics = metrics.swimming ? {
+                primary: metrics.swimming.avgPace100m !== undefined ? `${metrics.swimming.avgPace100m} min/100m` : '-',
+                secondary: metrics.swimming.strokeType ? `Style: ${metrics.swimming.strokeType}` : null,
+                tertiary: metrics.swimming.bestPace100m !== undefined ? `Vmax: ${metrics.swimming.bestPace100m} min/100m` : null,
             } : null;
-
+            break;
         default:
-            return null;
+            // Pour 'other' ou types non gérés spécifiquement
+            break;
     }
+
+    return {
+        ...baseMetrics,
+        ...sportSpecificMetrics,
+    };
 };
+
+// Composant Carte pour les stats Strava
+const StatsCard: React.FC<{
+    title: string;
+    icon: React.ElementType;
+    color: string;
+    data: { label: string; value: string | null | undefined; icon?: React.ElementType }[];
+    note?: string;
+    rpe?: number | null;
+    rpeColor?: string;
+}> = ({ title, icon: Icon, color, data, note, rpe, rpeColor }) => {
+    return (
+        <div className={`relative overflow-hidden rounded-xl p-4 sm:p-5 shadow-lg border ${color.replace('text-', 'border-')}/30 bg-linear-to-br from-slate-800/70 via-slate-900/90 to-slate-800/70`}>
+            <div className={`absolute -top-2 -right-2 w-24 h-24 rounded-full opacity-20 ${color} blur-lg`}></div>
+            <div className={`absolute -bottom-4 -left-4 w-32 h-32 rounded-full opacity-15 ${color} blur-xl`}></div>
+
+            <div className="relative z-10 flex flex-col h-full">
+                <div className="flex items-center mb-3 sm:mb-4">
+                    <Icon size={20} className={`mr-2 ${color}`} />
+                    <h3 className={`text-lg sm:text-xl font-bold ${color}`}>{title}</h3>
+                </div>
+
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 sm:gap-x-6 sm:gap-y-4 grow">
+                    {data.map((item, index) => (
+                        <div key={index} className="flex flex-col items-start col-span-1">
+                            <div className="flex items-center text-xs sm:text-sm text-slate-400 font-medium mb-1">
+                                {item.icon && <item.icon size={14} className="mr-1" />}
+                                {item.label}
+                            </div>
+                            <div className={`text-sm sm:text-base font-bold font-mono ${item.value ? 'text-white' : 'text-slate-500'}`}>
+                                {item.value ?? '-'}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {(rpe !== null && rpe !== undefined) && (
+                     <div className="mt-4 pt-3 border-t border-slate-700/50 flex items-center justify-between text-xs sm:text-sm">
+                        <div className="flex items-center text-slate-400">
+                            <Heart size={16} className={`mr-1.5 ${rpeColor || 'text-red-400'}`} />
+                            RPE
+                        </div>
+                        <span className={`font-bold ${rpeColor || 'text-red-400'}`}>{rpe.toFixed(1)}</span>
+                    </div>
+                )}
+
+                {note && (
+                    <p className="mt-3 text-xs sm:text-sm text-slate-500 italic">{note}</p>
+                )}
+            </div>
+        </div>
+    );
+};
+
 
 // --- Composant Principal ---
 export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
@@ -121,6 +211,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
     const [isRegenerating, setIsRegenerating] = useState(false);
 
     // --- Helpers Locaux ---
+    // Utilisation de `other` si sportType n'est pas dans le config
     const sportConfig = SPORT_CONFIG[workout.sportType];
     const SportIcon = sportConfig.icon;
 
@@ -130,34 +221,47 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
 
     const ModeIcon = workout.mode === 'Outdoor' ? Mountain : Home;
 
-    const sportMetrics = getSportMetrics(workout);
+    // Utilisation de useMemo pour éviter les recalculs inutiles
+    const sportMetrics = useMemo(() => getSportMetrics(workout), [workout]);
 
     // --- Handlers ---
+    // ... (les handlers restent les mêmes, sauf ajustements si nécessaire) ...
     const handleToggle = async () => {
         setIsMutating(true);
         try {
             await onToggleMode(workout.date);
         } catch (e) {
             console.error("Erreur bascule de mode:", e);
+            // Gérer l'erreur pour l'utilisateur si besoin
         } finally {
             setIsMutating(false);
         }
     };
 
     const handleMove = async () => {
-        if (!newMoveDate) return;
+        if (!newMoveDate) {
+            // Afficher un message d'erreur si aucune date n'est sélectionnée
+            alert("Veuillez sélectionner une nouvelle date.");
+            return;
+        }
         setIsMutating(true);
         try {
             await onMoveWorkout(workout.date, newMoveDate);
-            onClose();
+            onClose(); // Fermer la vue après succès
         } catch (e) {
             console.error("Erreur de déplacement:", e);
+            // Gérer l'erreur pour l'utilisateur
         } finally {
             setIsMutating(false);
         }
     };
 
     const handleRegenerateClick = async () => {
+        if (!regenInstruction.trim()) {
+             // Ne pas régénérer si l'instruction est vide
+             setShowRegenInput(false);
+             return;
+        }
         setIsMutating(true);
         setIsRegenerating(true);
         try {
@@ -166,6 +270,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
             setRegenInstruction('');
         } catch (e) {
             console.error("Erreur régénération:", e);
+             // Gérer l'erreur pour l'utilisateur
         } finally {
             setIsMutating(false);
             setIsRegenerating(false);
@@ -176,9 +281,11 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
         setIsMutating(true);
         try {
             await onDelete(workout.date);
+             // Pas besoin de fermer ici, le parent s'en chargera peut-être
         } catch (e) {
             console.error("Erreur suppression:", e);
-            setIsMutating(false);
+            // Gérer l'erreur pour l'utilisateur
+            setIsMutating(false); // Important pour réactiver les boutons
         }
     };
 
@@ -188,16 +295,30 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
     ) => {
         setIsMutating(true);
         try {
-            // await updateWorkoutStatus(workout.id, status, feedback);
-            await onUpdate(workout.date, status, feedback); // ← Ancien appel
+            await onUpdate(workout.date, status, feedback);
             setIsCompleting(false);
             setIsEditing(false);
+            // Si le statut devient 'pending' après 'completed', on peut peut-être fermer la vue
+            if (status === 'pending' && workout.status === 'completed') {
+                onClose();
+            }
         } catch (e) {
             console.error("Erreur de mise à jour:", e);
+             // Gérer l'erreur pour l'utilisateur
         } finally {
             setIsMutating(false);
         }
     };
+
+    // --- Calcul RPE Color Dynamiquement ---
+    const rpeColor = useMemo(() => {
+        if (sportMetrics?.rpe === null || sportMetrics?.rpe === undefined) return 'text-slate-400';
+        // Exemple: < 7 Vert, 7-8 Orange, > 8 Rouge
+        if (sportMetrics.rpe < 7) return 'text-emerald-400';
+        if (sportMetrics.rpe < 8.5) return 'text-orange-400';
+        return 'text-red-400';
+    }, [sportMetrics?.rpe]);
+
 
     // --- Render ---
     return (
@@ -208,96 +329,82 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                 className="flex items-center text-slate-400 hover:text-white mb-4 md:mb-6 transition-colors px-1"
                 aria-label="Retour au calendrier"
             >
-                <ChevronLeft size={20} className="mr-1" /> Retour au calendrier
+                <ChevronLeft size={20} className="mr-1" /> Retour
             </button>
 
-            <Card className="border-t-4 border-t-blue-500 shadow-2xl relative overflow-hidden">
-                {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
+            <Card className="relative overflow-hidden">
+                {/* Header: Titre, Dates, Badges */}
+                <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4 pb-4 border-b border-slate-800">
                     <div className="w-full">
-                        {/* Badges et Sport */}
+                        {/* Badges Sport & Type */}
                         <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-3">
-                            {/* Badge Sport */}
-                            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800/50 ${sportConfig.color} text-xs md:text-sm font-semibold`}>
+                            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full ${sportConfig.color} text-xs md:text-sm font-semibold bg-white/5`}>
                                 <SportIcon size={14} />
                                 <span>{sportConfig.label}</span>
                             </div>
-
                             <Badge type={workout.workoutType} />
-
-                            {/* Métriques Planifiées */}
-                            <div className="flex items-center gap-3 text-slate-400 bg-slate-800/50 rounded-full px-3 py-1 text-xs md:text-sm">
-                                <span className="flex items-center">
-                                    <Clock size={12} className="mr-1.5" />
-                                    {workout.plannedData?.durationMinutes} min
-                                </span>
-                                <div className="w-px h-3 bg-slate-600"></div>
-                                <span className="flex items-center">
-                                    <Zap size={12} className="mr-1.5" />
-                                    TSS: {workout.plannedData?.plannedTSS || '-'}
-                                </span>
-                            </div>
+                            {workout.status === 'completed' && <Badge type="completed" />}
                         </div>
 
-                        {/* Titre et Date */}
+                        {/* Titre */}
                         <h1 className="text-2xl md:text-3xl font-bold text-white mb-1 leading-tight">
                             {workout.title}
                         </h1>
+                        {/* Dates */}
                         <p className="text-slate-400 text-sm flex items-center gap-2">
-                            <CalendarDays size={14} /> {formatDate(workout.date)}
+                            <CalendarDays size={14} className="text-slate-500" />
+                            <span className="font-mono">{formatDate(workout.date)}</span>
+                            {workout.status === 'completed' && workout.date && (
+                                <span className="text-xs text-slate-500 ml-2">
+                                    ({formatDate(workout.date)})
+                                </span>
+                            )}
                         </p>
                     </div>
 
-                    {/* Badge Accompli avec Métriques Sport-Specific */}
-                    {workout.status === 'completed' && workout.completedData && sportMetrics && (
-                        <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-xl p-3 text-right shrink-0 w-full md:w-auto">
-                            <div className="text-xs text-emerald-400 font-bold uppercase mb-2 flex items-center justify-between md:justify-end gap-1">
-                                <CheckCircle size={12} /> Accompli
-                            </div>
-
-                            {/* Métriques Principales */}
-                            <div className="grid grid-cols-2 md:grid-cols-1 gap-2 text-left md:text-right">
-                                <div>
-                                    <div className="text-white text-base md:text-sm font-mono font-bold">
-                                        {sportMetrics.primary}
-                                    </div>
-                                    <div className="text-xs text-slate-400">
-                                        {sportMetrics.secondary}
-                                    </div>
-                                </div>
-
-                                <div className="flex md:flex-col items-end gap-2 md:gap-1">
-                                    {sportMetrics.tertiary && (
-                                        <div className="text-xs text-slate-400">
-                                            {sportMetrics.tertiary}
-                                        </div>
-                                    )}
-                                    <div className="text-xs text-slate-300">
-                                        RPE: <span className={
-                                            workout.completedData.perceivedEffort > 7
-                                                ? 'text-red-400'
-                                                : 'text-emerald-400'
-                                        }>
-                                            {workout.completedData.perceivedEffort}/10
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* FC Moyenne si disponible */}
-                            {workout.completedData.heartRate?.avgBPM && (
-                                <div className="mt-2 pt-2 border-t border-emerald-500/20 text-xs text-slate-400 flex items-center justify-end gap-1">
-                                    <Heart size={12} className="text-red-400" />
-                                    {workout.completedData.heartRate.avgBPM} bpm
-                                </div>
-                            )}
+                    {/* Métriques Planifiées (si pas complété) */}
+                    {workout.status !== 'completed' && workout.plannedData && (
+                        <div className="flex items-center gap-3 text-slate-400 bg-slate-800/50 rounded-full px-3 py-1 text-xs md:text-sm shrink-0">
+                            <span className="flex items-center">
+                                <Clock size={12} className="mr-1.5" />
+                                {workout.plannedData.durationMinutes} min
+                            </span>
+                            <div className="w-px h-3 bg-slate-600"></div>
+                            <span className="flex items-center">
+                                <Zap size={12} className="mr-1.5" />
+                                TSS: {workout.plannedData.plannedTSS || '-'}
+                            </span>
                         </div>
                     )}
                 </div>
 
-                {/* Barre d'outils secondaire */}
+                {/* === CARTE DES STATISTIQUES COMPLÉTÉES === */}
+                {workout.status === 'completed' && sportMetrics && (
+                    <StatsCard
+                        title={sportConfig.label}
+                        icon={sportConfig.icon}
+                        color={sportConfig.color}
+                        rpe={sportMetrics.rpe}
+                        rpeColor={rpeColor}
+                        data={[
+                            { label: 'Durée', value: sportMetrics.duration, icon: Timer },
+                            { label: 'Distance', value: sportMetrics.distance },
+                            { label: 'Calories', value: sportMetrics.calories },
+                            { label: 'FC Moyenne', value: sportMetrics.heartRate?.avg, icon: Heart },
+                            // Métriques spécifiques sport
+                            ...(sportMetrics.primary ? [{ label: 'Principal', value: sportMetrics.primary }] : []),
+                            ...(sportMetrics.secondary ? [{ label: 'Secondaire', value: sportMetrics.secondary }] : []),
+                            ...(sportMetrics.tertiary ? [{ label: 'Tertiaire', value: sportMetrics.tertiary }] : []),
+                            // ...(sportMetrics.primary ? [{ label: 'Puissance NP', value: sportMetrics. }] : []), // Exemple pour vélo si NP est séparé
+                        ].filter(item => item.value !== null && item.value !== undefined && item.value !== '-') // Filtrer les valeurs vides ou nulles
+                        }
+                        note={workout.completedData?.notes}
+                    />
+                )}
+
+                {/* Barre d'actions secondaire */}
                 {workout.workoutType !== 'Rest' && (
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-slate-800 pb-6 gap-4">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center my-6 border-b border-slate-800 pb-6 gap-4">
                         <div className="w-full md:w-auto">
                             {showRegenInput ? (
                                 <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 w-full md:w-auto">
@@ -313,7 +420,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                                     />
                                     <Button
                                         variant="ghost"
-                                        onClick={() => setShowRegenInput(false)}
+                                        onClick={() => { setShowRegenInput(false); setRegenInstruction(''); }}
                                         disabled={isMutating}
                                         className="shrink-0"
                                         aria-label="Annuler"
@@ -323,7 +430,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                                     <Button
                                         variant="primary"
                                         onClick={handleRegenerateClick}
-                                        disabled={isMutating}
+                                        disabled={isMutating || !regenInstruction.trim()}
                                         className="shrink-0 bg-blue-600 hover:bg-blue-500"
                                         aria-label="Envoyer"
                                     >
@@ -336,6 +443,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                                 </div>
                             ) : (
                                 <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 hide-scrollbar w-full">
+                                    {/* Bouton Toggle Mode */}
                                     <Button
                                         variant="secondary"
                                         className="whitespace-nowrap h-9 text-xs"
@@ -345,6 +453,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                                     >
                                         {workout.mode === 'Outdoor' ? 'Extérieur' : 'Home Tr.'}
                                     </Button>
+                                    {/* Bouton Déplacer */}
                                     <Button
                                         variant="secondary"
                                         className="whitespace-nowrap h-9 text-xs"
@@ -354,7 +463,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                                     >
                                         Déplacer
                                     </Button>
-
+                                    {/* Bouton Régénérer */}
                                     {workout.status === 'pending' && (
                                         <Button
                                             variant="ghost"
@@ -368,6 +477,20 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                                     )}
                                 </div>
                             )}
+                        </div>
+
+                        {/* Boutons secondaires pour les actions urgentes */}
+                        <div className="flex gap-2 shrink-0">
+                             <Button
+                                variant="ghost"
+                                className="px-3 text-slate-500 hover:text-red-400"
+                                onClick={() => setShowDeleteConfirm(true)}
+                                disabled={isMutating}
+                                aria-label="Supprimer la séance"
+                                icon={Trash2}
+                                // iconOnly // Pour n'afficher que l'icône
+                            >Supprimer</Button>
+                            
                         </div>
                     </div>
                 )}
@@ -385,11 +508,13 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                                 className="bg-slate-950 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm flex-1 outline-none focus:border-blue-500"
                                 onChange={(e) => setNewMoveDate(e.target.value)}
                                 aria-label="Nouvelle date"
+                                defaultValue={workout.date} // Pré-remplir avec la date actuelle
                             />
                             <Button
                                 variant="ghost"
                                 onClick={() => setIsMoving(false)}
                                 disabled={isMutating}
+                                className="h-9"
                             >
                                 Annuler
                             </Button>
@@ -397,6 +522,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                                 variant="primary"
                                 disabled={isMutating || !newMoveDate}
                                 onClick={handleMove}
+                                className="h-9"
                             >
                                 Confirmer
                             </Button>
@@ -430,13 +556,13 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                                 disabled={isMutating}
                                 icon={Trash2}
                             >
-                                {isMutating ? "..." : "Supprimer définitivement"}
+                                {isMutating ? "..." : "Supprimer"}
                             </Button>
                         </div>
                     </div>
                 )}
 
-                {/* Description de la séance */}
+                {/* Description de la séance (si applicable) */}
                 {currentDescription && (
                     <div className="bg-slate-900/50 rounded-xl p-4 md:p-6 mb-8 border border-slate-800">
                         <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4 flex items-center">
@@ -457,19 +583,22 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                         onSave={async (feedback) => {
                             await handleStatusUpdate('completed', feedback);
                         }}
-                        onCancel={() => setIsCompleting(false)}
+                        onCancel={() => {
+                            setIsCompleting(false);
+                            setIsEditing(false);
+                        }}
                     />
                 ) : (
-                    /* Footer Actions Principales */
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-slate-800">
+                    /* Actions Principales (Bas du Card) */
+                    <div className="grid grid-cols-1 gap-3 pt-4 border-t border-slate-800">
                         {workout.status !== 'completed' && !showDeleteConfirm && (
                             <Button
                                 variant="success"
                                 onClick={() => setIsCompleting(true)}
-                                className="w-full sm:col-span-2 h-12 md:h-10 text-base font-semibold shadow-lg shadow-emerald-900/20"
+                                className="w-full h-12 md:h-10 text-base font-semibold shadow-lg shadow-emerald-900/20"
                                 disabled={isMutating}
+                                icon={CheckCircle}
                             >
-                                <CheckCircle size={18} className="mr-2" />
                                 Marquer comme fait
                             </Button>
                         )}
@@ -480,6 +609,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                                     variant="outline"
                                     onClick={() => handleStatusUpdate('pending')}
                                     disabled={isMutating}
+                                    icon={RefreshCw}
                                 >
                                     Réinitialiser
                                 </Button>
@@ -493,40 +623,17 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                                 </Button>
                             </>
                         )}
-
-                        {/* Boutons secondaires (Raté / Supprimer) */}
-                        {!showDeleteConfirm && workout.status !== 'completed' && (
-                            <div className="flex gap-3 sm:col-span-2 mt-2">
-                                {workout.status !== 'missed' ? (
-                                    <Button
-                                        variant="danger"
-                                        className="flex-1 bg-red-950/30 border-red-900/50 text-red-400 hover:bg-red-900/50"
-                                        onClick={() => handleStatusUpdate('missed')}
-                                        disabled={isMutating}
-                                    >
-                                        <XCircle size={16} className="mr-2" /> Raté
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        variant="outline"
-                                        className="flex-1"
-                                        onClick={() => handleStatusUpdate('pending')}
-                                        disabled={isMutating}
-                                    >
-                                        Réactiver
-                                    </Button>
-                                )}
-
-                                <Button
-                                    variant="ghost"
-                                    className="px-3 text-slate-500 hover:text-red-400"
-                                    onClick={() => setShowDeleteConfirm(true)}
-                                    disabled={isMutating}
-                                    aria-label="Supprimer la séance"
-                                >
-                                    <Trash2 size={18} />
-                                </Button>
-                            </div>
+                        {/* Bouton pour 'raté' si pas encore marqué et pas en cours d'édition */}
+                        {workout.status !== 'missed' && workout.status !== 'completed' && !isCompleting && !isEditing && !showDeleteConfirm && (
+                             <Button
+                                variant="danger"
+                                onClick={() => handleStatusUpdate('missed')}
+                                className="h-10 text-sm font-medium bg-red-950/30 border-red-900/50 text-red-400 hover:bg-red-900/50"
+                                disabled={isMutating}
+                                icon={XCircle}
+                            >
+                                Marquer comme raté
+                            </Button>
                         )}
                     </div>
                 )}

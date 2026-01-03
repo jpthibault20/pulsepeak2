@@ -53,10 +53,19 @@ export function WeekSummaryCell({ stats }: WeekSummaryCellProps) {
                 {/* Main Stats Block */}
                 <div className="flex flex-col gap-3 py-1">
                     <div className="flex items-end gap-1.5">
-                        <div className="text-2xl text-white leading-none tracking-tight">
-                            {Math.round(stats.plannedTSS)}
+                        <div className="flex items-baseline gap-1.5">
+                            {/* Valeur Réalisée (Dominante) */}
+                            <div className="text-xl font- text-white leading-none tracking-tight">
+                                {Math.round(stats.completedTSS)}
+                            </div>
+
+                            {/* Valeur Prévue (Contexte) */}
+                            <div className="text-sm font-medium text-slate-500 leading-none">
+                                <span className="opacity-50 mr-1">/</span>
+                                {Math.round(stats.plannedTSS)}
+                            </div>
                         </div>
-                        <div className="text-[10px] font-medium text-slate-500 mb-0.5 flex items-center gap-0.5">
+                        <div className="text-[10px] font-medium text-slate-500 flex items-center gap-0.5">
                             <Zap size={10} className="text-yellow-500/70" /> TSS
                         </div>
                     </div>

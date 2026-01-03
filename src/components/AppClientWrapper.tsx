@@ -84,9 +84,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
                     // Optionnel : Notification "Pas de nouvelle activité"
                     console.log("Strava : À jour");
                 }
-            } else {
-                setError("Erreur lors de la synchro Strava");
-            }
+            } 
 
         } catch (e) {
             console.error('Erreur synchro Strava:', e);
@@ -96,11 +94,11 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
         }
     }, [refreshData]);
 
-        React.useEffect(() => {
+    React.useEffect(() => {
         if (initialProfile?.name) {
             handleSyncStrava();
         }
-    }, []);
+    },[handleSyncStrava, initialProfile?.name]);
 
 
     // --- Navigation Handler ---

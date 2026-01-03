@@ -40,7 +40,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 12,
             "avgPowerWatts": 135.3,
             "normalizedPowerWatts": 140,
             "maxPowerWatts": 454,
@@ -95,7 +95,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 70,
             "avgPowerWatts": 144.3,
             "normalizedPowerWatts": 171,
             "maxPowerWatts": 878,
@@ -150,7 +150,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 153,
             "avgPowerWatts": 156.1,
             "normalizedPowerWatts": 172,
             "maxPowerWatts": 683,
@@ -205,7 +205,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 62,
             "avgPowerWatts": 155.4,
             "normalizedPowerWatts": 174,
             "maxPowerWatts": 445,
@@ -260,7 +260,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 61,
             "avgPowerWatts": 142.2,
             "normalizedPowerWatts": 162,
             "maxPowerWatts": 789,
@@ -315,7 +315,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 85,
             "avgPowerWatts": 147.9,
             "normalizedPowerWatts": 179,
             "maxPowerWatts": 626,
@@ -370,7 +370,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 166,
             "avgPowerWatts": 149.4,
             "normalizedPowerWatts": 163,
             "maxPowerWatts": 515,
@@ -425,7 +425,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 100,
             "avgPowerWatts": 154.2,
             "normalizedPowerWatts": 161,
             "maxPowerWatts": 687,
@@ -480,7 +480,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 120,
             "avgPowerWatts": 106.5,
             "normalizedPowerWatts": 129,
             "maxPowerWatts": 556,
@@ -535,7 +535,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 60,
             "avgPowerWatts": 125.5,
             "normalizedPowerWatts": 161,
             "maxPowerWatts": 516,
@@ -590,7 +590,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 97,
             "avgPowerWatts": 146.6,
             "normalizedPowerWatts": 155,
             "maxPowerWatts": 491,
@@ -645,7 +645,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 123,
             "avgPowerWatts": 116.9,
             "normalizedPowerWatts": 130,
             "maxPowerWatts": 506,
@@ -753,7 +753,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 101,
             "avgPowerWatts": 162,
             "normalizedPowerWatts": 175,
             "maxPowerWatts": 481,
@@ -861,7 +861,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 67,
             "avgPowerWatts": 77.5,
             "normalizedPowerWatts": 125,
             "maxPowerWatts": 834,
@@ -916,7 +916,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 95,
             "avgPowerWatts": 142.7,
             "normalizedPowerWatts": 153,
             "maxPowerWatts": 417,
@@ -971,7 +971,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 4,
             "avgPowerWatts": 63.3,
             "normalizedPowerWatts": 83,
             "maxPowerWatts": 483,
@@ -1026,7 +1026,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 106,
             "avgPowerWatts": 143.1,
             "normalizedPowerWatts": 166,
             "maxPowerWatts": 466,
@@ -1081,7 +1081,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 45,
             "avgPowerWatts": 142.3,
             "normalizedPowerWatts": 166,
             "maxPowerWatts": 288,
@@ -1098,6 +1098,6 @@
       }
     }
   ],
-  "summary": "",
-  "lastGenerated": ""
+  "summary": "Semaine dédiée à l'évaluation physiologique suite à la phase de volume hivernale. Nous réalisons le Test FTP (Mardi) et une évaluation VO2max par intervalles courts/longs (Jeudi), suivis de journées de récupération obligatoires. Le week-end est consacré à la réintégration du volume en Zone 2 pour absorber la charge et préparer le prochain bloc. Respectez scrupuleusement les zones de puissance lors des tests pour garantir la validité des données.",
+  "lastGenerated": "2026-01-02"
 }

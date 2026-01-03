@@ -30,6 +30,7 @@ export function CalendarGrid({
                 distance: 0,
                 completed: 0,
                 total: 0,
+                completedTSS: 0,
                 sportBreakdown: {
                     cycling: 0,
                     running: 0,
@@ -54,6 +55,7 @@ export function CalendarGrid({
                     // Stats planifiées (toujours comptées)
                     stats.total++;
                     stats.plannedTSS += workout.plannedData.plannedTSS ?? 0;
+                    stats.completedTSS += workout.completedData?.metrics.cycling?.tss ?? 0;
                     stats.plannedDuration += workout.plannedData.durationMinutes ?? 0;
 
                     // Comptage des séances par sport
