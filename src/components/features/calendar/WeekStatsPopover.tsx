@@ -124,9 +124,12 @@ export function WeekStatsPopover({ stats, onClose, openUpward = false }: WeekSta
                             <Zap size={12} className="text-yellow-500/80" fill="currentColor" />
                             <span>CHARGE TSS</span>
                         </div>
-                        <p className="text-xl font-bold text-white tracking-tight mt-1">
-                            {Math.round(stats.plannedTSS)}
-                        </p>
+                        <div className="mt-1 flex items-baseline gap-1">
+                            <p className="text-xl font-bold text-white tracking-tight">
+                                {Math.round(stats.completedTSS)}
+                            </p>
+                            <span className="text-xs text-slate-500">/ {Math.round(stats.plannedTSS)}</span>
+                        </div>
                     </div>
 
                     <div className="bg-slate-800/50 rounded-lg p-3 border border-white/5 flex flex-col justify-between hover:bg-slate-800 transition-colors">
