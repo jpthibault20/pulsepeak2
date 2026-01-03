@@ -29,7 +29,7 @@ export function MobileCalendarList({
                 distance: 0,
                 completed: 0,
                 total: 0,
-                sportBreakdown: { cycling: 0, running: 0, swimming: 0 }
+                sportBreakdown: { cycling: 0, running: 0, swimming: 0, other: 0 },
             };
 
             week.forEach(date => {

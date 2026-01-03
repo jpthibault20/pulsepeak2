@@ -57,6 +57,12 @@ const SPORT_CONFIG: Record<SportType, {
         label: 'Natation',
         unit: 'min/100m'
     },
+    other: {
+        icon: Activity,
+        color: 'text-purple-400',
+        label: 'Activité',
+        unit: ''
+    }
 };
 
 // --- Helpers ---
