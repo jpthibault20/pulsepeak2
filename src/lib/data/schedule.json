@@ -1145,6 +1145,61 @@
       }
     },
     {
+      "id": "strava_16925444329",
+      "date": "2026-01-03",
+      "sportType": "cycling",
+      "title": "Zwift - Endurance + Cadence on Navig8 in Watopia",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 120,
+        "distanceKm": 68.48,
+        "perceivedEffort": null,
+        "notes": "───────────────\r\n Powered by PulsePeak",
+        "caloriesBurned": 1009,
+        "source": {
+          "type": "strava",
+          "stravaId": 16925444329
+        },
+        "map": {
+          "polyline": "jh`fAqudz^n@mGvG}ESsEwDmEzBiCKwCvJaYi@wDqIcEk@mEpIiStIAvCcEpGgAj@qEeDoFlC}B|JjL~B_A|AwEbDnAN`F`DhDaEnDmAx`@nFjIxWiAvA|SmC`Gh@|JdP~DpDvG~HuMpClAt@dD~EPtEjD|CkBHeGrF}EvLjD~Ei@hGfFxDgHdLiE~H{@dOjDzEsQxFcCjHnCpCiIzGqGfJ]xBeDzEnA`C{EdAxBpBhAtKqD|EnAxCwD~GeA~ARLhDpAPjJ}FhCvE`IlDqDrEx@rH|Iv@p@fDtDNhB`CzDmB|D`A`AxErEvA`JzVtBwA_EyKvD{BhCb@eB`MpMdPhApK`UpCpHcAzJtIhAnEk@tFxBlEwGjDNfO|D`A\\bK~GCv@wE|HlHQtA{HhC`IxD[nLsN~DcJp^oGjBd@lFwApErIpEyCxMaFxEaH`A}E_HaEvEsItAJ|ArJzD`BzKaArU|FaAvGxGiK|C\\rDgDhMaEnAuNdSqAlHwJ~IsHStBkO_AaKeFCkEmDhBkDw@qCvE}AaIwEv@aKpBs@rG~BrBwCzArGaEj@g@dBmG}AtFcOtF[iAiCfA_IeHcBkDuE`DoI_CwEb@uMdCeAhAwDuAsDnCqBrERj@sHvFk@bAcKpFJlCmDoAcDuLyBJwFeEAtBsP_HuCWaGrpAO~BdAbMiE^gBiIsH}@`FwGAS}JyDw@SoOvGeDwBwEh@oFgAqEuKaJ{GfAgUuCaAkKmMaPzAeM}C]qD`C~D~JgB|A}IuVgEiAsAgFmE_AqDjBwA_CuDGo@mDgJ{@u@_HjDoFaHoCmFaGiHpGqA[}AuDcH`AgDzDsEmAuKvDuBoAeA}BgC|EeFmAwBdDmIRqH`HsChIqGsCwGhCyBzMoBvBwMqDoJ`A}CrCmFl@qDfHwF{EoGTcKiD_HfFmG|@cApCjApLeMnHaAfEeEtDhFjL_D~DrCr@oHdEi@jJnB`H|EvFEnLkv@`TdC`IvOgEvBrAObQoDbN_@xLmL`@kEuMaDyAiBvEtHlPsOtErOGeOlDbOl@rDvKyCvC~DpE{C^h@`CaHEaH|GgBbLNfVeN|XwExBkGCtCyCgHxAcEmCKcDlBaAe@oJeBi@_GlDaD{GxFcL{G_VrA{AzE|BZkAoEeKeQyHaE_JXsD`JuHkDuEdCaBo@_TyCcHvEkNf@eHs@}H}EgL~DoTsHkGsBcIv@{GyBgFpE_Aj@oFjBi@tFzFxBl@_AjD|@pA`IWpC}CmA{E~CaDHuDwJcPvAgFvFgDAgEaEwFxB{BEkDjJeWSgEqHaDeBcEpIaUfJMtCcEjGeAn@iEiDoFpAqBdC?xHtKnBs@nDyEbBxAHzE~CjC_ErDc@~R"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 147.5,
+          "maxBPM": 172,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 78,
+            "avgPowerWatts": 145.9,
+            "normalizedPowerWatts": 150,
+            "maxPowerWatts": 358,
+            "intensityFactor": null,
+            "avgCadenceRPM": 83.3,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 423,
+            "avgSpeedKmH": 34.0416,
+            "maxSpeedKmH": 75.024
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
+    },
+    {
       "id": "cycling_20260104_a1",
       "date": "2026-01-04",
       "sportType": "cycling",
