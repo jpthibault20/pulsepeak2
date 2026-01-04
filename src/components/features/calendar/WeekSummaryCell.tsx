@@ -31,9 +31,14 @@ export function WeekSummaryCell({ stats }: WeekSummaryCellProps) {
         return `${hours}h${minutes.toString().padStart(2, '0')}`;
     };
 
-    const durationPercentage = 100 / stats.plannedDuration > 0
-        ? Math.min((stats.actualDuration / stats.plannedDuration) * 100, 100)
-        : 0;
+    const durationPercentage = stats.plannedDuration === 0
+        // CAS 1 : Rien n'était prévu (0 min)
+        ? (stats.actualDuration > 0 ? 100 : 0)
+        // CAS 2 : Calcul normal avec ton plafond à 100
+        : Math.min((stats.actualDuration / stats.plannedDuration) * 100, 100);
+
+
+
 
     return (
         <div className="relative h-full w-full">
