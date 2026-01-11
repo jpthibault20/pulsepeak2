@@ -170,7 +170,7 @@ export interface RunningMetrics {
 
 // Définition de l'interface pour les données de swimming
 export interface SwimmingMetrics {
-  avgPace100m: string | null;
+  avgPace100m: number | null;
   bestPace100m: string | null;
   strokeType: string | null; // "Freestyle", "Mixed"...
   avgStrokeRate: number | null;
@@ -236,7 +236,7 @@ export interface CompletedDataFeedback {
   
 
   // Running/Cycling
-  avgPace?: string;
+  avgPace?: number;
   avgCadence?: number;
   maxCadence?: number;
   avgSpeed?: number; // ✅ AJOUTÉ
@@ -270,6 +270,67 @@ export interface CompletedDataFeedback {
 
 
 
+/**
+ * Tests de puissance disponibles (durées en minutes)
+ */
+export interface PowerTests {
+  p5min: number;
+  p8min: number;
+  p15min: number;
+  p20min: number;
+}
+
+export type TestName = '5min' | '8min' | '15min' | '20min';
+
+/**
+ * Zone de puissance (min/max en watts)
+ */
+export interface PowerZone {
+  min: number;
+  max: number;
+}
+
+/**
+ * Zones d'entraînement (Z1-Z7)
+ */
+export interface PowerZones {
+  z1: PowerZone;
+  z2: PowerZone;
+  z3: PowerZone;
+  z4: PowerZone;
+  z5: PowerZone;
+  z6: PowerZone;
+  z7: PowerZone;
+}
+
+/**
+ * Données de saison (résultat du calcul)
+ */
+export interface SeasonData {
+  calculatedAt: string;       // ISO 8601
+  wPrime: number;             // W' en joules
+  criticalPower: number;      // CP (FTP) en watts
+  method: 'Critical Power Regression' | 'Single Test Estimation';
+  sourceTests: string[];      // Ex: ['5min', '20min']
+}
+
+/**
+ * Résultat complet du calcul
+ */
+export interface FtpCalculationResult {
+  ftp: number;
+  zones: PowerZones;
+  seasonData: SeasonData;
+}
+
+/**
+ * Point de données pour la régression (modèle CP)
+ */
+export interface DataPoint {
+  t: number;  // Temps en secondes
+  w: number;  // Travail total (watts × secondes)
+  p: number;  // Puissance moyenne (watts)
+}
 
 
 

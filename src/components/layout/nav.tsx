@@ -2,9 +2,9 @@ import React from 'react';
 import {
     LayoutDashboard,
     BarChart2,
-    Settings,
     ChevronLeft,
     LucideIcon,
+    UserRound,
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -26,7 +26,7 @@ export const Nav: React.FC<NavProps> = ({
     showBack = false,
     onBack
 }) => {
-    
+
     // Cette fonction aide à déterminer si un bouton est actif
     const isActive = (viewName: View) => currentView === viewName;
 
@@ -86,13 +86,13 @@ export const Nav: React.FC<NavProps> = ({
                         <NavButton
                             active={isActive('settings')}
                             onClick={() => onViewChange('settings')}
-                            icon={Settings}
-                            label="Réglages"
+                            icon={UserRound}
+                            label="Profil"
                         />
                     </div>
-                    
+
                     {/* Placeholder Mobile (pour équilibrer le layout si besoin, vide ici) */}
-                    <div className="md:hidden w-8"></div> 
+                    <div className="md:hidden w-8"></div>
                 </div>
             </nav>
 
@@ -100,23 +100,23 @@ export const Nav: React.FC<NavProps> = ({
             {/* DESIGN: fixed bottom-0, prend toute la largeur, z-index élevé */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-950 border-t border-slate-800 pb-safe-area">
                 <div className="flex justify-around items-center h-16">
-                    <MobileNavButton 
+                    <MobileNavButton
                         active={isActive('dashboard')}
                         onClick={() => onViewChange('dashboard')}
                         icon={LayoutDashboard}
                         label="Agenda"
                     />
-                    <MobileNavButton 
+                    <MobileNavButton
                         active={isActive('stats')}
                         onClick={() => onViewChange('stats')}
                         icon={BarChart2}
                         label="Stats"
                     />
-                    <MobileNavButton 
+                    <MobileNavButton
                         active={isActive('settings')}
                         onClick={() => onViewChange('settings')}
-                        icon={Settings}
-                        label="Réglages"
+                        icon={UserRound}
+                        label="Profil"
                     />
                 </div>
             </div>
@@ -149,9 +149,8 @@ const NavButton: React.FC<NavButtonProps> = ({ active, onClick, icon: Icon, labe
 const MobileNavButton: React.FC<NavButtonProps> = ({ active, onClick, icon: Icon, label }) => (
     <button
         onClick={onClick}
-        className={`flex flex-col items-center justify-center w-full h-full transition-colors duration-200 ${
-            active ? 'text-blue-400' : 'text-slate-500 hover:text-slate-300'
-        }`}
+        className={`flex flex-col items-center justify-center w-full h-full transition-colors duration-200 ${active ? 'text-blue-400' : 'text-slate-500 hover:text-slate-300'
+            }`}
     >
         {/* L'icône change légèrement de taille ou d'effet si active */}
         <div className={`mb-1 transition-transform duration-200 ${active ? '-translate-y-1' : ''}`}>

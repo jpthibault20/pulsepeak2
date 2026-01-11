@@ -6,8 +6,9 @@ import {
     Link2,
     Check
 } from 'lucide-react';
-import { Profile, PowerZones } from '@/lib/data/type';
+import { Profile, FtpCalculationResult } from '@/lib/data/type';
 import { Card, Button } from '@/components/ui';
+import { calculateFtp, validatePowerTests } from '@/lib/ftp-calculator';
 
 interface ProfileFormProps {
     initialProfileData: Profile | null;
@@ -49,76 +50,40 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialProfileData, is
         });
     };
 
-    // --- LOGIQUE METIER CONSERVÉE ---
-    const calculateZones = () => {
-        const p5 = formData.powerTests?.p5min || 0;
-        const p8 = formData.powerTests?.p8min || 0;
-        const p15 = formData.powerTests?.p15min || 0;
-        const p20 = formData.powerTests?.p20min || 0;
+    const handleCalculateZones = () => {
+        try {
+            const tests = formData.powerTests ?? {
+                p5min: 0,
+                p8min: 0,
+                p15min: 0,
+                p20min: 0,
+            };
 
-        let estimatedFtp = 0;
-        let wPrime = 0;
-        let sourceUsed = '';
-        let methodUsed = '';
-        const testsUsed: string[] = [];
-
-        const dataPoints: { t: number, w: number, p: number }[] = [];
-        if (p5 > 0) { dataPoints.push({ t: 5 * 60, w: p5 * 5 * 60, p: p5 }); testsUsed.push('5min'); }
-        if (p8 > 0) { dataPoints.push({ t: 8 * 60, w: p8 * 8 * 60, p: p8 }); testsUsed.push('8min'); }
-        if (p15 > 0) { dataPoints.push({ t: 15 * 60, w: p15 * 15 * 60, p: p15 }); testsUsed.push('15min'); }
-        if (p20 > 0) { dataPoints.push({ t: 20 * 60, w: p20 * 20 * 60, p: p20 }); testsUsed.push('20min'); }
-
-        if (dataPoints.length >= 2) {
-            let sumT = 0, sumW = 0, sumTW = 0, sumT2 = 0;
-            const n = dataPoints.length;
-            dataPoints.forEach(pt => {
-                sumT += pt.t;
-                sumW += pt.w;
-                sumTW += pt.t * pt.w;
-                sumT2 += pt.t * pt.t;
-            });
-            const slope = (n * sumTW - sumT * sumW) / (n * sumT2 - sumT * sumT);
-            const intercept = (sumW - slope * sumT) / n;
-            estimatedFtp = Math.round(slope);
-            wPrime = Math.round(intercept);
-            sourceUsed = `Modèle Puissance Critique (${testsUsed.join('+')})`;
-            methodUsed = 'Critical Power Regression';
-        } else {
-            if (p20 > 0) { estimatedFtp = Math.round(p20 * 0.95); sourceUsed = '95% du CP20'; }
-            else if (p15 > 0) { estimatedFtp = Math.round(p15 * 0.93); sourceUsed = '93% du CP15'; }
-            else if (p8 > 0) { estimatedFtp = Math.round(p8 * 0.90); sourceUsed = '90% du CP8'; }
-            else if (p5 > 0) { estimatedFtp = Math.round(p5 * 0.82); sourceUsed = '82% du CP5 (Estimatif)'; }
-            else { alert("Veuillez entrer au moins une valeur de test."); return; }
-            methodUsed = 'Single Test Estimation';
-        }
-
-        const newZones: PowerZones = {
-            z1: { min: 0, max: Math.round(estimatedFtp * 0.55) },
-            z2: { min: Math.round(estimatedFtp * 0.56), max: Math.round(estimatedFtp * 0.75) },
-            z3: { min: Math.round(estimatedFtp * 0.76), max: Math.round(estimatedFtp * 0.90) },
-            z4: { min: Math.round(estimatedFtp * 0.91), max: Math.round(estimatedFtp * 1.05) },
-            z5: { min: Math.round(estimatedFtp * 1.06), max: Math.round(estimatedFtp * 1.20) },
-            z6: { min: Math.round(estimatedFtp * 1.21), max: p5 > 0 ? p5 : Math.round(estimatedFtp * 1.50) },
-            z7: { min: (p5 > 0 ? p5 : Math.round(estimatedFtp * 1.50)) + 1, max: 2000 }
-        };
-
-        // Mise à jour du state avec les données de saison
-        setFormData(prev => ({
-            ...prev,
-            ftp: estimatedFtp,
-            zones: newZones,
-            seasonData: {
-                calculatedAt: new Date().toISOString(),
-                wPrime: wPrime,
-                criticalPower: estimatedFtp,
-                method: methodUsed,
-                sourceTests: testsUsed
+            // Validation
+            if (!validatePowerTests(tests)) {
+                alert('Veuillez entrer au moins une valeur de test.');
+                return;
             }
-        }));
 
-        console.log(`Zones calculées via ${sourceUsed}. FTP: ${estimatedFtp}W, W': ${wPrime}J`);
+            // Calcul via la lib
+            const result: FtpCalculationResult = calculateFtp(tests);
+
+            // Mise à jour du state
+            setFormData((prev) => ({
+                ...prev,
+                ftp: result.ftp,
+                zones: result.zones,
+                seasonData: result.seasonData,
+            }));
+        } catch (error) {
+            console.error('Erreur de calcul FTP:', error);
+            alert(
+                error instanceof Error
+                    ? error.message
+                    : 'Erreur lors du calcul des zones'
+            );
+        }
     };
-    // -----------------------------
 
     const totalWeeklyMinutes = Object.values(formData.weeklyAvailability).reduce((acc, val) => acc + val, 0);
     const totalWeeklyHours = Math.floor(totalWeeklyMinutes / 60);
@@ -169,7 +134,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialProfileData, is
                     </div>
                 </div>
 
-                                {/* --- NOUVEAU BLOC: CONNEXION STRAVA --- */}
+                {/* --- NOUVEAU BLOC: CONNEXION STRAVA --- */}
                 <div className="mb-6">
                     <label className="block text-sm font-medium text-slate-400 mb-2">Comptes Connectés</label>
                     <div className="bg-slate-900 border border-slate-700 rounded-lg p-3 flex items-center justify-between transition-colors hover:border-slate-600">
@@ -188,14 +153,14 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialProfileData, is
                                 </div>
                             </div>
                         </div>
-                        
+
                         {formData.strava ? (
                             <div className="px-3 py-1.5 bg-green-500/10 border border-green-500/30 rounded text-green-400 text-xs font-bold flex items-center gap-1.5">
                                 <Check size={14} strokeWidth={3} />
                                 Connecté
                             </div>
                         ) : (
-                            <a 
+                            <a
                                 href="/api/strava/login"
                                 className="px-4 py-2 bg-[#FC4C02] hover:bg-[#E34402] text-white text-xs md:text-sm font-bold rounded shadow-md transition-all active:scale-95 flex items-center gap-2"
                             >
@@ -238,7 +203,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialProfileData, is
                         ))}
                     </div>
 
-                    <Button variant="secondary" onClick={calculateZones} className="w-full py-3 md:py-2 text-sm mb-4 h-auto" icon={Calculator}>
+                    <Button variant="secondary" onClick={handleCalculateZones} className="w-full py-3 md:py-2 text-sm mb-4 h-auto" icon={Calculator}>
                         Calculer FTP & Zones
                     </Button>
 
