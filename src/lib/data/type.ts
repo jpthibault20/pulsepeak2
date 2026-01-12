@@ -335,6 +335,7 @@ export interface DataPoint {
 
 
 
+// Cela crée automatiquement le type : 'swim' | 'bike' | 'run'
 
 
 
