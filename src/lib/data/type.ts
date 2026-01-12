@@ -5,17 +5,34 @@
 
 // Définition de l'interface pour le profil athlète
 export interface Profile {
-  name: string;
+  lastName: string;
+  firstName: string;
+  email: string;
+  birthDate: string;
+  activeSports: {
+    swim: boolean;
+    bike: boolean;
+    run: boolean;
+  };
+  aiPersonality: 'Strict' | 'Encourageant' | 'Analytique';
   strava?: StravaConfig; 
-  sports: SportType[];
   weight?: number;
   experience: 'Débutant' | 'Intermédiaire' | 'Avancé' | string;
   ftp: number;
+  lthr: number;
+  vma: number;
+  recentRaceTime: { distance: string; time: string };
   goal: string;
   objectiveDate: string;
   weaknesses: string;
   weeklyAvailability: {
-    [key: string]: number;
+    [key: string]: {
+      swim: number;
+      bike: number;
+      run: number;
+      comment: string;
+
+    };
   };
   powerTests?: {
     p5min: number;

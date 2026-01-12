@@ -38,7 +38,7 @@ interface AppClientWrapperProps {
 export default function AppClientWrapper({ initialProfile, initialSchedule }: AppClientWrapperProps) {
 
     // --- State Management ---
-    const startView: View = initialProfile.name ? 'dashboard' : 'onboarding';
+    const startView: View = initialProfile.firstName ? 'dashboard' : 'onboarding';
     const [view, setView] = useState<View>(startView);
 
     const [profile, setProfile] = useState<Profile | null>(initialProfile);
@@ -95,10 +95,10 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
     }, [refreshData]);
 
     React.useEffect(() => {
-        if (initialProfile?.name) {
+        if (initialProfile?.firstName) {
             handleSyncStrava();
         }
-    },[handleSyncStrava, initialProfile?.name]);
+    },[handleSyncStrava, initialProfile?.firstName]);
 
 
     // --- Navigation Handler ---
@@ -306,7 +306,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
                 {view === 'onboarding' && (
                     <div className="max-w-2xl mx-auto py-4 sm:py-8">
                         <ProfileForm
-                            initialProfileData={profile}
+                            initialData={profile}
                             onSave={handleSaveProfile}
                             onSuccess={() => handleViewChange('dashboard')}
                             onCancel={() => handleViewChange('dashboard')}
@@ -317,7 +317,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
                 {view === 'settings' && (
                     <div className="max-w-2xl mx-auto py-4 sm:py-8 animate-in fade-in duration-300">
                         <ProfileForm
-                            initialProfileData={profile}
+                            initialData={profile}
                             onSave={handleSaveProfile}
                             onSuccess={() => handleViewChange('dashboard')}
                             onCancel={() => handleViewChange('dashboard')}

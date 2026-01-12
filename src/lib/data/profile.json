@@ -1,74 +1,80 @@
 {
-  "name": "JEANPIERRE Thibault",
-  "sports": [
-    "cycling",
-    "running"
-  ],
-  "ftp": 247,
-  "experience": "Avancé",
-  "goal": "Course sur route (Compétition)",
-  "objectiveDate": "",
-  "weaknesses": "",
-  "targetWeeklyHours": 10,
-  "weeklyAvailability": {
-    "Lundi": 0,
-    "Mardi": 90,
-    "Mercredi": 0,
-    "Jeudi": 90,
-    "Vendredi": 0,
-    "Samedi": 150,
-    "Dimanche": 210
-  },
+  "firstName": "JEANPIERRE",
+  "lastName": "Thibault",
+  "email": "jeanpierre.thibault@gmail.com",
+  "birthDate": "1999-01-01",
+  "aiPersonality": "Analytique",
   "weight": 58,
+  "ftp": 247,
+  "lthr": 170,
+  "vma": 15,
+  "recentRaceTime": {
+    "distance": "10km",
+    "time": "00:00:00"
+  },
+  "experience": "Avancé",
   "powerTests": {
     "p5min": 0,
     "p8min": 0,
     "p15min": 266,
     "p20min": 0
   },
-  "zones": {
-    "z1": {
-      "min": 0,
-      "max": 136
+  "weeklyAvailability": {
+    "Lundi": {
+      "swim": 0,
+      "bike": 0,
+      "run": 0,
+      "comment": ""
     },
-    "z2": {
-      "min": 138,
-      "max": 185
+    "Mardi": {
+      "swim": 0,
+      "bike": 90,
+      "run": 0,
+      "comment": ""
     },
-    "z3": {
-      "min": 188,
-      "max": 222
+    "Mercredi": {
+      "swim": 0,
+      "bike": 45,
+      "run": 0,
+      "comment": ""
     },
-    "z4": {
-      "min": 225,
-      "max": 259
+    "Jeudi": {
+      "swim": 0,
+      "bike": 90,
+      "run": 0,
+      "comment": ""
     },
-    "z5": {
-      "min": 262,
-      "max": 296
+    "Vendredi": {
+      "swim": 0,
+      "bike": 0,
+      "run": 0,
+      "comment": ""
     },
-    "z6": {
-      "min": 299,
-      "max": 371
+    "Samedi": {
+      "swim": 0,
+      "bike": 150,
+      "run": 0,
+      "comment": ""
     },
-    "z7": {
-      "min": 372,
-      "max": 2000
+    "Dimanche": {
+      "swim": 0,
+      "bike": 210,
+      "run": 0,
+      "comment": ""
     }
   },
-  "seasonData": {
-    "calculatedAt": "2025-12-01T20:37:24.271Z",
-    "wPrime": 0,
-    "criticalPower": 247,
-    "method": "Single Test Estimation",
-    "sourceTests": [
-      "15min"
-    ]
+  "activeSports": {
+    "swim": true,
+    "bike": true,
+    "run": true
   },
+  "goal": "Course sur route (Compétition)",
+  "weaknesses": "",
   "strava": {
-    "athleteId": 31596042,
-    "accessToken": "19d288d40bdda04210e6420d3f7df657b269fd99",
+    "accessToken": "42e9801827984ddde74047465d64c24fccfbc138",
     "refreshToken": "35180b31d539959a45bb305fff0171b412a106fc",
-    "expiresAt": 1767406585
-  }
+    "expiresAt": 1768269035,
+    "athleteId": 31596042
+  },
+  "objectiveDate": ""
 }

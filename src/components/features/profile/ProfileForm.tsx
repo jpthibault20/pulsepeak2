@@ -1,53 +1,48 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
-    User, Activity, Target, Save, Zap, Heart, Timer,
-    Waves, Bike, Footprints, MessageSquare, Calendar,
-    Check, Link2, X, Send, Calculator, TrendingUp
+    User, Clock, Activity, Target, Save, Zap, Heart, Timer,
+    Waves, Bike, Footprints, MessageSquare, Calendar, ChevronDown, Check, Link2, AlertCircle,
+    X,
+    Send,
+    LucideIcon
 } from 'lucide-react';
-import { Card, Button } from '@/components/ui';
-// On suppose que ces fonctions existent dans votre projet comme avant
-import { calculateFtp, validatePowerTests } from '@/lib/ftp-calculator';
+import { Card, Button } from '@/components/ui'; // Assure-toi que ces imports existent ou utilise des div/button standards
+import { calculateFtp, validatePowerTests } from '@/lib/ftp-calculator'; // Ta lib existante
+import { Profile } from '@/lib/data/type';
 
-// --- TYPES & INTERFACES ---
-type SportKey = keyof TriProfile['activeSports'];
-
+// --- TYPES ÉTENDUS POUR LE TRIATHLON ---
 export interface AvailabilitySlot {
-    swim: number; bike: number; run: number; comment: string;
+    swim: number; // minutes
+    bike: number;
+    run: number;
+    comment: string;
 }
 
-export interface ZoneRange { min: number; max: number; }
-export interface Zones { z1: ZoneRange; z2: ZoneRange; z3: ZoneRange; z4: ZoneRange; z5: ZoneRange; z6: ZoneRange; z7: ZoneRange; }
-
-export interface TriProfile {
-    // Base
-    firstName: string; lastName: string; email: string; weight: number; birthDate: string;
-    runnerType: 'Sprinter' | 'Endurance' | 'Hybride' | 'Débutant';
-
-    // App
-    activeSports: { swim: boolean; bike: boolean; run: boolean; };
-    stravaConnected: boolean;
-
-    // Disponibilités
-    weeklyAvailability: Record<string, AvailabilitySlot>;
-
-    // Performance & Zones
-    ftp: number;
-    lthr: number;
-    zones?: Zones; // Les zones calculées
-    seasonData?: any; // wPrime etc.
-
-    // Données brutes pour calcul
-    powerTests: { p5min: number; p8min: number; p15min: number; p20min: number };
-
-    // IA Context
-    goal: string;
-    weaknesses: string;
+export interface ZoneData {
+    min: number;
+    max: number;
 }
 
-// --- SOUS-COMPOSANT : CHAT WIDGET ---
+
+
+// --- SOUS-COMPOSANTS UI (Pour la lisibilité) ---
+const SectionHeader = ({ icon: Icon, title, color = "text-white", rightContent }: { icon: LucideIcon; title: string; color?: string; rightContent?: React.ReactNode; }) => (
+    <h3 className={`text-lg font-semibold ${color} mb-4 flex items-center justify-between border-b border-slate-800 pb-2`}>
+        <span className="flex items-center">
+            <Icon className="mr-2" size={20} />
+            {title}
+        </span>
+        {rightContent && (
+            <span className="text-xl text-white">
+                {rightContent}
+            </span>
+        )}
+    </h3>
+);
+
 const ChatWidget = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
     const [messages, setMessages] = useState<{ role: 'user' | 'ai', text: string }[]>([
         { role: 'ai', text: 'Bonjour ! Je suis votre coach Triathlon IA. Besoin d\'aide pour configurer vos zones ou votre emploi du temps ?' }
@@ -74,7 +69,6 @@ const ChatWidget = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
             }]);
         }, 1000);
     };
-
     if (!isOpen) return null;
 
     return (
@@ -119,22 +113,40 @@ const ChatWidget = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
     );
 };
 
+function safeValue<T>(value: T | null | undefined, fallback: T): T {
+    return value !== null && value !== undefined ? value : fallback;
+}
+
+const TabButton = ({ active, onClick, label, icon: Icon }: any) => (
+    <button
+        onClick={onClick}
+        className={`flex items-center gap-2 px-4 py-2 rounded-t-lg text-sm font-medium transition-colors ${active
+            ? 'bg-slate-800 text-blue-400 border-t-2 border-blue-400'
+            : 'bg-slate-900/50 text-slate-400 hover:text-slate-200'
+            }`}
+    >
+        <Icon size={16} /> {label}
+    </button>
+);
+
 // --- COMPOSANT PRINCIPAL ---
 
 interface ProfileFormProps {
-    initialData?: Partial<TriProfile>;
-    onSave: (data: TriProfile) => Promise<void>;
+    initialData: Partial<Profile>;
+    onSave: (data: Profile) => Promise<void>;
+    onSuccess?: () => void;
     onCancel: () => void;
+    isSettings?: boolean;
 }
 
-export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, onCancel }) => {
-
-    // -- STATE INITIAL --
-    const defaultData: TriProfile = {
-        firstName: '', lastName: '', email: '', weight: 70, birthDate: '',
-        runnerType: 'Endurance',
+export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, onSuccess, onCancel, isSettings }) => {
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    // État initial par défaut
+    const defaultData: Profile = {
+        firstName: 'etst', lastName: '', email: '', weight: 70, birthDate: '',
         activeSports: { swim: true, bike: true, run: true },
-        stravaConnected: false,
+        aiPersonality: 'Analytique',
+        strava: { accessToken: '', refreshToken: '', expiresAt: 0, athleteId: 0 },
         weeklyAvailability: {
             'Lundi': { swim: 0, bike: 0, run: 0, comment: '' },
             'Mardi': { swim: 60, bike: 0, run: 45, comment: '' },
@@ -144,56 +156,132 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
             'Samedi': { swim: 0, bike: 180, run: 0, comment: 'Sortie longue' },
             'Dimanche': { swim: 0, bike: 0, run: 90, comment: '' },
         },
-        ftp: 200, lthr: 170,
+        ftp: 200, lthr: 170, vma: 15,
         powerTests: { p5min: 0, p8min: 0, p15min: 0, p20min: 0 },
+        recentRaceTime: { distance: '10km', time: '00:00:00' },
         goal: 'Terminer un Ironman 70.3',
-        weaknesses: ''
+        weaknesses: '',
+        experience: 'Débutant',
+        objectiveDate: '',
     };
 
-    const [formData, setFormData] = useState<TriProfile>({ ...defaultData, ...initialData });
+    const initialFormData = useMemo<Profile>(() => {
+        // ✅ Si initialData est null, retourner defaultData directement
+        if (!initialData) return defaultData;
+
+        return {
+            // Champs string
+            firstName: safeValue(initialData.firstName, defaultData.firstName),
+            lastName: safeValue(initialData.lastName, defaultData.lastName),
+            email: safeValue(initialData.email, defaultData.email),
+            birthDate: safeValue(initialData.birthDate, defaultData.birthDate),
+            aiPersonality: safeValue(initialData.aiPersonality, defaultData.aiPersonality),
+
+            // Champs number
+            weight: safeValue(initialData.weight, defaultData.weight),
+            ftp: safeValue(initialData.ftp, defaultData.ftp),
+            lthr: safeValue(initialData.lthr, defaultData.lthr),
+            vma: safeValue(initialData.vma, defaultData.vma),
+            recentRaceTime: {
+                distance: safeValue(initialData.recentRaceTime?.distance, defaultData.recentRaceTime.distance),
+                time: safeValue(initialData.recentRaceTime?.time, defaultData.recentRaceTime.time),
+            },
+
+            // Enums
+            experience: safeValue(initialData.experience, defaultData.experience),
+
+            // PowerTests avec gestion de null
+            powerTests: {
+                p5min: safeValue(
+                    initialData.powerTests?.p5min,
+                    defaultData.powerTests!.p5min
+                ),
+                p8min: safeValue(
+                    initialData.powerTests?.p8min,
+                    defaultData.powerTests!.p8min
+                ),
+                p15min: safeValue(
+                    initialData.powerTests?.p15min,
+                    defaultData.powerTests!.p15min
+                ),
+                p20min: safeValue(
+                    initialData.powerTests?.p20min,
+                    defaultData.powerTests!.p20min
+                ),
+            },
+
+            // WeeklyAvailability
+            weeklyAvailability: (
+                Object.keys(defaultData.weeklyAvailability) as Array<keyof typeof defaultData.weeklyAvailability>
+            ).reduce((acc, day) => ({
+                ...acc,
+                [day]: {
+                    swim: safeValue(
+                        initialData.weeklyAvailability?.[day]?.swim,
+                        defaultData.weeklyAvailability[day].swim
+                    ),
+                    bike: safeValue(
+                        initialData.weeklyAvailability?.[day]?.bike,
+                        defaultData.weeklyAvailability[day].bike
+                    ),
+                    run: safeValue(
+                        initialData.weeklyAvailability?.[day]?.run,
+                        defaultData.weeklyAvailability[day].run
+                    ),
+                    comment: safeValue(
+                        initialData.weeklyAvailability?.[day]?.comment,
+                        defaultData.weeklyAvailability[day].comment
+                    ),
+                }
+            }), {} as Profile['weeklyAvailability']),
+
+            // ActiveSports
+            activeSports: {
+                swim: safeValue(
+                    initialData.activeSports?.swim,
+                    defaultData.activeSports.swim
+                ),
+                bike: safeValue(
+                    initialData.activeSports?.bike,
+                    defaultData.activeSports.bike
+                ),
+                run: safeValue(
+                    initialData.activeSports?.run,
+                    defaultData.activeSports.run
+                ),
+            },
+
+
+
+            // Autres champs
+            goal: safeValue(initialData.goal, defaultData.goal),
+
+            weaknesses: safeValue(initialData.weaknesses, defaultData.weaknesses),
+
+            strava: safeValue(initialData.strava, defaultData.strava),
+
+            objectiveDate: safeValue(initialData.objectiveDate, defaultData.objectiveDate)
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialData]);
+
+    const [formData, setFormData] = useState<Profile>(initialFormData);
+    console.log(initialData);
     const [activeZoneTab, setActiveZoneTab] = useState<'power' | 'hr' | 'pace'>('power');
-    const [isChatOpen, setIsChatOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
-    // -- LOGIQUE CALCUL ZONES (Code original adapté) --
-    const handleCalculateZones = () => {
-        try {
-            const tests = formData.powerTests;
-            // Validation basique
-            if (!tests.p20min && !tests.p5min) {
-                alert('Veuillez entrer au moins une valeur (20min ou 5min).');
-                return;
-            }
-
-            // Appel à la librairie (simulation si la lib n'est pas présente)
-            // const result = calculateFtp(tests); 
-
-            // MOCK du résultat pour l'exemple UI (à remplacer par le vrai appel calculateFtp(tests))
-            // Ici je reproduis la logique pour que l'UI fonctionne
-            const estimatedFtp = tests.p20min ? Math.floor(tests.p20min * 0.95) : Math.floor(tests.p5min * 0.85);
-            const zonesCalc: Zones = {
-                z1: { min: 0, max: Math.floor(estimatedFtp * 0.55) },
-                z2: { min: Math.floor(estimatedFtp * 0.56), max: Math.floor(estimatedFtp * 0.75) },
-                z3: { min: Math.floor(estimatedFtp * 0.76), max: Math.floor(estimatedFtp * 0.90) },
-                z4: { min: Math.floor(estimatedFtp * 0.91), max: Math.floor(estimatedFtp * 1.05) },
-                z5: { min: Math.floor(estimatedFtp * 1.06), max: Math.floor(estimatedFtp * 1.20) },
-                z6: { min: Math.floor(estimatedFtp * 1.21), max: Math.floor(estimatedFtp * 1.50) },
-                z7: { min: Math.floor(estimatedFtp * 1.51), max: 9999 },
-            };
-
-            setFormData((prev) => ({
-                ...prev,
-                ftp: estimatedFtp,
-                zones: zonesCalc,
-                // seasonData: result.seasonData 
-            }));
-
-        } catch (error) {
-            console.error('Erreur calcul', error);
-        }
+    // Calcul dynamique des totaux
+    const getTotalHours = () => {
+        let totalMin = 0;
+        Object.values(formData.weeklyAvailability).forEach(slot => {
+            if (formData.activeSports.swim) totalMin += slot.swim;
+            if (formData.activeSports.run) totalMin += slot.run;
+            if (formData.activeSports.bike) totalMin += slot.bike;
+        });
+        return (totalMin / 60).toFixed(1);
     };
 
-    // -- HANDLERS GENERIQUES --
+    // Handlers
     const handleAvailabilityChange = (day: string, sport: keyof AvailabilitySlot, value: string | number) => {
         setFormData(prev => ({
             ...prev,
@@ -207,224 +295,198 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
         }));
     };
 
-    // Remplacez votre ancienne fonction toggleSport par celle-ci :
-    const toggleSport = (sport: SportKey) => {
+    const toggleSport = (sport: keyof typeof formData.activeSports) => {
         setFormData(prev => ({
             ...prev,
-            activeSports: {
-                ...prev.activeSports,
-                [sport]: !prev.activeSports[sport]
-            }
+            activeSports: { ...prev.activeSports, [sport]: !prev.activeSports[sport] }
         }));
     };
 
-    // -- RENDER --
-    return (
-        <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500 pb-24 relative">
+    const handleSave = async () => {
+        setIsSaving(true);
+        try { await onSave(formData); }
+        catch (e) { console.error(e); }
+        finally { setIsSaving(false); }
+    };
 
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+    return (
+        <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500 pb-20">
+
+            {/* HEADER */}
+            <div className="text-center md:text-left md:flex justify-between items-end mb-6">
                 <div>
                     <h1 className="text-3xl font-bold text-white">Profil Athlète</h1>
-                    <p className="text-slate-400 mt-1">Configuration physiologique & Préférences</p>
+                    <p className="text-slate-400 text-sm mt-1">Configurez vos paramètres physiologiques et vos préférences IA.</p>
                 </div>
                 <Button
                     variant="outline"
                     onClick={() => setIsChatOpen(!isChatOpen)}
                     className={`${isChatOpen ? 'bg-blue-600/20 text-blue-400 border-blue-500' : 'bg-slate-800 text-slate-300'} gap-2`}
                 >
-                    <MessageSquare size={18} /> {isChatOpen ? 'Masquer le Coach' : 'Discuter avec le Coach IA'}
+                    <MessageSquare size={18} /> {isChatOpen ? 'Masquer le Coach' : 'Coach IA'}
                 </Button>
             </div>
 
-            {/* BLOC 1: INFOS & STRAVA */}
+            {/* 1. INFOS DE BASE & CONNEXIONS */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Colonne Gauche : Identité */}
                 <Card className="md:col-span-2 p-6 bg-slate-900/50 border-slate-800">
-                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center border-b border-slate-800 pb-2">
-                        <User className="mr-2 text-blue-400" size={20} /> Identité
-                    </h3>
+                    <SectionHeader icon={User} title="Informations Personnelles" color="text-blue-400" />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" placeholder="Prénom" value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} className="input-triathlon" />
-                        <input type="text" placeholder="Nom" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} className="input-triathlon" />
-                        <input type="email" placeholder="Email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="input-triathlon md:col-span-2" />
-                        <div className="flex gap-4">
-                            <div className="relative flex-1">
-                                <input type="number" value={formData.weight} onChange={e => setFormData({ ...formData, weight: +e.target.value })} className="input-triathlon" />
-                                <span className="absolute right-3 top-2.5 text-slate-500 text-sm">kg</span>
-                            </div>
-                            <input type="date" value={formData.birthDate} onChange={e => setFormData({ ...formData, birthDate: e.target.value })} className="input-triathlon flex-1" />
+                        <input
+                            placeholder="Prénom"
+                            value={formData.firstName}
+                            onChange={e => setFormData({ ...formData, firstName: e.target.value })}
+                            className="input-triathlon"
+                        />
+                        <input
+                            placeholder="Nom"
+                            value={formData.lastName}
+                            onChange={e => setFormData({ ...formData, lastName: e.target.value })}
+                            className="input-triathlon"
+                        />
+                        <input
+                            type="email" placeholder="Email"
+                            value={formData.email}
+                            onChange={e => setFormData({ ...formData, email: e.target.value })}
+                            className="input-triathlon"
+                        />
+                        <input
+                            type="date"
+                            value={formData.birthDate}
+                            onChange={e => setFormData({ ...formData, birthDate: e.target.value })}
+                            className="input-triathlon flex-1"
+                        />
+                        <div className="flex-1 relative">
+                            <input
+                                type="number" placeholder="Poids"
+                                value={formData.weight}
+                                onChange={e => setFormData({ ...formData, weight: parseInt(e.target.value) })}
+                                className="input-triathlon"
+                            />
+                            <span className="absolute right-3 top-2.5 text-slate-500 text-sm">kg</span>
                         </div>
                     </div>
                 </Card>
 
-                <div className="space-y-4">
-                    {/* Strava Widget */}
-                    <Card className={`p-4 border transition-all ${formData.stravaConnected ? 'bg-green-950/20 border-green-900' : 'bg-slate-900/50 border-slate-800'}`}>
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2 font-bold text-white">
-                                <span className="text-[#FC4C02]">STRAVA</span> Connect
-                            </div>
-                            {formData.stravaConnected && <Check size={16} className="text-green-500" />}
-                        </div>
-                        {formData.stravaConnected ? (
-                            <div className="text-xs text-green-400">Compte synchronisé avec succès.</div>
-                        ) : (
-                            <button onClick={() => setFormData({ ...formData, stravaConnected: true })} className="w-full py-2 bg-[#FC4C02] hover:bg-[#E34402] text-white text-sm font-bold rounded flex items-center justify-center gap-2 transition-transform active:scale-95">
-                                <Link2 size={16} /> Connecter
-                            </button>
-                        )}
-                    </Card>
-
-                    {/* Sélecteur Sports */}
-                    <Card className="p-4 bg-slate-900/50 border-slate-800">
-                        <h4 className="text-xs font-semibold text-slate-400 uppercase mb-3">Sports Pratiqués</h4>
-                        <div className="space-y-2">
-                            {/* On définit la liste avec un typage strict pour 'key' */}
+                {/* Colonne Droite : Sports & Strava */}
+                <div className="space-y-6">
+                    <Card className="p-6 bg-slate-900/50 border-slate-800">
+                        <SectionHeader icon={Activity} title="Disciplines" />
+                        <div className="space-y-3">
                             {[
-                                { key: 'swim' as SportKey, icon: Waves, label: 'Natation', color: 'text-cyan-400' },
-                                { key: 'bike' as SportKey, icon: Bike, label: 'Vélo', color: 'text-orange-400' },
-                                { key: 'run' as SportKey, icon: Footprints, label: 'Course à pied', color: 'text-emerald-400' }
+                                { key: 'swim', label: 'Natation', icon: Waves, color: 'text-cyan-400', bg: 'bg-cyan-950/30 border-cyan-800' },
+                                { key: 'bike', label: 'Cyclisme', icon: Bike, color: 'text-orange-400', bg: 'bg-orange-950/30 border-orange-800' },
+                                { key: 'run', label: 'Running', icon: Footprints, color: 'text-emerald-400', bg: 'bg-emerald-950/30 border-emerald-800' },
                             ].map((sport) => (
                                 <div
                                     key={sport.key}
-                                    // Plus besoin de 'as any' ici, car sport.key est typé correctement
-                                    onClick={() => toggleSport(sport.key)}
-                                    className={`flex items-center justify-between p-2 rounded cursor-pointer border ${formData.activeSports[sport.key] ? 'bg-slate-800 border-slate-600' : 'border-transparent opacity-50'}`}
+                                    onClick={() => toggleSport(sport.key as any)}
+                                    className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${formData.activeSports[sport.key as keyof typeof formData.activeSports]
+                                        ? `${sport.bg} border-opacity-50`
+                                        : 'bg-slate-900 border-slate-800 opacity-60 grayscale'
+                                        }`}
                                 >
-                                    <div className="flex items-center gap-2">
-                                        <sport.icon size={16} className={sport.color} />
-                                        <span className="text-sm text-slate-200">{sport.label}</span>
+                                    <div className="flex items-center gap-3">
+                                        <sport.icon className={sport.color} size={20} />
+                                        <span className="text-slate-200 font-medium">{sport.label}</span>
                                     </div>
-                                    {/* Ici aussi, l'accès est sécurisé */}
-                                    {formData.activeSports[sport.key] && (
-                                        <div className={`w-2 h-2 rounded-full ${sport.color.replace('text', 'bg')}`} />
-                                    )}
+                                    {formData.activeSports[sport.key as keyof typeof formData.activeSports] && <Check size={16} className={sport.color} />}
                                 </div>
                             ))}
                         </div>
                     </Card>
+
+                    <Card className="p-4 bg-slate-900/50 border-slate-800 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-[#FC4C02] opacity-10 rounded-bl-full pointer-events-none" />
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-8 h-8 bg-[#FC4C02] rounded flex items-center justify-center text-white font-bold">S</div>
+                            <div className="text-sm font-semibold text-white">Compte Strava</div>
+                        </div>
+                        {formData.strava?.athleteId ? (
+                            <div className="flex items-center gap-2 text-green-400 text-sm bg-green-950/30 p-2 rounded border border-green-900">
+                                <Check size={14} /> Connecté
+                            </div>
+                        ) : (
+                            <Button className="w-full bg-[#FC4C02] hover:bg-[#E34402] text-white h-9 text-sm" icon={Link2}>
+                                Lier mon compte
+                            </Button>
+                        )}
+                    </Card>
                 </div>
             </div>
 
-            {/* BLOC 2 : ZONES PHYSIOLOGIQUES */}
-            <Card className="p-0 bg-slate-900/50 border-slate-800 overflow-hidden">
-                <div className="p-4 border-b border-slate-800 bg-slate-900/80 flex justify-between items-center">
-                    <h3 className="text-lg font-semibold text-white flex items-center">
-                        <Zap className="mr-2 text-yellow-400" size={20} /> Zones & Puissance
-                    </h3>
-                    <div className="flex bg-slate-800 rounded-lg p-1">
-                        <button onClick={() => setActiveZoneTab('power')} className={`px-3 py-1 text-xs rounded-md transition-all ${activeZoneTab === 'power' ? 'bg-slate-600 text-white shadow' : 'text-slate-400'}`}>Puissance</button>
-                        <button onClick={() => setActiveZoneTab('hr')} className={`px-3 py-1 text-xs rounded-md transition-all ${activeZoneTab === 'hr' ? 'bg-slate-600 text-white shadow' : 'text-slate-400'}`}>Cardio</button>
-                    </div>
-                </div>
-
-                <div className="p-6">
-                    {activeZoneTab === 'power' && (
-                        <div className="animate-in fade-in slide-in-from-left-4">
-                            {/* Inputs des tests */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                                {[
-                                    { label: '5 min (PMA)', key: 'p5min' },
-                                    { label: '8 min', key: 'p8min' },
-                                    { label: '15 min', key: 'p15min' },
-                                    { label: '20 min (FTP)', key: 'p20min', highlight: true }
-                                ].map((test: any) => (
-                                    <div key={test.key}>
-                                        <label className="block text-xs text-slate-400 mb-1 text-center">{test.label}</label>
-                                        <input
-                                            type="number"
-                                            value={formData.powerTests[test.key as keyof typeof formData.powerTests] || ''}
-                                            onChange={e => setFormData({ ...formData, powerTests: { ...formData.powerTests, [test.key]: parseInt(e.target.value) } })}
-                                            className={`w-full h-10 bg-slate-800 border rounded p-2 text-white text-center focus:border-blue-500 outline-none ${test.highlight ? 'border-blue-500/50' : 'border-slate-600'}`}
-                                            placeholder="Watts"
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-
-                            <Button variant="secondary" onClick={handleCalculateZones} className="w-full mb-6" icon={Calculator}>
-                                Calculer FTP & Zones
-                            </Button>
-
-                            {/* AFFICHAGE DES ZONES (Grille) */}
-                            {formData.zones && (
-                                <div className="space-y-4 pt-4 border-t border-slate-700">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-slate-300">FTP Calculée: <span className="text-xl font-bold text-white">{formData.ftp}W</span></span>
-                                        <span className="text-slate-300">Ratio: <span className="text-emerald-400 font-mono">{(formData.ftp / formData.weight).toFixed(2)} W/kg</span></span>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 text-center">
-                                        {[
-                                            { l: 'Z1', n: 'Récup', val: formData.zones.z1, c: 'border-gray-500 text-gray-300' },
-                                            { l: 'Z2', n: 'Endur.', val: formData.zones.z2, c: 'border-green-500 text-green-400' },
-                                            { l: 'Z3', n: 'Tempo', val: formData.zones.z3, c: 'border-blue-500 text-blue-400' },
-                                            { l: 'Z4', n: 'Seuil', val: formData.zones.z4, c: 'border-yellow-500 text-yellow-400' },
-                                            { l: 'Z5', n: 'PMA', val: formData.zones.z5, c: 'border-orange-500 text-orange-400' },
-                                            { l: 'Z6', n: 'Anaé.', val: formData.zones.z6, c: 'border-red-500 text-red-400' },
-                                            { l: 'Z7', n: 'Neuro', val: formData.zones.z7, c: 'border-purple-500 text-purple-400' },
-                                        ].map((z, idx) => (
-                                            <div key={z.l} className={`bg-slate-800/40 p-2 rounded border-t-2 flex flex-col justify-center min-h-[60px] ${z.c} ${idx === 6 ? 'col-span-2 sm:col-span-1' : ''}`}>
-                                                <div className="font-bold text-xs">{z.l}</div>
-                                                <div className="text-[10px] uppercase opacity-70">{z.n}</div>
-                                                <div className="text-[10px] font-mono text-white mt-1">
-                                                    {z.l === 'Z1' ? `<${z.val.max}` : z.l === 'Z7' ? `>${z.val.min}` : `${z.val.min}-${z.val.max}`}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {activeZoneTab === 'hr' && (
-                        <div className="text-center py-8 animate-in fade-in">
-                            <Heart size={40} className="mx-auto text-red-500 mb-2 opacity-80" />
-                            <p className="text-slate-400 mb-4">Saisissez votre Fréquence Cardiaque au Seuil (LTHR)</p>
-                            <input
-                                type="number"
-                                value={formData.lthr}
-                                onChange={e => setFormData({ ...formData, lthr: parseInt(e.target.value) })}
-                                className="bg-slate-800 text-white text-2xl font-bold w-32 text-center rounded-lg py-2 border border-slate-600 focus:border-red-500 outline-none"
-                            />
-                            <span className="ml-2 text-slate-500">bpm</span>
-                        </div>
-                    )}
-                </div>
-            </Card>
-
-            {/* BLOC 3: DISPO SEMAINE */}
+            {/* 2. DISPONIBILITÉS (MATRICE) */}
             <Card className="p-6 bg-slate-900/50 border-slate-800">
-                <h3 className="text-lg font-semibold text-white mb-4 flex items-center border-b border-slate-800 pb-2">
-                    <Calendar className="mr-2 text-purple-400" size={20} /> Emploi du Temps
-                </h3>
+                <SectionHeader
+                    icon={Calendar}
+                    title="Disponibilités & Volume"
+                    color="text-purple-400"
+                    rightContent={<>{getTotalHours()}h</>}
+                />
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
-                            <tr className="text-slate-500 border-b border-slate-700 text-left">
-                                <th className="pb-2 w-20">Jour</th>
-                                {formData.activeSports.swim && <th className="pb-2 text-center text-cyan-400">Swim (min)</th>}
-                                {formData.activeSports.bike && <th className="pb-2 text-center text-orange-400">Bike (min)</th>}
-                                {formData.activeSports.run && <th className="pb-2 text-center text-emerald-400">Run (min)</th>}
-                                <th className="pb-2 pl-4">Note / Club</th>
+                            <tr className="text-slate-400 border-b border-slate-700">
+                                <th className="text-left pb-3 font-medium w-24">Jour</th>
+                                {formData.activeSports.swim && <th className="pb-3 font-medium text-cyan-400"><Waves size={16} className="inline mr-1" />Swim (min)</th>}
+                                {formData.activeSports.bike && <th className="pb-3 font-medium text-orange-400"><Bike size={16} className="inline mr-1" />Bike (min)</th>}
+                                {formData.activeSports.run && <th className="pb-3 font-medium text-emerald-400"><Footprints size={16} className="inline mr-1" />Run (min)</th>}
+                                <th className="text-left pb-3 font-medium pl-4">Commentaire (Club, contrainte...)</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800">
-                            {Object.keys(formData.weeklyAvailability).map(day => (
-                                <tr key={day} className="hover:bg-slate-800/30">
-                                    <td className="py-3 font-medium text-slate-300">{day}</td>
+                            {Object.keys(formData.weeklyAvailability).map((day) => (
+                                <tr key={day} className="group hover:bg-slate-800/30 transition-colors">
+                                    <td className="py-3 text-slate-300 font-medium">{day}</td>
+
+                                    {/* Inputs Natation */}
                                     {formData.activeSports.swim && (
-                                        <td className="p-1"><input type="number" step="15" className="w-full bg-slate-900 border border-slate-700 rounded text-center text-white h-8" value={formData.weeklyAvailability[day].swim || ''} onChange={e => handleAvailabilityChange(day, 'swim', e.target.value)} /></td>
+                                        <td className="py-2 text-center">
+                                            <input
+                                                type="number" step="15"
+                                                value={formData.weeklyAvailability[day].swim || ''}
+                                                onChange={(e) => handleAvailabilityChange(day, 'swim', e.target.value)}
+                                                placeholder="-"
+                                                className="w-16 h-8 bg-slate-900 border border-slate-700 rounded text-center text-white focus:border-cyan-500 outline-none"
+                                            />
+                                        </td>
                                     )}
+
+                                    {/* Inputs Vélo */}
                                     {formData.activeSports.bike && (
-                                        <td className="p-1"><input type="number" step="30" className="w-full bg-slate-900 border border-slate-700 rounded text-center text-white h-8" value={formData.weeklyAvailability[day].bike || ''} onChange={e => handleAvailabilityChange(day, 'bike', e.target.value)} /></td>
+                                        <td className="py-2 text-center">
+                                            <input
+                                                type="number" step="30"
+                                                value={formData.weeklyAvailability[day].bike || ''}
+                                                onChange={(e) => handleAvailabilityChange(day, 'bike', e.target.value)}
+                                                placeholder="-"
+                                                className="w-16 h-8 bg-slate-900 border border-slate-700 rounded text-center text-white focus:border-orange-500 outline-none"
+                                            />
+                                        </td>
                                     )}
+
+                                    {/* Inputs Run */}
                                     {formData.activeSports.run && (
-                                        <td className="p-1"><input type="number" step="10" className="w-full bg-slate-900 border border-slate-700 rounded text-center text-white h-8" value={formData.weeklyAvailability[day].run || ''} onChange={e => handleAvailabilityChange(day, 'run', e.target.value)} /></td>
+                                        <td className="py-2 text-center">
+                                            <input
+                                                type="number" step="10"
+                                                value={formData.weeklyAvailability[day].run || ''}
+                                                onChange={(e) => handleAvailabilityChange(day, 'run', e.target.value)}
+                                                placeholder="-"
+                                                className="w-16 h-8 bg-slate-900 border border-slate-700 rounded text-center text-white focus:border-emerald-500 outline-none"
+                                            />
+                                        </td>
                                     )}
-                                    <td className="p-1 pl-4">
-                                        <input type="text" className="w-full bg-transparent border-b border-transparent focus:border-purple-500 outline-none text-slate-400 h-8" placeholder="..." value={formData.weeklyAvailability[day].comment} onChange={e => handleAvailabilityChange(day, 'comment', e.target.value)} />
+
+                                    <td className="py-2 pl-4">
+                                        <input
+                                            type="text"
+                                            value={formData.weeklyAvailability[day].comment}
+                                            onChange={(e) => handleAvailabilityChange(day, 'comment', e.target.value)}
+                                            placeholder="Ex: Club..."
+                                            className="w-full h-8 bg-transparent border-b border-transparent hover:border-slate-700 focus:border-blue-500 outline-none text-slate-400 focus:text-white transition-all"
+                                        />
                                     </td>
                                 </tr>
                             ))}
@@ -433,26 +495,201 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
                 </div>
             </Card>
 
-            {/* FOOTER ACTIONS */}
-            <div className="flex justify-end gap-4 pt-4 border-t border-slate-800">
-                <Button variant="secondary" onClick={onCancel}>Annuler</Button>
-                <Button onClick={async () => { setIsSaving(true); await onSave(formData); setIsSaving(false); }} icon={Save} disabled={isSaving}>
-                    {isSaving ? 'Sauvegarde...' : 'Valider le Profil'}
+            {/* 3. ZONES & TESTS (TABS) */}
+            <Card className="p-0 bg-slate-900/50 border-slate-800 overflow-hidden">
+                <div className="p-6 pb-0">
+                    <SectionHeader icon={Zap} title="Physiologie & Zones" color="text-yellow-400" />
+                </div>
+
+                {/* Tab Navigation */}
+                <div className="flex border-b border-slate-700 px-6 gap-2">
+                    <TabButton
+                        active={activeZoneTab === 'power'}
+                        onClick={() => setActiveZoneTab('power')}
+                        label="Puissance (Watt)"
+                        icon={Zap}
+                    />
+                    <TabButton
+                        active={activeZoneTab === 'hr'}
+                        onClick={() => setActiveZoneTab('hr')}
+                        label="Cardio (FC)"
+                        icon={Heart}
+                    />
+                    <TabButton
+                        active={activeZoneTab === 'pace'}
+                        onClick={() => setActiveZoneTab('pace')}
+                        label="Allure (Pace)"
+                        icon={Timer}
+                    />
+                </div>
+
+                <div className="p-6 bg-slate-900/80 min-h-[250px]">
+                    {activeZoneTab === 'power' && (
+                        <div className="animate-in fade-in slide-in-from-left-4">
+                            <div className="flex justify-between items-center mb-4">
+                                <p className="text-sm text-slate-400">Basé sur votre FTP vélo.</p>
+                                <div className="text-orange-400 font-mono text-xl font-bold">{formData.ftp} W <span className="text-xs text-slate-500 font-normal">FTP</span></div>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                {/* Inputs simplifiés pour l'exemple */}
+                                <div>
+                                    <label className="text-xs text-slate-500">Test 5 min (Watts)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value={formData.powerTests?.p5min ?? ''}
+                                        onChange={(e) => setFormData(prev => ({
+                                            ...prev,
+                                            powerTests: {
+                                                p8min: 0,
+                                                p15min: 0,
+                                                p20min: 0,
+                                                ...prev.powerTests, // ✅ Garde les valeurs existantes
+                                                p5min: parseInt(e.target.value, 10) || 0, // ✅ Override p5min
+                                            }
+                                        }))}
+                                        className="input-triathlon mt-1"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-slate-500">Test 20 min (Watts)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value={formData.powerTests?.p20min ?? ''}
+                                        onChange={(e) => setFormData(prev => ({
+                                            ...prev,
+                                            powerTests: {
+                                                p8min: 0,
+                                                p15min: 0,
+                                                p5min: 0,
+                                                ...prev.powerTests, // ✅ Garde les valeurs existantes
+                                                p20min: parseInt(e.target.value, 10) || 0,
+                                            }
+                                        }))}
+                                        className="input-triathlon mt-1"
+                                    />                                </div>
+                            </div>
+                            <Button variant="secondary" className="w-full" icon={Activity}>Recalculer mes zones de puissance</Button>
+                        </div>
+                    )}
+
+                    {activeZoneTab === 'hr' && (
+                        <div className="animate-in fade-in slide-in-from-left-4 space-y-4">
+                            <div className="flex items-center gap-4 p-4 bg-red-900/10 border border-red-900/30 rounded-lg">
+                                <Heart className="text-red-500" />
+                                <div>
+                                    <h4 className="text-red-200 font-medium">Seuil Anaérobie (LTHR)</h4>
+                                    <p className="text-xs text-red-400/70">Essentiel pour calibrer l&apos;effort sur les 3 sports.</p>
+                                </div>
+                                <input
+                                    type="number"
+                                    value={formData.lthr}
+                                    onChange={e => setFormData({ ...formData, lthr: parseInt(e.target.value) })}
+                                    className="ml-auto w-20 h-10 bg-slate-900 border border-slate-700 rounded text-center text-white font-bold text-lg"
+                                />
+                                <span className="text-slate-500 text-sm">bpm</span>
+                            </div>
+                            <div className="grid grid-cols-5 gap-1 mt-4">
+                                {[50, 60, 70, 80, 90].map((pct, i) => (
+                                    <div key={i} className="h-2 rounded bg-slate-700 overflow-hidden">
+                                        <div className={`h-full bg-red-500`} style={{ width: `${i * 20 + 20}%`, opacity: (i + 1) * 0.2 }} />
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="text-center text-xs text-slate-500 mt-2">Zone 2 estimée : {Math.round(formData.lthr * 0.65)} - {Math.round(formData.lthr * 0.80)} bpm</p>
+                        </div>
+                    )}
+
+                    {activeZoneTab === 'pace' && (
+                        <div className="animate-in fade-in slide-in-from-left-4 text-center py-8">
+                            <Timer size={40} className="mx-auto text-emerald-500 mb-3 opacity-50" />
+                            <p className="text-slate-300">Entrez votre temps de référence récent</p>
+                            <div className="flex justify-center gap-4 mt-4 max-w-sm mx-auto">
+                                <select className="bg-slate-800 border-slate-700 text-white rounded px-3 py-2 outline-none">
+                                    <option>5 km</option>
+                                    <option>10 km</option>
+                                    <option>Semi</option>
+                                </select>
+                                <input type="text" placeholder="00:45:00" className="bg-slate-800 border-slate-700 text-white rounded px-3 py-2 outline-none w-32 text-center" />
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </Card>
+            {/* 4. IA & OBJECTIFS */}
+            <Card className="p-6 bg-slate-900/50 border-slate-800 border-t-4 border-t-purple-500">
+                <SectionHeader icon={MessageSquare} title="Configuration du Coach IA" color="text-purple-400" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-1">Objectif Principal</label>
+                            <input
+                                value={formData.goal}
+                                onChange={e => setFormData({ ...formData, goal: e.target.value })}
+                                className="input-triathlon"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-1">Style de Coaching</label>
+                            <div className="grid grid-cols-3 gap-2">
+                                {['Strict', 'Encourageant', 'Analytique'].map(style => (
+                                    <button
+                                        key={style}
+                                        onClick={() => setFormData({ ...formData, aiPersonality: style as any })}
+                                        className={`text-xs py-2 px-1 rounded border transition-all ${formData.aiPersonality === style
+                                            ? 'bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-900/20'
+                                            : 'bg-slate-800 border-slate-700 text-slate-400'
+                                            }`}
+                                    >
+                                        {style}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-400 mb-1">Points faibles / Notes pour l&apos;IA</label>
+                        <textarea
+                            value={formData.weaknesses}
+                            onChange={e => setFormData({ ...formData, weaknesses: e.target.value })}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:ring-1 focus:ring-purple-500 outline-none h-32 resize-none text-sm"
+                            placeholder="Ex: Je nage comme une enclume, j'ai peur des descentes en vélo..."
+                        />
+                    </div>
+                </div>
+            </Card>
+
+            {/* ACTIONS FOOTER (Sticky mobile) */}
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-slate-950/90 backdrop-blur-md border-t border-slate-800 flex justify-end gap-3 z-50 md:static md:bg-transparent md:border-none md:p-0">
+                <Button variant="secondary" onClick={onCancel} className="bg-slate-800 text-white hover:bg-slate-700">
+                    Annuler
+                </Button>
+                <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20 w-full md:w-auto" icon={Save}>
+                    {isSaving ? 'Enregistrement...' : 'Valider le profil'}
                 </Button>
             </div>
 
-            {/* CHAT WIDGET OVERLAY */}
             <ChatWidget isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
 
-            {/* STYLES UTILS */}
             <style jsx global>{`
         .input-triathlon {
-          width: 100%; height: 44px;
-          background-color: #0f172a; border: 1px solid #334155;
-          border-radius: 0.5rem; padding: 0 1rem; color: white;
-          outline: none; transition: all 0.2s;
+          width: 100%;
+          height: 44px;
+          background-color: #0f172a; /* slate-900 */
+          border: 1px solid #334155; /* slate-700 */
+          border-radius: 0.5rem;
+          padding: 0 1rem;
+          color: white;
+          outline: none;
+          transition: all 0.2s;
         }
-        .input-triathlon:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
+        .input-triathlon:focus {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
       `}</style>
         </div>
     );

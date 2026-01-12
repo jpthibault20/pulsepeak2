@@ -1098,125 +1098,463 @@
       }
     },
     {
-    "id": "cycling_20260103_a1",
-    "date": "2026-01-03",
-    "sportType": "cycling",
-    "title": "Endurance + Cadence",
-    "workoutType": "Endurance/Technique",
-    "mode": "Outdoor",
-    "status": "pending",
-    "plannedData": {
-      "durationMinutes": 150,
-      "targetPowerWatts": null,
-      "targetPaceMinPerKm": null,
-      "targetHeartRateBPM": null,
-      "distanceKm": null,
-      "plannedTSS": 100,
-      "descriptionOutdoor": "2h30 en Z2 (135-181W). Intégrer 3 x 10 minutes de travail de haute cadence (maintenir >100 RPM) au milieu de la séance, en maintenant la puissance en Z2. Récupération active entre chaque bloc de cadence: 5 min Z2 à cadence normale.",
-      "descriptionIndoor": "2h30 en Z2 (135-181W). Après 60 minutes, réaliser 3 blocs de 10 minutes de 'Spin-ups': Augmenter progressivement la cadence jusqu'à la limite sans rebondir sur la selle, tout en maintenant la puissance Z2. Récupération active entre: 5 min Z2 normale."
+      "id": "cycling_20260103_a1",
+      "date": "2026-01-03",
+      "sportType": "cycling",
+      "title": "Endurance + Cadence",
+      "workoutType": "Endurance/Technique",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 150,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 100,
+        "descriptionOutdoor": "2h30 en Z2 (135-181W). Intégrer 3 x 10 minutes de travail de haute cadence (maintenir >100 RPM) au milieu de la séance, en maintenant la puissance en Z2. Récupération active entre chaque bloc de cadence: 5 min Z2 à cadence normale.",
+        "descriptionIndoor": "2h30 en Z2 (135-181W). Après 60 minutes, réaliser 3 blocs de 10 minutes de 'Spin-ups': Augmenter progressivement la cadence jusqu'à la limite sans rebondir sur la selle, tout en maintenant la puissance Z2. Récupération active entre: 5 min Z2 normale."
+      },
+      "completedData": {
+        "actualDurationMinutes": 120,
+        "distanceKm": 68.48,
+        "perceivedEffort": null,
+        "notes": "───────────────\r\n Powered by PulsePeak",
+        "caloriesBurned": 1009,
+        "source": {
+          "type": "strava",
+          "stravaId": 16925444329
+        },
+        "map": {
+          "polyline": "jh`fAqudz^n@mGvG}ESsEwDmEzBiCKwCvJaYi@wDqIcEk@mEpIiStIAvCcEpGgAj@qEeDoFlC}B|JjL~B_A|AwEbDnAN`F`DhDaEnDmAx`@nFjIxWiAvA|SmC`Gh@|JdP~DpDvG~HuMpClAt@dD~EPtEjD|CkBHeGrF}EvLjD~Ei@hGfFxDgHdLiE~H{@dOjDzEsQxFcCjHnCpCiIzGqGfJ]xBeDzEnA`C{EdAxBpBhAtKqD|EnAxCwD~GeA~ARLhDpAPjJ}FhCvE`IlDqDrEx@rH|Iv@p@fDtDNhB`CzDmB|D`A`AxErEvA`JzVtBwA_EyKvD{BhCb@eB`MpMdPhApK`UpCpHcAzJtIhAnEk@tFxBlEwGjDNfO|D`A\\bK~GCv@wE|HlHQtA{HhC`IxD[nLsN~DcJp^oGjBd@lFwApErIpEyCxMaFxEaH`A}E_HaEvEsItAJ|ArJzD`BzKaArU|FaAvGxGiK|C\\rDgDhMaEnAuNdSqAlHwJ~IsHStBkO_AaKeFCkEmDhBkDw@qCvE}AaIwEv@aKpBs@rG~BrBwCzArGaEj@g@dBmG}AtFcOtF[iAiCfA_IeHcBkDuE`DoI_CwEb@uMdCeAhAwDuAsDnCqBrERj@sHvFk@bAcKpFJlCmDoAcDuLyBJwFeEAtBsP_HuCWaGrpAO~BdAbMiE^gBiIsH}@`FwGAS}JyDw@SoOvGeDwBwEh@oFgAqEuKaJ{GfAgUuCaAkKmMaPzAeM}C]qD`C~D~JgB|A}IuVgEiAsAgFmE_AqDjBwA_CuDGo@mDgJ{@u@_HjDoFaHoCmFaGiHpGqA[}AuDcH`AgDzDsEmAuKvDuBoAeA}BgC|EeFmAwBdDmIRqH`HsChIqGsCwGhCyBzMoBvBwMqDoJ`A}CrCmFl@qDfHwF{EoGTcKiD_HfFmG|@cApCjApLeMnHaAfEeEtDhFjL_D~DrCr@oHdEi@jJnB`H|EvFEnLkv@`TdC`IvOgEvBrAObQoDbN_@xLmL`@kEuMaDyAiBvEtHlPsOtErOGeOlDbOl@rDvKyCvC~DpE{C^h@`CaHEaH|GgBbLNfVeN|XwExBkGCtCyCgHxAcEmCKcDlBaAe@oJeBi@_GlDaD{GxFcL{G_VrA{AzE|BZkAoEeKeQyHaE_JXsD`JuHkDuEdCaBo@_TyCcHvEkNf@eHs@}H}EgL~DoTsHkGsBcIv@{GyBgFpE_Aj@oFjBi@tFzFxBl@_AjD|@pA`IWpC}CmA{E~CaDHuDwJcPvAgFvFgDAgEaEwFxB{BEkDjJeWSgEqHaDeBcEpIaUfJMtCcEjGeAn@iEiDoFpAqBdC?xHtKnBs@nDyEbBxAHzE~CjC_ErDc@~R"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 147.5,
+          "maxBPM": 172,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 74,
+            "avgPowerWatts": 145.9,
+            "normalizedPowerWatts": 150,
+            "maxPowerWatts": 358,
+            "intensityFactor": null,
+            "avgCadenceRPM": 83.3,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 423,
+            "avgSpeedKmH": 34.0416,
+            "maxSpeedKmH": 75.024
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
     },
-    "completedData": null
-  },
-  {
-    "id": "cycling_20260104_a1",
-    "date": "2026-01-04",
-    "sportType": "cycling",
-    "title": "Endurance Longue",
-    "workoutType": "Endurance",
-    "mode": "Outdoor",
-    "status": "pending",
-    "plannedData": {
-      "durationMinutes": 210,
-      "targetPowerWatts": null,
-      "targetPaceMinPerKm": null,
-      "targetHeartRateBPM": null,
-      "distanceKm": null,
-      "plannedTSS": 150,
-      "descriptionOutdoor": "3h30 en Z2 (135-181W). Dernière longue sortie de charge. Maintenir une intensité constante et confortable. Se concentrer sur la fluidité du pédalage.",
-      "descriptionIndoor": "3h30 en Z2 (135-181W). Rouler en Z2 et toutes les 45 minutes, faire 5 minutes de Z3 (183-217W) pour simuler un petit effort, avant de revenir à Z2."
+    {
+      "id": "cycling_20260104_a1",
+      "date": "2026-01-04",
+      "sportType": "cycling",
+      "title": "Endurance Longue",
+      "workoutType": "Endurance",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 210,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 150,
+        "descriptionOutdoor": "3h30 en Z2 (135-181W). Dernière longue sortie de charge. Maintenir une intensité constante et confortable. Se concentrer sur la fluidité du pédalage.",
+        "descriptionIndoor": "3h30 en Z2 (135-181W). Rouler en Z2 et toutes les 45 minutes, faire 5 minutes de Z3 (183-217W) pour simuler un petit effort, avant de revenir à Z2."
+      },
+      "completedData": {
+        "actualDurationMinutes": 173,
+        "distanceKm": 75.36,
+        "perceivedEffort": null,
+        "notes": "",
+        "caloriesBurned": 1266,
+        "source": {
+          "type": "strava",
+          "stravaId": 16936604375
+        },
+        "map": {
+          "polyline": "wlnhH_t}k@_@z@n@~AMcEzQxKjZtS{UaP_DaHqAoJ{GkHhh@u`@`UPzw@bD~UjNh\\nb@bDtBjBJhPiM}@q\\lDk@[kJvC{GSuA_Be@iDeG}@aFl@u_@bBgMfCee@GiDyCmPiD_JyOwPbAgOoHoI{BiGsAaKGoUcBgLmJxC`AlR|AbJp@hVb@VhJkFcC_OIyTiCcSAySoImb@yAo\\aDaMqGka@ZgJyEaLqFaCcz@zRcX\\}AeFjAiBYqEmB}@_B{Ee@uVVyEq@qJkAsF{CuE~A{MoBkIW{NbK{GfI_IrQmGhSgCpIz@tUiC`D}JR{JeDw`@gI}KyEoTgGsEgE}I}JwHgD_\\FcCv~@gGvGoDjLwAbGbD|VxAlHdHbIfBpAvA`H_BrT`E`FpIvCvIhLoDdL~EsH`]iL`JjAfRo@tPo@fDcFhLjJ|vAO~M~b@JnLkF|IaGfFcAlEDj@lFdAtAlEuFjIWdQiDrv@rC\\~ArBz@`A|LiCdCX`UjFtMtGpc@VjE_@~GcIp`@[dJbA~MBbHeBvOd@~SqAxL_If@qd@~L{@t@u@fDaOzFmA~AC~EeCdDuBrFeM|EZbIYdBkCjAuDyCoKhJa@fH{ObOgJfCk@uA_@}JkAiISmNwFie@kDzGuFzXeHtKcAvDd@bJwA`Vz@hKgDbRuRqPsHmAeF|@{BiLkD}IcOwOWoBfAwLgH_IgCuHkAiKCeSkCwS?sRsIwb@sAs[iDgNqGca@`@{I}EcLuDcCkBA}w@vRwNBeAiBk@iOTkFeCoSuJbANkHy@wLoA{EmCwD`BmMoB{IWeO`UuQzQuGpS_CpIz@jUgCdDkKRaKcDw_@uIuL{CmPgAkCiGqEwDgIaKwHeD}_@r~@mGfHkDrLwApFxC~V~AlHxGzHrBzA~A~GuAbU|DpExHxC|IfLiDdLxEsHh]_LrIdA|Qu@|Qq@~C_FtKnJdwAWnMbc@TbL}EvIaGdGqArD?bA~Fx@jA|EsFnJ[zOiDhv@~Cd@bBdBp@nAzKGx@gCnB^fUhFhM|BfT`DrOHvGkCrMuE`YUpHdAjN?lHcBhO^tSmAjLaIl@md@|LeAdAs@lDgOvFeA`BBlEaC~CqBpFoMzF^xHYbBkC`AwDsCsKjJCfFc@dAuOtN}IjCnApXC|QtA`Pw@nJrHhBpDuBjB@dAxFUpCcB`FeEbCgGtQ}CtEyJzBwS`BkB{@cJtB{ShBeJG_@`A}@nIR`HyCrA~@l\\iP`MgBKkDcCk[qa@sReL^Gw@D}@}Biz@aDcU^ag@ja@oBnCiBjH"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 154.5,
+          "maxBPM": 187,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 101,
+            "avgPowerWatts": 122.7,
+            "normalizedPowerWatts": 146,
+            "maxPowerWatts": 441,
+            "intensityFactor": null,
+            "avgCadenceRPM": 84,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 953,
+            "avgSpeedKmH": 26.1,
+            "maxSpeedKmH": 96.33600000000001
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
     },
-    "completedData": null 
-  },
-  {
-    "id": "cycling_20260106_a1",
-    "date": "2026-01-06",
-    "sportType": "cycling",
-    "title": "Récupération Active/Endurance Légère (W4)",
-    "workoutType": "Récupération",
-    "mode": "Outdoor",
-    "status": "pending",
-    "plannedData": {
-      "durationMinutes": 90,
-      "targetPowerWatts": null,
-      "targetPaceMinPerKm": null,
-      "targetHeartRateBPM": null,
-      "distanceKm": null,
-      "plannedTSS": 50,
-      "descriptionOutdoor": "90 minutes de récupération active. Rouler uniquement en Z1 (moins de 133W) ou début Z2, très facile. Éviter toute difficulté ou accélération.",
-      "descriptionIndoor": "90 minutes de 'Décrassage'. Rouler en Z1 (moins de 133W). Regarder un flux vidéo ou écouter un podcast. Maintenir une cadence élevée (90+ RPM) sans forcer la puissance."
+    {
+      "id": "cycling_20260106_a1",
+      "date": "2026-01-06",
+      "sportType": "cycling",
+      "title": "Récupération Active/Endurance Légère (W4)",
+      "workoutType": "Récupération",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 90,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 50,
+        "descriptionOutdoor": "90 minutes de récupération active. Rouler uniquement en Z1 (moins de 133W) ou début Z2, très facile. Éviter toute difficulté ou accélération.",
+        "descriptionIndoor": "90 minutes de 'Décrassage'. Rouler en Z1 (moins de 133W). Regarder un flux vidéo ou écouter un podcast. Maintenir une cadence élevée (90+ RPM) sans forcer la puissance."
+      },
+      "completedData": {
+        "actualDurationMinutes": 90,
+        "distanceKm": 43.9,
+        "perceivedEffort": null,
+        "notes": "───────────────\r\n Powered by PulsePeak",
+        "caloriesBurned": 688,
+        "source": {
+          "type": "strava",
+          "stravaId": 16959275469
+        },
+        "map": {
+          "polyline": "np_fAax~y^lCnIpFvDbKnDhE|JxAnAdDe@AmAz@aAyBuABeB{A_Ah@iBfBGhA|CbC|AfDsBHw@}CaD@yAdA]tEb@tFrJpLiIrEdFdDyGxE`EdA@M_E|Bm@\\eAgCuEc@sDeCw@gKIfOmCw@e@yKrA_Ae@`AyApMmCcHcOWwBrBgClBt@nFbOpLa@f@iMnDaNL}NO_CyAa@uPfEiBkIl|@kUfI_F|ErCd@oBoB{BAiCmAoBn@eBnCDlGmCbLgBtPd@pNxGlFbIsA~KmC|@iBnDz@bEaDlB{@o@y@^h@dB}AlEd@zEuEfDi@dBz@lC|An@HfBkB`CcCX{@lAe@`OuCzGeD`By@vCaEpCoEpLCzE{AvHpDjIjBjBxExAjFdH~C~@jMb@xPwEhH~AdGDl@dDxBi@jDjAg@`AkCHe@rAbF|DpFrKdCb@z@mAPcCnCChCbBn@tCjU|HhH?p@~ArAb@^zCiAnA}BQi@xCoH\\eIuCaBfAr@`EWlDpCbCo@jDbHjE~HsAj@sAd@yDo@aCvAs@pBPnBbC`CqBtCpB~Ds@fFnBThBx@\\jMO|HgGbHC~CeArD\\vC`BdJk@xAzCjAb@hAu@tBqMuAqHZ{AgAm@qCb@{EuDjBsDw@mCpD_@`@eAk@}@mFkAw@{Eb@aDlAiBdEzArCVhA{CdBt@XpFkDPk@jBuG_Bf@yDlCsCz@mDnDb@dAy@eAgDlAsGqHcCaD{DjBsDp@cEMmAqBeBt@}CYgHXaArBc@bAaDmAeDN_A|C{AvDT\\y@HuFxCN`BcAbA}JpFJjB}A\\aBuAqCwCMeD_CsBRUgAhAcBm@oAsDRc@iBvAmCz@cIeAiB{Em@q@}GyHCyFcDgAz@u@rFuAf@y@cAM_FqBe@w@`AClEiAl@y@y@WuFoAa@}@x@QhF{@X{@oHcAe@cAp@LrEg@h@gCaB_KKqGmLNsEmCcEmEuA[iD{QyLuIbDiBbEq@zFwHnCkDoAUcFqA_AcRTm@rCfAzNO|H`AnEgBxEgCSeAyAoAmOsCJe@`BNfEiFjD_B{AQoJ{Ee@_AfIeCv@kBfDv@lE}ChBuBWd@rB{A`E^pFqEzCi@~Av@lCdBz@FxAgBdC}BTeAtA@zIk@jDoCnGkDhBw@rCiDtBmCdF{Z{Gk@sBr@yFs@wAmBtBoAxFq@[MaFm@i@q_@yG?}LzDuP@sO}@_Awg@fLsDi@{HsIaFSyDxBqEdIqYdF{DdDgAnEpAlOeCvA~CtCHhAwIzG"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 136.5,
+          "maxBPM": 184,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 63,
+            "avgPowerWatts": 132.6,
+            "normalizedPowerWatts": 160,
+            "maxPowerWatts": 542,
+            "intensityFactor": null,
+            "avgCadenceRPM": 83.3,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 578,
+            "avgSpeedKmH": 29.0808,
+            "maxSpeedKmH": 64.368
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
     },
-    "completedData": null 
-  },
-  {
-    "id": "cycling_20260108_a1",
-    "date": "2026-01-08",
-    "sportType": "cycling",
-    "title": "Tempo Léger (W4)",
-    "workoutType": "Tempo Léger",
-    "mode": "Outdoor",
-    "status": "pending",
-    "plannedData": {
-      "durationMinutes": 90,
-      "targetPowerWatts": 189,
-      "targetPaceMinPerKm": null,
-      "targetHeartRateBPM": null,
-      "distanceKm": null,
-      "plannedTSS": 70,
-      "descriptionOutdoor": "Échauffement 20 min Z2. 2 x 15 minutes en bas de Z3 (183W-195W). Récupération : 10 min Z2. Le but est de solliciter légèrement le système sans accumuler de fatigue. Retour au calme Z2.",
-      "descriptionIndoor": "Échauffement 20 min Z2. 3 x 10 minutes 'Spinning Class Style': Maintenir la puissance entre 183W et 195W tout en alternant 5 minutes assis / 5 minutes en danseuse. Récupération : 5 min Z2. Retour au calme Z2."
+    {
+      "id": "strava_16969802770",
+      "date": "2026-01-07",
+      "sportType": "running",
+      "title": "Course à pied dans l'après-midi",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 25,
+        "distanceKm": 4.83,
+        "perceivedEffort": null,
+        "notes": "",
+        "caloriesBurned": 343,
+        "source": {
+          "type": "strava",
+          "stravaId": 16969802770
+        },
+        "map": {
+          "polyline": "mnnhHas}k@Qg@_@m@AGJ_@CKQScAq@}@iAc@gAEg@?y@Oc@k@oAIKa@WS[]uAyAiDm@iA{AiEe@eAe@aAe@s@uBgFsBaEkBeES_@e@e@g@uAMq@K]oB{Ek@mA{@{BcEaJ{BgEsA_CqCiEwBgCqCkC]WMMWe@GCGDOZC\\BLPPl@b@dC|BbCrCzBhDpArBhArB~AzCxEnK~DjJR^FX?p@BVNl@FJb@\\b@t@Pb@n@x@`@t@lBtE|MtZd@pAD^CNGLy@~@_@NGF_FpG{ChEKZE`@@`@J\\rBrEt@hBrBtEXx@v@|AF@FEZ{@v@wAd@iA^k@^cAlAuBr@_Bf@eA|@sBl@sBn@eB"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 152.7,
+          "maxBPM": 174,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": null,
+          "running": {
+            "avgPaceMinPerKm": null,
+            "bestPaceMinPerKm": null,
+            "elevationGainMeters": 27,
+            "avgCadenceSPM": 161.2,
+            "maxCadenceSPM": null,
+            "avgSpeedKmH": 11.268,
+            "maxSpeedKmH": 14.76,
+            "strideLength": null
+          },
+          "swimming": null
+        }
+      }
     },
-    "completedData": null 
-  },
-  {
-    "id": "cycling_20260110_a1",
-    "date": "2026-01-10",
-    "sportType": "cycling",
-    "title": "Endurance Courte Récupération (W4)",
-    "workoutType": "Endurance",
-    "mode": "Outdoor",
-    "status": "pending",
-    "plannedData": {
-      "durationMinutes": 150,
-      "targetPowerWatts": null,
-      "targetPaceMinPerKm": null,
-      "targetHeartRateBPM": null,
-      "distanceKm": null,
-      "plannedTSS": 90,
-      "descriptionOutdoor": "2h30 en Z2 (135-181W). Rouler tranquillement et rester dans la première moitié de la zone Z2. Concentration maximale sur la récupération.",
-      "descriptionIndoor": "2h30 en Z2 (135-181W). Rouler avec une résistance constante et regarder un film. Toutes les 20 minutes, faire 1 minute de haute cadence (>100 RPM) en Z2, puis revenir à une cadence normale."
+    {
+      "id": "cycling_20260108_a1",
+      "date": "2026-01-08",
+      "sportType": "cycling",
+      "title": "Tempo Léger (W4)",
+      "workoutType": "Tempo Léger",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 90,
+        "targetPowerWatts": 189,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 70,
+        "descriptionOutdoor": "Échauffement 20 min Z2. 2 x 15 minutes en bas de Z3 (183W-195W). Récupération : 10 min Z2. Le but est de solliciter légèrement le système sans accumuler de fatigue. Retour au calme Z2.",
+        "descriptionIndoor": "Échauffement 20 min Z2. 3 x 10 minutes 'Spinning Class Style': Maintenir la puissance entre 183W et 195W tout en alternant 5 minutes assis / 5 minutes en danseuse. Récupération : 5 min Z2. Retour au calme Z2."
+      },
+      "completedData": {
+        "actualDurationMinutes": 90,
+        "distanceKm": 43.01,
+        "perceivedEffort": null,
+        "notes": "───────────────\r\n Powered by PulsePeak",
+        "caloriesBurned": 744,
+        "source": {
+          "type": "strava",
+          "stravaId": 16982678740
+        },
+        "map": {
+          "polyline": "ubcdFxtrwMfEsIl@c@zB|AjBXlEnBfA`ArANdOaXdCeF?g@eLuKs@}@G_@jOqZ\\?x@v@hKtK~@BnCqFj@aBWi@sBeBGc@bJgQ~@wB`C~BJz@q@Ry@w@e@Ce@fAw@n@DZVHr@Mt@P?^c@t@RV\\AjIyA`FNz@OdCoAtFcG~GwCrA[^VYh@{@b@wH~BaFjFmQvMuMvSeAlB]~A_B|CmJfP}BnFU~AJbDcBvDk@Q_GgGm@?{OjYwTbc@yDtIWZm@@iCkBkIiIC}@t^ws@b@M|B~AzCn@vCvAdA~@tAPlRm]\\}@Ck@aLmKq@y@Ie@hOkZZGr@n@pK~K\\P`@IzDiIOo@qB}AQm@|K_Ur@VdB`CKf@a@H_B_Ag@bA{@h@A\\RThBEPVg@t@B`@ZFdJ{A~DNxAS`CmAnFaGbHwCrA[\\X[f@y@b@{HbCaFjFmPvLaBpBkLlRe@z@_@dBuB`EwI`O}BjFUxAFvDcBnDi@QaGkGm@D_LzRqXpi@gEhJq@J}@g@aLwKDcAt^ss@l@BpBvAdDv@jF~Cz@?vQk\\r@iBKg@qK{JgAyAXgApNsXb@?tL|LZX`@An@w@rCkGGs@yBkBOg@`JcQz@{Bb@HtBlCKf@_@JcB_Ae@fA}@l@B\\TLr@Mv@LB\\e@t@NZ^?bIwAzELvASzBmAtFcGpGqCzA]^JIf@q@b@kIhC_FfFkPvL_BnBgL|Qu@xA]zAsB`EeJvOuBdFU|ANtBGx@aBjD[CiGsG[MWN}NxWmUbd@gEnJo@Vo@Y_MsLq@ZkXxi@El@\\z@`HtEJRGj@c^zr@}AlAm@jB{CdGyAx@g@~CcXph@Qh@DRp@?pXui@`BcA\\sCdDwGf@i@bALtClC~TrK`APXYZaCbG}ULgn@qEe@eI}FW[Ac@`Xii@VUZFjIjIbBnAlA@r\\{p@fN{VPQf@TbGlGj@IzAqDGsDRqA|BoFtI}NzBmEZyAt@uAxL{R~@iAbQiMfEuEzIuCv@o@@m@a@QyA\\cHxC}FnG_CdAaALqEQyIzAW?AUf@m@Eg@m@UkAPM_@|@g@`@cAhB`Af@[@i@gBeC_AUwKlTI^J`@zBjBN^yDjIk@?iMwMo@BiOhZL|@x@~@pKzJFh@g@lAeRx\\kAYw@w@aD}AoDw@gByAk@Hya@rx@"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 149.7,
+          "maxBPM": 177,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 62,
+            "avgPowerWatts": 144.4,
+            "normalizedPowerWatts": 159,
+            "maxPowerWatts": 398,
+            "intensityFactor": null,
+            "avgCadenceRPM": 77.8,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 556,
+            "avgSpeedKmH": 28.5372,
+            "maxSpeedKmH": 68.83200000000001
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
     },
-    "completedData": null 
-  },
-  {
-    "id": "cycling_20260111_a1",
-    "date": "2026-01-11",
-    "sportType": "cycling",
-    "title": "Endurance Moyenne Récupération (W4)",
-    "workoutType": "Endurance",
-    "mode": "Outdoor",
-    "status": "pending",
-    "plannedData": {
-      "durationMinutes": 210,
-      "targetPowerWatts": null,
-      "targetPaceMinPerKm": null,
-      "targetHeartRateBPM": null,
-      "distanceKm": null,
-      "plannedTSS": 120,
-      "descriptionOutdoor": "3h30 de sortie. Maintenir l'intensité stricte Z2 (135-181W), en privilégiant le bas de la zone. C'est la fin du microcycle, la fatigue doit diminuer.",
-      "descriptionIndoor": "3h30 en Z2 (135-181W). Se concentrer sur un pédalage parfaitement rond et relâché. Utiliser une séance de simulation de course à faible intensité (Z2) pour maintenir l'engagement mental."
+    {
+      "id": "cycling_20260110_a1",
+      "date": "2026-01-10",
+      "sportType": "cycling",
+      "title": "Endurance Courte Récupération (W4)",
+      "workoutType": "Endurance",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 150,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 90,
+        "descriptionOutdoor": "2h30 en Z2 (135-181W). Rouler tranquillement et rester dans la première moitié de la zone Z2. Concentration maximale sur la récupération.",
+        "descriptionIndoor": "2h30 en Z2 (135-181W). Rouler avec une résistance constante et regarder un film. Toutes les 20 minutes, faire 1 minute de haute cadence (>100 RPM) en Z2, puis revenir à une cadence normale."
+      },
+      "completedData": {
+        "actualDurationMinutes": 14,
+        "distanceKm": 8.17,
+        "perceivedEffort": null,
+        "notes": "",
+        "caloriesBurned": 110,
+        "source": {
+          "type": "strava",
+          "stravaId": 16998575899
+        },
+        "map": {
+          "polyline": "pu_fAsm~y^c@e@Yk@]y@a@sAMq@Gy@Ak@Jy@H[Zc@j@i@z@o@LEd@_@zA}@n@k@\\c@H_@E]O[m@k@kAm@UUG[?MDMJGJE|AWBOAOYoDg@{DIwAAk@Di@Fo@R{@@UCUIQm@c@W_@_@k@Oa@I_@IeA@k@Dk@^}A^}@bAaB`@y@N_@Pm@Z{BNwB?_BK_CMoAWqASu@Sc@g@e@WOQUCKA{@QYa@[MWS{@I}@@q@H_@Po@bAqC^kBd@iAZyB@gAC]Ok@]w@[c@WU]KoAQm@MWUIK]y@Kc@e@yAUcAW}@Iu@Ds@l@qCDa@Eq@[y@kAmBIWA[F[Z[HGLCf@AZDx@DZMFMFa@HkCFc@FMZYNEPC`@?p@Hn@Pl@TdAl@`@b@D`@EfAFN^LP?`@FZPJNBLCPm@hAQ^CLBb@FNXZNF`@JhABfFe@z@u@t@}@Rc@BUASGUWc@[a@Mi@Ei@DUHU^[hAo@LOVc@Lk@Dk@?YIcA]uA[_ASi@c@y@s@}@y@u@i@c@m@Yk@_@IMEQCO?e@Hs@P_ARs@Zk@LO^WnBe@PG^WZ[Ra@Je@Hy@Ai@Ci@Kc@Q_@c@o@w@o@aA_AQ_@AODOT[dAy@LKHODO?SUq@CO?SHc@Rq@l@_BlEgKjA_DReAFiABs@Ce@I_@Q]UY]U]McD{@m@[YWa@i@a@}@Ka@Ee@AMBe@Jc@Xo@bBmDjAwBh@oAd@oAJa@NaAP_@l@Y^Mr@K`@AP@\\J\\PNJ^L`@?`@I^QV[P]p@aBJKNG`@KP?PDdA@`AW\\SXUP_@X_ADs@Cs@I]Q]mBcCWc@CO"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 129.8,
+          "maxBPM": 167,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 8,
+            "avgPowerWatts": 130,
+            "normalizedPowerWatts": 139,
+            "maxPowerWatts": 266,
+            "intensityFactor": null,
+            "avgCadenceRPM": 85,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 26,
+            "avgSpeedKmH": 33.0588,
+            "maxSpeedKmH": 46.152
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
     },
-    "completedData": null 
-  }
+    {
+      "id": "strava_16999787042",
+      "date": "2026-01-10",
+      "sportType": "cycling",
+      "title": "Zwift - Group Ride: Xert Winter Saturday Social Ride (D) on Big Flat 8 in Watopia",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 90,
+        "distanceKm": 57.1,
+        "perceivedEffort": null,
+        "notes": "",
+        "caloriesBurned": 834,
+        "source": {
+          "type": "strava",
+          "stravaId": 16999787042
+        },
+        "map": {
+          "polyline": "rg_fA{~bz^hA`@`DkAo@uEv@sFwBkFp@aAlDOTuEr@o@nH~BH|BzBz@eAzCz@jAbIWhCsCiAcFbDkDFmDkBsF{F}EMqAjAqEtEmBv@cBScE{D{EzBeCIaDhI{Sh@uE_AkCkH}CcAqEtI}S~Cy@bEr@dCyDdHaB`@uDeDwFjBwB`Cb@`H|JtB_ArAqEvDvAH|EbDbD_EhDyAl`@|F|IvGb@rLwClAt@tAtTuCtHrAxIhNxBjChFrA~@fFqLdBa@vBxAThCpF^xBhEU`G{LxG}@bEkEnDpC|ErA~E]lB{BvApCd@kHbEo@hJnBlHzEhFEtL}t@pRk@tAvAlHwUfE_Cy@{FgH{Fu@oE~BgE~H_XnEcE|B{ArC_@bFpAfLcCvAnDbEeJjIOlEtD~HlQbInEfK[v@aE_CqBvA|GfVwFtLpClGlCsBvCy@nAp@^vJ_B`@[hClDjDnHyAx@`A_E|AtGLxF}BvAeFpBeBzGyNM}UrB}L~GeGzGD_AmBhDy@cCgA_AiCxC{CcCkEg@}DkO}@bOiCeAm@cMx@n@}A|M{CiHiOHkDhBgA|At@vFbOnKSt@}AHwJzDsP@{N_AoAmh@fLuD_AcGkHqDs@gFbBmDhHmC|AqT~CkHtEyC_ELuDlDwH|@qGu@yKqBmCiBaHfEiSgAsC{DiAeAmBaBqGp@gHoBkFtE{@ZwEzAy@jFdBb@zCxBr@cA~Cx@nArIW|BmCgAoFvCwCNyDqB{FqFqESuAlAyEzDwAnAmBIwD_EwFvBsBAsDpIoTZkDe@_CgIuDaAqErI}S|Cy@hEn@tCcElGmA\\qE}CwEt@}AdDSvHtKvB_AxAqElD|ADlEbDdDaExDwA|_@vF`JrFh@hM}C~Ah@zAdSQrC_CvC`ArKlOnCzAtAnBhEdFsLjB[jBjA`@tC`Gl@pB`Iq@fCsLtGy@zDiEpDxCfFjAnE_@nB_CdAtC`AmH`Eg@|IbBpGdFpGChL_u@rRo@nAfBhHmMhDeJToHqIiCy@sDZsClBiE~H}WlEgDdBwBzDYnErAjLcCvAjDnE}ItH]tD`BzFrBxBrPhHnElKSr@gE}BuBdB|GrUqFlM~ChGrCeClCo@~@j@d@xJgBj@QbCfDbDtHuAv@dA{D|AxJOhD}B|@eE|JePn@sGo@sOdB}KnHaHzGH_AmBnD_AcCy@cAiCzCaDgCmEi@aEgOw@dOiC[m@_LpAsAc@bAyAjMgCeHmOMcC`BqBtBh@~FnOjLk@`@cMnDwMF{RuCe@wZrIwKlAyJkJcGi@{DxBwEhI_W|D{GnEoCqCLyF"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 154.5,
+          "maxBPM": 188,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 72,
+            "avgPowerWatts": 157.7,
+            "normalizedPowerWatts": 171,
+            "maxPowerWatts": 434,
+            "intensityFactor": null,
+            "avgCadenceRPM": 89.1,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 196,
+            "avgSpeedKmH": 37.8576,
+            "maxSpeedKmH": 56.016000000000005
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
+    },
+    {
+      "id": "strava_16999999486",
+      "date": "2026-01-10",
+      "sportType": "cycling",
+      "title": "Zwift - The Classic in Watopia",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 16,
+        "distanceKm": 6.18,
+        "perceivedEffort": null,
+        "notes": "",
+        "caloriesBurned": 87,
+        "source": {
+          "type": "strava",
+          "stravaId": 16999999486
+        },
+        "map": {
+          "polyline": "|uafAmuzy^RRx@lAdAlA`@n@`@nAXtAJ~@HxBHj@Zp@|@hAD@VZTRp@^hBfBTPDHFBz@fAPLRJd@Lz@Bd@CDCNA|@[HAlAk@HIJCdAu@`@IXHNZNf@^zBv@`Dd@xA~@rBp@bALNNT\\^XTdAj@t@TN@FBV@FB^?FCVAVINAv@e@`@]~AcB|@mAp@o@bEqC|@s@d@m@h@_AXw@Pu@ZcC^sBZyATo@Zm@Tq@`@sBHgAEk@Qo@s@aAy@k@m@[q@W[I{C]W?o@EqB?UBcA@UBcABqCTe@CMMIMCSBk@^mBBw@As@Ew@Ms@Yo@i@]gA[WCeA[_A]}@c@wBu@mA[g@Ey@BgBb@cALaAR_@Dq@?oAMm@QwB_@uA[wASm@Cy@I{A?wALeARe@Pc@XURUb@Qf@IZGh@?ZDx@ZdBVx@LXdArBhBnCtAbBh@|@`@tA\\rBDx@?r@Ht@FTVj@h@r@D@n@t@XTLBPPF@dAdATPDHNHp@r@h@t@ZPl@P`@Bp@AXEJETCNK`@If@Yn@WlA}@\\IJ?THRh@Nj@\\vBv@~C^hAt@bB"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 134,
+          "maxBPM": 141,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 4,
+            "avgPowerWatts": 91.4,
+            "normalizedPowerWatts": 92,
+            "maxPowerWatts": 141,
+            "intensityFactor": null,
+            "avgCadenceRPM": 74.4,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 80,
+            "avgSpeedKmH": 22.233600000000003,
+            "maxSpeedKmH": 55.656000000000006
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
+    },
+    {
+      "id": "cycling_20260111_a1",
+      "date": "2026-01-11",
+      "sportType": "cycling",
+      "title": "Endurance Moyenne Récupération (W4)",
+      "workoutType": "Endurance",
+      "mode": "Outdoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 210,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": 120,
+        "descriptionOutdoor": "3h30 de sortie. Maintenir l'intensité stricte Z2 (135-181W), en privilégiant le bas de la zone. C'est la fin du microcycle, la fatigue doit diminuer.",
+        "descriptionIndoor": "3h30 en Z2 (135-181W). Se concentrer sur un pédalage parfaitement rond et relâché. Utiliser une séance de simulation de course à faible intensité (Z2) pour maintenir l'engagement mental."
+      },
+      "completedData": null
+    }
   ],
   "summary": "Semaine dédiée à l'évaluation physiologique suite à la phase de volume hivernale. Nous réalisons le Test FTP (Mardi) et une évaluation VO2max par intervalles courts/longs (Jeudi), suivis de journées de récupération obligatoires. Le week-end est consacré à la réintégration du volume en Zone 2 pour absorber la charge et préparer le prochain bloc. Respectez scrupuleusement les zones de puissance lors des tests pour garantir la validité des données.",
   "lastGenerated": "2026-01-02"
