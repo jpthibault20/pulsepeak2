@@ -1,6 +1,6 @@
 {
   "name": "JEANPIERRE Thibault",
-  "ftp": 241,
+  "ftp": 248,
   "experience": "Avancé",
   "goal": "Course sur route (Compétition)",
   "objectiveDate": "",
@@ -17,55 +17,54 @@
   },
   "weight": 58,
   "powerTests": {
-    "p5min": 317,
+    "p5min": 0,
     "p8min": 0,
-    "p15min": 266,
-    "p20min": 0
+    "p15min": 0,
+    "p20min": 261
   },
   "zones": {
     "z1": {
       "min": 0,
-      "max": 133
+      "max": 136
     },
     "z2": {
-      "min": 135,
-      "max": 181
+      "min": 139,
+      "max": 186
     },
     "z3": {
-      "min": 183,
-      "max": 217
+      "min": 188,
+      "max": 223
     },
     "z4": {
-      "min": 219,
-      "max": 253
+      "min": 226,
+      "max": 260
     },
     "z5": {
-      "min": 255,
-      "max": 289
+      "min": 263,
+      "max": 298
     },
     "z6": {
-      "min": 292,
-      "max": 317
+      "min": 300,
+      "max": 372
     },
     "z7": {
-      "min": 318,
+      "min": 373,
       "max": 2000
     }
   },
   "seasonData": {
-    "calculatedAt": "2025-12-02T19:39:28.498Z",
-    "wPrime": 22950,
-    "criticalPower": 241,
-    "method": "Critical Power Regression",
+    "calculatedAt": "2026-01-13T18:30:21.898Z",
+    "wPrime": 0,
+    "criticalPower": 248,
+    "method": "Single Test Estimation",
     "sourceTests": [
-      "5min",
-      "15min"
+      "20min"
     ]
   },
   "strava": {
-    "accessToken": "ccae778e041f9a5c35e56409477a619bbec650fd",
+    "accessToken": "e3dd404f20e2788a44cbb34b39ab66e1a826ee09",
     "refreshToken": "35180b31d539959a45bb305fff0171b412a106fc",
-    "expiresAt": 1767459498,
+    "expiresAt": 1768350292,
     "athleteId": 31596042
   }
 }
