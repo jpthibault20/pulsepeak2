@@ -1589,7 +1589,7 @@
       "title": "Endurance Moyenne Récupération (W4)",
       "workoutType": "Endurance",
       "mode": "Outdoor",
-      "status": "pending",
+      "status": "missed",
       "plannedData": {
         "durationMinutes": 210,
         "targetPowerWatts": null,
@@ -1869,6 +1869,61 @@
             "elevationGainMeters": 775,
             "avgSpeedKmH": 26.712,
             "maxSpeedKmH": 64.224
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
+    },
+    {
+      "id": "strava_17082709348",
+      "date": "2026-01-17",
+      "sportType": "cycling",
+      "title": "sortie Schwenheim",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 194,
+        "distanceKm": 85.55,
+        "perceivedEffort": null,
+        "notes": "Test 5 min\nPremier en cuissard court de la saison 😀",
+        "caloriesBurned": 1817,
+        "source": {
+          "type": "strava",
+          "stravaId": 17082709348
+        },
+        "map": {
+          "polyline": "mnnhHop}k@fFcOjk@sc@je@hAdElGjErCzoAr]pKp@tGgC~TiR~OeBvNsFhXyZkY|AsCqAsXnDsOf@{DiGcA_Fj@}_@bBkLdCek@_DyPiDaJqOePz@oPsIqJsCgL^vIdMxM{@zO|OzPnD~JrCtPoCpi@}AlKi@`\\NhHrE`JVfDiA`GJzGyCrApAl\\rV|WnNnWra@pz@|DhQ~GpRlKpGtJjMjD~@dRzWbErAzNjRX|CcAbSrApHjElJbCvMw@bQrJnGlNvCjK|Gx@fDrAvXXpCxCxPfMp\\sGgHwGqEoAyKaHaRiAmQyBiF_HmAeMlDwFuCkGfDY~GXoGdGmDrGtCnMgE~FbAhCpGz@zN~C~H`F`WlErCnIvIoNgXyDw[x@eBWxAa@o@~Gr`@vHzMpApG{@EiE}HeHyE_DsRsEoJ}@aQiCcGkHaAsLzCkGmC{FxCe@fG^wFfGaD|F`BnO{C~EtAfClH`AxOzGbR~AnLvCtA~JfMyLkYeFi\\tByOjCmFjk@tBvFpAdLnJ|RJ~CgC~BzDvAZrC{@bBqIdCyDnBS|DxCtC|PxCxDMkGx@uEzCiGtC{AnIf@tDpEbB~IlDBpDwJl@aPnCuOtFaAtPxH~EhNbGne@u@bPgIvL~SsCDyErDiCaCaN_Bgj@zJ{UzNnC`FqEp@sD[mZjKoTp@_NeAcPwAaFqNiLwBgX]wh@pF_YgAgZ|Bkg@}@aD_JcKgAgDcFkj@_Dqc@cC_IqFiXhGyIdAwVpC_U`CyJpDyH@oIpKkDpFaGvDlCtNdX|JxGhNlCtQ~Q~K|BCcB}FcEsGkPYmFrAyFpDwEjEe@rJ`@vHbD`KyB|BuDr@i[nCeIeCoPjBiMo@wNxAky@vFoQpD_DrOiXx@oS_Am]fFql@MqXzFqp@bEqW}@}TyGuZoBoa@uSkwAqAsc@eFcDeEqKgb@mJoE}QuA}@{FgB{K|RgAwOmQkNiJkCqGhAyQiBcR_KeNoRVuKyB}K]yOy@wDqCoDsFcBmGsPeCcTeMqLeH|RcBpJ_FfHuQxi@y[aIuSaBeN|IiH@aEdIaDrAkM{IkVkG_B|UqILoSrQ{HxRgH`I}EhCqI`A}UfQiPvI{MrEsHScApEXdIuGxEEpR_^xzAiK`Iw@rBlApPm@`QyGrRpJlwAmFzaAsZn_@iWhKkOQcUfQoI~LnCv`@pIjc@?`RdCfSBfRv@dJ~BpIlI~JaAdObPjQdD~IxC`QiCzj@}AhKo@``@b@~DjEnIN~CgAlFLdHwClAbAj\\_PdMk\\TqXlJqIgDyPjJua@uIeHrN_ElU{FnEq@_AuBnDmFdDyIoXcCy@aGrDsAkHwIyK`ByK]aO"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 164.8,
+          "maxBPM": 193,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 175,
+            "avgPowerWatts": 155.5,
+            "normalizedPowerWatts": 182,
+            "maxPowerWatts": 761,
+            "intensityFactor": null,
+            "avgCadenceRPM": 82.4,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 1277.7,
+            "avgSpeedKmH": 26.3844,
+            "maxSpeedKmH": 75.16799999999999
           },
           "running": null,
           "swimming": null
