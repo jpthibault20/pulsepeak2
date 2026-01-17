@@ -22,7 +22,7 @@
   "weeklyAvailability": {
     "Lundi": {
       "swimming": 0,
-      "cycling": 0,
+      "cycling": 105,
       "running": 0,
       "comment": ""
     },
@@ -40,12 +40,12 @@
     },
     "Jeudi": {
       "swimming": 60,
-      "cycling": 0,
+      "cycling": 70,
       "running": 45,
       "comment": ""
     },
     "Vendredi": {
-      "swimming": 0,
+      "swimming": 72,
       "cycling": 0,
       "running": 0,
       "comment": ""

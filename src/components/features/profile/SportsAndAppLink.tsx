@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Activity, Bike, Check, Footprints, Link2, Waves } from "lucide-react";
 import { SectionHeader } from "./SessionHeader";
@@ -41,7 +40,6 @@ export const SportsAndAppLink: React.FC<SportsAndLinkAppProps> = ({ formData, se
                                 <sport.icon className={sport.color} size={20} />
                                 <span className="text-slate-200 font-medium">{sport.label}</span>
                             </div>
-                            {formData.activeSports[sport.key as keyof typeof formData.activeSports] && <Check size={16} className={sport.color} />}
                         </div>
                     ))}
                 </div>
