@@ -10,11 +10,11 @@ export interface Profile {
   email: string;
   birthDate: string;
   activeSports: {
-    swim: boolean;
-    bike: boolean;
-    run: boolean;
+    swimming: boolean;
+    cycling: boolean;
+    running: boolean;
   };
-  aiPersonality: 'Strict' | 'Encourageant' | 'Analytique';
+  aiPersonality: aiPersonality;
   strava?: StravaConfig; 
   weight?: number;
   experience: 'Débutant' | 'Intermédiaire' | 'Avancé' | string;
@@ -27,9 +27,9 @@ export interface Profile {
   weaknesses: string;
   weeklyAvailability: {
     [key: string]: {
-      swim: number;
-      bike: number;
-      run: number;
+      swimming: number;
+      cycling: number;
+      running: number;
       comment: string;
 
     };
@@ -48,6 +48,15 @@ export interface Profile {
     method: string;
     sourceTests: string[];
   };
+}
+
+export type aiPersonality = 'Strict' | 'Encourageant' | 'Analytique';
+
+export interface AvailabilitySlot {
+    swimming: number; 
+    cycling: number;
+    running: number;
+    comment: string;
 }
 
 // Definition de l'interface pour le calendrier (Tableau de Workout)
@@ -220,7 +229,7 @@ export interface PowerZone {
 }
 
 // Définition de l'interface pour le type de sport
-export type SportType = 'cycling' | 'running' | 'swimming' | 'other';
+export type SportType = 'cycling' | 'running' | 'swimming';
 
 // Définition de l'interface pour le profil strava
 export interface StravaConfig {

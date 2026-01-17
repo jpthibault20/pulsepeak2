@@ -21,7 +21,7 @@
   },
   "weeklyAvailability": {
     "Lundi": {
-      "swim": 0,
+      "swim": 200,
       "bike": 0,
       "run": 0,
       "comment": ""
@@ -29,7 +29,7 @@
     "Mardi": {
       "swim": 0,
       "bike": 90,
-      "run": 0,
+      "run": 10,
       "comment": ""
     },
     "Mercredi": {
@@ -71,9 +71,9 @@
   "goal": "Course sur route (Compétition)",
   "weaknesses": "",
   "strava": {
-    "accessToken": "42e9801827984ddde74047465d64c24fccfbc138",
+    "accessToken": "b8a3682e63ee7a9cf7ec2cf1bb647a0013fbaa25",
     "refreshToken": "35180b31d539959a45bb305fff0171b412a106fc",
-    "expiresAt": 1768269035,
+    "expiresAt": 1768707550,
     "athleteId": 31596042
   },
   "objectiveDate": ""

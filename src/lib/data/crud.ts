@@ -57,7 +57,7 @@ export async function writeJsonFile<T>(filename: string, data: T): Promise<void>
 
 export async function getProfile(): Promise<Profile | null> {
     const data = await readJsonFile<Partial<Profile>>('profile.json');
-    if (data && data.name && data.ftp) {
+    if (data && data.firstName && data.ftp) {
         return data as Profile;
     }
     return null;

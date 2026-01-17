@@ -48,7 +48,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
     // Etats UI
     const [error, setError] = useState<string | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [isSyncing, setIsSyncing] = useState(false); // <-- NOUVEL ETAT
+    const [isSyncing, setIsSyncing] = useState(false); 
 
     // --- Re-Fetch des données (Utile après une action de l'utilisateur) ---
     const refreshData = useCallback(async () => {
