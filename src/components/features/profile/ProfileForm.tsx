@@ -233,24 +233,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
             </div>
 
             <ChatWidget isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
-
-            <style jsx global>{`
-        .input-triathlon {
-          width: 100%;
-          height: 44px;
-          background-color: #0f172a; /* slate-900 */
-          border: 1px solid #334155; /* slate-700 */
-          border-radius: 0.5rem;
-          padding: 0 1rem;
-          color: white;
-          outline: none;
-          transition: all 0.2s;
-        }
-        .input-triathlon:focus {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-        }
-      `}</style>
         </div>
     );
 };

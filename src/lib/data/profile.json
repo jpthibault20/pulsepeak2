@@ -1,8 +1,8 @@
 {
   "firstName": "JEANPIERRE",
   "lastName": "Thibault",
-  "email": "jeanpierre.thibault@gmail.com",
-  "birthDate": "1999-01-01",
+  "email": "tjeanpierre757@gmail.com",
+  "birthDate": "2000-03-20",
   "aiPersonality": "Analytique",
   "weight": 58,
   "ftp": 247,
@@ -21,52 +21,52 @@
   },
   "weeklyAvailability": {
     "Lundi": {
-      "swim": 200,
-      "bike": 0,
-      "run": 0,
+      "swimming": 0,
+      "cycling": 0,
+      "running": 0,
       "comment": ""
     },
     "Mardi": {
-      "swim": 0,
-      "bike": 90,
-      "run": 10,
+      "swimming": 60,
+      "cycling": 0,
+      "running": 45,
       "comment": ""
     },
     "Mercredi": {
-      "swim": 0,
-      "bike": 45,
-      "run": 0,
+      "swimming": 0,
+      "cycling": 90,
+      "running": 0,
       "comment": ""
     },
     "Jeudi": {
-      "swim": 0,
-      "bike": 90,
-      "run": 0,
+      "swimming": 60,
+      "cycling": 0,
+      "running": 45,
       "comment": ""
     },
     "Vendredi": {
-      "swim": 0,
-      "bike": 0,
-      "run": 0,
+      "swimming": 0,
+      "cycling": 0,
+      "running": 0,
       "comment": ""
     },
     "Samedi": {
-      "swim": 0,
-      "bike": 150,
-      "run": 0,
+      "swimming": 0,
+      "cycling": 180,
+      "running": 0,
       "comment": ""
     },
     "Dimanche": {
-      "swim": 0,
-      "bike": 210,
-      "run": 0,
+      "swimming": 0,
+      "cycling": 0,
+      "running": 90,
       "comment": ""
     }
   },
   "activeSports": {
-    "swim": true,
-    "bike": true,
-    "run": true
+    "swimming": true,
+    "cycling": true,
+    "running": true
   },
   "goal": "Course sur route (Compétition)",
   "weaknesses": "",

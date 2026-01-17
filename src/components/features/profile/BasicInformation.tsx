@@ -33,7 +33,7 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({ formData, se
                         type="email" placeholder="Email"
                         value={formData.email}
                         onChange={e => setFormData({ ...formData, email: e.target.value })}
-                        className="input-triathlon"
+                        className="input-triathlon md:col-span-2"
                     />
                     <input
                         type="date"
@@ -52,6 +52,24 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({ formData, se
                     </div>
                 </div>
             </Card>
+
+            <style jsx global>{`
+        .input-triathlon {
+          width: 100%;
+          height: 44px;
+          background-color: #0f172a; /* slate-900 */
+          border: 1px solid #334155; /* slate-700 */
+          border-radius: 0.5rem;
+          padding: 0 1rem;
+          color: white;
+          outline: none;
+          transition: all 0.2s;
+        }
+        .input-triathlon:focus {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+      `}</style>
         </>
     );
 }
