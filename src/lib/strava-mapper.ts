@@ -154,7 +154,7 @@ export async function tagStravaActivity(
     const description = currentDescription || "";
 
     // 1. Éviter de taguer deux fois (boucle infinie)
-    if (description.includes("PulsePeak")) {
+    if (description.includes("⚡ PulsePeak") || description.includes("by PulsePeak")) {
         return;
     }
 

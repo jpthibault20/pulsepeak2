@@ -7,10 +7,10 @@
   "aiPersonality": "Analytique",
   "experience": "Avancé",
   "strava": {
-    "athleteId": 31596042,
-    "accessToken": "2afca86edf717723ba626b9fbba1da4a94938c14",
+    "accessToken": "258fd1a79508b4e295403d7792415890162cf53d",
     "refreshToken": "2e4173af55d98b2c4a3e407f998c96b3125c7e34",
-    "expiresAt": 1768724700
+    "expiresAt": 1768756143,
+    "athleteId": 31596042
   },
   "ftp": 245,
   "lthr": 170,

@@ -1594,7 +1594,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 62,
             "avgPowerWatts": 136.4,
             "normalizedPowerWatts": 185,
             "maxPowerWatts": 383,
@@ -1649,7 +1649,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 2,
             "avgPowerWatts": 109.4,
             "normalizedPowerWatts": 131,
             "maxPowerWatts": 445,
@@ -1704,7 +1704,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 2,
             "avgPowerWatts": 89.9,
             "normalizedPowerWatts": 116,
             "maxPowerWatts": 209,
@@ -1812,7 +1812,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 125,
             "avgPowerWatts": 149,
             "normalizedPowerWatts": 176,
             "maxPowerWatts": 754,
@@ -1850,7 +1850,7 @@
         "actualDurationMinutes": 194,
         "distanceKm": 85.55,
         "perceivedEffort": null,
-        "notes": "Test 5 min\nPremier en cuissard court de la saison 😀",
+        "notes": "Test 5 min\nPremier en cuissard court de la saison 😀\n\n──────────────\nTSS: 179 • ⚡ PulsePeak",
         "caloriesBurned": 1817,
         "source": {
           "type": "strava",
