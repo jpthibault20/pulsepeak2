@@ -32,6 +32,7 @@ interface ProfileFormProps {
 
 export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, onSuccess, onCancel, isSettings }) => {
     const [isChatOpen, setIsChatOpen] = useState(false);
+
     // État initial par défaut
     const defaultData: Profile = {
         firstName: 'etst', lastName: '', email: '', weight: 70, birthDate: '',
@@ -49,7 +50,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
         },
         ftp: 200, lthr: 170, vma: 15,
         powerTests: { p5min: 0, p8min: 0, p15min: 0, p20min: 0 },
-        recentRaceTime: { distance: '10km', time: '00:00:00' },
         goal: 'Terminer un Ironman 70.3',
         weaknesses: '',
         experience: 'Débutant',
@@ -57,51 +57,64 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
     };
 
     const initialFormData = useMemo<Profile>(() => {
-        // ✅ Si initialData est null, retourner defaultData directement
+        // ✅ 1. Sécurité de base
         if (!initialData) return defaultData;
 
         return {
-            // Champs string
+            // --- CHAMPS TEXTE & IDENTITÉ ---
             firstName: safeValue(initialData.firstName, defaultData.firstName),
             lastName: safeValue(initialData.lastName, defaultData.lastName),
             email: safeValue(initialData.email, defaultData.email),
             birthDate: safeValue(initialData.birthDate, defaultData.birthDate),
-            aiPersonality: safeValue(initialData.aiPersonality, defaultData.aiPersonality),
-
-            // Champs number
             weight: safeValue(initialData.weight, defaultData.weight),
+            
+            // --- CONFIGURATION & ENUMS ---
+            aiPersonality: safeValue(initialData.aiPersonality, defaultData.aiPersonality),
+            experience: safeValue(initialData.experience, defaultData.experience),
+            strava: initialData.strava || undefined, // Optionnel
+
+            // --- PHYSIOLOGIE (RACINE) ---
+            // Selon ton interface, ces valeurs restent à la racine
             ftp: safeValue(initialData.ftp, defaultData.ftp),
             lthr: safeValue(initialData.lthr, defaultData.lthr),
             vma: safeValue(initialData.vma, defaultData.vma),
-            recentRaceTime: {
-                distance: safeValue(initialData.recentRaceTime?.distance, defaultData.recentRaceTime.distance),
-                time: safeValue(initialData.recentRaceTime?.time, defaultData.recentRaceTime.time),
+
+            // --- SOUS-PROFILS (Données complexes & Zones) ---
+            // On récupère les objets entiers s'ils existent (pour garder les zones calculées)
+            heartRate: initialData.heartRate ? {
+                max: initialData.heartRate.max,
+                resting: initialData.heartRate.resting,
+                zones: initialData.heartRate.zones // IMPORTANT: garde les zones FC
+            } : undefined,
+
+            running: initialData.running ? {
+                vma: initialData.running.vma, // Peut être redondant avec root.vma mais permet de stocker l'objet
+                zones: initialData.running.zones // IMPORTANT: garde les zones Allure
+            } : undefined,
+
+            // --- SPORTS ACTIFS ---
+            activeSports: {
+                swimming: safeValue(initialData.activeSports?.swimming, defaultData.activeSports.swimming),
+                cycling: safeValue(initialData.activeSports?.cycling, defaultData.activeSports.cycling),
+                running: safeValue(initialData.activeSports?.running, defaultData.activeSports.running),
             },
 
-            // Enums
-            experience: safeValue(initialData.experience, defaultData.experience),
+            // --- OBJECTIFS ---
+            goal: safeValue(initialData.goal, defaultData.goal),
+            objectiveDate: safeValue(initialData.objectiveDate, defaultData.objectiveDate),
+            weaknesses: safeValue(initialData.weaknesses, defaultData.weaknesses),
 
-            // PowerTests avec gestion de null
+            // --- POWER DATA (Cyclisme) ---
+            zones: initialData.zones || undefined, // Zones de puissance
+            seasonData: initialData.seasonData || undefined,
             powerTests: {
-                p5min: safeValue(
-                    initialData.powerTests?.p5min,
-                    defaultData.powerTests!.p5min
-                ),
-                p8min: safeValue(
-                    initialData.powerTests?.p8min,
-                    defaultData.powerTests!.p8min
-                ),
-                p15min: safeValue(
-                    initialData.powerTests?.p15min,
-                    defaultData.powerTests!.p15min
-                ),
-                p20min: safeValue(
-                    initialData.powerTests?.p20min,
-                    defaultData.powerTests!.p20min
-                ),
+                p5min: safeValue(initialData.powerTests?.p5min, defaultData.powerTests!.p5min),
+                p8min: safeValue(initialData.powerTests?.p8min, defaultData.powerTests!.p8min),
+                p15min: safeValue(initialData.powerTests?.p15min, defaultData.powerTests!.p15min),
+                p20min: safeValue(initialData.powerTests?.p20min, defaultData.powerTests!.p20min),
             },
 
-            // WeeklyAvailability
+            // --- DISPONIBILITÉS (Fusion profonde) ---
             weeklyAvailability: (
                 Object.keys(defaultData.weeklyAvailability) as Array<keyof typeof defaultData.weeklyAvailability>
             ).reduce((acc, day) => ({
@@ -125,39 +138,12 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
                     ),
                 }
             }), {} as Profile['weeklyAvailability']),
-
-            // ActiveSports
-            activeSports: {
-                swimming: safeValue(
-                    initialData.activeSports?.swimming,
-                    defaultData.activeSports.swimming
-                ),
-                cycling: safeValue(
-                    initialData.activeSports?.cycling,
-                    defaultData.activeSports.cycling
-                ),
-                running: safeValue(
-                    initialData.activeSports?.running,
-                    defaultData.activeSports.running
-                ),
-            },
-
-
-
-            // Autres champs
-            goal: safeValue(initialData.goal, defaultData.goal),
-
-            weaknesses: safeValue(initialData.weaknesses, defaultData.weaknesses),
-
-            strava: safeValue(initialData.strava, defaultData.strava),
-
-            objectiveDate: safeValue(initialData.objectiveDate, defaultData.objectiveDate)
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialData]);
 
+
     const [formData, setFormData] = useState<Profile>(initialFormData);
-    console.log(initialData);
     
     const [isSaving, setIsSaving] = useState(false);
 

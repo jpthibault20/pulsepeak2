@@ -3,18 +3,118 @@
   "lastName": "Thibault",
   "email": "tjeanpierre757@gmail.com",
   "birthDate": "2000-03-20",
-  "aiPersonality": "Analytique",
   "weight": 58,
-  "ftp": 247,
+  "aiPersonality": "Analytique",
+  "experience": "Avancé",
+  "strava": {
+    "accessToken": "b8a3682e63ee7a9cf7ec2cf1bb647a0013fbaa25",
+    "refreshToken": "35180b31d539959a45bb305fff0171b412a106fc",
+    "expiresAt": 1768707550,
+    "athleteId": 31596042
+  },
+  "ftp": 244,
   "lthr": 170,
   "vma": 15,
-  "recentRaceTime": {
-    "distance": "10km",
-    "time": "00:00:00"
+  "heartRate": {
+    "max": 190,
+    "zones": {
+      "z1": {
+        "min": 0,
+        "max": 114
+      },
+      "z2": {
+        "min": 116,
+        "max": 143
+      },
+      "z3": {
+        "min": 144,
+        "max": 156
+      },
+      "z4": {
+        "min": 158,
+        "max": 169
+      },
+      "z5": {
+        "min": 171,
+        "max": 190
+      }
+    }
   },
-  "experience": "Avancé",
+  "running": {
+    "vma": 20,
+    "zones": {
+      "z1": {
+        "min": 300,
+        "max": 257
+      },
+      "z2": {
+        "min": 257,
+        "max": 240
+      },
+      "z3": {
+        "min": 240,
+        "max": 212
+      },
+      "z4": {
+        "min": 212,
+        "max": 189
+      },
+      "z5": {
+        "min": 189,
+        "max": 164
+      }
+    }
+  },
+  "activeSports": {
+    "swimming": true,
+    "cycling": true,
+    "running": true
+  },
+  "goal": "Course sur route (Compétition)",
+  "objectiveDate": "",
+  "weaknesses": "",
+  "zones": {
+    "z1": {
+      "min": 0,
+      "max": 134
+    },
+    "z2": {
+      "min": 137,
+      "max": 183
+    },
+    "z3": {
+      "min": 185,
+      "max": 220
+    },
+    "z4": {
+      "min": 222,
+      "max": 256
+    },
+    "z5": {
+      "min": 259,
+      "max": 293
+    },
+    "z6": {
+      "min": 295,
+      "max": 310
+    },
+    "z7": {
+      "min": 311,
+      "max": 2000
+    }
+  },
+  "seasonData": {
+    "calculatedAt": "2026-01-18T00:25:52.546Z",
+    "wPrime": 19800,
+    "criticalPower": 244,
+    "method": "Critical Power Regression",
+    "sourceTests": [
+      "5min",
+      "15min"
+    ]
+  },
   "powerTests": {
-    "p5min": 0,
+    "p5min": 310,
     "p8min": 0,
     "p15min": 266,
     "p20min": 0
@@ -63,18 +163,8 @@
       "comment": ""
     }
   },
-  "activeSports": {
-    "swimming": true,
-    "cycling": true,
-    "running": true
-  },
-  "goal": "Course sur route (Compétition)",
-  "weaknesses": "",
-  "strava": {
-    "accessToken": "b8a3682e63ee7a9cf7ec2cf1bb647a0013fbaa25",
-    "refreshToken": "35180b31d539959a45bb305fff0171b412a106fc",
-    "expiresAt": 1768707550,
-    "athleteId": 31596042
-  },
-  "objectiveDate": ""
+  "recentRaceTime": {
+    "distance": "10",
+    "time": "30"
+  }
 }
