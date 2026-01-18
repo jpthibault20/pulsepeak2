@@ -1882,6 +1882,61 @@
           "swimming": null
         }
       }
+    },
+    {
+      "id": "strava_17094379091",
+      "date": "2026-01-18",
+      "sportType": "cycling",
+      "title": "Zwift - The Muckle Yin in Scotland",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 67,
+        "distanceKm": 33.62,
+        "perceivedEffort": null,
+        "notes": "",
+        "caloriesBurned": 429,
+        "source": {
+          "type": "strava",
+          "stravaId": 17094379091
+        },
+        "map": {
+          "polyline": "spqrIrgz^rFTVnF_@v@kFPMpMwFfA_@tI\\|BrCtErC~IVvIm@bCyBIk@bEmCf@eA`Gv@tB`KdAr@`EJpKk@rByDJyBfBeAbC]vEaBhBwFBuAxAcByDgNeA{AxEqKlLmEjIsBZcDmHeAoAcF^yAy@iBiKwE_Lo@cGbA{It@eBpAL^xB}@nBmDuCiCxA_CuFoB`Ds@DmEiHe@kGg@}@eEq@iFfAaE_Bs@wB^qCxC{ClGmBTmCeAyDhAmCxAn@z@pFhB`EpI{IdCrCvCiAhBvBfJ_FpC`Gz@RtE{NlE}CpAoK~@_CfCi@bCpExAuEfCEv@pAJvFpAxG[vA_AIHkC|CaBlA|@VhBq@bBgDnCeCq@YfBh@vApAh@bDqE`AN[zCoFrDRzAtA{AfAb@f@xBs@`Aq@iBt@cCzCaAl@x@BpCyAXQ~BkA`CpCnCFvCsDbAjExFy@lGRhBrGdC~@~Au@|OyA|AyFqAiHNsA|E_KvKuFlJaCe@{DyIwF\\cBkBeAiIiEwJ}@yEnAeNx@_AdA`@VtB{@fBoDsCqCrAgBoFyCjDuAiASiBvBuGWyBf@wCy@iFt@kBEaBcBmDuD`CgBiE{@kFoAg@y@xAEtAdAzD]lBgAl@bvAgo@h@|@jLrBqHoBqBXgAhCLnGlApFU~AgXw@mDhCqC|KiAhAkEwGmI|EkBuB_DdAmCqCaI|IsB{D_AwF{As@cAxChAxC]hDiFlAcEfEMbChAlBfEnAvDgAzEt@x@bHvEhIt@IrB{CrBnFtCuAhDrCt@cBQ{AkAa@q@dAmAtMdA|E`E`JhAnI~AdBfGUpDtIpB`@tGmK`JsJ`BmFpN`AfBxDvAyArEFxBqB^}EbBcDfHuBNyIm@aHyJuA_AmA@gCz@mDvCu@ZoDxBFr@aDa@sIcCsHkDsG_@qJePaB{JiB{AuAcAxBkBdAiA`EoCoEgCp@{BjNaFjEeEdNgAMyCaGaJ~EwAuBcDlAgCuCgIzIuBaEaAyFsAi@cA`CdArD[`DuF`ByD`ELzDdEnBtFaA`El@n@hA^~FnEnHp@GxBcDtBtFpCyAjDrCn@cBSsAsBVsAnMbA~EdEnJjAtI~A|AxF[tDvIpBh@vGsKnJcKlAsErJ@bDlA`AdD`ByApEF~B{BXkExAyCvHeCJoJq@uGaKiA}@qBbAsGnCm@|@uEhBZj@gDi@kIcCuHeDeGImIv@iCvEUR}MpF_@V{Ew@w@gTKWgLj@qAdC@bAfApAcAtI@RoLaAmAoN?_@j@OtFkJz@Ej\\XtA`MgAh@`NjEn@r@aAHyLjEY"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 126.3,
+          "maxBPM": 155,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 26,
+            "avgPowerWatts": 111.4,
+            "normalizedPowerWatts": 119,
+            "maxPowerWatts": 270,
+            "intensityFactor": null,
+            "avgCadenceRPM": 79.1,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 338,
+            "avgSpeedKmH": 30.052800000000005,
+            "maxSpeedKmH": 59.616
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
     }
   ],
   "summary": "Semaine dédiée à l'évaluation physiologique suite à la phase de volume hivernale. Nous réalisons le Test FTP (Mardi) et une évaluation VO2max par intervalles courts/longs (Jeudi), suivis de journées de récupération obligatoires. Le week-end est consacré à la réintégration du volume en Zone 2 pour absorber la charge et préparer le prochain bloc. Respectez scrupuleusement les zones de puissance lors des tests pour garantir la validité des données.",

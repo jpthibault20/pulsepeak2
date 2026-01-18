@@ -2,41 +2,37 @@
 // ______________________________________________________
 // --- TYPES PRINCIPALES ---
 // ______________________________________________________
-
-// Définition de l'interface pour le profil athlète
 export interface Profile {
+  // Informations générales
   lastName: string;
   firstName: string;
   email: string;
   birthDate: string;
+  weight?: number;
+  lthr: number; // @TODO: PUL-7
+  experience: 'Débutant' | 'Intermédiaire' | 'Avancé' | string;
+
+  heartRate?: HeartRateProfile;
+
+// Cycling
   activeSports: {
     swimming: boolean;
     cycling: boolean;
     running: boolean;
   };
-  aiPersonality: aiPersonality;
-  strava?: StravaConfig; 
-  weight?: number;
-  experience: 'Débutant' | 'Intermédiaire' | 'Avancé' | string;
-  ftp: number;
-  lthr: number;
-  vma: number;
-  heartRate?: HeartRateProfile;
-  running?: RunningProfile;
-  recentRaceTime?: { distance?: string; time?: string };
-  goal: string;
-  objectiveDate: string;
-  weaknesses: string;
+
   weeklyAvailability: {
     [key: string]: {
       swimming: number;
       cycling: number;
       running: number;
       comment: string;
-
     };
   };
-  powerTests?: {
+
+  ftp: number;
+
+    powerTests?: {
     p5min: number;
     p8min: number;
     p15min: number;
@@ -50,6 +46,25 @@ export interface Profile {
     method: string;
     sourceTests: string[];
   };
+
+// Running
+vma: number;
+running?: RunningProfile;
+  recentRaceTime?: { distance?: string; time?: string };
+
+// Swimming
+
+// AI
+  aiPersonality: aiPersonality;
+
+
+  strava?: StravaConfig; 
+
+  goal: string;
+  objectiveDate: string;
+  weaknesses: string;
+
+
 }
 
 export interface RunningProfile {
