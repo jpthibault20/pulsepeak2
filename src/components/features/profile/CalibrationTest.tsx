@@ -3,9 +3,10 @@ import { SectionHeader } from "./SessionHeader";
 import { Activity, Calculator, Heart, Timer, TrendingUp, Wind, Zap } from "lucide-react";
 import { TabButton } from "./TabButton";
 import { Dispatch, SetStateAction, useState } from "react";
-import { PowerZones, Profile, RunningZones } from "@/lib/data/type";
+import { Profile, RunningZones } from "@/lib/data/type";
 import { Button } from "@/components/ui/Button";
 import { saveAthleteProfile } from "@/app/actions/schedule";
+import { calculateFtp, validatePowerTests } from "@/lib/ftp-calculator";
 
 interface CalibrationTestProps {
     formData: Profile;
@@ -13,8 +14,11 @@ interface CalibrationTestProps {
 }
 
 export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setFormData }) => {
+
     const [activeZoneTab, setActiveZoneTab] = useState<'power' | 'hr' | 'pace'>('power');
 
+
+    // FTP
     const handleTestChange = (key: 'p5min' | 'p8min' | 'p15min' | 'p20min', value: string) => {
         setFormData(prev => {
             const current = prev.powerTests ?? { p5min: 0, p8min: 0, p15min: 0, p20min: 0 };
@@ -23,69 +27,16 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
         });
     };
 
-    const calculateZones = () => {
-        const p5 = formData.powerTests?.p5min || 0;
-        const p8 = formData.powerTests?.p8min || 0;
-        const p15 = formData.powerTests?.p15min || 0;
-        const p20 = formData.powerTests?.p20min || 0;
-
-        let estimatedFtp = 0;
-        let wPrime = 0;
-        let sourceUsed = '';
-        let methodUsed = '';
-        const testsUsed: string[] = [];
-
-        const dataPoints: { t: number, w: number, p: number }[] = [];
-        if (p5 > 0) { dataPoints.push({ t: 5 * 60, w: p5 * 5 * 60, p: p5 }); testsUsed.push('5min'); }
-        if (p8 > 0) { dataPoints.push({ t: 8 * 60, w: p8 * 8 * 60, p: p8 }); testsUsed.push('8min'); }
-        if (p15 > 0) { dataPoints.push({ t: 15 * 60, w: p15 * 15 * 60, p: p15 }); testsUsed.push('15min'); }
-        if (p20 > 0) { dataPoints.push({ t: 20 * 60, w: p20 * 20 * 60, p: p20 }); testsUsed.push('20min'); }
-
-        if (dataPoints.length >= 2) {
-            let sumT = 0, sumW = 0, sumTW = 0, sumT2 = 0;
-            const n = dataPoints.length;
-            dataPoints.forEach(pt => {
-                sumT += pt.t;
-                sumW += pt.w;
-                sumTW += pt.t * pt.w;
-                sumT2 += pt.t * pt.t;
-            });
-            const slope = (n * sumTW - sumT * sumW) / (n * sumT2 - sumT * sumT);
-            const intercept = (sumW - slope * sumT) / n;
-            estimatedFtp = Math.round(slope);
-            wPrime = Math.round(intercept);
-            sourceUsed = `Modèle Puissance Critique (${testsUsed.join('+')})`;
-            methodUsed = 'Critical Power Regression';
-        } else {
-            if (p20 > 0) { estimatedFtp = Math.round(p20 * 0.95); sourceUsed = '95% du CP20'; }
-            else if (p15 > 0) { estimatedFtp = Math.round(p15 * 0.93); sourceUsed = '93% du CP15'; }
-            else if (p8 > 0) { estimatedFtp = Math.round(p8 * 0.90); sourceUsed = '90% du CP8'; }
-            else if (p5 > 0) { estimatedFtp = Math.round(p5 * 0.82); sourceUsed = '82% du CP5 (Estimatif)'; }
-            else { alert("Veuillez entrer au moins une valeur de test."); return; }
-            methodUsed = 'Single Test Estimation';
-        }
-
-        const newZones: PowerZones = {
-            z1: { min: 0, max: Math.round(estimatedFtp * 0.55) },
-            z2: { min: Math.round(estimatedFtp * 0.56), max: Math.round(estimatedFtp * 0.75) },
-            z3: { min: Math.round(estimatedFtp * 0.76), max: Math.round(estimatedFtp * 0.90) },
-            z4: { min: Math.round(estimatedFtp * 0.91), max: Math.round(estimatedFtp * 1.05) },
-            z5: { min: Math.round(estimatedFtp * 1.06), max: Math.round(estimatedFtp * 1.20) },
-            z6: { min: Math.round(estimatedFtp * 1.21), max: p5 > 0 ? p5 : Math.round(estimatedFtp * 1.50) },
-            z7: { min: (p5 > 0 ? p5 : Math.round(estimatedFtp * 1.50)) + 1, max: 2000 }
-        };
+    const handlecalculateFtp = () => {
+        if (!formData.powerTests) return;
+        if (!validatePowerTests(formData.powerTests)) return;
+        const { ftp, zones, seasonData } = calculateFtp(formData.powerTests);
 
         const updatedProfile: Profile = {
             ...formData,
-            ftp: estimatedFtp,
-            zones: newZones,
-            seasonData: {
-                calculatedAt: new Date().toISOString(),
-                wPrime: wPrime,
-                criticalPower: estimatedFtp,
-                method: methodUsed,
-                sourceTests: testsUsed
-            }
+            ftp: ftp,
+            zones: zones,
+            seasonData: seasonData
         };
 
         setFormData(updatedProfile);
@@ -93,53 +44,8 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
         saveAthleteProfile(updatedProfile);
     };
 
-    const calculateHrZones = () => {
-        // On récupère la FC Max saisie
-        const maxHr = formData.heartRate?.max || 0;
 
-        if (maxHr < 100) return; // Sécurité pour éviter les calculs sur des valeurs absurdes
-
-        // Modèle standard (Coggan modifié pour FC Max):
-        // Z1: < 60% (Récup active)
-        // Z2: 60-75% (Endurance)
-        // Z3: 75-82% (Tempo)
-        // Z4: 82-89% (Seuil Lactique)
-        // Z5: > 89% (VO2 Max)
-
-        const newHrZones = {
-            z1: { min: 0, max: Math.round(maxHr * 0.60) },
-            z2: { min: Math.round(maxHr * 0.61), max: Math.round(maxHr * 0.75) },
-            z3: { min: Math.round(maxHr * 0.76), max: Math.round(maxHr * 0.82) },
-            z4: { min: Math.round(maxHr * 0.83), max: Math.round(maxHr * 0.89) },
-            z5: { min: Math.round(maxHr * 0.90), max: maxHr },
-        };
-
-
-                const updatedProfile: Profile = {
-            ...formData,
-            heartRate: {
-                max: maxHr,
-                zones: newHrZones
-            }
-        };
-
-        setFormData(updatedProfile);
-
-        saveAthleteProfile(updatedProfile);
-    };
-
-    // Helper pour mettre à jour la FC Max
-    const handleFcMaxChange = (value: string) => {
-        const val = parseInt(value) || 0;
-        setFormData(prev => ({
-            ...prev,
-            heartRate: {
-                ...prev.heartRate,
-                max: val
-            }
-        }));
-    };
-
+    // VMA
     const handleVMAChange = (value: string) => {
         const val = parseInt(value) || 0;
         setFormData(prev => ({
@@ -172,7 +78,6 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
         }));
     };
 
-    // Convertit des secondes (ex: 330) en chaine "5:30"
     const formatPace = (seconds: number): string => {
         if (!seconds || !isFinite(seconds)) return "--:--";
         const mins = Math.floor(seconds / 60);
@@ -180,7 +85,7 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    const updateRunningZones = (vmaInput: number) => {
+    const calculateRunningZones = (vmaInput: number) => {
         if (!vmaInput || isNaN(vmaInput)) {
             // Si input vide, on garde la structure mais on vide la VMA pour éviter crash
             setFormData(prev => ({
@@ -216,7 +121,7 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
             z5: { min: getPace(percentages.z5[0]), max: getPace(percentages.z5[1]) },
         };
 
-                const updatedProfile: Profile = {
+        const updatedProfile: Profile = {
             ...formData,
             running: {
                 // On s'assure que running existe
@@ -237,6 +142,53 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
         z4: 'border-orange-500 text-orange-400',   // Orange
         z5: 'border-red-500 text-red-400',         // Rouge
     };
+
+
+    // HR
+    const handleFcMaxChange = (value: string) => {
+        const val = parseInt(value) || 0;
+        setFormData(prev => ({
+            ...prev,
+            heartRate: {
+                ...prev.heartRate,
+                max: val
+            }
+        }));
+    };
+
+    const CalculateHrZones = () => {
+        // On récupère la FC Max saisie
+        const maxHr = formData.heartRate?.max || 0;
+
+        if (maxHr < 100) return; // Sécurité pour éviter les calculs sur des valeurs absurdes
+
+        const newHrZones = {
+            z1: { min: 0, max: Math.round(maxHr * 0.60) },
+            z2: { min: Math.round(maxHr * 0.61), max: Math.round(maxHr * 0.75) },
+            z3: { min: Math.round(maxHr * 0.76), max: Math.round(maxHr * 0.82) },
+            z4: { min: Math.round(maxHr * 0.83), max: Math.round(maxHr * 0.89) },
+            z5: { min: Math.round(maxHr * 0.90), max: maxHr },
+        };
+
+
+        const updatedProfile: Profile = {
+            ...formData,
+            heartRate: {
+                max: maxHr,
+                zones: newHrZones
+            }
+        };
+
+        setFormData(updatedProfile);
+
+        saveAthleteProfile(updatedProfile);
+    };
+
+
+
+
+
+
 
     return (
         <>
@@ -302,7 +254,7 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
                                     ))}
                                 </div>
 
-                                <Button variant="secondary" onClick={calculateZones} className="w-full py-3 md:py-2 text-sm mb-4 h-auto" icon={Calculator}>
+                                <Button variant="secondary" onClick={handlecalculateFtp} className="w-full py-3 md:py-2 text-sm mb-4 h-auto" icon={Calculator}>
                                     Calculer FTP & Zones
                                 </Button>
 
@@ -314,12 +266,14 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
                                             <span className="text-sm text-slate-300">Ratio: <span className="font-bold text-emerald-400">{formData.weight ? (formData.ftp / formData.weight).toFixed(2) : '-'} W/kg</span></span>
                                         </div>
 
-                                        {formData.seasonData?.wPrime && formData.seasonData.wPrime > 0 && (
+                                        {/* On vérifie directement si c'est supérieur à 0, ce qui retourne true/false au lieu de 0 */}
+                                        {(formData.seasonData?.wPrime || 0) > 0 && (
                                             <div className="flex items-center gap-2 bg-slate-800/50 p-2 rounded mb-2 text-xs text-slate-400 border border-slate-600/30">
                                                 <TrendingUp size={12} className="text-orange-400" />
-                                                <span>W&apos; (Anaérobie): <span className="text-orange-300 font-mono">{formData.seasonData.wPrime} J</span></span>
+                                                <span>W&apos; (Anaérobie): <span className="text-orange-300 font-mono">{formData.seasonData!.wPrime} J</span></span>
                                             </div>
                                         )}
+
 
                                         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 text-center">
                                             {[
@@ -389,7 +343,7 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
 
                                 <Button
                                     variant="secondary"
-                                    onClick={calculateHrZones}
+                                    onClick={CalculateHrZones}
                                     className="w-full py-3 md:py-2 text-sm mb-4 h-auto hover:bg-red-500/20 hover:text-red-200 hover:border-red-500/50 transition-colors"
                                     icon={Calculator}
                                 >
@@ -506,14 +460,14 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
 
                                         // Logique de parsage rapide
                                         if (runTestVMA) {
-                                            updateRunningZones(Math.round(runTestVMA * 10) / 10);
+                                            calculateRunningZones(Math.round(runTestVMA * 10) / 10);
                                         }
                                         else if (dist && time) {
                                             const [m, s] = time.split(':').map(Number);
                                             const totalSec = (m * 60) + (s || 0);
                                             if (totalSec > 0) {
                                                 const vmaCalc = (parseFloat(dist) * 1000 / totalSec) * 3.6;
-                                                updateRunningZones(Math.round(vmaCalc * 10) / 10);
+                                                calculateRunningZones(Math.round(vmaCalc * 10) / 10);
                                             }
                                         }
 

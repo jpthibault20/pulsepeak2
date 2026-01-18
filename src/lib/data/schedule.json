@@ -1867,7 +1867,7 @@
         },
         "metrics": {
           "cycling": {
-            "tss": null,
+            "tss": 179,
             "avgPowerWatts": 155.5,
             "normalizedPowerWatts": 182,
             "maxPowerWatts": 761,

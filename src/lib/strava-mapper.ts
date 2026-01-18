@@ -57,73 +57,56 @@ function mapStravaSport(stravaType: string): SportType {
 // Transforme l'objet API Strava TYPÉ en notre objet CompletedData
 export async function mapStravaToCompletedData(activity: StravaActivityInput): Promise<CompletedData> {
   const sport = mapStravaSport(activity.type);
-  let calculatedTSS = null;
+  let calculatedTSS: number | null = null; // Typage explicite
 
   try {
     const profile = await getProfile();
-    if (profile) {
-      const np = activity.weighted_average_watts || activity.average_watts || 0;
-      const ftp = profile.ftp || 200; // Valeur par défaut si profil incomplet
-      let intensityFactor = 0;
+    // Optimisation : on vérifie profile?.ftp direct
+    const ftp = profile?.ftp || 200; 
+    
+    // Normalisation de la puissance (Weighted > Average > 0)
+    const np = activity.weighted_average_watts || activity.average_watts || 0;
 
-      if (np > 0 && ftp > 0) {
-        // 3. Calcul de l'Intensity Factor (IF) = NP / FTP
-        intensityFactor = np / ftp;
-
-        // 4. Calcul du TSS
-        // Formule : (Durée en heures) x (IF au carré) x 100
+    if (np > 0 && ftp > 0) {
+        // Calcul IF et TSS
+        const intensityFactor = np / ftp;
         const durationInHours = activity.moving_time / 3600;
-
         calculatedTSS = Math.round(durationInHours * (intensityFactor * intensityFactor) * 100);
-      }
     }
 
-
-
   } catch (error) {
-    console.error("Erreur lors de la récupération du profil:", error);
+    console.error("Erreur lors de la récupération du profil pour TSS:", error);
   }
 
-  // 1. Structure de base
+  // --- STRUCTURE DE BASE ---
   const completed: CompletedData = {
     actualDurationMinutes: Math.floor(activity.moving_time / 60),
     distanceKm: parseFloat((activity.distance / 1000).toFixed(2)),
     perceivedEffort: null,
     notes: activity.description || "",
     caloriesBurned: activity.calories ?? null,
-
-    // INFO SOURCE IMPORTANTE
     source: {
       type: 'strava',
       stravaId: activity.id,
     },
-
-    // CARTE
-    map: {
-      polyline: activity.map?.summary_polyline || null
-    },
-
-    // TOURS (Tyage strict ici aussi)
+    map: { polyline: activity.map?.summary_polyline || null },
     laps: [],
-
-    // Freq Cardiaque globale
     heartRate: {
       avgBPM: activity.average_heartrate || null,
       maxBPM: activity.max_heartrate || null,
       zoneDistribution: [],
     },
-
     metrics: { cycling: null, running: null, swimming: null }
   };
 
-  // 2. Metrics Spécifiques
+  // --- METRICS PAR SPORT ---
   if (sport === 'cycling') {
     completed.metrics.cycling = {
-      tss: calculatedTSS,
+      tss: calculatedTSS, // On utilise la variable calculée plus haut
       avgPowerWatts: activity.average_watts || null,
       normalizedPowerWatts: activity.weighted_average_watts || null,
       maxPowerWatts: activity.max_watts || null,
-      intensityFactor: null,
+      intensityFactor: null, // Tu pourrais aussi stocker l'IF calculé haut dessus ici
       avgCadenceRPM: activity.average_cadence || null,
       maxCadenceRPM: null,
       elevationGainMeters: activity.total_elevation_gain,
@@ -135,7 +118,6 @@ export async function mapStravaToCompletedData(activity: StravaActivityInput): P
       avgPaceMinPerKm: null,
       bestPaceMinPerKm: null,
       elevationGainMeters: activity.total_elevation_gain,
-      // Strava donne souvent en RPM (1 jambe), on multiplie par 2 pour SPM si présent
       avgCadenceSPM: activity.average_cadence ? activity.average_cadence * 2 : null,
       maxCadenceSPM: null,
       avgSpeedKmH: activity.average_speed * 3.6,
@@ -143,7 +125,68 @@ export async function mapStravaToCompletedData(activity: StravaActivityInput): P
       strideLength: null
     };
   }
-  // TODO: Ajouter map pour Swimming si nécessaire
+
+  // --- INTEGRATION PULSEPEAK AUTOMATIQUE ---
+  // Note: Cette partie doit idéalement être faite dans le contrôleur qui possède l'AccessToken Strava.
+  // Mais si tu as accès à l'accessToken ici (via un contexte ou paramètre), tu peux décommenter :
+  
+
+
 
   return completed;
+}
+
+
+
+// Define le style de la signature
+const BRANDING_SUFFIX = "\n\n──────────────\n⚡ Powered by PulsePeak";
+
+/**
+ * Met à jour la description sur Strava via leur API
+ * À appeler juste après la synchronisation de l'activité
+ */
+export async function tagStravaActivity(
+    accessToken: string, // Le token de l'utilisateur
+    activityId: number | string,
+    currentDescription: string | null,
+    stats?: { tss?: number | null }
+) {
+    const description = currentDescription || "";
+
+    // 1. Éviter de taguer deux fois (boucle infinie)
+    if (description.includes("PulsePeak")) {
+        return;
+    }
+
+    // 2. Construction du footer minimaliste
+    let footer = BRANDING_SUFFIX;
+    
+    // Bonus : Si on a calculé un TSS, on l'affiche joliment avant le branding
+    if (stats?.tss && stats.tss > 0) {
+        // On remplace le footer standard par une version avec stats
+        // Rendu: "TSS: 120 • ⚡ Powered by PulsePeak"
+        footer = `\n\n──────────────\nTSS: ${stats.tss} • ⚡ PulsePeak`;
+    }
+
+    const newDescription = description + footer;
+
+    // 3. Appel API Strava (PUT)
+    try {
+        const response = await fetch(`https://www.strava.com/api/v3/activities/${activityId}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                description: newDescription
+            })
+        });
+
+        if (!response.ok) {
+            console.warn("Impossible de mettre à jour la description Strava", await response.text());
+        }
+    } catch (error) {
+        console.error("Erreur réseau update Strava:", error);
+    }
 }

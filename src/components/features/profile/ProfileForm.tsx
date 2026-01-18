@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -25,12 +24,10 @@ function safeValue<T>(value: T | null | undefined, fallback: T): T {
 interface ProfileFormProps {
     initialData: Partial<Profile>;
     onSave: (data: Profile) => Promise<void>;
-    onSuccess?: () => void;
     onCancel: () => void;
-    isSettings?: boolean;
 }
 
-export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, onSuccess, onCancel, isSettings }) => {
+export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave,  onCancel }) => {
     const [isChatOpen, setIsChatOpen] = useState(false);
 
     // État initial par défaut

@@ -14,10 +14,6 @@ export const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 };
 
-/**
- * Convertit les données saisies manuellement (Feedback) en objet CompletedData structuré.
- * Initialise les champs complexes (laps, source, map) avec des valeurs par défaut pour le mode manuel.
- */
 export function createCompletedData(feedback: CompletedDataFeedback): CompletedData {
   // 1. Base commune à tous les sports
   const baseData = {

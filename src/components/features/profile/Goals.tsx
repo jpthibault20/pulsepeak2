@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui";
 import { aiPersonality, Profile } from "@/lib/data/type";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Lock } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
 import { SectionHeader } from "./SessionHeader";
 
@@ -13,7 +13,16 @@ export const Goals: React.FC<GoalsProps> = ({ formData, setFormData }) => {
 
     return (
         <>
+            {/* --- SURCOUCHE "À VENIR" --- */}
             <Card className="p-6 bg-slate-900/50 border-slate-800 border-t-4 border-t-purple-500">
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950/70 backdrop-blur-[2px]">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 border border-purple-500/50 rounded-full shadow-lg shadow-purple-900/20">
+                        <Lock size={14} className="text-purple-300" />
+                        <span className="text-sm font-semibold text-purple-200 uppercase tracking-wide">
+                            Prochainement disponible
+                        </span>
+                    </div>
+                </div>
                 <SectionHeader icon={MessageSquare} title="Configuration du Coach IA" color="text-purple-400" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">

@@ -13,7 +13,7 @@ export async function GET() {
     const redirectUri = `${baseUrl}/api/strava/callback`;
 
     // On demande la permission de LIRE les activités (activity:read_all)
-    const scope = 'activity:read_all';
+    const scope = "read,activity:read_all,activity:write"; 
 
     const params = new URLSearchParams({
         client_id: clientId,

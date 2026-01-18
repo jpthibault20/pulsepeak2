@@ -97,7 +97,7 @@ export async function generatePlanFromAI(
             const availability = profile.weeklyAvailability[dayName] || 0;
             const dateStr = d.toISOString().split('T')[0];
 
-            if (availability === 0) {
+            if (availability.cycling === 0 && availability.running === 0 && availability.swimming === 0) {
                 dateConstraints += `- ${dateStr} (${dayName}): REPOS OBLIGATOIRE (0 min dispo).\n`;
             } else {
                 dateConstraints += `- ${dateStr} (${dayName}): Max ${availability} min dispo.\n`;
@@ -154,7 +154,7 @@ FORMAT DE RÉPONSE :
 
     const userPrompt = `
     PROFIL ATHLÈTE:
-    - Sport pratiqué: ${profile.sports.join(', ')}
+    - Sport pratiqué: ${profile.activeSports.cycling ? 'Cyclisme' : ''}${profile.activeSports.running ? 'Course à pied' : ''}${profile.activeSports.swimming ? 'Natation' : ''}
     - Niveau: ${profile.experience}
     - FTP (Vélo): ${profile.ftp}W
     - Poids: ${profile.weight || '?'}kg
