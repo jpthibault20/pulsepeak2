@@ -1984,8 +1984,328 @@
           "swimming": null
         }
       }
+    },
+    {
+      "id": "cycling_20260120_wzctx",
+      "date": "2026-01-20",
+      "sportType": "cycling",
+      "title": "Seuil Spécifique Long (Z4)",
+      "workoutType": "Threshold",
+      "mode": "Indoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 85,
+        "plannedTSS": 90,
+        "distanceKm": null,
+        "targetPowerWatts": 240,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "descriptionOutdoor": "Concentration maximale requise pour maintenir la puissance cible. Préparez-vous mentalement à l'effort soutenu, même si la séance est à l'intérieur.",
+        "descriptionIndoor": "Échauffement: 15 min progressif Z1-Z2. Corps de séance: 2x10 min @ 235-245W (Z4), récupération 10 min Z1/Z2 entre les efforts. Fin de séance: 40 min Z2 (140-160W) en mode 'doux' pour la récupération et l'accumulation de volume."
+      },
+      "completedData": null
+    },
+    {
+      "id": "running_20260122_vo0i2",
+      "date": "2026-01-22",
+      "sportType": "running",
+      "title": "Footing Récupération Active",
+      "workoutType": "Recovery",
+      "mode": "Outdoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 45,
+        "plannedTSS": 30,
+        "distanceKm": null,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": "6:00/km+",
+        "targetHeartRateBPM": null,
+        "descriptionOutdoor": "Course très facile, concentrez-vous sur la légèreté de la foulée et une cadence élevée (>170 ppm). Terrain plat si possible pour éviter la contrainte musculaire.",
+        "descriptionIndoor": "N/A. Programme basé sur la sensation et la récupération. Si sur tapis: 45 min Z1/Z2 très facile (rythme conversationnel)."
+      },
+      "completedData": null
+    },
+    {
+      "id": "cycling_20260124_thjc1",
+      "date": "2026-01-24",
+      "sportType": "cycling",
+      "title": "Tempo Structuré avec Blocs Z4",
+      "workoutType": "Tempo/Threshold",
+      "mode": "Outdoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 140,
+        "plannedTSS": 130,
+        "distanceKm": null,
+        "targetPowerWatts": 195,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "descriptionOutdoor": "Roulez sur un parcours légèrement vallonné. Intégrez les 2 efforts de Z4 dans des montées simulées ou face au vent. L'objectif principal est de travailler la puissance moyenne sur Z3/Z2.",
+        "descriptionIndoor": "Échauffement: 20 min Z1/Z2. Blocs de travail: 3x(30 min Z3 (186-210W) + 5 min Z4 (225-245W)), récupération 5 min Z2 entre les blocs de 35 min. Retour au calme: 15 min Z1."
+      },
+      "completedData": null
+    },
+    {
+      "id": "cycling_20260125_yaqks",
+      "date": "2026-01-25",
+      "sportType": "cycling",
+      "title": "Longue Sortie Endurance Fondamentale",
+      "workoutType": "Endurance",
+      "mode": "Outdoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 200,
+        "plannedTSS": 180,
+        "distanceKm": null,
+        "targetPowerWatts": 160,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "descriptionOutdoor": "Sortie longue et stable. Maintenez une intensité constante en Z2 (137-184W). Hydratation et nutrition sont clés aujourd'hui. Évitez les accélérations brusques.",
+        "descriptionIndoor": "200 min continues Z2 (150-175W). Cadence libre mais régulière (85-95 RPM). Pas d'intervalles structurés, travail sur la capacité aérobie de base."
+      },
+      "completedData": null
+    },
+    {
+      "id": "cycling_20260127_n6dq5",
+      "date": "2026-01-27",
+      "sportType": "cycling",
+      "title": "Volume Seuil Soutenu (Progressif)",
+      "workoutType": "Threshold",
+      "mode": "Indoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 85,
+        "plannedTSS": 95,
+        "distanceKm": null,
+        "targetPowerWatts": 240,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "descriptionOutdoor": "L'effort sera soutenu, simulant la gestion d'un long col à puissance critique. Concentrez-vous sur l'économie du pédalage.",
+        "descriptionIndoor": "Échauffement: 20 min Z1-Z2. Corps de séance: 3x10 min @ 235-245W (Z4). Récupération 8 min Z1/Z2 entre les efforts. Retour au calme: 19 min Z1. Total temps en Z4: 30 minutes."
+      },
+      "completedData": null
+    },
+    {
+      "id": "cycling_20260129_6snxw",
+      "date": "2026-01-29",
+      "sportType": "cycling",
+      "title": "VO2 Max 5 minutes (Spécifique Col)",
+      "workoutType": "VO2 Max",
+      "mode": "Indoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 60,
+        "plannedTSS": 70,
+        "distanceKm": null,
+        "targetPowerWatts": 270,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "descriptionOutdoor": "Séance courte mais très intense. Chaque intervalle simule un passage à haute intensité sur une courte montée exigeante.",
+        "descriptionIndoor": "Échauffement: 15 min Z1-Z2 incluant 3x30s Z6. Corps de séance: 4x5 min @ 265-280W (Z5), récupération 5 min Z1/Z2 entre les efforts. Retour au calme: 5 min Z1. Total temps en Z5: 20 minutes."
+      },
+      "completedData": null
+    },
+    {
+      "id": "cycling_20260131_50f6v",
+      "date": "2026-01-31",
+      "sportType": "cycling",
+      "title": "Tempo de Croisière et Résistance",
+      "workoutType": "Tempo",
+      "mode": "Outdoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 145,
+        "plannedTSS": 135,
+        "distanceKm": null,
+        "targetPowerWatts": 210,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "descriptionOutdoor": "Trouvez un parcours avec des sections où vous pouvez maintenir la puissance ciblée sans interruption. Travaillez la résistance musculaire en Z3, idéalement sur des faux-plats montants.",
+        "descriptionIndoor": "Échauffement: 25 min Z1/Z2. Blocs de travail: 2x20 min @ 200-220W (Z3/début Z4), récupération 10 min Z2. Maintenez ensuite 70 min en Z2 (160-180W). Retour au calme: 10 min Z1."
+      },
+      "completedData": null
+    },
+    {
+      "id": "cycling_20260201_6zp5j",
+      "date": "2026-02-01",
+      "sportType": "cycling",
+      "title": "Endurance Longue (Haute Cadence)",
+      "workoutType": "Endurance",
+      "mode": "Outdoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 205,
+        "plannedTSS": 190,
+        "distanceKm": null,
+        "targetPowerWatts": 165,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "descriptionOutdoor": "Continuez à développer votre capacité aérobie de base. Maintenez une cadence élevée et confortable (90-95 RPM) pour réduire la contrainte musculaire.",
+        "descriptionIndoor": "205 min continues Z2 (160-180W). Ne dépassez pas Z3. Concentrez-vous sur l'efficacité du coup de pédale."
+      },
+      "completedData": null
+    },
+    {
+      "id": "cycling_20260203_wotq7",
+      "date": "2026-02-03",
+      "sportType": "cycling",
+      "title": "Over/Under (Simulation Fin de Col)",
+      "workoutType": "Intervals",
+      "mode": "Indoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 80,
+        "plannedTSS": 90,
+        "distanceKm": null,
+        "targetPowerWatts": 245,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "descriptionOutdoor": "Séance spécifique pour habituer votre corps aux changements de rythme typiques d'une montée difficile. L'Over (Z5) est la relance, l'Under (Z4) est la tenue de rythme.",
+        "descriptionIndoor": "Échauffement: 20 min Z1-Z2. Corps de séance: 3x10 min Over/Under. Chaque 10 min = 2x(1 min @ 260-270W (Z5) / 4 min @ 230-240W (Z4)). Récupération 8 min Z1/Z2 entre les 10 min. Retour au calme: 16 min Z1."
+      },
+      "completedData": null
+    },
+    {
+      "id": "running_20260205_d8jla",
+      "date": "2026-02-05",
+      "sportType": "running",
+      "title": "Course à Pied Seuil (4x5min)",
+      "workoutType": "Threshold",
+      "mode": "Outdoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 50,
+        "plannedTSS": 50,
+        "distanceKm": null,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": "4:30/km",
+        "targetHeartRateBPM": null,
+        "descriptionOutdoor": "Trouvez un circuit plat. L'effort doit être soutenu, difficulté RPE 7-8/10. Concentrez-vous sur la respiration et le maintien de l'allure ciblée.",
+        "descriptionIndoor": "N/A. Échauffement: 15 min facile. Corps de séance: 4x5 min Allure Seuil (difficile mais tenable), récupération 3 min marche/jog Z1. Retour au calme: 8 min facile."
+      },
+      "completedData": null
+    },
+    {
+      "id": "cycling_20260207_641dr",
+      "date": "2026-02-07",
+      "sportType": "cycling",
+      "title": "Spécificité Col (Z4/Z5 intégré)",
+      "workoutType": "Threshold/VO2 Max",
+      "mode": "Outdoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 145,
+        "plannedTSS": 145,
+        "distanceKm": null,
+        "targetPowerWatts": 250,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "descriptionOutdoor": "C'est votre journée pour performer! Cherchez deux longues montées (15 minutes). Tentez de maintenir une puissance entre 245W et 260W sur ces segments, gérant l'effort comme en course.",
+        "descriptionIndoor": "Échauffement: 30 min Z1/Z2. Blocs principaux: 2x15 min @ 245-260W (Z4/Low Z5), récupération 15 min Z2. Maintenez le reste du temps en Z2/Z3 léger. Retour au calme: 10 min Z1."
+      },
+      "completedData": null
+    },
+    {
+      "id": "cycling_20260208_zdawq",
+      "date": "2026-02-08",
+      "sportType": "cycling",
+      "title": "Maintenance Aérobie Post-Charge",
+      "workoutType": "Endurance",
+      "mode": "Outdoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 200,
+        "plannedTSS": 175,
+        "distanceKm": null,
+        "targetPowerWatts": 160,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "descriptionOutdoor": "Grand volume à basse intensité après la séance intense d'hier. Récupérez activement tout en capitalisant sur le temps de selle. Restez strictement en Z2.",
+        "descriptionIndoor": "200 min Z2 (150-170W). Cadence libre et souple. Focus sur la nutrition et l'hydratation."
+      },
+      "completedData": null
+    },
+    {
+      "id": "cycling_20260210_eidub",
+      "date": "2026-02-10",
+      "sportType": "cycling",
+      "title": "Récupération Active",
+      "workoutType": "Recovery",
+      "mode": "Indoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 60,
+        "plannedTSS": 30,
+        "distanceKm": null,
+        "targetPowerWatts": 130,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "descriptionOutdoor": "Relâchement total. Utiliser des braquets légers pour faire tourner les jambes.",
+        "descriptionIndoor": "60 min continues Z1 (<135W). Cadence 95+ RPM. Séance uniquement pour favoriser le drainage musculaire et la récupération."
+      },
+      "completedData": null
+    },
+    {
+      "id": "cycling_20260212_71iwi",
+      "date": "2026-02-12",
+      "sportType": "cycling",
+      "title": "Activation Neuromusculaire",
+      "workoutType": "Neuromuscular",
+      "mode": "Indoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 60,
+        "plannedTSS": 55,
+        "distanceKm": null,
+        "targetPowerWatts": 315,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "descriptionOutdoor": "Des efforts très courts et très rapides pour maintenir la vivacité musculaire avant le week-end.",
+        "descriptionIndoor": "Échauffement: 20 min Z1/Z2 progressif. Corps de séance: 6x(15s Z7 (>311W) / 45s Z1 de récupération), puis 10 min Z2. Répétez ce bloc de 6 sprints. Retour au calme: 14 min Z1."
+      },
+      "completedData": null
+    },
+    {
+      "id": "cycling_20260214_xsde4",
+      "date": "2026-02-14",
+      "sportType": "cycling",
+      "title": "Maintien et Ouverture (Z4)",
+      "workoutType": "Endurance/Threshold",
+      "mode": "Outdoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 120,
+        "plannedTSS": 95,
+        "distanceKm": null,
+        "targetPowerWatts": 245,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "descriptionOutdoor": "Sortie d'entretien avec une seule sollicitation Seuil (Z4) à mi-parcours pour 'ouvrir' les jambes. Roulez le reste en Z2 sans forcer.",
+        "descriptionIndoor": "Échauffement: 20 min Z2. Bloc central: 1x10 min @ 235-245W (Z4). Le reste: 90 min Z2 (160-180W)."
+      },
+      "completedData": null
+    },
+    {
+      "id": "cycling_20260215_g9ylg",
+      "date": "2026-02-15",
+      "sportType": "cycling",
+      "title": "Sortie Longue de Maintenance",
+      "workoutType": "Endurance",
+      "mode": "Outdoor",
+      "status": "pending",
+      "plannedData": {
+        "durationMinutes": 180,
+        "plannedTSS": 155,
+        "distanceKm": null,
+        "targetPowerWatts": 170,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "descriptionOutdoor": "Volume de transition pour clôturer ce bloc intense. Concentrez-vous sur le plaisir de rouler et le maintien d'une puissance stable en Z2. Aucune accélération brutale.",
+        "descriptionIndoor": "180 min Z2 (165-180W) continu. C'est une journée de récupération active longue distance."
+      },
+      "completedData": null
     }
   ],
-  "summary": "Semaine dédiée à l'évaluation physiologique suite à la phase de volume hivernale. Nous réalisons le Test FTP (Mardi) et une évaluation VO2max par intervalles courts/longs (Jeudi), suivis de journées de récupération obligatoires. Le week-end est consacré à la réintégration du volume en Zone 2 pour absorber la charge et préparer le prochain bloc. Respectez scrupuleusement les zones de puissance lors des tests pour garantir la validité des données.",
-  "lastGenerated": "2026-01-02"
+  "summary": "Ce bloc de 4 semaines est structuré pour développer votre capacité à maintenir des efforts intenses de durée moyenne (5 à 10 minutes), simulant des petits cols. La progression est axée sur l'augmentation du temps passé au Seuil (Z4) et l'introduction d'efforts en transition Seuil/VO2 Max (Z5). Les jours de semaine sont dédiés à la qualité et aux intervalles structurés Indoor, maximisant l'efficacité en peu de temps. Les week-ends sont utilisés pour le volume d'Endurance Outdoor avec intégration de blocs spécifiques sur le terrain.",
+  "lastGenerated": "2026-01-19"
 }
