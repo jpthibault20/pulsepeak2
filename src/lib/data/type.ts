@@ -1,100 +1,3 @@
-
-// ______________________________________________________
-// --- TYPES PRINCIPALES ---
-// ______________________________________________________
-export interface Profile {
-  // Informations générales
-  lastName: string;
-  firstName: string;
-  email: string;
-  birthDate: string;
-  weight?: number;
-  lthr: number; // @TODO: PUL-7
-  experience: 'Débutant' | 'Intermédiaire' | 'Avancé' | string;
-
-  heartRate?: HeartRateProfile;
-
-// Cycling
-  activeSports: {
-    swimming: boolean;
-    cycling: boolean;
-    running: boolean;
-  };
-
-  weeklyAvailability: {
-    [key: string]: {
-      swimming: number;
-      cycling: number;
-      running: number;
-      comment: string;
-    };
-  };
-
-  ftp: number;
-
-    powerTests?: {
-    p5min: number;
-    p8min: number;
-    p15min: number;
-    p20min: number;
-  };
-  zones?: PowerZones;
-  seasonData?: {
-    calculatedAt: string;
-    wPrime: number;
-    criticalPower: number;
-    method: string;
-    sourceTests: string[];
-  };
-
-// Running
-vma: number;
-running?: RunningProfile;
-  recentRaceTime?: { distance?: string; time?: string };
-
-// Swimming
-
-// AI
-  aiPersonality: aiPersonality;
-
-
-  strava?: StravaConfig; 
-
-  goal: string;
-  objectiveDate: string;
-  weaknesses: string;
-
-
-}
-
-export interface RunningProfile {
-    vma: number | null; // Vitesse Maximale Aérobie en km/h (ex: 16.5)
-    zones?: RunningZones;
-}
-
-export interface RunningZones {
-    z1: Zone; // Endurance Fondamentale / Échauffement (< 70% VMA)
-    z2: Zone; // Endurance Active (70-75% VMA)
-    z3: Zone; // Tempo / Marathon (75-85% VMA)
-    z4: Zone; // Seuil (85-92% VMA)
-    z5: Zone; // VMA Courte / Piste (95-105% VMA)
-}
-
-export interface HeartRateProfile {
-    max: number | null;       // FC Maximum (obligatoire pour le calcul simple)
-    resting?: number | null;  // FC au Repos (optionnel, utile pour formule de Karvonen)
-    lthr?: number | null;     // Seuil Lactique (optionnel, pour utilisateurs avancés)
-    zones?: HeartRateZones;   // Les zones calculées (peut être undefined si pas encore calculé)
-}
-
-export interface HeartRateZones {
-    z1: Zone; // Récupération / Endurance fondamentale basse (<60% FCMax)
-    z2: Zone; // Endurance fondamentale (60-75% FCMax)
-    z3: Zone; // Tempo / Endurance active (75-82% FCMax)
-    z4: Zone; // Seuil Lactique / SV2 (82-89% FCMax)
-    z5: Zone; // VO2 Max / Anaérobie (>89% FCMax)
-}
-
 export type aiPersonality = 'Strict' | 'Encourageant' | 'Analytique';
 
 export interface AvailabilitySlot {
@@ -105,12 +8,7 @@ export interface AvailabilitySlot {
 }
 
 // Definition de l'interface pour le calendrier (Tableau de Workout)
-export interface Schedule {
-  dbVersion: string;
-  workouts: Workout[];
-  summary: string | null;
-  lastGenerated: string | null;
-}
+
 
 // Définition de l'interface pour les données d'une séance
 export interface Workout {
@@ -257,7 +155,7 @@ export interface SwimmingMetrics {
 // ______________________________________________________
 
 // Définition complète des 7 zones de Coggan
-export interface PowerZones {
+export interface Zones {
   z1: Zone; // Récupération active
   z2: Zone; // Endurance
   z3: Zone; // Tempo
@@ -310,8 +208,8 @@ export interface CompletedDataFeedback {
   avgPace?: number;
   avgCadence?: number;
   maxCadence?: number;
-  avgSpeed?: number; // ✅ AJOUTÉ
-  maxSpeed?: number; // ✅ AJOUTÉ
+  avgSpeed?: number; 
+  maxSpeed?: number; 
 
   // Swimming
   strokeType?: string;
@@ -320,26 +218,6 @@ export interface CompletedDataFeedback {
   poolLengthMeters?: number;
   totalStrokes?: number;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /**
  * Tests de puissance disponibles (durées en minutes)
@@ -352,16 +230,6 @@ export interface PowerTests {
 }
 
 export type TestName = '5min' | '8min' | '15min' | '20min';
-
-/**
- * Zone de puissance (min/max en watts)
- */
-
-
-/**
- * Zones d'entraînement (Z1-Z7)
- */
-
 
 /**
  * Données de saison (résultat du calcul)
@@ -379,7 +247,7 @@ export interface SeasonData {
  */
 export interface FtpCalculationResult {
   ftp: number;
-  zones: PowerZones;
+  zones: Zones;
   seasonData: SeasonData;
 }
 
@@ -391,22 +259,3 @@ export interface DataPoint {
   w: number;  // Travail total (watts × secondes)
   p: number;  // Puissance moyenne (watts)
 }
-
-
-
-
-// Cela crée automatiquement le type : 'swim' | 'bike' | 'run'
-
-
-
-
-
-
-
-
-
-
-
-
-
-
