@@ -1542,7 +1542,7 @@
       "title": "Endurance Moyenne Récupération (W4)",
       "workoutType": "Endurance",
       "mode": "Outdoor",
-      "status": "pending",
+      "status": "missed",
       "plannedData": {
         "durationMinutes": 210,
         "targetPowerWatts": null,
