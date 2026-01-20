@@ -14,7 +14,7 @@ export interface Profile {
     email: string;
     birthDate: string;
     weight?: number;
-    lthr: number; //Taille // @TODO: PUL-7
+    height?: number; 
     experience: 'Débutant' | 'Intermédiaire' | 'Avancé' | string;
     activeSports: {
         swimming: boolean;

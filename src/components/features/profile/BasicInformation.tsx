@@ -21,40 +21,57 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({ formData, se
                         placeholder="Prénom"
                         value={formData.firstName}
                         onChange={e => setFormData({ ...formData, firstName: e.target.value })}
-                        className="input-triathlon"
+                        className="input-perso"
                     />
                     <input
                         placeholder="Nom"
                         value={formData.lastName}
                         onChange={e => setFormData({ ...formData, lastName: e.target.value })}
-                        className="input-triathlon"
+                        className="input-perso"
                     />
                     <input
                         type="email" placeholder="Email"
                         value={formData.email}
                         onChange={e => setFormData({ ...formData, email: e.target.value })}
-                        className="input-triathlon md:col-span-2"
+                        className="input-perso md:col-span-2"
                     />
+                    <div className="flex-1 relative">
+                        <input
+                            type="number"
+                            placeholder="taille"
+                            value={formData.height ?? ''}
+                            onChange={e => {
+                                const value = e.target.value === '' ? undefined : parseInt(e.target.value) || 0;
+                                setFormData(prev => ({ ...prev, height: value }));
+                            }}
+                            className="input-perso"
+                        />
+                        <span className="absolute right-3 top-2.5 text-slate-500 text-sm">cm</span>
+                    </div>
+                    <div className="flex-1 relative">
+                        <input
+                            type="number"
+                            placeholder="poids"
+                            value={formData.weight ?? ''}
+                            onChange={e => {
+                                const value = e.target.value === '' ? undefined : parseInt(e.target.value) || 0;
+                                setFormData(prev => ({ ...prev, weight: value }));
+                            }}
+                            className="input-perso"
+                        />
+                        <span className="absolute right-3 top-2.5 text-slate-500 text-sm">kg</span>
+                    </div>
                     <input
                         type="date"
                         value={formData.birthDate}
                         onChange={e => setFormData({ ...formData, birthDate: e.target.value })}
-                        className="input-triathlon flex-1"
+                        className="input-perso flex-1"
                     />
-                    <div className="flex-1 relative">
-                        <input
-                            type="number" placeholder="Poids"
-                            value={formData.weight}
-                            onChange={e => setFormData({ ...formData, weight: parseInt(e.target.value) })}
-                            className="input-triathlon"
-                        />
-                        <span className="absolute right-3 top-2.5 text-slate-500 text-sm">kg</span>
-                    </div>
                 </div>
             </Card>
 
             <style jsx global>{`
-        .input-triathlon {
+        .input-perso {
           width: 100%;
           height: 44px;
           background-color: #0f172a; /* slate-900 */

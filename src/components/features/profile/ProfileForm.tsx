@@ -35,9 +35,8 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave,  
     // État initial par défaut
     const defaultData: Profile = {
         id: '', createdAt: '', updatedAt: '', lastLoginAt: null,
-        firstName: 'etst', lastName: '', email: '', weight: 70, birthDate: '',
+        firstName: 'etst', lastName: '', email: '', weight: undefined, height: undefined, birthDate: '',
         activeSports: { swimming: true, cycling: true, running: true },
-        lthr: 180,
         aiPersonality: 'Analytique',
         strava: { accessToken: '', refreshToken: '', expiresAt: 0, athleteId: 0 },
         weeklyAvailability: {
@@ -76,10 +75,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave,  
             aiPersonality: safeValue(initialData.aiPersonality, defaultData.aiPersonality),
             experience: safeValue(initialData.experience, defaultData.experience),
             strava: initialData.strava || undefined, // Optionnel
-
-            // --- PHYSIOLOGIE (RACINE) ---
-            // Selon ton interface, ces valeurs restent à la racine
-            lthr: safeValue(initialData.lthr, defaultData.lthr),
 
             // --- SPORTS ACTIFS ---
             activeSports: {
