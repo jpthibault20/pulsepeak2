@@ -9,12 +9,13 @@ import {
     Bike, FootprintsIcon as Running, Waves, Heart,
     Timer // Ajout pour la durée
 } from 'lucide-react';
-import type { Profile, Workout, SportType, CompletedDataFeedback } from '@/lib/data/type';
+import type { Workout, SportType, CompletedDataFeedback } from '@/lib/data/type';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { formatDate } from '@/lib/utils';
 import { FeedbackForm } from './FeedbackForm';
+import { Profile } from '@/lib/data/DatabaseTypes';
 
 // --- Types ---
 interface WorkoutDetailViewProps {
@@ -56,12 +57,6 @@ const SPORT_CONFIG: Record<SportType, {
         color: 'text-cyan-400',
         label: 'Natation',
         unit: 'min/100m'
-    },
-    other: {
-        icon: Activity,
-        color: 'text-purple-400',
-        label: 'Activité',
-        unit: ''
     }
 };
 

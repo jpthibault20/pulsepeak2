@@ -3,10 +3,11 @@ import { SectionHeader } from "./SessionHeader";
 import { Activity, Calculator, Heart, Timer, TrendingUp, Wind, Zap } from "lucide-react";
 import { TabButton } from "./TabButton";
 import { Dispatch, SetStateAction, useState } from "react";
-import { Profile, RunningZones } from "@/lib/data/type";
+import { CyclingTest, Zones } from "@/lib/data/type";
 import { Button } from "@/components/ui/Button";
 import { saveAthleteProfile } from "@/app/actions/schedule";
 import { calculateFtp, validatePowerTests } from "@/lib/ftp-calculator";
+import { Profile } from "@/lib/data/DatabaseTypes";
 
 interface CalibrationTestProps {
     formData: Profile;
@@ -19,24 +20,76 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
 
 
     // FTP
-    const handleTestChange = (key: 'p5min' | 'p8min' | 'p15min' | 'p20min', value: string) => {
-        setFormData(prev => {
-            const current = prev.powerTests ?? { p5min: 0, p8min: 0, p15min: 0, p20min: 0 };
-            const updated = { ...current, [key]: parseInt(value) || 0 };
-            return { ...prev, powerTests: updated };
-        });
+const handleTestChange = (
+  key: keyof Pick<CyclingTest, 'ftp' | 'p5min' | 'p8min' | 'p15min' | 'p20min'>,
+  value: string
+) => {
+  setFormData(prev => {
+    // 1. Crée une copie profonde des données cyclistes actuelles
+    const currentCycling = { ...prev.cycling };
+
+    // 2. Initialise Test avec des valeurs par défaut si undefined
+    const currentTest = currentCycling.Test ?? {
+      seasonData: {
+        calculatedAt: new Date().toISOString(),
+        wPrime: 0,
+        criticalPower: 0,
+        method: 'Single Test Estimation',
+        sourceTests: []
+      }
     };
 
+    // 3. Met à jour la valeur spécifique
+    const numericValue = value === '' ? undefined : parseInt(value) || 0;
+    const updatedTest = {
+      ...currentTest,
+      [key]: numericValue
+    };
+
+    // 4. Si on modifie ftp ou p20min, on met à jour seasonData.criticalPower
+    if (key === 'ftp') {
+      updatedTest.seasonData = {
+        ...updatedTest.seasonData,
+        criticalPower: numericValue || 0
+      };
+    } else if (key === 'p20min' && numericValue) {
+      // Estimation FTP = 95% de p20min
+      updatedTest.seasonData = {
+        ...updatedTest.seasonData,
+        criticalPower: Math.round(numericValue * 0.95),
+        method: 'Single Test Estimation',
+        sourceTests: [...new Set([...(updatedTest?.seasonData?.sourceTests || []), '20min'])]
+      };
+    }
+
+    return {
+      ...prev,
+      cycling: {
+        ...currentCycling,
+        Test: updatedTest
+      }
+    };
+  });
+};
+
+
+
     const handlecalculateFtp = () => {
-        if (!formData.powerTests) return;
-        if (!validatePowerTests(formData.powerTests)) return;
-        const { ftp, zones, seasonData } = calculateFtp(formData.powerTests);
+        if (!formData.cycling?.Test) return;
+        if (!validatePowerTests(formData.cycling?.Test)) return;
+        const { ftp, zones, seasonData } = calculateFtp(formData.cycling.Test);
 
         const updatedProfile: Profile = {
             ...formData,
-            ftp: ftp,
-            zones: zones,
-            seasonData: seasonData
+            cycling: {
+                ...formData.cycling,
+                Test: {
+                    ...formData.cycling.Test,
+                    ftp: ftp,
+                    zones: zones,
+                    seasonData: seasonData
+                }
+            }
         };
 
         setFormData(updatedProfile);
@@ -52,7 +105,10 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
             ...prev,
             running: {
                 ...prev.running,
-                vma: val
+                Test: {
+                    ...prev?.running?.Test,
+                    vma: val
+                }
             }
         }));
     };
@@ -61,9 +117,12 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
         if (!value) return;
         setFormData(prev => ({
             ...prev,
-            recentRaceTime: {
-                ...prev.recentRaceTime,
-                distance: value
+            running: {
+                ...prev.running,
+                Test: {
+                    ...prev?.running?.Test,
+                    recentRaceDistanceMeters: value
+                }
             }
         }));
     };
@@ -71,9 +130,12 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
     const handleTpsChange = (value: string) => {
         setFormData(prev => ({
             ...prev,
-            recentRaceTime: {
-                ...prev.recentRaceTime,
-                time: value
+            running: {
+                ...prev.running,
+                Test: {
+                    ...prev?.running?.Test,
+                    recentRaceTimeSec: value
+                }
             }
         }));
     };
@@ -113,7 +175,7 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
         };
 
         // 3. Construction des zones
-        const newZones: RunningZones = {
+        const newZones: Zones = {
             z1: { min: getPace(percentages.z1[0]), max: getPace(percentages.z1[1]) },
             z2: { min: getPace(percentages.z2[0]), max: getPace(percentages.z2[1]) },
             z3: { min: getPace(percentages.z3[0]), max: getPace(percentages.z3[1]) },
@@ -124,9 +186,12 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
         const updatedProfile: Profile = {
             ...formData,
             running: {
-                // On s'assure que running existe
-                vma: vmaInput,
-                zones: newZones
+                ...formData.running,
+                Test: {
+                    ...formData?.running?.Test,
+                    vma: vmaInput,
+                    zones: newZones
+                }
             }
         };
 
@@ -228,7 +293,8 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
                                     <h4 className="text-sm font-bold text-white flex items-center gap-2">
                                         <Zap size={16} className="text-yellow-500" /> Tests de Puissance (Watts Moyens)
                                     </h4>
-                                    {formData.ftp > 0 && <span className="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded-full">FTP: {formData.ftp}W</span>}
+                                    {formData.cycling?.Test?.ftp != null && formData.cycling?.Test?.ftp > 0 &&
+                                        <span className="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded-full">FTP: {formData.cycling.Test.ftp}W</span>}
                                 </div>
 
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4">
@@ -242,7 +308,7 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
                                             <label className="block text-xs text-slate-400 mb-1 text-center">{test.label}</label>
                                             <input
                                                 type="number"
-                                                value={formData.powerTests?.[test.key] || ''}
+                                                value={formData.cycling?.Test?.[test.key] || ''}
                                                 onChange={e => handleTestChange(test.key, e.target.value)}
                                                 className={`
                             w-full h-10 md:h-9 bg-slate-800 border border-slate-600 rounded p-2 text-white text-center focus:border-blue-500 outline-none
@@ -259,31 +325,36 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
                                 </Button>
 
                                 {/* Affichage des zones calculées */}
-                                {formData.zones && (
+                                {formData.cycling?.Test?.ftp && (
                                     <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 pt-4 border-t border-slate-700">
                                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                                            <span className="text-sm text-slate-300">Nouvelle FTP: <span className="font-bold text-white text-lg">{formData.ftp} W</span></span>
-                                            <span className="text-sm text-slate-300">Ratio: <span className="font-bold text-emerald-400">{formData.weight ? (formData.ftp / formData.weight).toFixed(2) : '-'} W/kg</span></span>
+                                            <span className="text-sm text-slate-300">Nouvelle FTP: <span className="font-bold text-white text-lg">{formData.cycling.Test.ftp} W</span></span>
+                                            <span className="text-sm text-slate-300">Ratio: <span className="font-bold text-emerald-400">{formData.weight && formData.cycling?.Test?.ftp
+                                                ? (formData.cycling.Test.ftp / formData.weight).toFixed(2)
+                                                : '-'}
+                                                W/kg
+                                            </span>
+                                            </span>
                                         </div>
 
                                         {/* On vérifie directement si c'est supérieur à 0, ce qui retourne true/false au lieu de 0 */}
-                                        {(formData.seasonData?.wPrime || 0) > 0 && (
+                                        {(formData.cycling?.Test?.seasonData?.wPrime || 0) > 0 && (
                                             <div className="flex items-center gap-2 bg-slate-800/50 p-2 rounded mb-2 text-xs text-slate-400 border border-slate-600/30">
                                                 <TrendingUp size={12} className="text-orange-400" />
-                                                <span>W&apos; (Anaérobie): <span className="text-orange-300 font-mono">{formData.seasonData!.wPrime} J</span></span>
+                                                <span>W&apos; (Anaérobie): <span className="text-orange-300 font-mono">{formData.cycling.Test.seasonData!.wPrime} J</span></span>
                                             </div>
                                         )}
 
 
                                         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 text-center">
                                             {[
-                                                { label: 'Z1', name: 'Récup', val: formData.zones.z1, color: 'border-gray-400 text-gray-300' },
-                                                { label: 'Z2', name: 'Endur.', val: formData.zones.z2, color: 'border-green-500 text-green-400' },
-                                                { label: 'Z3', name: 'Tempo', val: formData.zones.z3, color: 'border-blue-500 text-blue-400' },
-                                                { label: 'Z4', name: 'Seuil', val: formData.zones.z4, color: 'border-yellow-500 text-yellow-400' },
-                                                { label: 'Z5', name: 'PMA', val: formData.zones.z5, color: 'border-orange-500 text-orange-400' },
-                                                { label: 'Z6', name: 'Anaé.', val: formData.zones.z6, color: 'border-red-500 text-red-400' },
-                                                { label: 'Z7', name: 'Neuro', val: formData.zones.z7, color: 'border-purple-500 text-purple-400' },
+                                                { label: 'Z1', name: 'Récup', val: formData.cycling?.Test?.zones?.z1 || { min: 0, max: 0 }, color: 'border-gray-400 text-gray-300' },
+                                                { label: 'Z2', name: 'Endur.', val: formData.cycling?.Test?.zones?.z2 || { min: 0, max: 0 }, color: 'border-green-500 text-green-400' },
+                                                { label: 'Z3', name: 'Tempo', val: formData.cycling?.Test?.zones?.z3 || { min: 0, max: 0 }, color: 'border-blue-500 text-blue-400' },
+                                                { label: 'Z4', name: 'Seuil', val: formData.cycling?.Test?.zones?.z4 || { min: 0, max: 0 }, color: 'border-yellow-500 text-yellow-400' },
+                                                { label: 'Z5', name: 'PMA', val: formData.cycling?.Test?.zones?.z5 || { min: 0, max: 0 }, color: 'border-orange-500 text-orange-400' },
+                                                { label: 'Z6', name: 'Anaé.', val: formData.cycling?.Test?.zones?.z6 || { min: 0, max: 0 }, color: 'border-red-500 text-red-400' },
+                                                { label: 'Z7', name: 'Neuro', val: formData.cycling?.Test?.zones?.z7 || { min: 0, max: 0 }, color: 'border-purple-500 text-purple-400' },
                                             ].map((zone, idx) => (
                                                 <div key={zone.label} className={`
                     bg-slate-800/40 p-2 rounded border-t-2 flex flex-col justify-center min-h-[60px]
@@ -401,9 +472,9 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
                                         <Wind size={16} className="text-cyan-400" /> {/* Icône Vent/Vitesse */}
                                         Profil Allure (VMA)
                                     </h4>
-                                    {formData.running?.vma && (
+                                    {formData.running?.Test?.vma && (
                                         <span className="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded-full border border-slate-700">
-                                            VMA: <span className="text-white font-bold">{formData.running.vma} km/h</span>
+                                            VMA: <span className="text-white font-bold">{formData?.running?.Test?.vma} km/h</span>
                                         </span>
                                     )}
                                 </div>
@@ -418,7 +489,7 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
                                             type="number"
                                             step="0.1"
                                             placeholder="Ex: 16.5"
-                                            value={formData.running?.vma || ''}
+                                            value={formData.running?.Test?.vma || ''}
                                             onChange={e => handleVMAChange(e.target.value)}
                                             // onChange={(e) => updateRunningZones(parseFloat(e.target.value))}
                                             className="w-full h-10 md:h-9 bg-slate-800 border border-slate-600 rounded p-2 text-white text-center focus:border-cyan-500 outline-none "
@@ -431,7 +502,7 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
                                             <label className="block text-[10px] text-slate-400 mb-1 text-center">Test Distance (km)</label>
                                             <input
                                                 type="text"
-                                                value={formData.recentRaceTime?.distance || ''}
+                                                value={formData.running?.Test?.recentRaceDistanceMeters || ''}
                                                 onChange={e => handleDistChange(e.target.value)}
                                                 placeholder="10"
                                                 className="w-full h-8 bg-slate-900 border border-slate-700 rounded px-2 text-white text-xs text-center focus:border-cyan-500 outline-none"
@@ -441,7 +512,7 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
                                             <label className="block text-[10px] text-slate-400 mb-1 text-center">Temps (mm:ss)</label>
                                             <input
                                                 type="text"
-                                                value={formData.recentRaceTime?.time || ''}
+                                                value={formData.running?.Test?.recentRaceTimeSec || ''}
                                                 onChange={e => handleTpsChange(e.target.value)}
                                                 placeholder="06:00"
                                                 className="w-full h-8 bg-slate-900 border border-slate-700 rounded px-2 text-white text-xs text-center focus:border-cyan-500 outline-none"
@@ -454,9 +525,9 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
                                 <Button
                                     variant="secondary"
                                     onClick={() => {
-                                        const dist = formData.recentRaceTime?.distance;
-                                        const time = formData.recentRaceTime?.time;
-                                        const runTestVMA = formData.running?.vma;
+                                        const dist = formData.running?.Test?.recentRaceDistanceMeters;
+                                        const time = formData.running?.Test?.recentRaceTimeSec;
+                                        const runTestVMA = formData.running?.Test?.vma;
 
                                         // Logique de parsage rapide
                                         if (runTestVMA) {
@@ -479,17 +550,17 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
                                 </Button>
 
                                 {/* --- ZONES RESULTS --- */}
-                                {formData.running?.zones && (
+                                {formData.running?.Test?.zones && (
                                     <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 pt-4 border-t border-slate-700">
 
                                         {/* Metrics Summary Row */}
                                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 px-1">
                                             <span className="text-sm text-slate-300">
-                                                VMA: <span className="font-bold text-white text-lg">{formData.running.vma} km/h</span>
+                                                VMA: <span className="font-bold text-white text-lg">{formData.running.Test.vma} km/h</span>
                                             </span>
                                             <span className="text-sm text-slate-300">
                                                 Allure VMA: <span className="font-bold text-cyan-400 font-mono">
-                                                    {formatPace(3600 / (formData.running.vma || 1))}/km
+                                                    {formatPace(3600 / (formData.running.Test.vma || 1))}/km
                                                 </span>
                                             </span>
                                         </div>
@@ -497,11 +568,11 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
                                         {/* ZONES GRID : Copie conforme du style Power */}
                                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 text-center">
                                             {[
-                                                { label: 'Z1', name: 'Endu. Fond.', val: formData.running.zones.z1, style: RUNNING_COLORS.z1 },
-                                                { label: 'Z2', name: 'Endu. Act.', val: formData.running.zones.z2, style: RUNNING_COLORS.z2 },
-                                                { label: 'Z3', name: 'Tempo', val: formData.running.zones.z3, style: RUNNING_COLORS.z3 },
-                                                { label: 'Z4', name: 'Seuil', val: formData.running.zones.z4, style: RUNNING_COLORS.z4 },
-                                                { label: 'Z5', name: 'VMA', val: formData.running.zones.z5, style: RUNNING_COLORS.z5 },
+                                                { label: 'Z1', name: 'Endu. Fond.', val: formData.running.Test.zones.z1, style: RUNNING_COLORS.z1 },
+                                                { label: 'Z2', name: 'Endu. Act.', val: formData.running.Test.zones.z2, style: RUNNING_COLORS.z2 },
+                                                { label: 'Z3', name: 'Tempo', val: formData.running.Test.zones.z3, style: RUNNING_COLORS.z3 },
+                                                { label: 'Z4', name: 'Seuil', val: formData.running.Test.zones.z4, style: RUNNING_COLORS.z4 },
+                                                { label: 'Z5', name: 'VMA', val: formData.running.Test.zones.z5, style: RUNNING_COLORS.z5 },
                                             ].map((zone, idx) => (
                                                 <div key={zone.label} className={`
                                 bg-slate-800/40 p-2 rounded border-t-2 flex flex-col justify-center min-h-[60px]

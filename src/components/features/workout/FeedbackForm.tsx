@@ -8,12 +8,12 @@ import {
 } from 'lucide-react';
 import type {
     Workout,
-    Profile,
     CompletedData,
     CompletedDataFeedback,
     SportType,
 } from '@/lib/data/type';
 import { Button } from '@/components/ui/Button';
+import { Profile } from '@/lib/data/DatabaseTypes';
 
 // --- Types Props ---
 interface FeedbackFormProps {
@@ -32,7 +32,6 @@ const SPORT_CONFIG: Record<SportType, {
     cycling: { icon: Bike, label: 'Vélo', color: 'text-blue-400' },
     running: { icon: Running, label: 'Course', color: 'text-orange-400' },
     swimming: { icon: Waves, label: 'Natation', color: 'text-cyan-400' },
-    other: { icon: Activity, label: 'Activité', color: 'text-purple-400' }
 };
 
 // --- Helper Type-Safe ---
@@ -120,7 +119,7 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
     // --- États Cyclisme ---
     const [avgPower, setAvgPower] = useState<number | undefined>(
         getCompletedValue(workout.completedData, 'avgPower',
-            profile.ftp ? Math.round(profile.ftp * 0.7) : undefined
+            profile.cycling?.Test?.ftp ? Math.round(profile.cycling.Test.ftp * 0.7) : undefined
         )
     );
 
@@ -160,12 +159,11 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
 
     // --- Calcul Intensité ---
     const intensity = useMemo(() => {
-        if (workout.sportType === 'cycling' && profile.ftp && avgPower) {
-            return Math.round((avgPower / profile.ftp) * 100);
+        if (workout.sportType === 'cycling' && profile.cycling?.Test?.ftp && avgPower) {
+            return Math.round((avgPower / profile.cycling.Test.ftp) * 100);
         }
         return null;
-    }, [workout.sportType, profile.ftp, avgPower]);
-
+    }, [workout.sportType, profile.cycling?.Test?.ftp, avgPower]);
     // --- Soumission ---
     const handleSave = async () => {
         setIsSaving(true);

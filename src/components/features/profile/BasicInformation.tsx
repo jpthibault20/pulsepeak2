@@ -1,8 +1,8 @@
 import { Card } from "@/components/ui/Card";
 import { SectionHeader } from "./SessionHeader";
 import { User } from "lucide-react";
-import { Profile } from "@/lib/data/type";
 import { Dispatch, SetStateAction } from "react";
+import { Profile } from "@/lib/data/DatabaseTypes";
 
 interface BasicInformationProps {
     formData: Profile;

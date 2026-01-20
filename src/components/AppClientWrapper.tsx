@@ -17,7 +17,7 @@ import {
 } from '@/app/actions/schedule';
 
 // Import des types
-import type { Profile, Schedule, Workout, CompletedDataFeedback } from '@/lib/data/type';
+import type { Workout, CompletedDataFeedback } from '@/lib/data/type';
 
 // Import des composants
 import { CalendarView } from '@/components/features/calendar/CalendarView';
@@ -27,6 +27,7 @@ import { WorkoutDetailView } from '@/components/features/workout/WorkoutDetailVi
 import { Nav, View } from '@/components/layout/nav';
 import { Card } from '@/components/ui';
 import { createCompletedData } from '@/lib/utils';
+import { Profile, Schedule } from '@/lib/data/DatabaseTypes';
 
 // Definition des Props reçues du Server Component
 interface AppClientWrapperProps {

@@ -1,10 +1,11 @@
 import type {
   PowerTests,
-  PowerZones,
+  Zones,
   SeasonData,
   FtpCalculationResult,
   DataPoint,
-  TestName, // ✅ Import du nouveau type
+  TestName,
+  CyclingTest, // ✅ Import du nouveau type
 } from '@/lib/data/type';
 
 const TEST_CONFIG: Record<TestName, { duration: number; key: keyof PowerTests }> = {
@@ -41,24 +42,29 @@ const ZONE_COEFFICIENTS = {
 /**
  * Convertit les tests en points de données pour la régression
  */
-function buildDataPoints(tests: PowerTests): { points: DataPoint[]; names: TestName[] } {
+function buildDataPoints(tests: CyclingTest): { points: DataPoint[]; names: TestName[] } {
   const points: DataPoint[] = [];
   const names: TestName[] = [];
 
   (Object.entries(TEST_CONFIG) as [TestName, typeof TEST_CONFIG[TestName]][])
     .forEach(([name, config]) => {
-      const power = tests[config.key];
-      if (power > 0) {
+      // Vérification plus robuste du type et de la valeur
+      const testValue = tests[config.key];
+      if (typeof testValue === 'number' && testValue > 0) {
         points.push({
           t: config.duration,
-          w: power * config.duration,
-          p: power,
+          w: testValue * config.duration,
+          p: testValue,
         });
         names.push(name);
       }
     });
 
-  return { points, names };
+  // Tri des points par durée (du plus court au plus long)
+  const resultPoints = [...points].sort((a, b) => a.t - b.t);
+  const resultNames = names.sort((a, b) => TEST_CONFIG[a].duration - TEST_CONFIG[b].duration);
+
+  return { points: resultPoints, names: resultNames };
 }
 
 /**
@@ -95,33 +101,33 @@ function calculateCriticalPower(points: DataPoint[]): {
 /**
  * Calcule la FTP depuis un seul test (fallback)
  */
-function calculateSingleTestFtp(tests: PowerTests): {
+function calculateSingleTestFtp(tests: CyclingTest): {
   ftp: number;
   source: string;
   testUsed: TestName; // ✅ Type strict
 } {
-  if (tests.p20min > 0) {
+  if (tests.p20min != null && tests.p20min > 0) {
     return { 
       ftp: Math.round(tests.p20min * 0.95), 
       source: '95% du CP20',
       testUsed: '20min',
     };
   }
-  if (tests.p15min > 0) {
+  if (tests.p15min != null && tests.p15min > 0) {
     return { 
       ftp: Math.round(tests.p15min * 0.93), 
       source: '93% du CP15',
       testUsed: '15min',
     };
   }
-  if (tests.p8min > 0) {
+  if (tests.p8min != null && tests.p8min > 0) {
     return { 
       ftp: Math.round(tests.p8min * 0.90), 
       source: '90% du CP8',
       testUsed: '8min',
     };
   }
-  if (tests.p5min > 0) {
+  if (tests.p5min != null && tests.p5min > 0) {
     return { 
       ftp: Math.round(tests.p5min * 0.82), 
       source: '82% du CP5 (Estimatif)',
@@ -135,7 +141,7 @@ function calculateSingleTestFtp(tests: PowerTests): {
 /**
  * Génère les zones d'entraînement à partir de la FTP
  */
-function generatePowerZones(ftp: number, maxP5?: number): PowerZones {
+function generatePowerZones(ftp: number, maxP5?: number): Zones {
   const z6Max = maxP5 && maxP5 > 0 ? maxP5 : Math.round(ftp * ZONE_COEFFICIENTS.z6[1]);
   
   return {
@@ -181,7 +187,7 @@ function generatePowerZones(ftp: number, maxP5?: number): PowerZones {
  * const result = calculateFtp({ p5min: 350, p20min: 280 });
  * console.log(result.ftp); // 266 (si régression)
  */
-export function calculateFtp(tests: PowerTests): FtpCalculationResult {
+export function calculateFtp(tests: CyclingTest): FtpCalculationResult {
   const { points: dataPoints, names: testsUsed } = buildDataPoints(tests);
 
   if (dataPoints.length === 0) {
@@ -210,7 +216,7 @@ export function calculateFtp(tests: PowerTests): FtpCalculationResult {
     testsUsed[0] = testUsed; // ✅ Déjà typé TestName
   }
 
-  const zones = generatePowerZones(ftp, tests.p5min > 0 ? tests.p5min : undefined);
+  const zones = generatePowerZones(ftp, tests.p5min != null ? tests.p5min : undefined);
 
   const seasonData: SeasonData = {
     calculatedAt: new Date().toISOString(),
@@ -228,6 +234,6 @@ export function calculateFtp(tests: PowerTests): FtpCalculationResult {
 /**
  * Valide les données de tests (utilitaire)
  */
-export function validatePowerTests(tests: PowerTests): boolean {
+export function validatePowerTests(tests: CyclingTest): boolean {
   return Object.values(tests).some(val => val > 0);
 }

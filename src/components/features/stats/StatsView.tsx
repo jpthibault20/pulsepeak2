@@ -6,8 +6,9 @@ import {
     BarChart2, CalendarDays, Target,
     TrendingUp, MapPin, Filter
 } from 'lucide-react';
-import type { Schedule, Workout, Profile } from '@/lib/data/type';
+import type { Workout } from '@/lib/data/type';
 import { Card } from '@/components/ui/Card';
+import { Profile, Schedule } from '@/lib/data/DatabaseTypes';
 
 interface StatsViewProps {
     scheduleData: Schedule;
@@ -113,7 +114,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
                 totalActualDistance += actualDist;
                 totalActualTSS += actualTssVal;
 
-                totalRPE += w.completedData.perceivedEffort;
+                totalRPE += w.completedData.perceivedEffort || 0;
                 rpeCount++;
 
                 if (actualTssVal > 0) dailyLoads.push(actualTssVal);
