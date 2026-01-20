@@ -1992,7 +1992,7 @@
       "title": "Seuil Spécifique Long (Z4)",
       "workoutType": "Threshold",
       "mode": "Indoor",
-      "status": "pending",
+      "status": "completed",
       "plannedData": {
         "durationMinutes": 85,
         "plannedTSS": 90,
@@ -2003,7 +2003,42 @@
         "descriptionOutdoor": "Concentration maximale requise pour maintenir la puissance cible. Préparez-vous mentalement à l'effort soutenu, même si la séance est à l'intérieur.",
         "descriptionIndoor": "Échauffement: 15 min progressif Z1-Z2. Corps de séance: 2x10 min @ 235-245W (Z4), récupération 10 min Z1/Z2 entre les efforts. Fin de séance: 40 min Z2 (140-160W) en mode 'doux' pour la récupération et l'accumulation de volume."
       },
-      "completedData": null
+      "completedData": {
+        "actualDurationMinutes": 91,
+        "distanceKm": 50.66,
+        "perceivedEffort": null,
+        "notes": "",
+        "caloriesBurned": 850,
+        "source": {
+          "type": "strava",
+          "stravaId": 17118334264
+        },
+        "map": {
+          "polyline": "pss`Ayies^VxD~BxCyChEEvDvIbEhFc@pBqFaAmGdD}CP{Bc@wFsC}DlA}DsAgD`FqBx@uBhDk@f@{AeB{AsGc@AsCrBSuDmAzDFzBrC~@_ArAfAdJmBpFhAuBqERkAnGz@|AiAO}A{Hm@qOfDmBgBjAmDiFsDiBp@yDgC{FfHaLqCqJaImEy@mEyGEiCfAwA_@w@aFc@{GjEgB]@qCqAsB~@oMsHyFsG\\gF`Dd@dNrE~Cq@nEvB`H_@pBzD~SKvIxCrJpEm@|IzSdGjCbDGfE~GbGeDtE\\h@pE`CnCwCjEQhDxIvEvFo@jB{EaAoGnDgEKcHeDsFlAiDiAmExEyAh@iBvDu@h@mA}AeByGg@GoCvBWuDmAxETtAdCfDBtImBpFnAaB_HtGz@zAcAUmBeIa@kObDcBkBrA}CsF}DaBr@eEkCuFhHoKiC{EaCgCqDiFgAqE}GA{Cb@aCoEi@qHpE{AWCqCsAwB~@qMmHuFiGVsF|CZzMtEfDm@tEvBhH_@jBzD`TKtIvCrJnEo@|IzSnGlC~CG~DxGpFwCbFJr@zE`ChCWfB}BhBSdDxIzErFg@pBmFaAmGlD{DS}HyCuEjAwDoA{DhGqE~E}By@}AcIy@?mCvBQyCO[_AdELjBlC|@}@tA`AfJiBjFjAkBoENoAnGz@~AeAOaBgIk@kObDgBeBnAeDuF_EsAx@eEkCcGhHkLyCiIkHcFcAoEaHAuCbAmAg@y@iEc@uHtEyA[?qCsAsB~@yMgHmFcHTgFbDb@tMtE~Cm@|EvBbH_@pBzDdTIxIvCjJdEy@|IxShGtC~DFtDpGnF_D|ELr@xE~BhCQdB_ChBWdDdIrEbGUvBuF{@yGfDqDKeHcDqFjAeDiAmElGmEtEsB_AeB_Iy@HoCnBQsDkAnEPlBjC|@aAtAbAvIiBhFnAuA_HrGv@|AkAS}AmIi@sNhDwBeBhAsDuFyDsAx@eEkCuFhH{KoCeJuHaFgAoE{GAmCdAkAa@}@eEi@sHpEiB]?oCoAuBdAcMqH_GaHZgFdDd@lMvElDm@rErB~G]pBzD~SEhJnCzIlEm@`JzSxGtCvCG~DtGpG_DpE\\h@|EzB`CYjBsBnA]rDjIxE`G]pBgFy@eHfDsDQwH}CwEjAuDkA}DnGsEtEyBw@}A}Hs@IkCvBa@qDgAhELrBlC|@_AvAbA|ImBlFnAcBwGvGr@xAiA_@uBwHSyNhDyBqBtA{C_GeEsAx@uEiCiFfHiNuDmGiGcFaA_E{F[kDhAeBg@s@oEc@}GhEgBOCsCsAsB~@{MgI{FwF`@_GbEl@tLxEhDo@lEvAzKv@vA"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 154.7,
+          "maxBPM": 184,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 86,
+            "avgPowerWatts": 162.8,
+            "normalizedPowerWatts": 184,
+            "maxPowerWatts": 347,
+            "intensityFactor": null,
+            "avgCadenceRPM": 87.9,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 458,
+            "avgSpeedKmH": 33.379200000000004,
+            "maxSpeedKmH": 60.696
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
     },
     {
       "id": "running_20260122_vo0i2",
