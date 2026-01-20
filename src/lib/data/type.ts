@@ -6,11 +6,6 @@ export interface AvailabilitySlot {
     running: number;
     comment: string;
 }
-
-// Definition de l'interface pour le calendrier (Tableau de Workout)
-
-
-// Définition de l'interface pour les données d'une séance
 export interface Workout {
   id: string; 
   date: string; // "YYYY-MM-DD"
@@ -24,7 +19,6 @@ export interface Workout {
   completedData: CompletedData | null;
 }
 
-// Définition de l'interface pour les données des séances planifiées
 export interface PlannedData {
   durationMinutes: number; 
   targetPowerWatts: number | null;
@@ -34,8 +28,6 @@ export interface PlannedData {
   plannedTSS: number | null;    
   descriptionOutdoor: string | null; 
   descriptionIndoor: string | null;  
-  
-  // NOUVEAU (Optionnel) Structure des intervalles prévus
   structure?: {
     type: 'intervals' | 'steady';
     sets: number; // ex: 5 répétitions
@@ -43,40 +35,28 @@ export interface PlannedData {
   };
 }
 
-// Définition de l'interface pour les données des séances réalisées
 export interface CompletedData {
   // --- Données Globales ---
   actualDurationMinutes: number; 
   distanceKm: number;
   perceivedEffort: number | null; // RPE 1-10
   notes: string;
-  
-  // NOUVEAU: Source de la donnée (import Strava, manuel, etc.)
   source: {
     type: 'manual' | 'strava';
     stravaId?: number | string | null;   // ID unique de l'activité Strava
     stravaUrl?: string;           // Lien direct
     fullJson?: boolean;           // Flag si on a stocké tout le JSON (rarement utile)
   };
-
-  // NOUVEAU: Données Géographiques (pour affichage simple)
   map?: {
     polyline: string | null; // La trace GPS compressée
   };
-
-  // --- Physiologie Globale ---
   heartRate?: {
     avgBPM: number | null;
     maxBPM: number | null;
     zoneDistribution?: number[]; // % du temps passé en Z1, Z2... (Top pour l'analyse)
   };
   caloriesBurned?: number | null;
-
-  // --- Analyse Structurelle (COACHING CRITIQUE) ---
-  // Permet de voir les intervalles (Lap 1, Lap 2...)
   laps: CompletedLap[];
-
-  // --- Métriques Spécifiques par Sport ---
   metrics: {
     cycling: CyclingMetrics | null;
     running: RunningMetrics | null;
@@ -93,16 +73,11 @@ export interface CompletedData {
 // ______________________________________________________
 // --- Sous Types ---
 // ______________________________________________________
-
-// NOUVEAU: Représente un Tour (Lap) ou un Intervalle
-// C'est ici qu'on vérifie si l'athlète a tenu les watts sur ses 5 répétitions.
 export interface CompletedLap {
   index: number;         // 1, 2, 3...
   name: string;          // "Lap 1"
   durationSeconds: number;
   distanceMeters: number;
-  
-  // Métriques du tour
   avgPower?: number | null;
   normalizedPower?: number | null; // Très utile sur des efforts longs
   avgHeartRate?: number | null;
@@ -111,7 +86,6 @@ export interface CompletedLap {
   avgSpeedKmh?: number | null;
 }
 
-// Définition de l'interface pour les données cycle
 export interface CyclingMetrics {
   tss: number | null;               // Training Stress Score (Fatigue)
   avgPowerWatts: number | null;
@@ -125,7 +99,6 @@ export interface CyclingMetrics {
   maxSpeedKmH: number | null;
 }
 
-// Définition de l'interface pour les données de running
 export interface RunningMetrics {
   avgPaceMinPerKm: string | null; // Format "5:30"
   bestPaceMinPerKm: string | null; 
@@ -136,8 +109,6 @@ export interface RunningMetrics {
   maxSpeedKmH: number | null;
   strideLength?: number | null;   // NOUVEAU: Longueur de foulée (souvent dispo sur Strava)
 }
-
-// Définition de l'interface pour les données de swimming
 export interface SwimmingMetrics {
   avgPace100m: number | null;
   bestPace100m: string | null;
@@ -156,12 +127,9 @@ export interface CyclingTest {
   p20min?: number;
   zones?: Zones;
   seasonData?: SeasonData;
-
   sourceTests?: string[];
 }
 
-
-// Définition complète des 7 zones de Coggan
 export interface Zones {
   z1: Zone; // Récupération active
   z2: Zone; // Endurance
@@ -172,16 +140,13 @@ export interface Zones {
   z7?: Zone; // Neuromusculaire
 }
 
-// Définition d'une zone unique (plage de puissance)
 export interface Zone {
   min: number;
   max: number;
 }
 
-// Définition de l'interface pour le type de sport
 export type SportType = 'cycling' | 'running' | 'swimming';
 
-// Définition de l'interface pour le profil strava
 export interface StravaConfig {
   athleteId: number;
   accessToken: string;
@@ -189,36 +154,25 @@ export interface StravaConfig {
   expiresAt: number;
 }
 
-
-// Définition de l'interface pour les données des feedbacks
 export interface CompletedDataFeedback {
   rpe: number;
   actualDuration: number;
   distance: number;
   notes: string;
   sportType: SportType;
-
-  // Universel
   avgHeartRate?: number;
   calories?: number;
   elevation?: number;
-
-  // Cyclisme
   avgPower?: number;
   maxPower?: number;
   normalizedPower?: number;
   tss?: number;
   intensityFactor?: number;
-  
-
-  // Running/Cycling
   avgPace?: string;
   avgCadence?: number;
   maxCadence?: number;
   avgSpeed?: number; 
   maxSpeed?: number; 
-
-  // Swimming
   strokeType?: string;
   avgStrokeRate?: number;
   avgSwolf?: number;
@@ -226,9 +180,6 @@ export interface CompletedDataFeedback {
   totalStrokes?: number;
 }
 
-/**
- * Tests de puissance disponibles (durées en minutes)
- */
 export interface PowerTests {
   p5min: number;
   p8min: number;
@@ -236,33 +187,10 @@ export interface PowerTests {
   p20min: number;
 }
 
-export type TestName = '5min' | '8min' | '15min' | '20min';
-
-/**
- * Données de saison (résultat du calcul)
- */
 export interface SeasonData {
   calculatedAt?: string;       // ISO 8601
   wPrime?: number;             // W' en joules
   criticalPower?: number;      // CP (FTP) en watts
   method?: 'Critical Power Regression' | 'Single Test Estimation';
   sourceTests?: string[];      // Ex: ['5min', '20min']
-}
-
-/**
- * Résultat complet du calcul
- */
-export interface FtpCalculationResult {
-  ftp: number;
-  zones: Zones;
-  seasonData: SeasonData;
-}
-
-/**
- * Point de données pour la régression (modèle CP)
- */
-export interface DataPoint {
-  t: number;  // Temps en secondes
-  w: number;  // Travail total (watts × secondes)
-  p: number;  // Puissance moyenne (watts)
 }

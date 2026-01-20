@@ -2,9 +2,6 @@ import type {
   PowerTests,
   Zones,
   SeasonData,
-  FtpCalculationResult,
-  DataPoint,
-  TestName,
   CyclingTest, // ✅ Import du nouveau type
 } from '@/lib/data/type';
 
@@ -15,9 +12,18 @@ const TEST_CONFIG: Record<TestName, { duration: number; key: keyof PowerTests }>
   '20min': { duration: 1200, key: 'p20min' },
 };
 
-/**
- * Constantes de calcul (basées sur les modèles Coggan/Skiba)
- */
+type TestName = '5min' | '8min' | '15min' | '20min';
+interface FtpCalculationResult {
+  ftp: number;
+  zones: Zones;
+  seasonData: SeasonData;
+}
+interface DataPoint {
+  t: number;  // Temps en secondes
+  w: number;  // Travail total (watts × secondes)
+  p: number;  // Puissance moyenne (watts)
+}
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const FTP_RATIOS = {
   p5min: 0.82,   // FTP = 82% de CP5
