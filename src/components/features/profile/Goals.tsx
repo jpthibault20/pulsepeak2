@@ -1,8 +1,9 @@
 import { Card } from "@/components/ui";
-import { aiPersonality, Profile } from "@/lib/data/type";
+import { aiPersonality } from "@/lib/data/type";
 import { MessageSquare, Lock } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
 import { SectionHeader } from "./SessionHeader";
+import { Profile } from "@/lib/data/DatabaseTypes";
 
 interface GoalsProps {
     formData: Profile;

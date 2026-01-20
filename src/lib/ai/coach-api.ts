@@ -1,4 +1,5 @@
-import { Profile, Workout, SportType } from "../data/type";
+import { Profile } from "../data/DatabaseTypes";
+import { Workout, SportType } from "../data/type";
 
 // Lecture de la clé API depuis les variables d'environnement du serveur
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -112,8 +113,8 @@ export async function generatePlanFromAI(
     // Contexte Zones
     let zonesContext = "ZONES: Utilise les % FTP/VMA standard car les zones exactes ne sont pas définies.";
     
-    if (profile.zones) {
-        const z = profile.zones;
+    if (profile.cycling?.Test?.zones) {
+        const z = profile.cycling.Test.zones;
         zonesContext = `
         ZONES CYCLISME ATHLÈTE (Watts) - À RESPECTER IMPÉRATIVEMENT :
         - Z1 (Récupération): < ${z.z1.max} W
@@ -121,8 +122,8 @@ export async function generatePlanFromAI(
         - Z3 (Tempo): ${z.z3.min} - ${z.z3.max} W
         - Z4 (Seuil/FTP): ${z.z4.min} - ${z.z4.max} W
         - Z5 (VO2 Max): ${z.z5.min} - ${z.z5.max} W
-        - Z6 (Anaérobie): ${z.z6.min} - ${z.z6.max} W
-        - Z7 (Neuromusculaire): > ${z.z7.min} W
+        - Z6 (Anaérobie): ${z?.z6?.min} - ${z?.z6?.max} W
+        - Z7 (Neuromusculaire): > ${z?.z7?.min} W
         `;
     }
 
@@ -154,9 +155,9 @@ FORMAT DE RÉPONSE :
 
     const userPrompt = `
     PROFIL ATHLÈTE:
-    - Sport pratiqué: ${profile.activeSports.cycling ? 'Cyclisme' : ''}${profile.activeSports.running ? 'Course à pied' : ''}${profile.activeSports.swimming ? 'Natation' : ''}
+    - Sport pratiqué: ${profile.activeSports.cycling ? 'Cyclisme' : ''}${profile.activeSports.running ? ', Course à pied' : ''}${profile.activeSports.swimming ? ', Natation' : ''}
     - Niveau: ${profile.experience}
-    - FTP (Vélo): ${profile.ftp}W
+    - FTP (Vélo): ${profile.cycling?.Test?.ftp}W
     - Poids: ${profile.weight || '?'}kg
     ${zonesContext}
 
@@ -298,9 +299,9 @@ export async function generateSingleWorkoutFromAI(
     const availability = profile.weeklyAvailability[dayName] || 60;
 
     let zonesContext = "";
-    if (profile.zones) {
+    if (profile.cycling?.Test?.zones) {
         // Version simplifiée pour économiser des tokens
-        const z = profile.zones;
+        const z = profile.cycling.Test.zones;
         zonesContext = `ZONES (W): Z2 ${z.z2.min}-${z.z2.max}, Z4 ${z.z4.min}-${z.z4.max}, Z5 ${z.z5.min}-${z.z5.max}`;
     }
 
@@ -319,7 +320,7 @@ export async function generateSingleWorkoutFromAI(
 
     const userPrompt = `
     DATE: ${date}. SPORT: ${currentSport.toUpperCase()}.
-    PROFIL: FTP ${profile.ftp}. ${zonesContext}.
+    PROFIL: FTP ${profile.cycling?.Test?.ftp}. ${zonesContext}.
     DISPO MAX: ${availability} min.
     FOCUS: ${currentBlockFocus}.
     

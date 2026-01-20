@@ -2,7 +2,8 @@ import { Card } from "@/components/ui/Card";
 import { Activity, Bike, Check, Footprints, Link2, Waves } from "lucide-react";
 import { SectionHeader } from "./SessionHeader";
 import React, { Dispatch, SetStateAction } from "react";
-import { Profile, SportType } from "@/lib/data/type";
+import { SportType } from "@/lib/data/type";
+import { Profile } from "@/lib/data/DatabaseTypes";
 
 interface SportsAndLinkAppProps {
     formData: Profile;

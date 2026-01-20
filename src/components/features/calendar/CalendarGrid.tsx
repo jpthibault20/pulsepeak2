@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
-import type { Schedule, Workout } from '@/lib/data/type';
+import type { Workout } from '@/lib/data/type';
 import { DayCell } from './DayCell';
 import { WeekSummaryCell } from './WeekSummaryCell';
 import { formatDateKey, DAY_NAMES_SHORT, type DayName } from '@/lib/utils';
+import { Schedule } from '@/lib/data/DatabaseTypes';
 
 interface CalendarGridProps {
     weekRows: (Date | null)[][];

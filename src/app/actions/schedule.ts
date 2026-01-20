@@ -3,7 +3,7 @@
 // Import de la fonction generatePlanFromAI
 import { generatePlanFromAI, generateSingleWorkoutFromAI } from '@/lib/ai/coach-api';
 import { getProfile, getSchedule, saveProfile, saveSchedule } from '@/lib/data/crud';
-import { Schedule, Profile, Workout } from '@/lib/data/type';
+import { Workout } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
 // lib/actions/workoutActions.ts
 import type { CompletedData, CompletedDataFeedback } from '@/lib/data/type';
@@ -12,6 +12,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { getStravaActivities, getStravaActivityById } from '@/lib/strava-service';
 import { mapStravaToCompletedData } from '@/lib/strava-mapper';
+import { Profile, Schedule } from '@/lib/data/DatabaseTypes';
 
 
 const DB_PATH = path.join(process.cwd(), 'src/lib/data/schedule.json');

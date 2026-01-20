@@ -127,7 +127,7 @@ export interface CyclingMetrics {
 
 // Définition de l'interface pour les données de running
 export interface RunningMetrics {
-  avgPaceMinPerKm: number | null; // Format "5:30"
+  avgPaceMinPerKm: string | null; // Format "5:30"
   bestPaceMinPerKm: string | null; 
   elevationGainMeters: number | null;
   avgCadenceSPM: number | null;   // Steps Per Minute (Cadence)
@@ -148,11 +148,18 @@ export interface SwimmingMetrics {
   totalStrokes: number | null;
 }
 
+export interface CyclingTest {
+  ftp?: number;
+  p5min?: number;
+  p8min?: number;
+  p15min?: number;
+  p20min?: number;
+  zones?: Zones;
+  seasonData?: SeasonData;
 
+  sourceTests?: string[];
+}
 
-// ______________________________________________________
-// --- AUTRES / UTILITAIRES ---
-// ______________________________________________________
 
 // Définition complète des 7 zones de Coggan
 export interface Zones {
@@ -161,8 +168,8 @@ export interface Zones {
   z3: Zone; // Tempo
   z4: Zone; // Seuil (FTP)
   z5: Zone; // VO2max
-  z6: Zone; // Capacité Anaérobie
-  z7: Zone; // Neuromusculaire
+  z6?: Zone; // Capacité Anaérobie
+  z7?: Zone; // Neuromusculaire
 }
 
 // Définition d'une zone unique (plage de puissance)
@@ -205,7 +212,7 @@ export interface CompletedDataFeedback {
   
 
   // Running/Cycling
-  avgPace?: number;
+  avgPace?: string;
   avgCadence?: number;
   maxCadence?: number;
   avgSpeed?: number; 
@@ -235,11 +242,11 @@ export type TestName = '5min' | '8min' | '15min' | '20min';
  * Données de saison (résultat du calcul)
  */
 export interface SeasonData {
-  calculatedAt: string;       // ISO 8601
-  wPrime: number;             // W' en joules
-  criticalPower: number;      // CP (FTP) en watts
-  method: 'Critical Power Regression' | 'Single Test Estimation';
-  sourceTests: string[];      // Ex: ['5min', '20min']
+  calculatedAt?: string;       // ISO 8601
+  wPrime?: number;             // W' en joules
+  criticalPower?: number;      // CP (FTP) en watts
+  method?: 'Critical Power Regression' | 'Single Test Estimation';
+  sourceTests?: string[];      // Ex: ['5min', '20min']
 }
 
 /**

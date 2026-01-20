@@ -62,7 +62,7 @@ export async function mapStravaToCompletedData(activity: StravaActivityInput): P
   try {
     const profile = await getProfile();
     // Optimisation : on vérifie profile?.ftp direct
-    const ftp = profile?.ftp || 200; 
+    const ftp = profile?.cycling?.Test?.ftp || 200; 
     
     // Normalisation de la puissance (Weighted > Average > 0)
     const np = activity.weighted_average_watts || activity.average_watts || 0;

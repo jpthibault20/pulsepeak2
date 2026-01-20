@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Plus, BrainCircuit, Info, X, Target, Home } from 'lucide-react';
-import type { Workout, Schedule } from '@/lib/data/type';
+import type { Workout } from '@/lib/data/type';
 import { Button } from '@/components/ui/Button';
 import { ManualWorkoutModal } from '../workout/ManualWorkoutModal';
 import { GenerationModal } from './GenerationModal';
@@ -10,6 +10,7 @@ import { CalendarGrid } from '@/components/features/calendar/CalendarGrid';
 import { MobileCalendarList } from '@/components/features/calendar/MobileCalendarList';
 import { useCalendarDays } from '@/hooks/useCalendarDays';
 import { MONTH_NAMES } from '@/lib/utils';
+import { Schedule } from '@/lib/data/DatabaseTypes';
 
 interface CalendarViewProps {
     scheduleData: Schedule;

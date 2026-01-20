@@ -1,8 +1,9 @@
 import { Card } from "@/components/ui/Card";
-import { AvailabilitySlot, Profile } from "@/lib/data/type";
+import { AvailabilitySlot } from "@/lib/data/type";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { SectionHeader } from "./SessionHeader";
 import { Bike, Calendar, Footprints, Waves, Clock } from "lucide-react";
+import { Profile } from "@/lib/data/DatabaseTypes";
 
 interface AvailabilityProps {
     formData: Profile;

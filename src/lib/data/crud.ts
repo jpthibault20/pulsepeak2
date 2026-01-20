@@ -1,6 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { Profile, Schedule } from './type';
+import { Profile, Schedule } from './DatabaseTypes';
+
 
 // ATTENTION: CE FICHIER UTILISE DES MODULES NODE.JS (fs, path). 
 // SES EXPORTS NE DOIVENT JAMAIS ÊTRE IMPORTÉS DIRECTEMENT DANS UN COMPOSANT CLIENT ('use client').
@@ -57,7 +58,7 @@ export async function writeJsonFile<T>(filename: string, data: T): Promise<void>
 
 export async function getProfile(): Promise<Profile | null> {
     const data = await readJsonFile<Partial<Profile>>('profile.json');
-    if (data && data.firstName && data.ftp) {
+    if (data && data.firstName && data.cycling?.Test?.ftp) {
         return data as Profile;
     }
     return null;

@@ -1,4 +1,4 @@
-import { aiPersonality, AvailabilitySlot, StravaConfig, Workout, Zones } from "./type";
+import { aiPersonality, AvailabilitySlot, CyclingTest, StravaConfig, Workout, Zones } from "./type";
 
 
 export interface Profile {
@@ -33,26 +33,14 @@ export interface Profile {
     };
 
     cycling?: {
-        Test?: {
-            ftp?: number;
-            p5min?: number;
-            p8min?: number;
-            p15min?: number;
-            p20min?: number;
-            zones?: Zones;
-            calculatedAt?: string;
-            wPrime?: number;
-            criticalPower?: number;
-            method?: string;
-            sourceTests?: string[];
-        }
+        Test?: CyclingTest
         comments?: string;
     }
 
     running?: {
         Test?: {
-            recentRaceTimeSec?: number;
-            recentRaceDistanceMeters?: number;
+            recentRaceTimeSec?: string;
+            recentRaceDistanceMeters?: string;
             vma?: number;
             zones?: Zones;
         }
