@@ -1098,6 +1098,60 @@
       }
     },
     {
+      "title": "Sortie Libre",
+      "id": "manual-1769099270326",
+      "date": "2026-01-03",
+      "sportType": "cycling",
+      "workoutType": "Endurance",
+      "status": "completed",
+      "mode": "indoor",
+      "plannedData": {
+        "durationMinutes": 120,
+        "distanceKm": 68,
+        "plannedTSS": 30,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "descriptionIndoor": "Séance manuelle",
+        "descriptionOutdoor": "Séance manuelle"
+      },
+      "completedData": {
+        "actualDurationMinutes": 120,
+        "distanceKm": 68,
+        "perceivedEffort": 5,
+        "notes": "",
+        "source": {
+          "type": "manual",
+          "fullJson": false
+        },
+        "laps": [],
+        "map": {
+          "polyline": null
+        },
+        "heartRate": {
+          "avgBPM": 147,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 30,
+            "avgPowerWatts": 146,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": 34,
+            "maxSpeedKmH": null,
+            "intensityFactor": null
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
+    },
+    {
       "id": "cycling_20260104_a1",
       "date": "2026-01-04",
       "sportType": "cycling",
@@ -1998,14 +2052,49 @@
       "title": "Endurance Rythmée : Blocs Tempo Courts",
       "workoutType": "Endurance/Tempo Mix",
       "mode": "Outdoor",
-      "status": "pending",
+      "status": "completed",
       "plannedData": {
         "durationMinutes": 89,
         "plannedTSS": 70,
         "descriptionOutdoor": "Séance d'Endurance Variée pour briser la monotonie du Z2. Après l'échauffement, vous enchaînerez 4 blocs de 16 minutes : 10 minutes en Z2 (160-180W) suivies de 5 minutes de Tempo soutenu en Z3 (200-220W), terminées par 1 minute de récupération active en Z2. Ces variations maintiennent l'engagement mental. Concentrez-vous sur une cadence fluide (85-95 rpm) pendant les efforts Z3. Cherchez un terrain relativement plat ou de légères ondulations pour bien maintenir les zones de puissance.",
         "descriptionIndoor": "Séance structurée pour rendre l'endurance plus ludique. L'objectif est de réaliser 4 répétitions de (10 min @ Z2/160W + 5 min @ Z3/200W + 1 min Récupération active @ Z2/160W). Les efforts en Z3 (200W) sont là pour maintenir l'engagement et simuler les changements de rythme. Gardez une cadence de 85-95 rpm, surtout pendant les blocs Tempo. Structure: 15 min Échauffement progressif Z1-Z2, 4 x (10 min @ 160W, 5 min @ 200W, 1 min @ 160W), 10 min Retour au calme Z1."
       },
-      "completedData": null
+      "completedData": {
+        "actualDurationMinutes": 90,
+        "distanceKm": 52.46,
+        "perceivedEffort": null,
+        "notes": "",
+        "caloriesBurned": 892,
+        "source": {
+          "type": "strava",
+          "stravaId": 17141743538
+        },
+        "map": {
+          "polyline": "kecdFhyrwMzHgOR?|B~AzCn@xCxAbBnAv@AbO_X|BuEDy@gLuKq@y@Ga@^cAlNmXd@DzLdM\\P^IdCyEv@yBUk@oB}AMi@`LaU~@n@lAzADVOd@c@Dy@u@c@Ee@dA{@j@B^TJr@Mv@LD\\g@t@NZ^?hIyA`FNxA[|BuA`FqF~GuCrA[R?JRWj@i@XsIpCoExEyPbMwAfBiLdRu@zA]zA}AzCsJpP{BnFS|ANnBIz@_BjDg@UgGmGWC[ZoNdWiVre@uDlIk@Ng@UuG}FiCqC_@M_@PkXdj@Ff@XZdIzF~DPN^Qjm@cG`VY|B]Po@O}GqDyK}EaDsCkAIu@|@qCtFWv@MdBcBfAkXni@]PIQzXkj@R}BzAaAjD}G`@wAtA{@z^ot@d@Wf@RvCDRFDTQfm@eGdV_@hCc@Hc@O{GqDmJaEsAw@_CyBqAAu@dAqCxFWdCY\\oAr@gXhi@_@RKQ|Xkj@XiC`BcAdDyGd@{AhAm@h_@_u@jALlCBPFDTQpm@cG|UW|B[R_AW}GqDuJgEcEgDiA?s@`AyCfGYfCwAv@uXzi@]PIQnXwi@Vs@LiB|A}@bDuG`@uAbAk@h@w@j^us@RMpAX~BBNNOtm@{FlUk@`Da@Fc@Q{GoDcKoEaAm@_CyBi@Ke@LiEfIUbC[Zs@R[^cXdi@_@RIQ@UtXoi@Ng@RoBvAu@hDcHZeAhAq@Zg@x^gt@tERRFDTQrm@aGpUa@rCcAE_HsDmKuEsD}CiAGi@j@cDtGOf@IdBiAh@YZqXti@]LIOvXaj@Pe@NoBrAs@`DkGl@kBfAk@f@{@l^ss@fFVFTQnm@_GzU]fC]Ps@QwGoD_L_F}CqCqAGu@dA{CfGUbCoAl@Y^gXfi@_@NGSrXui@Rg@NsB~AcAbDuG`@uAdAi@Zc@l^ys@b@Wh@RhDHMvn@eGzUUpB[TaAY_HqDaKoEiDyCmAGi@n@eDxGYjCcBdAkXli@]PIQrX{i@Tw@FwAxA_AfDwGn@iBdAg@n_@iu@fFVHVUzm@aGvUa@fCQFs@QiHwDoKwEaDsCoAEk@r@{CfGU|@IvA}Az@qXxi@a@NGSnXoi@X_AJ}A`BeAfD{Gb@uAbAi@Xc@r^at@PMlAXfCBJL@bASdl@aGxUa@`C[HgA_@kGiDgKqE}CqCqAQg@b@aDlG[~@MdB{Az@qOjZ"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 153.9,
+          "maxBPM": 173,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 81,
+            "avgPowerWatts": 171.9,
+            "normalizedPowerWatts": 179,
+            "maxPowerWatts": 344,
+            "intensityFactor": null,
+            "avgCadenceRPM": 85.1,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 309,
+            "avgSpeedKmH": 34.736399999999996,
+            "maxSpeedKmH": 66.744
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
     },
     {
       "id": "cycling_20260124_thjc1",
@@ -2286,60 +2375,6 @@
         "descriptionIndoor": "180 min Z2 (165-180W) continu. C'est une journée de récupération active longue distance."
       },
       "completedData": null
-    },
-    {
-      "title": "Sortie Libre",
-      "id": "manual-1769099270326",
-      "date": "2026-01-03",
-      "sportType": "cycling",
-      "workoutType": "Endurance",
-      "status": "completed",
-      "mode": "indoor",
-      "plannedData": {
-        "durationMinutes": 120,
-        "distanceKm": 68,
-        "plannedTSS": 30,
-        "targetPowerWatts": null,
-        "targetPaceMinPerKm": null,
-        "targetHeartRateBPM": null,
-        "descriptionIndoor": "Séance manuelle",
-        "descriptionOutdoor": "Séance manuelle"
-      },
-      "completedData": {
-        "actualDurationMinutes": 120,
-        "distanceKm": 68,
-        "perceivedEffort": 5,
-        "notes": "",
-        "source": {
-          "type": "manual",
-          "fullJson": false
-        },
-        "laps": [],
-        "map": {
-          "polyline": null
-        },
-        "heartRate": {
-          "avgBPM": 147,
-          "maxBPM": null
-        },
-        "caloriesBurned": null,
-        "metrics": {
-          "cycling": {
-            "tss": 30,
-            "avgPowerWatts": 146,
-            "maxPowerWatts": null,
-            "normalizedPowerWatts": null,
-            "avgCadenceRPM": null,
-            "maxCadenceRPM": null,
-            "elevationGainMeters": null,
-            "avgSpeedKmH": 34,
-            "maxSpeedKmH": null,
-            "intensityFactor": null
-          },
-          "running": null,
-          "swimming": null
-        }
-      }
     }
   ],
   "summary": "Ce bloc de 4 semaines est structuré pour développer votre capacité à maintenir des efforts intenses de durée moyenne (5 à 10 minutes), simulant des petits cols. La progression est axée sur l'augmentation du temps passé au Seuil (Z4) et l'introduction d'efforts en transition Seuil/VO2 Max (Z5). Les jours de semaine sont dédiés à la qualité et aux intervalles structurés Indoor, maximisant l'efficacité en peu de temps. Les week-ends sont utilisés pour le volume d'Endurance Outdoor avec intégration de blocs spécifiques sur le terrain.",
