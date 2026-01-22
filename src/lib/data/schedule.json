@@ -1098,108 +1098,6 @@
       }
     },
     {
-      "id": "cycling_20260103_a1",
-      "date": "2026-01-03",
-      "sportType": "cycling",
-      "title": "Endurance Ludique : Vélocité et Rythme",
-      "workoutType": "Endurance/Technique",
-      "mode": "Indoor",
-      "status": "completed",
-      "plannedData": {
-        "durationMinutes": 120,
-        "plannedTSS": 86,
-        "descriptionOutdoor": "Parcours plat ou légèrement vallonné. Maintenez la puissance en Zone 2 (150-180W). Intégrez des segments de 5 minutes en haute vélocité (>105 RPM) suivis de 5 minutes en cadence naturelle (85-95 RPM). 15 min Échauffement, 90 min Corps de Séance, 15 min Retour au Calme.",
-        "descriptionIndoor": "Séance de 2h sur home trainer axée sur l'endurance active et la vélocité pour briser la monotonie. Échauffement (15 min Z1>Z2). Corps de séance (90 min) : Répétez 9 fois l'alternance suivante : 5 min Z2 (150-170W) @ 90 RPM, puis 5 min Z2 bas (135-150W) @ 105+ RPM. Terminez par 15 min de récupération active."
-      },
-      "completedData": {
-        "actualDurationMinutes": 120,
-        "distanceKm": 68.48,
-        "perceivedEffort": 6,
-        "notes": "",
-        "source": {
-          "type": "manual",
-          "stravaId": null
-        },
-        "laps": [],
-        "heartRate": {
-          "avgBPM": 147.5,
-          "maxBPM": null
-        },
-        "caloriesBurned": 1009,
-        "metrics": {
-          "cycling": {
-            "tss": 78,
-            "avgPowerWatts": 145.9,
-            "maxPowerWatts": 358,
-            "normalizedPowerWatts": null,
-            "intensityFactor": null,
-            "avgCadenceRPM": 83.3,
-            "maxCadenceRPM": null,
-            "elevationGainMeters": 423,
-            "avgSpeedKmH": null,
-            "maxSpeedKmH": null
-          },
-          "running": null,
-          "swimming": null
-        }
-      }
-    },
-    {
-      "id": "strava_16925444329",
-      "date": "2026-01-03",
-      "sportType": "cycling",
-      "title": "Zwift - Endurance + Cadence on Navig8 in Watopia",
-      "workoutType": "Sortie Libre",
-      "mode": "Outdoor",
-      "status": "completed",
-      "plannedData": {
-        "durationMinutes": 0,
-        "targetPowerWatts": null,
-        "targetPaceMinPerKm": null,
-        "targetHeartRateBPM": null,
-        "distanceKm": null,
-        "plannedTSS": null,
-        "descriptionOutdoor": null,
-        "descriptionIndoor": null
-      },
-      "completedData": {
-        "actualDurationMinutes": 120,
-        "distanceKm": 68.48,
-        "perceivedEffort": null,
-        "notes": "───────────────\r\n Powered by PulsePeak",
-        "caloriesBurned": 1009,
-        "source": {
-          "type": "strava",
-          "stravaId": 16925444329
-        },
-        "map": {
-          "polyline": "jh`fAqudz^n@mGvG}ESsEwDmEzBiCKwCvJaYi@wDqIcEk@mEpIiStIAvCcEpGgAj@qEeDoFlC}B|JjL~B_A|AwEbDnAN`F`DhDaEnDmAx`@nFjIxWiAvA|SmC`Gh@|JdP~DpDvG~HuMpClAt@dD~EPtEjD|CkBHeGrF}EvLjD~Ei@hGfFxDgHdLiE~H{@dOjDzEsQxFcCjHnCpCiIzGqGfJ]xBeDzEnA`C{EdAxBpBhAtKqD|EnAxCwD~GeA~ARLhDpAPjJ}FhCvE`IlDqDrEx@rH|Iv@p@fDtDNhB`CzDmB|D`A`AxErEvA`JzVtBwA_EyKvD{BhCb@eB`MpMdPhApK`UpCpHcAzJtIhAnEk@tFxBlEwGjDNfO|D`A\\bK~GCv@wE|HlHQtA{HhC`IxD[nLsN~DcJp^oGjBd@lFwApErIpEyCxMaFxEaH`A}E_HaEvEsItAJ|ArJzD`BzKaArU|FaAvGxGiK|C\\rDgDhMaEnAuNdSqAlHwJ~IsHStBkO_AaKeFCkEmDhBkDw@qCvE}AaIwEv@aKpBs@rG~BrBwCzArGaEj@g@dBmG}AtFcOtF[iAiCfA_IeHcBkDuE`DoI_CwEb@uMdCeAhAwDuAsDnCqBrERj@sHvFk@bAcKpFJlCmDoAcDuLyBJwFeEAtBsP_HuCWaGrpAO~BdAbMiE^gBiIsH}@`FwGAS}JyDw@SoOvGeDwBwEh@oFgAqEuKaJ{GfAgUuCaAkKmMaPzAeM}C]qD`C~D~JgB|A}IuVgEiAsAgFmE_AqDjBwA_CuDGo@mDgJ{@u@_HjDoFaHoCmFaGiHpGqA[}AuDcH`AgDzDsEmAuKvDuBoAeA}BgC|EeFmAwBdDmIRqH`HsChIqGsCwGhCyBzMoBvBwMqDoJ`A}CrCmFl@qDfHwF{EoGTcKiD_HfFmG|@cApCjApLeMnHaAfEeEtDhFjL_D~DrCr@oHdEi@jJnB`H|EvFEnLkv@`TdC`IvOgEvBrAObQoDbN_@xLmL`@kEuMaDyAiBvEtHlPsOtErOGeOlDbOl@rDvKyCvC~DpE{C^h@`CaHEaH|GgBbLNfVeN|XwExBkGCtCyCgHxAcEmCKcDlBaAe@oJeBi@_GlDaD{GxFcL{G_VrA{AzE|BZkAoEeKeQyHaE_JXsD`JuHkDuEdCaBo@_TyCcHvEkNf@eHs@}H}EgL~DoTsHkGsBcIv@{GyBgFpE_Aj@oFjBi@tFzFxBl@_AjD|@pA`IWpC}CmA{E~CaDHuDwJcPvAgFvFgDAgEaEwFxB{BEkDjJeWSgEqHaDeBcEpIaUfJMtCcEjGeAn@iEiDoFpAqBdC?xHtKnBs@nDyEbBxAHzE~CjC_ErDc@~R"
-        },
-        "laps": [],
-        "heartRate": {
-          "avgBPM": 147.5,
-          "maxBPM": 172,
-          "zoneDistribution": []
-        },
-        "metrics": {
-          "cycling": {
-            "tss": 78,
-            "avgPowerWatts": 145.9,
-            "normalizedPowerWatts": 150,
-            "maxPowerWatts": 358,
-            "intensityFactor": null,
-            "avgCadenceRPM": 83.3,
-            "maxCadenceRPM": null,
-            "elevationGainMeters": 423,
-            "avgSpeedKmH": 34.0416,
-            "maxSpeedKmH": 75.024
-          },
-          "running": null,
-          "swimming": null
-        }
-      }
-    },
-    {
       "id": "cycling_20260104_a1",
       "date": "2026-01-04",
       "sportType": "cycling",
@@ -2388,6 +2286,60 @@
         "descriptionIndoor": "180 min Z2 (165-180W) continu. C'est une journée de récupération active longue distance."
       },
       "completedData": null
+    },
+    {
+      "title": "Sortie Libre",
+      "id": "manual-1769099270326",
+      "date": "2026-01-03",
+      "sportType": "cycling",
+      "workoutType": "Endurance",
+      "status": "completed",
+      "mode": "indoor",
+      "plannedData": {
+        "durationMinutes": 120,
+        "distanceKm": 68,
+        "plannedTSS": 30,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "descriptionIndoor": "Séance manuelle",
+        "descriptionOutdoor": "Séance manuelle"
+      },
+      "completedData": {
+        "actualDurationMinutes": 120,
+        "distanceKm": 68,
+        "perceivedEffort": 5,
+        "notes": "",
+        "source": {
+          "type": "manual",
+          "fullJson": false
+        },
+        "laps": [],
+        "map": {
+          "polyline": null
+        },
+        "heartRate": {
+          "avgBPM": 147,
+          "maxBPM": null
+        },
+        "caloriesBurned": null,
+        "metrics": {
+          "cycling": {
+            "tss": 30,
+            "avgPowerWatts": 146,
+            "maxPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": null,
+            "avgSpeedKmH": 34,
+            "maxSpeedKmH": null,
+            "intensityFactor": null
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
     }
   ],
   "summary": "Ce bloc de 4 semaines est structuré pour développer votre capacité à maintenir des efforts intenses de durée moyenne (5 à 10 minutes), simulant des petits cols. La progression est axée sur l'augmentation du temps passé au Seuil (Z4) et l'introduction d'efforts en transition Seuil/VO2 Max (Z5). Les jours de semaine sont dédiés à la qualité et aux intervalles structurés Indoor, maximisant l'efficacité en peu de temps. Les week-ends sont utilisés pour le volume d'Endurance Outdoor avec intégration de blocs spécifiques sur le terrain.",
