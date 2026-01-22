@@ -63,9 +63,9 @@
     ]
   },
   "strava": {
-    "accessToken": "2eb6a223528b904a0baef2bbaf740d4400d724bb",
+    "accessToken": "3f8d921e93d8e6a31504485c1d641f8b492c9ae9",
     "refreshToken": "35180b31d539959a45bb305fff0171b412a106fc",
-    "expiresAt": 1768948792,
+    "expiresAt": 1769120207,
     "athleteId": 31596042
   }
 }

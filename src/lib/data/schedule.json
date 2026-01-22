@@ -2041,22 +2041,71 @@
       }
     },
     {
+      "id": "strava_17130097838",
+      "date": "2026-01-21",
+      "sportType": "running",
+      "title": "Course à pied le soir",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 34,
+        "distanceKm": 5.98,
+        "perceivedEffort": null,
+        "notes": "👫❤️",
+        "caloriesBurned": 408,
+        "source": {
+          "type": "strava",
+          "stravaId": 17130097838
+        },
+        "map": {
+          "polyline": "kmnhHmt}k@AEKCBCRH?CAJWd@IXBZITDLAFOZMHE?ET?VIPEB?HBDS\\CNSB@X[b@CNOZKHW^IRALIFCGMNA`@CD?FELAJIP?FOLM?ALKTOJCJEBIX?NGFCPQAOHi@x@Ud@Q^?L?HLh@DDFVPZJ\\`@x@`@fAFHNf@Vh@D\\J?\\z@@H@p@CnD@\\EJEtFDjAClBCj@?^A~@BjA?jBE|BANApBAV?bBJ|BPpBZzABVHPTr@CHHFP\\BLLTJ@JRHFZ`@D@RVtBvBDJd@ZHLFDDHJDVXh@`@FBNRRHDFdAt@PFn@h@NRh@`@p@r@BHHB`@l@JFLRDBT\\@FJHBJFDXf@\\x@Xj@@HFBFLB@HT^p@Th@|@bBFRv@zAHTLJd@v@HPDLPPJPNHLPN@JJ@HV^NPLDNLNFHLLHN?HN\\LTPD?DFFC`@TF@v@d@l@Xh@n@VN\\h@T`@?HHFDPXpA^lCJXBb@CN@FEXHrAH~B?r@AJEHLD?JHv@?n@Hl@?VFN@PFR?FBFCDG?CG_@[Q[AKMmACo@L}A@i@CUIc@SkFKkAS{AGSAO_@mA]i@{@{@qBkAeBw@c@UiAu@oAkAiAaBq@kAk@kA}@aB]s@QYuA{Cc@s@]_@y@kAWe@eBoB{@o@QICE{@e@_Au@}@}@k@a@i@i@KOc@_@{@w@mAqAg@m@i@eAi@aB_@yAKq@QcBKyD?mBAMBYCS?eAF}CAc@BWA_BCi@DS@i@?oAJeA?cD@K?qBDq@CuCEm@Ku@GYGKG]FKSDMO@EEKECI[U]Y{@KQ?GGWGKI?CESe@IICOJ[^o@FECKFILMDOAG?KHa@RYP_@HCd@k@F]DKDEFAHK@[FCF[HIBKCM?GNML]NMHMBWH?DYHIBQD?FOBAFWJKDSF@FSFEJ?DBDC@MEI?KH]L]LO^wALWH]@??S"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 147.4,
+          "maxBPM": 179,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": null,
+          "running": {
+            "avgPaceMinPerKm": null,
+            "bestPaceMinPerKm": null,
+            "elevationGainMeters": 27,
+            "avgCadenceSPM": null,
+            "maxCadenceSPM": null,
+            "avgSpeedKmH": 10.2744,
+            "maxSpeedKmH": 20.664,
+            "strideLength": null
+          },
+          "swimming": null
+        }
+      }
+    },
+    {
       "id": "running_20260122_vo0i2",
       "date": "2026-01-22",
-      "sportType": "running",
-      "title": "Footing Récupération Active",
-      "workoutType": "Recovery",
+      "sportType": "cycling",
+      "title": "Endurance Rythmée : Blocs Tempo Courts",
+      "workoutType": "Endurance/Tempo Mix",
       "mode": "Outdoor",
       "status": "pending",
       "plannedData": {
-        "durationMinutes": 45,
-        "plannedTSS": 30,
-        "distanceKm": null,
-        "targetPowerWatts": null,
-        "targetPaceMinPerKm": "6:00/km+",
-        "targetHeartRateBPM": null,
-        "descriptionOutdoor": "Course très facile, concentrez-vous sur la légèreté de la foulée et une cadence élevée (>170 ppm). Terrain plat si possible pour éviter la contrainte musculaire.",
-        "descriptionIndoor": "N/A. Programme basé sur la sensation et la récupération. Si sur tapis: 45 min Z1/Z2 très facile (rythme conversationnel)."
+        "durationMinutes": 89,
+        "plannedTSS": 70,
+        "descriptionOutdoor": "Séance d'Endurance Variée pour briser la monotonie du Z2. Après l'échauffement, vous enchaînerez 4 blocs de 16 minutes : 10 minutes en Z2 (160-180W) suivies de 5 minutes de Tempo soutenu en Z3 (200-220W), terminées par 1 minute de récupération active en Z2. Ces variations maintiennent l'engagement mental. Concentrez-vous sur une cadence fluide (85-95 rpm) pendant les efforts Z3. Cherchez un terrain relativement plat ou de légères ondulations pour bien maintenir les zones de puissance.",
+        "descriptionIndoor": "Séance structurée pour rendre l'endurance plus ludique. L'objectif est de réaliser 4 répétitions de (10 min @ Z2/160W + 5 min @ Z3/200W + 1 min Récupération active @ Z2/160W). Les efforts en Z3 (200W) sont là pour maintenir l'engagement et simuler les changements de rythme. Gardez une cadence de 85-95 rpm, surtout pendant les blocs Tempo. Structure: 15 min Échauffement progressif Z1-Z2, 4 x (10 min @ 160W, 5 min @ 200W, 1 min @ 160W), 10 min Retour au calme Z1."
       },
       "completedData": null
     },
