@@ -1992,6 +1992,169 @@
           "swimming": null
         }
       }
+    },
+    {
+      "id": "strava_17130097838",
+      "date": "2026-01-21",
+      "sportType": "running",
+      "title": "Course à pied le soir",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 34,
+        "distanceKm": 5.98,
+        "perceivedEffort": null,
+        "notes": "👫❤️\n\n──────────────\n⚡ Powered by PulsePeak",
+        "caloriesBurned": 408,
+        "source": {
+          "type": "strava",
+          "stravaId": 17130097838
+        },
+        "map": {
+          "polyline": "kmnhHmt}k@AEKCBCRH?CAJWd@IXBZITDLAFOZMHE?ET?VIPEB?HBDS\\CNSB@X[b@CNOZKHW^IRALIFCGMNA`@CD?FELAJIP?FOLM?ALKTOJCJEBIX?NGFCPQAOHi@x@Ud@Q^?L?HLh@DDFVPZJ\\`@x@`@fAFHNf@Vh@D\\J?\\z@@H@p@CnD@\\EJEtFDjAClBCj@?^A~@BjA?jBE|BANApBAV?bBJ|BPpBZzABVHPTr@CHHFP\\BLLTJ@JRHFZ`@D@RVtBvBDJd@ZHLFDDHJDVXh@`@FBNRRHDFdAt@PFn@h@NRh@`@p@r@BHHB`@l@JFLRDBT\\@FJHBJFDXf@\\x@Xj@@HFBFLB@HT^p@Th@|@bBFRv@zAHTLJd@v@HPDLPPJPNHLPN@JJ@HV^NPLDNLNFHLLHN?HN\\LTPD?DFFC`@TF@v@d@l@Xh@n@VN\\h@T`@?HHFDPXpA^lCJXBb@CN@FEXHrAH~B?r@AJEHLD?JHv@?n@Hl@?VFN@PFR?FBFCDG?CG_@[Q[AKMmACo@L}A@i@CUIc@SkFKkAS{AGSAO_@mA]i@{@{@qBkAeBw@c@UiAu@oAkAiAaBq@kAk@kA}@aB]s@QYuA{Cc@s@]_@y@kAWe@eBoB{@o@QICE{@e@_Au@}@}@k@a@i@i@KOc@_@{@w@mAqAg@m@i@eAi@aB_@yAKq@QcBKyD?mBAMBYCS?eAF}CAc@BWA_BCi@DS@i@?oAJeA?cD@K?qBDq@CuCEm@Ku@GYGKG]FKSDMO@EEKECI[U]Y{@KQ?GGWGKI?CESe@IICOJ[^o@FECKFILMDOAG?KHa@RYP_@HCd@k@F]DKDEFAHK@[FCF[HIBKCM?GNML]NMHMBWH?DYHIBQD?FOBAFWJKDSF@FSFEJ?DBDC@MEI?KH]L]LO^wALWH]@??S"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 147.4,
+          "maxBPM": 179,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": null,
+          "running": {
+            "avgPaceMinPerKm": null,
+            "bestPaceMinPerKm": null,
+            "elevationGainMeters": 27,
+            "avgCadenceSPM": null,
+            "maxCadenceSPM": null,
+            "avgSpeedKmH": 10.2744,
+            "maxSpeedKmH": 20.664,
+            "strideLength": null
+          },
+          "swimming": null
+        }
+      }
+    },
+    {
+      "id": "strava_17141743538",
+      "date": "2026-01-22",
+      "sportType": "cycling",
+      "title": "Zwift - Endurance Rythmée : Blocs Tempo on Richmond Rollercoaster in Richmond",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 90,
+        "distanceKm": 52.46,
+        "perceivedEffort": null,
+        "notes": "──────────────\nTSS: 81 • ⚡ PulsePeak",
+        "caloriesBurned": 892,
+        "source": {
+          "type": "strava",
+          "stravaId": 17141743538
+        },
+        "map": {
+          "polyline": "kecdFhyrwMzHgOR?|B~AzCn@xCxAbBnAv@AbO_X|BuEDy@gLuKq@y@Ga@^cAlNmXd@DzLdM\\P^IdCyEv@yBUk@oB}AMi@`LaU~@n@lAzADVOd@c@Dy@u@c@Ee@dA{@j@B^TJr@Mv@LD\\g@t@NZ^?hIyA`FNxA[|BuA`FqF~GuCrA[R?JRWj@i@XsIpCoExEyPbMwAfBiLdRu@zA]zA}AzCsJpP{BnFS|ANnBIz@_BjDg@UgGmGWC[ZoNdWiVre@uDlIk@Ng@UuG}FiCqC_@M_@PkXdj@Ff@XZdIzF~DPN^Qjm@cG`VY|B]Po@O}GqDyK}EaDsCkAIu@|@qCtFWv@MdBcBfAkXni@]PIQzXkj@R}BzAaAjD}G`@wAtA{@z^ot@d@Wf@RvCDRFDTQfm@eGdV_@hCc@Hc@O{GqDmJaEsAw@_CyBqAAu@dAqCxFWdCY\\oAr@gXhi@_@RKQ|Xkj@XiC`BcAdDyGd@{AhAm@h_@_u@jALlCBPFDTQpm@cG|UW|B[R_AW}GqDuJgEcEgDiA?s@`AyCfGYfCwAv@uXzi@]PIQnXwi@Vs@LiB|A}@bDuG`@uAbAk@h@w@j^us@RMpAX~BBNNOtm@{FlUk@`Da@Fc@Q{GoDcKoEaAm@_CyBi@Ke@LiEfIUbC[Zs@R[^cXdi@_@RIQ@UtXoi@Ng@RoBvAu@hDcHZeAhAq@Zg@x^gt@tERRFDTQrm@aGpUa@rCcAE_HsDmKuEsD}CiAGi@j@cDtGOf@IdBiAh@YZqXti@]LIOvXaj@Pe@NoBrAs@`DkGl@kBfAk@f@{@l^ss@fFVFTQnm@_GzU]fC]Ps@QwGoD_L_F}CqCqAGu@dA{CfGUbCoAl@Y^gXfi@_@NGSrXui@Rg@NsB~AcAbDuG`@uAdAi@Zc@l^ys@b@Wh@RhDHMvn@eGzUUpB[TaAY_HqDaKoEiDyCmAGi@n@eDxGYjCcBdAkXli@]PIQrX{i@Tw@FwAxA_AfDwGn@iBdAg@n_@iu@fFVHVUzm@aGvUa@fCQFs@QiHwDoKwEaDsCoAEk@r@{CfGU|@IvA}Az@qXxi@a@NGSnXoi@X_AJ}A`BeAfD{Gb@uAbAi@Xc@r^at@PMlAXfCBJL@bASdl@aGxUa@`C[HgA_@kGiDgKqE}CqCqAQg@b@aDlG[~@MdB{Az@qOjZ"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 153.9,
+          "maxBPM": 173,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 81,
+            "avgPowerWatts": 171.9,
+            "normalizedPowerWatts": 179,
+            "maxPowerWatts": 344,
+            "intensityFactor": null,
+            "avgCadenceRPM": 85.1,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 309,
+            "avgSpeedKmH": 34.736399999999996,
+            "maxSpeedKmH": 66.744
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
+    },
+    {
+      "id": "strava_17162968610",
+      "date": "2026-01-24",
+      "sportType": "cycling",
+      "title": "Enterrement de vie de garçon 🙂",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 420,
+        "distanceKm": 191.15,
+        "perceivedEffort": null,
+        "notes": "",
+        "caloriesBurned": 3861,
+        "source": {
+          "type": "strava",
+          "stravaId": 17162968610
+        },
+        "map": {
+          "polyline": "yknhHws}k@dp@ap@de@dA|_Bzy@`TiLre@po@~o@d`BreAbfA|IdnAbe@nTjC|[vOeXzuAdWjNiSfOz[dEuU|JoCrOxStS{o@nWtWnH`m@kK~VdZaMhAmo@nHlo@td@bFzTcRlRpKlk@uUds@|DnPg\\sDcX|XzWhd@cd@vP`NjB|Xh\\vY}Hzn@sD~uAfOhBlFp^xPtArYpf@IlMpThEcBdVfFbCpDkOdAxVdLsNsHe[{@i}@nZufA|Be{@zc@ab@nn@wnAj\\mdBbJcP|h@sa@~iAuJ|@|aEzNlaA|MnxAx~@x`BbPpy@bHht@``BjzAf\\roBz\\nYPdVtVzQrBqJvYfBjbAndAxi@_NpKbe@|t@xj@rSnt@tj@vTnSwMr~@vDjX|u@lmAjiArBh{@hYhBdH~OfChVcQnz@`Kny@cT|fArE`s@{KtOnPh`Am{@phCfJv^oAl|AwKdR~DfpAh^|`BjVp\\iAlj@}KtTqUlmAhPb]nl@pXj^lhA~Hb_BbZ|~@|]tpCrH~IU~o@`nAgAnb@m`@d_@w~@`WyGpTs\\`b@vYfRbg@rf@aRjWh}@hNfHjMoMrPhj@fTe\\}f@cMlQvi@oNhW}|CxyBav@p{@amBXsInZwlAl}@q[nl@}VjJcPzq@wUvAm\\owC}d@{t@qGmjAkp@moA}SwO}UgfAi]gk@kMiD}MfXg`AkRwOx\\cCqWiPbDaWyb@sOjKcOoKf@ll@yM{Q_Icg@qN}L_UfCkQoY_g@jDe@nqA_VlY~EtQkHzf@op@xkBoKhIw]qi@ufAak@{e@_{AqE`Dii@gj@mK{_Agg@sk@kQg`Aya@yRkOin@oKX`GcVgjB~PqnAbxB}ZmYt@gmBmQyf@cgBchA{Z~|@qb@`RqYgEwI{f@ea@}a@kXsxBsg@}JvHkMsCk\\kqBxNce@uPgg@lpAeKp[_\\wfAsh@oJmfBo`Bl^s~AJsZqXqz@uEu|@k]n@qJu[kUgQnCcd@rOfEWcZeb@itAqDy|@cHuQqQfE?yg@wSkYwEon@aYko@qEwo@s@m]xCgxAzLi^zNvAuN_WiM}oAzFgcA}Cc~@f[m{AfDso@eRy_@a\\cP}Le~AqLsUuZbAqRszApAyb@~b@utAdRipArP{CdLia@dQgLxA}b@qHwl@{Vgd@iEg\\cUiQ}F}i@cv@a_AeGmbAtM}Z"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 162.2,
+          "maxBPM": 184,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 314,
+            "avgPowerWatts": 153.5,
+            "normalizedPowerWatts": 164,
+            "maxPowerWatts": 634,
+            "intensityFactor": null,
+            "avgCadenceRPM": 85.6,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 2332,
+            "avgSpeedKmH": 27.244799999999998,
+            "maxSpeedKmH": 67.968
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
     }
   ],
   "summary": "Semaine dédiée à l'évaluation physiologique suite à la phase de volume hivernale. Nous réalisons le Test FTP (Mardi) et une évaluation VO2max par intervalles courts/longs (Jeudi), suivis de journées de récupération obligatoires. Le week-end est consacré à la réintégration du volume en Zone 2 pour absorber la charge et préparer le prochain bloc. Respectez scrupuleusement les zones de puissance lors des tests pour garantir la validité des données.",

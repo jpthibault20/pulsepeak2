@@ -10,9 +10,9 @@
   "aiPersonality": "Analytique",
   "experience": "Avancé",
   "strava": {
-    "accessToken": "9b5aede9657a50a701c2e337efa3ec9bb6dda29e",
+    "accessToken": "d6196aafd08d27427f6b41331096ece99a5a530f",
     "refreshToken": "2e4173af55d98b2c4a3e407f998c96b3125c7e34",
-    "expiresAt": 1768954855,
+    "expiresAt": 1769368675,
     "athleteId": 31596042
   },
   "activeSports": {
@@ -69,29 +69,29 @@
   },
   "running": {
     "Test": {
-      "vma": 13.3,
-      "recentRaceTimeSec": "45",
+      "vma": 16,
+      "recentRaceTimeSec": "58:0",
       "recentRaceDistanceMeters": "10",
       "zones": {
         "z1": {
-          "min": 451,
-          "max": 387
+          "min": 375,
+          "max": 321
         },
         "z2": {
-          "min": 387,
-          "max": 361
+          "min": 321,
+          "max": 300
         },
         "z3": {
-          "min": 361,
-          "max": 318
+          "min": 300,
+          "max": 265
         },
         "z4": {
-          "min": 318,
-          "max": 285
+          "min": 265,
+          "max": 237
         },
         "z5": {
-          "min": 285,
-          "max": 246
+          "min": 237,
+          "max": 205
         }
       }
     }
