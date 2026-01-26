@@ -47,6 +47,41 @@ interface RawAIWorkout {
     description_indoor: string;
 }
 
+// Fonction générique pour appeler l'API
+async function callGeminiAPI(payload: unknown) {
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set.");
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        try {
+            const response = await fetch(`${API_URL}?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}. ${errorBody.substring(0, 200)}`);
+            }
+
+            const data = await response.json();
+            const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (!jsonText) throw new Error("AI response empty.");
+
+            return JSON.parse(jsonText);
+
+        } catch (error) {
+            if (attempt < MAX_RETRIES - 1) {
+                console.warn(`Tentative ${attempt + 1} échouée. Retry...`);
+                await delay(Math.pow(2, attempt) * 1000);
+            } else {
+                throw error;
+            }
+        }
+    }
+}
+
 /**
  * Génère un plan d'entraînement (Compatible Multisport & Multi-séance)
  */
@@ -381,37 +416,3 @@ export async function generateSingleWorkoutFromAI(
     } as Workout;
 }
 
-// Fonction générique pour appeler l'API
-async function callGeminiAPI(payload: unknown) {
-    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set.");
-
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-        try {
-            const response = await fetch(`${API_URL}?key=${GEMINI_API_KEY}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                const errorBody = await response.text();
-                throw new Error(`HTTP error! status: ${response.status}. ${errorBody.substring(0, 200)}`);
-            }
-
-            const data = await response.json();
-            const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-            if (!jsonText) throw new Error("AI response empty.");
-
-            return JSON.parse(jsonText);
-
-        } catch (error) {
-            if (attempt < MAX_RETRIES - 1) {
-                console.warn(`Tentative ${attempt + 1} échouée. Retry...`);
-                await delay(Math.pow(2, attempt) * 1000);
-            } else {
-                throw error;
-            }
-        }
-    }
-}
