@@ -8,7 +8,7 @@ import { Modal } from '@/components/ui/Modale';
 interface GenerationModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onGenerate: (blockFocus: string, customTheme: string | null, startDate: string | null, numWeeks?: number) => Promise<void>;
+    onGenerate: (blockFocus: string, customTheme: string | null, startDate: string, numWeeks: number) => Promise<void>;
     isGenerating: boolean;
 }
 
@@ -29,7 +29,7 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ isOpen, onClos
     ];
 
     const handleGenerate = async () => {
-        const durationToSend = blockFocus === 'Personnalisé' ? numWeeks : undefined;
+        const durationToSend = blockFocus === 'Personnalisé' ? numWeeks : 4;
         await onGenerate(blockFocus, blockFocus === 'Personnalisé' ? customTheme : null, startDate, durationToSend);
         onClose();
     };

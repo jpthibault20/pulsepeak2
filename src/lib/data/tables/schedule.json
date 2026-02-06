@@ -2155,6 +2155,389 @@
           "swimming": null
         }
       }
+    },
+    {
+      "id": "strava_17195802496",
+      "date": "2026-01-27",
+      "sportType": "cycling",
+      "title": "Vélo dans l'après-midi",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 25,
+        "distanceKm": 11.88,
+        "perceivedEffort": null,
+        "notes": "\n\n──────────────\nTSS: 16 • ⚡ PulsePeak",
+        "caloriesBurned": 203,
+        "source": {
+          "type": "strava",
+          "stravaId": 17195802496
+        },
+        "map": {
+          "polyline": "vr_fAa~~y^c@j@Qb@GTGp@?v@L|@P|@`@lAh@lAv@`At@p@fBfAxBbAfCt@h@Jd@L|@^`@TPPd@j@Vb@d@nAz@rCRd@b@x@BL@JCNIFO@WOu@_AYSm@Wc@Ae@Da@Pe@h@GNEPAf@VvAnBlGxA`En@xAJr@ANGNq@n@ILUrAUZi@^WZe@x@[`ACb@@Pz@hBh@pBN\\ZP`@Fp@QXS`@mAJMNEr@ANEj@a@`@?PDZVR^\\jCBd@?PMfABfAAPIJQDy@BIHKVETGhAB`@NXjCvB`@Td@HT?PEPKlBw@hA_@RE\\TJRBNMLUDk@@m@Hm@PSNGVLTX?n@QhAFl@Jj@Dj@?|@Q|@Ah@F^XpCxEJd@ARGN]n@Qb@Ib@Gb@Ab@Dx@X~Af@vAx@`BzBfDhArAh@|@Tp@`@lBJv@FjBFp@Rj@`@n@lApA|@l@nCfCj@t@VVZRl@Lj@BXA|@Mr@WnAk@bBgA\\ENDJHFLJ\\X`B~@dE\\dAf@nAZp@`A|An@t@RPl@\\v@\\tAXb@?n@KTGt@c@`A{@xAcBn@y@h@g@vEaDr@q@h@w@j@iAZoAh@_EVwA^oAz@sB^cBDg@Dm@Gs@Ka@e@s@u@q@k@]q@[oAWmAQ{BMwB?iDL{AJUF}@?QIMMEU?UFm@TiAD[@wAIuAQq@OUSUo@WqCq@uCoAiBo@UCSIk@G_ACi@J}A`@Q@w@PgALc@@s@Ea@Gq@Sq@Mq@KcCg@eD[yA?aBLmAXU?SGOKeCcEc@o@OIc@Kc@Ce@BuARa@AcAMuAKo@RO@MI?QJIl@Yh@Kn@?FCXA~@Yh@IlBs@d@YXSV_@^_BT_@fBwAz@aAPc@FSDc@@s@GqACWMe@MW]c@c@o@Us@a@eBMW[k@e@]gAc@uA[mC]w@BkBPKBaBBCBqAHoAZeAp@OT_@`AY^[RYZIJK\\AZDZp@rBXjCNv@Nb@d@v@JHTJr@Ld@CXMFIJw@PWJEXKdAUdAUZCh@Q\\Cj@OLAXFHJR`AJNRLp@P~@Nx@?DCNAHILQHWJk@Bo@@y@Ce@GQWk@a@g@g@_BY]u@k@a@OEGc@Q_AUo@CGCuA?GBq@B}@X"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 134.1,
+          "maxBPM": 166,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 16,
+            "avgPowerWatts": 139.2,
+            "normalizedPowerWatts": 150,
+            "maxPowerWatts": 341,
+            "intensityFactor": null,
+            "avgCadenceRPM": 80,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 156,
+            "avgSpeedKmH": 27.8964,
+            "maxSpeedKmH": 56.808
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
+    },
+    {
+      "id": "strava_17208002353",
+      "date": "2026-01-28",
+      "sportType": "running",
+      "title": "Course à pied le soir",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 30,
+        "distanceKm": 4.96,
+        "perceivedEffort": null,
+        "notes": "👫❤️\n\n──────────────\n⚡ Powered by PulsePeak",
+        "caloriesBurned": 338,
+        "source": {
+          "type": "strava",
+          "stravaId": 17208002353
+        },
+        "map": {
+          "polyline": "ylnhHot}k@LBCCI@CBH_@BGReALUDMDEL]DW?IISC]BCCBGE@MF?FI?SQYAGII?EEHCGI_@?QIKAKGCAOGQWWI[EAQLECi@}@EOOQQa@i@i@q@eAQEIGWu@q@qAIGGQ{AuCIIBKGc@Wm@s@oAGQy@qA}@oBWe@ECQYIYIMYk@mAsBi@eAIYe@}@[c@O]y@uAWk@EEAG]e@KAEYWk@Wc@c@}@EAEGWk@e@{@Yc@cA_COSKUECe@gAMO]s@k@y@g@cAa@q@u@_Bo@cAu@yAYe@Sg@mAsBi@gAQSQAUKq@oAyAaC}BeEMKOBg@r@Ud@@PN\\\\^LHXZlAhAx@z@TPTXHFTb@XX`@l@HNLZFDTZn@bARTb@p@DJFF^p@Td@\\b@@Pf@|@Zt@\\j@LZBBbAvBzAjDHXLRX|@PXRj@LNLf@FH\\r@FTFFf@dAL\\Lx@h@tA?JPND@Xn@f@t@DPHHfAdCn@pAPd@HLXt@`@t@Xr@FFTj@@Jn@pARj@RZFPDVFFLVL^HLAHT\\FTHHVr@FFFRZj@J\\b@`AF\\HFJR^~@Hh@JN@LAJF?NPZRPVF\\PVZr@@\\GNS^UXO^SXGFIPY\\EA[h@IFAAoA`BINERe@\\I@WRWb@KFk@x@wA`BQ\\AX@JFJ@NP^@FHNL\\JJDXLREHVXL\\VZ?LrAnCJZ@LHJBJNNAJLLB?DD?BB@Jj@HAHQFCPq@j@{@Nc@JMJ@PWBOL_@BABQLSDCNe@BCBMDAHOB@JODANe@BWR[@K@CB@N[DCFYLYLO@IDCJOFEPk@AIHWFQFGBQHIJe@Zo@Rq@RP"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 142.2,
+          "maxBPM": 164,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": null,
+          "running": {
+            "avgPaceMinPerKm": null,
+            "bestPaceMinPerKm": null,
+            "elevationGainMeters": 25.9,
+            "avgCadenceSPM": null,
+            "maxCadenceSPM": null,
+            "avgSpeedKmH": 9.6804,
+            "maxSpeedKmH": 17.352,
+            "strideLength": null
+          },
+          "swimming": null
+        }
+      }
+    },
+    {
+      "id": "strava_17219104291",
+      "date": "2026-01-29",
+      "sportType": "cycling",
+      "title": "Sortie vélo dans l'après-midi",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 134,
+        "distanceKm": 59.74,
+        "perceivedEffort": null,
+        "notes": "\n\n──────────────\nTSS: 145 • ⚡ PulsePeak",
+        "caloriesBurned": 1535,
+        "source": {
+          "type": "strava",
+          "stravaId": 17219104291
+        },
+        "map": {
+          "polyline": "emnhHkt}k@S|@z@hKuAvNbIfJzAxHlAb@vEwD|Ad@rCdGtGxZn[rVdLnO`^~UjPzLdH`GdDzEbK{C`At@jPxAlL~GpF^xGtBnGdGrAfCdGaElMwBlK|@nJ`FdL~MrRbClKnNnH~G`LxPfPnPhMxJ~K~EhBsAhHvFpOhD`KpG~@~Br@dHCfLXxAn@[RyGlC}KbHoAfi@pEjNrLhROtCmClCjFt@n@~CoAjBqJzBmDtBk@rEzCpAnEpA|JzBrDd@}@B{IxCcIhFkChDJpATbCjCxC|KlCnA|BsCjBqGf@gDb@aOnB{Jh@a@|DjWpErQw@p[qBpM`B`Y{ApQPjCr@pAjBKzP}HnBrA`B`Fg@XSeB{AaB{AAoH`IcJzG}HpAk@qB^mIQuOkBeGoEyAuDbDaHhB_GdSsIlCqD|Ck@pFkBzFPhIpCrFpLArDvBrAnCtChZxCxNXr[bBfJ^~Ir@rDvAzAdBArFsE|EwIhBIp@zAj@fMsBjFgCpSr@dKqBnI?|Fb@|EdCvK~B`BdFQ^h@I|@wDrEuG`CeCzNu@jAgAqBu@{NeA{G_FaJ}EqD_DxCmEyB_CnA}BhJPtRg@xL`ClOmEjAwI]iGfK}ClImAnL|@tN_AtFGvDfBfNm@fBiNwAcKbAiAtAUlCp@nJnC`HBxDgOfYi@vDHzHe@nBqBnAgGGeDxByHlL}BnNoCbD{Ba@eDeGwF_EsDNaEnF{AvEg@rEIzZ{@zAcFzAsDbGwCnNUhOwDpGeFvORpAbFdEB`AcFAaQnJoIcAkEXwIvC_Ly@u@bKTbGtE~[}@t^Rhb@iAjEeItIcGbJ_Id[kBlCD`IyA~BeDlKUpBz@pWtApEhDtDXbCo@jBmEdB{QqIeDmC_GyJ{AaAmg@f@sJaCsNScOcCyCiDkCPeFuEeFuAsGlA{KmBm@vBmAZoFgE}BoGRkByDiL]_KRcDfB_BrGwAbCqFLiYj@sOrCw_@UyHgCmOgCkJGiTeGaQ_DsScA{RbEkClAoEQiC_CqIBcExBsGLwGlFgNtAeBhDmA|EmH|Ba@~FzGvH|CjJ_Cx@aBDiDqNwHaFqLsFuBaLuLkKg]iImKmEyBiEpCcLwJsDkPeBw[AmUqBqPqCyMoIgQmBcBsG^oHnCqAq@mA{BaChAm@yEeCck@eLm^MwOtAq[`BiF|KiTdQqr@zDsSfDkZrHud@n@sBnBqAdFvAxC}@fBeEzCsQfDkHvD_EtG{BvBmBnAkFIqN`@qJkEyWcBoTwC{HyRe\\oBoS{A{GkDcF}KmE}BgD{BwQUqNgAeGs@oAmLoHkLkVySeT}B}GaAiOk@ga@oFsMxNy["
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 165.3,
+          "maxBPM": 190,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 145,
+            "avgPowerWatts": 160.2,
+            "normalizedPowerWatts": 197,
+            "maxPowerWatts": 701,
+            "intensityFactor": null,
+            "avgCadenceRPM": 85.3,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 877,
+            "avgSpeedKmH": 26.5788,
+            "maxSpeedKmH": 61.776
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
+    },
+    {
+      "id": "strava_17239979352",
+      "date": "2026-01-31",
+      "sportType": "cycling",
+      "title": "Sortie vélo dans l'après-midi",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 142,
+        "distanceKm": 70.13,
+        "perceivedEffort": null,
+        "notes": "\n\n──────────────\nTSS: 150 • ⚡ PulsePeak",
+        "caloriesBurned": 1652,
+        "source": {
+          "type": "strava",
+          "stravaId": 17239979352
+        },
+        "map": {
+          "polyline": "}jnhH_w}k@|AiGzBiCpe@}^`C]`d@~@zFbHbDxBf_AtWtLxOnElCbCa@bN}KV}Ba@wBg@iUpDo@e@sIjAoElAiBYmAaBw@cDuFy@uEl@m`@bBmLjCye@UgHpE_A|HnArRzO|C{Q}@_KrAcV]{J|@iDdHkKvFeYzDsGw@aPvDy@p@mEfBwC|Ae@lf@h[tHfDg@iFtGwB|@aAHaIzBeFbBkI?yA_B}DjDyNgAad@z@{Nb@mT~AaF{Gg|@}EeMiFgWUsHViCrD{D~HK|QsDlu@zCh@hBlBr@l@~D`@ZjAoALkF\\iAhRcItDmD~Lsl@AsMx@eOBkX|@wDbEgJFoD}BcGl@kMWcI_BaHy]}dAyBiBqRwE}BiBcMoRqHqPeEaOoAmHjKuK`FcN|B}DzFoEdKwJhBa@pFB@oElA{McBwNqCkKWwBs@mMb@_h@jBq`@t@iEjKgZbDaNxH{RzAmPnIoWr@iNtAeLgNNaKfBsEbBsLtKwEtAkBo@s@gFeA}@q@n@}@|D}@pAqC^sCaEcJuXkFyFaD_AwGnEwFi@kBuCaGcWoDmDeAeEyEo@i[iMk`@hI_HAuq@|_AuAg@uFgKaCyBkR_DyQiHaDmBqHuI_EcBqDBwB|@aSdTaClAuHwI}EgJwDwOoE_[qBoF{E{HwDsMqFoB_Ej@cHuAeGiH_BeJuJFmK_H{CsIaD{G{AkI}EoLmAf@eB_CoCpAaDEkCeG}KoIcPiPbBoOM{BfCwRHeGc@qI_E`B{YnEaDzGyFMyFlCuDh@uO^aJtCmRp@}TrCiBUsI~Dih@fe@}@L_BiAz@nAAhAsHxHr@tLk@`GmBhJBdEtA~G|Sp]jAnDHdCwCpCiChDiI~GaCbNe@|KeAtEeBpDf@lFsCpGkBnO{f@~FqO|SkJjDiFxDaAvFqB|FmA~KTtDOtJx@`ReFdUcBlCaPpOiMpGkTdRwYr{@qF|YaBzD{ZjGwZ_X_GgAwAn@mAzBgM`hCg@hIk@dCNhCuAz^hArNjBjMzAtEnD~BaBpG{LjSIzGuGpRkBjJa@tRNvSQnAmAjBJdFuHz_BIvIhBrUz]nlC~ApPAfC`FxQxCjGvA[bN`Ppd@rHfCjC|MzCrG`JdCnI~F`AzE{A~G@nEnRlBrLjBhXvDtJzU~a@~EnE~FnK`JhGhJvExBZbCo@lAoFx@k@|E`C|UvAb]_J~My@|HrBdH|GvBbAxJFnKbBvQhE|F`CdNaB`I|BzL@~FpBhDxCfHcA`@pHpD\\lShN|QhX|@RlDiB~J~Uv@jEhJjT"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 169,
+          "maxBPM": 188,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 150,
+            "avgPowerWatts": 183.2,
+            "normalizedPowerWatts": 195,
+            "maxPowerWatts": 612,
+            "intensityFactor": null,
+            "avgCadenceRPM": 88.7,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 765,
+            "avgSpeedKmH": 29.5344,
+            "maxSpeedKmH": 60.552
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
+    },
+    {
+      "id": "strava_17243327827",
+      "date": "2026-01-31",
+      "sportType": "cycling",
+      "title": "virée nocturne",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 35,
+        "distanceKm": 10.49,
+        "perceivedEffort": null,
+        "notes": "Les 1000km en janvier aussi \n──────────────\nTSS: 17 • ⚡ PulsePeak",
+        "caloriesBurned": 236,
+        "source": {
+          "type": "strava",
+          "stravaId": 17243327827
+        },
+        "map": {
+          "polyline": "omnhHss}k@AHIJ[fAi@nAK`@MZMN]p@Ur@a@v@IZu@hAq@tAUv@g@v@EBGE]oAGCGFD|@V`AIVUXGMOw@GIEAEBRXRv@AH]`@Yj@Ob@Mv@HNX^p@lAFb@Ep@f@zBJHF?JE^_@NC\\k@PQDAFBFHCBNm@p@u@x@cAv@qAb@eABAL?LHdArAn@r@rAjB~AnBNZl@nBDfBBZNb@LRNLTHR?HENKv@}@fAgA`@Ub@Kf@Ab@PNLj@x@r@jA\\z@BPNZ\\pA|DhQVpAVvBDf@D~A?fEBnBA~BIlAOl@Y`BGv@D^Rz@|AxB|BpEJXVf@d@fAl@`APb@dApB^h@HTLLj@z@Z^\\X~@dAZ\\LDJH\\\\h@^XZVd@~@hA|@lBPVrAtDVdAl@pBBX\\rAJXH\\Zp@Rr@Tj@JHr@hAbAtAvBfClAdA`@ZJBlAv@|@v@TD\\Tt@Z~@j@RFn@`@p@j@z@l@\\^LLVB`@VdBNpARXPf@Rz@r@h@n@jAfBb@fANv@?bABr@Cz@HrBJv@HXJFJCFM?IAc@KcAAc@E_@?e@Du@Gu@Dm@C]UkAEc@_@kACg@Im@IQc@iBQ]]c@Mg@c@s@CYe@iAQm@QSc@[YEo@Q]?k@EQCMIe@c@Ya@y@mBc@oAYe@SYsBiBMIG?GO]QIKKCOBC?AFp@h@YQKKE@OOH@PHNL`@TB@FGN?Z`@\\XRX^ZPRRXZp@`@nAP|@NXT\\j@^RDTJ`@HHCV@xAb@ZNPVVv@l@pAnAzBZz@h@vB|@xEB|CEfCFfAJ|@?NMEGGUiBAk@CqCCm@MgAQo@Wg@w@oAkA}Aa@]q@_@a@Mi@KgAGu@I}@Wi@Ue@]qAmAiA{@uDqByAm@SMmAaAoBkB}DeG}AuDkAqEe@wB}AoEe@iAkBqCa@_@mE}CSSc@m@gAuA}@_BeAcCiBuDaAeBiA{B}@}AQi@Gs@Dy@h@mCFaADyLAgAGcA[qCg@oCgDiNw@qCq@_B_AuA_@[c@QSCQ?SDg@RQJc@b@eAnAQNSLc@PQGQSKYCa@CcAG{@]sAYq@wAkB}EwFKMKY@Oj@{B`@qBZ}BDk@?eACm@e@sEKq@Mc@EGOCLO\\_A"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": null,
+          "maxBPM": null,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 17,
+            "avgPowerWatts": 112.4,
+            "normalizedPowerWatts": 131,
+            "maxPowerWatts": 300,
+            "intensityFactor": null,
+            "avgCadenceRPM": 72.5,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 265,
+            "avgSpeedKmH": 17.8596,
+            "maxSpeedKmH": 49.752
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
+    },
+    {
+      "id": "strava_17274348378",
+      "date": "2026-02-03",
+      "sportType": "cycling",
+      "title": "bla bla ride avec Niels",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 84,
+        "distanceKm": 33.43,
+        "perceivedEffort": null,
+        "notes": "Tous doux, je suis malade 🤧",
+        "caloriesBurned": 741,
+        "source": {
+          "type": "strava",
+          "stravaId": 17274348378
+        },
+        "map": {
+          "polyline": "}lnhHqt}k@fCmHr@kAzf@ca@nBeA~RNhRj@j@l@n@vAhCvC|ApAxBfAr}@|VxRdF~CVnDg@lFsB|FyEvG}GlCyAnC_AhEOdBDTV~GAlE_@|DVhHAbIuAnJsH`AkBlSsS^y@b@sDJB~A`F`BmAv@IdGlCrEzAdF~DdGvGtAvBbCjFjG`GvGbLhAfCfCvHnC~ExAvGtC|Jr@b@dIhBxDnBbAv@dAbCp@bEXtEzA~HpAfRtC~VxAnHf@dBpFzKzCtKlAlHZnJKhDfA~Fp@fGKt@qAx@]z@d@|FaMbEaO`Gk@f@?~@~@lKVjGAvBcBnNg@fPQb@_ATi@p@{BrH]tEUnLJ\\rC|Bt@bBdApKF~EO|A@lAvAtKr@zCZlCChAZdB^v@|AfFr@bAbAdCfAfAt@hBPnAnA`BAb@UZy@g@{AkDqByB}AiCsCo@aAiJ}BoJ{@_CgAcAk@kA[_L}@qGoCiDkCo@}@Jk@SqBrAwBS}C|Ay@JaCq@mAqAo@WeF~Bq@n@Y`@UrADnCGFq@eAcAkEiAoCkLeIeBk@cBM_BwAcBgCg@gBMaBm@kCaBoDcEiHmDuFwB}AgB}BoEcE{AkCaBwDy@s@_GgBuI~@yCB]e@]aEmAkE_@YiBcDeBeByAc@_DGgCPaG~@gDHYOsD^cCq@mCO[a@kCo@_BFm@QaAi@cBmC_B}AgFiB_CYuAYaC`@sB|AsGlDaC?_FlAsDFcHcBwDxCeI~Dw@Dy@]oAqBMeB?kFMaASs@kAuBaCoC{@g@sG}@wMkHeEeD_DeEwAcCcAyCe@qCeB{G{BmF{BmCuE_DoAoAaCaEmEuKaDoGBuAx@uDH}Pa@{DgCyKeCsJwBmDcAa@s@BgAn@}BhCw@L[c@[{Dk@uBcEkFY@eBtDyAvAWDmAi@GlRdAjFf@|SZxBf@tAlBvC`CdBlObCbDfAhGR?uBj@qCJwACgOs@cG{BwJ}BwImBmDyAw@w@FaAp@kBtBaAPe@u@Q}Bm@uBe@_A{C{D[D_ChEy@x@mBu@QtJBdFfAzGn@lSz@bEzBhDbB|AtPdChDhAhFPJY?}At@qEE_P]cDw@cEcEsPoA{CmA}AsA]wAj@wCzCw@CYi@U{Dg@wAyDqFUIuBvDaA`Ac@Lu@g@[?LzCQvMbArFh@jSPjBh@xBtEpFvOfC~DhApBHfC?BgBh@mCNmBCqN[gD_BaIeEePoBwCmA_@sAd@sCrCy@A[o@]sDq@gB_IyJhAeH^}De@sFo@iC"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 159.6,
+          "maxBPM": 182,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 71,
+            "avgPowerWatts": 146.2,
+            "normalizedPowerWatts": 174,
+            "maxPowerWatts": 368,
+            "intensityFactor": null,
+            "avgCadenceRPM": 78.3,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 663,
+            "avgSpeedKmH": 23.6124,
+            "maxSpeedKmH": 59.25600000000001
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
+    },
+    {
+      "id": "strava_17298739928",
+      "date": "2026-02-05",
+      "sportType": "cycling",
+      "title": "Zwift - Over/Under on Loopin Lava in Watopia",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 90,
+        "distanceKm": 48.33,
+        "perceivedEffort": null,
+        "notes": "",
+        "caloriesBurned": 880,
+        "source": {
+          "type": "strava",
+          "stravaId": 17298739928
+        },
+        "map": {
+          "polyline": "hr_fAq}~y^y@nDrBnHtFjEpKtDfFhLa@h@yD{BgA\\o@tA|G~TyF`LnBtGzA^hB_CnDc@t@dAZlDOlDkBp@DzCnEvC`GoBt@j@eD~@Ux@~KGfAd@vCvFiAlE`@xDpItNrArJpBzClJpHjBEjHqChChKbCdFrDvCbDRnH}GjJgIjFsTM{D_CuBgD_A_SL_@q@d@qGg@gCqNgFsCKuHhAeMwB_J`@iFwGwLDb@w@rKsCpA{CbEwEIaFkF{JyGsAkJf@qCfAoCzDhBtLv@`A`BNhAmBbIcBvApBjETj@_FiCsF_D}AsDMkDdAyBjCGhDvAzDhDjBtBLhBi@hB_DBgB{@mC}AcAgBIwCbBKfDpClC`Cc@z@kD{@sAqBe@qC`Bp@eCnEU`C`DJpBoAnCiDlAuFaCqAaEDkCxBmC`C_AlEJ|CvAjCdFi@`F}DWaBqBaIdB{AhBuASw@qA{AkKtCcExCcAbJg@xHtB~DlJApEcEjEoAvC}LfEfN^`D~FkAjEh@nEpInNnBhLtLhK`CK|GiCpD`NfCbEvBvAzED`QeOnAkCfEiRWsEwGcDgSDWy@d@mFk@}CwNiFqBOsInAcO}BkGf@_GyGoLHDm@`LuCtA}CdEmECsFgF{JuGsAsJf@wClAeCrDKhAbBpIjA~AvALxAsBxH}AfBxBbED`@uEeCmFkDeB{DI{CbAuB|BMxCxAvE`DfB`CPxB_AtAiCs@qFuAaA{BMyA^y@nAJbEnCdBdC_Ad@yC_DoBgDzAl@uB`F_@rBfCRpCiA|BoDvAyFiCmAyDBiCvBiCtCgAlDDrDdBhCpFg@lEaEUaBqBeIdB{AlBqAWw@oA{AsKzCcEnDeAxI]pH`CtDbJGzEaE~D}A`DqJ|By@~@dL?bAb@zCtFiAlEb@bEpIrNvBvLpLdKlCMjGiCfEbObFtFvCf@rBm@bPyNnG_VKyEgDcCkCk@sRFW{@d@wEc@eD_OuFqBOuInAqO}BiGf@mFwGuLF`@{@~JaChH}JIgFgF{JqGsAqJf@iC|@{CdExAzKbAxAhATjBsBxHaBjBxB~DFf@sE_CkFgEqBwDAkC`AyBhCGvC~ArErC|AdCT`Bc@rBmDw@iF{DqA}CvASlD|BnCtC_@z@kDu@kAwBm@wC|An@{BrE[vA~@t@zB?jBoA~BsDhAoFiCmA_ELqC|BgCzD_AzCTbDbBxBdFk@pEgE[qAmBaIbBgBnBqAYy@uA{AcKnC}DfCeA|Jm@fIdCrDfJO|EsDnDyA`DyKrCUx@`LG`Ab@zCrFiAjE`@`ErIxNtBrLtLhKrCQfGeCjFbQ~BnChDhA"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 159.7,
+          "maxBPM": 184,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 90,
+            "avgPowerWatts": 170.2,
+            "normalizedPowerWatts": 190,
+            "maxPowerWatts": 334,
+            "intensityFactor": null,
+            "avgCadenceRPM": 84.7,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 640,
+            "avgSpeedKmH": 32.1228,
+            "maxSpeedKmH": 62.496
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
     }
   ],
   "summary": "Semaine dédiée à l'évaluation physiologique suite à la phase de volume hivernale. Nous réalisons le Test FTP (Mardi) et une évaluation VO2max par intervalles courts/longs (Jeudi), suivis de journées de récupération obligatoires. Le week-end est consacré à la réintégration du volume en Zone 2 pour absorber la charge et préparer le prochain bloc. Respectez scrupuleusement les zones de puissance lors des tests pour garantir la validité des données.",

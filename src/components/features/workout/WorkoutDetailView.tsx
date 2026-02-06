@@ -9,7 +9,7 @@ import {
     Bike, FootprintsIcon as Running, Waves, Heart,
     Timer // Ajout pour la durée
 } from 'lucide-react';
-import type { Workout, SportType, CompletedDataFeedback } from '@/lib/data/type';
+import type { Workoutold, SportType, CompletedDataFeedback } from '@/lib/data/type';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -19,7 +19,7 @@ import { Profile } from '@/lib/data/DatabaseTypes';
 
 // --- Types ---
 interface WorkoutDetailViewProps {
-    workout: Workout;
+    workout: Workoutold;
     profile: Profile;
     onClose: () => void;
     onUpdate: (
@@ -75,7 +75,7 @@ const formatDuration = (totalSeconds: number | undefined): string => {
 };
 
 // Helper pour extraire les métriques communes et spécifiques
-const getSportMetrics = (workout: Workout) => {
+const getSportMetrics = (workout: Workoutold) => {
     if (!workout.completedData) return null;
 
     const { sportType, completedData } = workout;

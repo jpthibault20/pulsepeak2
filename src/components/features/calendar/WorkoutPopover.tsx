@@ -1,13 +1,13 @@
 import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom'; // Import nécessaire pour la téléportation
 import { X } from 'lucide-react';
-import type { Workout } from '@/lib/data/type';
+import type { Workoutold } from '@/lib/data/type';
 import { WorkoutBadge } from './WorkoutBadge';
 
 interface WorkoutPopoverProps {
-    workouts: Workout[];
+    workouts: Workoutold[];
     onClose: () => void;
-    onViewWorkout: (workout: Workout) => void;
+    onViewWorkout: (workout: Workoutold) => void;
 }
 
 export function WorkoutPopover({ workouts, onClose, onViewWorkout }: WorkoutPopoverProps) {

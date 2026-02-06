@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { Workout } from '@/lib/data/type';
+import type { Workoutold } from '@/lib/data/type';
 import { DayCell } from './DayCell';
 import { WeekSummaryCell } from './WeekSummaryCell';
 import { formatDateKey, DAY_NAMES_SHORT, type DayName } from '@/lib/utils';
@@ -11,7 +11,7 @@ interface CalendarGridProps {
     currentYear: number;
     scheduleData: Schedule;
     onOpenManualModal: (e: React.MouseEvent, date: Date) => void;
-    onViewWorkout: (workout: Workout) => void;
+    onViewWorkout: (workout: Workoutold) => void;
 }
 
 export function CalendarGrid({

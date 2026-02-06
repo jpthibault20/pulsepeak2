@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Plus, BrainCircuit, Info, X, Target, Home } from 'lucide-react';
-import type { Workout } from '@/lib/data/type';
+import type { Workoutold } from '@/lib/data/type';
 import { Button } from '@/components/ui/Button';
 import { ManualWorkoutModal } from '../workout/ManualWorkoutModal';
 import { GenerationModal } from './GenerationModal';
@@ -14,9 +14,9 @@ import { Schedule } from '@/lib/data/DatabaseTypes';
 
 interface CalendarViewProps {
     scheduleData: Schedule;
-    onViewWorkout: (workout: Workout) => void;
-    onGenerate: (blockFocus: string, customTheme: string | null, startDate: string | null, numWeeks?: number) => void;
-    onAddManualWorkout: (workout: Workout) => void;
+    onViewWorkout: (workout: Workoutold) => void;
+    onGenerate: (blockFocus: string, customTheme: string | null, startDate: string, numWeeks: number) => void;
+    onAddManualWorkout: (workout: Workoutold) => void;
     onSyncStrava?: () => void;
     isSyncing?: boolean;
 }
@@ -42,12 +42,12 @@ export function CalendarView({
     const handleGeneratePlan = async (
         blockFocus: string,
         customTheme: string | null,
-        startDate: string | null,
-        numWeeks?: number
+        startDate: string,
+        numWeeks: number
     ) => {
         setIsGenerating(true);
         try {
-            await onGenerate(blockFocus, customTheme, startDate, numWeeks);
+            onGenerate(blockFocus, customTheme, startDate, numWeeks);
         } finally {
             setIsGenerating(false);
         }
@@ -59,7 +59,7 @@ export function CalendarView({
         setShowManualModal(true);
     };
 
-    const handleSaveManual = async (workout: Workout) => {
+    const handleSaveManual = async (workout: Workoutold) => {
         await onAddManualWorkout(workout);
         setShowManualModal(false);
     };
@@ -169,7 +169,7 @@ export function CalendarView({
                     <Button
                         variant="ghost"
                         icon={BrainCircuit}
-                        onClick={() => handleGeneratePlan('Objectif Principal', null, null)}
+                        onClick={() => handleGeneratePlan('Objectif Principal', null, "", 0)}
                         disabled={isGenerating}
                         className="text-sm text-slate-400 hover:text-white"
                     >

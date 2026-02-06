@@ -5,7 +5,7 @@ import React, { useState, useCallback } from 'react';
 // Import des Server Actions
 import {
     saveAthleteProfile,
-    generateNewPlan,
+    CreateNewPlan,
     updateWorkoutStatus,
     toggleWorkoutMode,
     moveWorkout,
@@ -17,7 +17,7 @@ import {
 } from '@/app/actions/schedule';
 
 // Import des types
-import type { Workout, CompletedDataFeedback } from '@/lib/data/type';
+import type { Workoutold, CompletedDataFeedback } from '@/lib/data/type';
 
 // Import des composants
 import { CalendarView } from '@/components/features/calendar/CalendarView';
@@ -42,9 +42,9 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
     const startView: View = initialProfile.firstName ? 'dashboard' : 'onboarding';
     const [view, setView] = useState<View>(startView);
 
-    const [profile, setProfile] = useState<Profile | null>(initialProfile);
+    const [profile, setProfile] = useState<Profile>(initialProfile);
     const [schedule, setSchedule] = useState<Schedule | null>(initialSchedule);
-    const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
+    const [selectedWorkout, setSelectedWorkout] = useState<Workoutold | null>(null);
     
     // Etats UI
     const [error, setError] = useState<string | null>(null);
@@ -56,7 +56,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
         try {
             setIsRefreshing(true);
             const { profile: profileData, schedule: scheduleData } = await loadInitialData();
-            setProfile(profileData);
+            setProfile(profileData as Profile);
             setSchedule(scheduleData);
             setError(null);
         } catch (e) {
@@ -111,7 +111,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }, []);
 
-    const handleViewWorkout = useCallback((workout: Workout) => {
+    const handleViewWorkout = useCallback((workout: Workoutold) => {
         setSelectedWorkout(workout);
         setView('workout-detail');
     }, []);
@@ -120,12 +120,12 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
     const handleGenerate = useCallback(async (
         blockFocus: string,
         customTheme: string | null,
-        startDate: string | null,
-        numWeeks?: number
+        startDate: string,
+        numWeeks: number
     ) => {
         try {
             setIsRefreshing(true);
-            await generateNewPlan(blockFocus, customTheme, startDate, numWeeks);
+            await CreateNewPlan(blockFocus, customTheme, startDate, numWeeks, profile.id);
             await refreshData();
         } catch (e) {
             console.error('Erreur génération plan:', e);
@@ -201,7 +201,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
         }
     }, [refreshData]);
 
-    const handleAddManualWorkout = useCallback(async (workout: Workout) => {
+    const handleAddManualWorkout = useCallback(async (workout: Workoutold) => {
         try {
             await addManualWorkout(workout);
             await refreshData();

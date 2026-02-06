@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Plus, BedDouble, Layers } from 'lucide-react';
-import type { Workout } from '@/lib/data/type';
+import type { Workoutold } from '@/lib/data/type';
 import { WorkoutBadge } from './WorkoutBadge';
 import { WorkoutPopover } from './WorkoutPopover';
 
 interface DayCellProps {
     date: Date;
-    workouts: Workout[];
+    workouts: Workoutold[];
     isCurrentMonth: boolean;
     isToday: boolean;
     onOpenManualModal: (e: React.MouseEvent, date: Date) => void;
-    onViewWorkout: (workout: Workout) => void;
+    onViewWorkout: (workout: Workoutold) => void;
 }
 
 export function DayCell({

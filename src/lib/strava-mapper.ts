@@ -139,7 +139,7 @@ export async function mapStravaToCompletedData(activity: StravaActivityInput): P
 
 
 // Define le style de la signature
-const BRANDING_SUFFIX = "\n\n──────────────\n⚡ Powered by PulsePeak";
+const BRANDING_SUFFIX = "\n──────────────\n⚡ Powered by PulsePeak";
 
 /**
  * Met à jour la description sur Strava via leur API

@@ -4,10 +4,10 @@ import {
     Bike, Footprints, Waves, Dumbbell, Activity,
     Home, Sun
 } from 'lucide-react';
-import type { Workout } from '@/lib/data/type';
+import type { Workoutold } from '@/lib/data/type';
 
 interface WorkoutBadgeProps {
-    workout: Workout;
+    workout: Workoutold;
     onClick: (e: React.MouseEvent) => void;
     isCompact?: boolean;
 }

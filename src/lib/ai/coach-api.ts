@@ -1,5 +1,5 @@
 import { Profile } from "../data/DatabaseTypes";
-import { Workout, SportType } from "../data/type";
+import { Workoutold, SportType } from "../data/type";
 
 // Lecture de la clé API depuis les variables d'environnement du serveur
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -92,7 +92,7 @@ export async function generatePlanFromAI(
     customTheme: string | null,
     startDateInput: string | null,
     numWeeks?: number
-): Promise<{ synthesis: string, workouts: Workout[] }> {
+): Promise<{ synthesis: string, workouts: Workoutold[] }> {
     if (!GEMINI_API_KEY) {
         console.error("ERREUR CRITIQUE: GEMINI_API_KEY est NULL.");
         throw new Error("GEMINI_API_KEY is not set.");
@@ -267,7 +267,7 @@ FORMAT DE RÉPONSE :
 
     // --- 4. Transformation et Nettoyage des données ---
     
-    const structuredWorkouts: Workout[] = rawResponse.workouts
+    const structuredWorkouts: Workoutold[] = rawResponse.workouts
         // Sécurité 1: On filtre les objets invalides ou les jours de repos explicites si l'IA s'est trompée
         .filter(w => w.duration > 0 && w.title.toLowerCase() !== "repos")
         .map((w) => {
@@ -320,10 +320,10 @@ export async function generateSingleWorkoutFromAI(
     history: unknown,
     date: string,
     surroundingWorkouts: Record<string, string>,
-    oldWorkout?: Workout,
+    oldWorkout?: Workoutold,
     currentBlockFocus: string = "General Fitness",
     userInstruction?: string
-): Promise<Workout> {
+): Promise<Workoutold> {
 
     // Le type de sport est forcé à vélo pour l'instant
     const currentSport: SportType = 'cycling'; // TODO: Passer le sport en paramètre si on supporte la course à pied plus tard
@@ -413,6 +413,6 @@ export async function generateSingleWorkoutFromAI(
             descriptionIndoor: w.description_indoor
         },
         completedData: null
-    } as Workout;
+    } as Workoutold;
 }
 

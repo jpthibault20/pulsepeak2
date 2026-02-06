@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Plus, BedDouble } from 'lucide-react';
-import type { Workout } from '@/lib/data/type';
+import type { Workoutold } from '@/lib/data/type';
 import { WorkoutBadge } from './WorkoutBadge';
 import { formatDateKey, DAY_NAMES_SHORT, MONTH_NAMES } from '@/lib/utils';
 import { Schedule } from '@/lib/data/DatabaseTypes';
@@ -10,7 +10,7 @@ interface MobileCalendarListProps {
     currentMonth: number;
     scheduleData: Schedule;
     onOpenManualModal: (e: React.MouseEvent, date: Date) => void;
-    onViewWorkout: (workout: Workout) => void;
+    onViewWorkout: (workout: Workoutold) => void;
 }
 
 export function MobileCalendarList({

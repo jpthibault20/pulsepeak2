@@ -6,7 +6,7 @@ import {
     BarChart2, CalendarDays, Target,
     TrendingUp, MapPin, Filter
 } from 'lucide-react';
-import type { Workout } from '@/lib/data/type';
+import type { Workoutold } from '@/lib/data/type';
 import { Card } from '@/components/ui/Card';
 import { Profile, Schedule } from '@/lib/data/DatabaseTypes';
 
@@ -61,7 +61,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
     }, [scheduleData.workouts]);
 
     // 2. Données filtrées
-    const filteredWorkouts = useMemo((): Workout[] => {
+    const filteredWorkouts = useMemo((): Workoutold[] => {
         return scheduleData.workouts.filter(w => {
             const wDate = new Date(w.date);
             if (viewMode === 'annual') {

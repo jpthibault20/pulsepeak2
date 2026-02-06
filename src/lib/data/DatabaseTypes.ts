@@ -1,4 +1,4 @@
-import { aiPersonality, AvailabilitySlot, CyclingTest, StravaConfig, Workout, Zones } from "./type";
+import { aiPersonality, AvailabilitySlot, CompletedData, CyclingTest, PlannedData, SportType, StravaConfig, Workoutold, Zones } from "./type";
 
 
 export interface Profile {
@@ -14,7 +14,7 @@ export interface Profile {
     email: string;
     birthDate: string;
     weight?: number;
-    height?: number; 
+    height?: number;
     experience: 'Débutant' | 'Intermédiaire' | 'Avancé' | string;
     activeSports: {
         swimming: boolean;
@@ -70,7 +70,58 @@ export interface Profile {
 
 export interface Schedule {
     dbVersion: string;
-    workouts: Workout[];
+    workouts: Workoutold[];
     summary: string | null;
     lastGenerated: string | null;
+}
+
+export interface Plan {
+    ID: string;
+    userID: string;
+    blocksID: string[];
+    name: string;
+    goalDate: string;
+    startDate: string;
+    macroStrategyDescription: string;
+    status: 'active' | 'archived';
+}
+
+export interface Block {
+    ID: string;
+    userID: string;
+    weeksID: string[];
+    planID: string;
+    orderIndex: number;
+    theme: string;
+    comment: string;
+    weekCount: number;
+}
+
+export interface Week {
+    ID: string;
+    userID: string;
+    workoutsID: string[];
+    blockID: string;
+    weekNumber: number;
+    type: 'Load' | 'Recovery' | 'Taper'; // Charge ou Assimilation
+    targetTSS: number; // ex: 500
+    actualTSS: number; // Somme calculée des séances complétées
+    // Feedback global de la semaine (pour l'IA de la semaine suivante)
+    userFeedback?: string; // "J'étais KO cette semaine"}
+}
+
+export interface Workout {
+    ID: string;
+    userID: string;
+    weekID: string;
+    id: string;
+    date: string; // "YYYY-MM-DD"
+    sportType: SportType;
+    title: string;
+    workoutType: string;
+    mode: 'Outdoor' | 'Indoor';
+    status: 'pending' | 'completed' | 'missed';
+
+    plannedData: PlannedData;
+    completedData: CompletedData | null;
 }

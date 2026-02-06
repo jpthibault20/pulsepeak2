@@ -1,0 +1,42 @@
+[
+  {
+    "ID": "5f4be792-76ba-4f5b-bc8c-71f8fb97f6c3",
+    "userID": "1",
+    "blocksID": [],
+    "name": "Endurance",
+    "startDate": "2026-02-07",
+    "goalDate": "2026-03-07",
+    "macroStrategyDescription": "",
+    "status": "active"
+  },
+  {
+    "ID": "5e542423-37c4-44df-8d6d-98db6c5d4d1f",
+    "userID": "1",
+    "blocksID": [],
+    "name": "Endurance",
+    "startDate": "2026-02-07",
+    "goalDate": "2026-03-07",
+    "macroStrategyDescription": "",
+    "status": "active"
+  },
+  {
+    "ID": "06717cf9-e6f1-4737-9da4-b05ec123adfd",
+    "userID": "1",
+    "blocksID": [],
+    "name": "Endurance",
+    "startDate": "2026-02-07",
+    "goalDate": "2026-03-07",
+    "macroStrategyDescription": "",
+    "status": "active"
+  },
+  {
+    "ID": "f226f1b7-da78-415e-be9d-0fbeda0b5a47",
+    "userID": "666",
+    "blocksID": [],
+    "name": "Endurance",
+    "startDate": "2026-02-07",
+    "goalDate": "2026-03-07",
+    "macroStrategyDescription": "",
+    "status": "active"
+  }
+]

@@ -1,5 +1,5 @@
 {
-  "id": "",
+  "id": "666",
   "createdAt": "",
   "updatedAt": "",
   "lastLoginAt": "",
@@ -10,9 +10,9 @@
   "aiPersonality": "Analytique",
   "experience": "Avancé",
   "strava": {
-    "accessToken": "f732b8455732b95472b12c6dce49115f3afda361",
+    "accessToken": "df565bd21d28a82f03601b2a31e5129c8350f035",
     "refreshToken": "2e4173af55d98b2c4a3e407f998c96b3125c7e34",
-    "expiresAt": 1769483091,
+    "expiresAt": 1770400033,
     "athleteId": 31596042
   },
   "activeSports": {

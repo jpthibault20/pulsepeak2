@@ -1,17 +1,17 @@
 export type aiPersonality = 'Strict' | 'Encourageant' | 'Analytique';
 
 export interface AvailabilitySlot {
-    swimming: number; 
-    cycling: number;
-    running: number;
-    comment: string;
+  swimming: number;
+  cycling: number;
+  running: number;
+  comment: string;
 }
-export interface Workout {
-  id: string; 
+export interface Workoutold {
+  id: string;
   date: string; // "YYYY-MM-DD"
-  sportType: SportType; 
+  sportType: SportType;
   title: string;
-  workoutType: string; 
+  workoutType: string;
   mode: 'Outdoor' | 'Indoor';
   status: 'pending' | 'completed' | 'missed';
 
@@ -20,16 +20,16 @@ export interface Workout {
 }
 
 export interface PlannedData {
-  durationMinutes: number; 
+  durationMinutes: number;
   targetPowerWatts: number | null;
   targetPaceMinPerKm: string | null;
   targetHeartRateBPM: number | null;
-  distanceKm: number | null;    
-  plannedTSS: number | null;    
-  descriptionOutdoor: string | null; 
-  descriptionIndoor: string | null;  
+  distanceKm: number | null;
+  plannedTSS: number | null;
+  descriptionOutdoor: string | null;
+  descriptionIndoor: string | null;
   structure?: {
-    type: 'intervals' | 'steady';
+    type: 'Warmup' | 'Active' | 'Rest' | 'Cooldown';
     sets: number; // ex: 5 répétitions
     repsDescription: string; // ex: "5x 5min @ Z4"
   };
@@ -37,7 +37,7 @@ export interface PlannedData {
 
 export interface CompletedData {
   // --- Données Globales ---
-  actualDurationMinutes: number; 
+  actualDurationMinutes: number;
   distanceKm: number;
   perceivedEffort: number | null; // RPE 1-10
   notes: string;
@@ -62,6 +62,10 @@ export interface CompletedData {
     running: RunningMetrics | null;
     swimming: SwimmingMetrics | null;
   };
+
+  calculatedTSS?: number; // Calculé par TON code (pas Strava) avec le FTP du profil
+  intensityFactor?: number; // IF (Normalised Power / FTP)
+  variabilityIndex?: number; // VI (NP / Avg Power) - utile pour voir si la séance était stable
 }
 
 
@@ -101,16 +105,16 @@ export interface CyclingMetrics {
 
 export interface RunningMetrics {
   avgPaceMinPerKm: string | null; // Format "5:30"
-  bestPaceMinPerKm: string | null; 
+  bestPaceMinPerKm: string | null;
   elevationGainMeters: number | null;
   avgCadenceSPM: number | null;   // Steps Per Minute (Cadence)
   maxCadenceSPM: number | null;
-  avgSpeedKmH: number | null; 
+  avgSpeedKmH: number | null;
   maxSpeedKmH: number | null;
   strideLength?: number | null;   // NOUVEAU: Longueur de foulée (souvent dispo sur Strava)
 }
 export interface SwimmingMetrics {
-  avgPace100m: number | null;
+  avgPace100m: string | null;
   bestPace100m: string | null;
   strokeType: string | null; // "Freestyle", "Mixed"...
   avgStrokeRate: number | null;
@@ -171,8 +175,8 @@ export interface CompletedDataFeedback {
   avgPace?: string;
   avgCadence?: number;
   maxCadence?: number;
-  avgSpeed?: number; 
-  maxSpeed?: number; 
+  avgSpeed?: number;
+  maxSpeed?: number;
   strokeType?: string;
   avgStrokeRate?: number;
   avgSwolf?: number;

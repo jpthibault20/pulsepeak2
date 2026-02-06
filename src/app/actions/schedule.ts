@@ -2,8 +2,8 @@
 
 // Import de la fonction generatePlanFromAI
 import { generatePlanFromAI, generateSingleWorkoutFromAI } from '@/lib/ai/coach-api';
-import { getProfile, getSchedule, saveProfile, saveSchedule } from '@/lib/data/crud';
-import { Workout } from '@/lib/data/type';
+import { getBlock, getPlan, getProfile, getSchedule, saveBlock, savePlan, saveProfile, saveSchedule } from '@/lib/data/crud';
+import { Workoutold } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
 // lib/actions/workoutActions.ts
 import type { CompletedData, CompletedDataFeedback } from '@/lib/data/type';
@@ -12,10 +12,125 @@ import fs from 'fs/promises';
 import path from 'path';
 import { getStravaActivities, getStravaActivityById } from '@/lib/strava-service';
 import { mapStravaToCompletedData } from '@/lib/strava-mapper';
-import { Profile, Schedule } from '@/lib/data/DatabaseTypes';
+import { Block, Plan, Profile, Schedule } from '@/lib/data/DatabaseTypes';
+import { randomUUID } from 'crypto';
 
 
-const DB_PATH = path.join(process.cwd(), 'src/lib/data/schedule.json');
+
+
+
+/******************************************************************************
+ * function: CreateNewPlan
+ * brrief: Création d'un nouveau training plan basé sur les inputs de l'utilisateur.
+ * input: 
+ * - blockFocus: Nom du bloc de séance
+ * - customTheme: Thème personnalisé pour le bloc de séance
+ * - startDate: Date de début du plan
+ * - numWeeks: Nombre de semaines pour le plan
+ * - userID: ID de l'utilisateur
+ * output: 
+ * - None
+ ******************************************************************************/
+export async function CreateNewPlan(
+    blockFocus: string, 
+    customTheme: string | null, 
+    startDate: string, 
+    numWeeks: number, 
+    userID: string
+) {
+    const existingPlan = await getPlan();
+
+    // Calculer la date de fin
+    const goalDate = new Date(startDate);
+    goalDate.setDate(goalDate.getDate() + (numWeeks * 7));
+
+    const newPlan: Plan = {
+        ID: randomUUID(),
+        userID,
+        blocksID: [],
+        name: blockFocus,
+        startDate,
+        goalDate: goalDate.toISOString().split('T')[0],
+        macroStrategyDescription: customTheme || "",
+        status: "active"
+    };
+
+    // Combiner les plans existants avec le nouveau
+    const allPlans = Array.isArray(existingPlan) 
+        ? [...existingPlan, newPlan] 
+        : [newPlan];
+
+    await savePlan(allPlans);
+}
+
+/******************************************************************************
+ * function: createBlock
+ * brrief: Création des différents blocs pour arriver a l'objectif du plan.
+ * input: 
+ * - userID: ID de l'utilisateur
+ * - planID: ID du plan
+ * output: 
+ * - None
+ ******************************************************************************/
+async function createBlock(newPlan : Plan) {
+    
+    const existingBlock = await getBlock();
+    const newBlock: Block = {
+        ID: randomUUID(),
+        userID: newPlan.userID,
+        weeksID: [],
+        planID : newPlan.ID,
+        orderIndex: 0,
+        theme: "",
+        comment: "",
+        weekCount: 0,
+    };
+
+    // Combiner les blocs existants avec le nouveau
+    const allBlocks = Array.isArray(existingBlock) 
+        ? [...existingBlock, newBlock] 
+        : [newBlock];
+
+    await saveBlock(allBlocks);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const DB_PATH = path.join(process.cwd(), 'src/lib/data/tables/schedule.json');
 
 // --- Helpers ---
 
@@ -77,7 +192,7 @@ const getRecentPerformanceHistory = (schedule: Schedule): string => {
 
 
 // Helper pour trouver une séance par ID ou par Date (pour rétro-compatibilité)
-const findWorkoutIndex1 = (workouts: Workout[], identifier: string): number => {
+const findWorkoutIndex1 = (workouts: Workoutold[], identifier: string): number => {
     return workouts.findIndex(w => w.id === identifier || w.date === identifier);
 };
 
@@ -99,8 +214,8 @@ export async function saveAthleteProfile(data: Profile) {
     await saveProfile(data);
 }
 
-// Génération d'un nouveau plan (Ajout/Écrasement des dates concernées)
-export async function generateNewPlan(blockFocus: string, customTheme: string | null, startDate: string | null, numWeeks?: number) {
+
+export async function generateNewPlanOld(blockFocus: string, customTheme: string | null, startDate: string | null, numWeeks?: number) {
     console.log(`[Plan Generation] Focus: ${blockFocus}. Theme custom: ${customTheme}. Start Date: ${startDate}`);
 
     const existingSchedule = await getSchedule();
@@ -232,7 +347,7 @@ function getSurroundingWorkouts(schedule: Schedule, targetDate: string) {
 /**
  * Trouve l'index d'un workout par ID ou Date
  */
-function findWorkoutIndex(workouts: Workout[], idOrDate: string): number {
+function findWorkoutIndex(workouts: Workoutold[], idOrDate: string): number {
     return workouts.findIndex(w => w.id === idOrDate || w.date === idOrDate);
 }
 
@@ -281,7 +396,7 @@ function transformFeedbackToCompletedData(
             } : null,
 
             running: sportType === 'running' ? {
-                avgPaceMinPerKm: feedback.avgPace ? Number(feedback.avgPace) : null,
+                avgPaceMinPerKm: feedback.avgPace ? feedback.avgPace : null,
                 bestPaceMinPerKm: null,
                 elevationGainMeters: feedback.elevation ? Number(feedback.elevation) : null,
                 avgCadenceSPM: feedback.avgCadence ? Number(feedback.avgCadence) : null,
@@ -425,7 +540,7 @@ export async function moveWorkout(originalDateOrId: string, newDateStr: string) 
     revalidatePath('/');
 }
 
-export async function addManualWorkout(workout: Workout) {
+export async function addManualWorkout(workout: Workoutold) {
     const schedule = await getSchedule();
 
     // ✅ Validation : vérifier que l'ID est unique (sécurité)
@@ -548,7 +663,7 @@ export async function syncStravaActivities() {
             } else {
                 // PAS DE MATCH : On crée une nouvelle entrée "Activité Libre"
                 console.log(`   ➕ Nouvelle activité libre ajoutée : ${activityDate}`);
-                const newWorkout: Workout = {
+                const newWorkout: Workoutold = {
                     id: unplannedId,
                     date: activityDate,
                     sportType: completedData.metrics.running ? 'running' : 'cycling', // Simplifié
