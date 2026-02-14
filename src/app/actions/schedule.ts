@@ -2,7 +2,7 @@
 
 // Import de la fonction generatePlanFromAI
 import { generatePlanFromAI, generateSingleWorkoutFromAI } from '@/lib/ai/coach-api';
-import { getBlock, getPlan, getProfile, getSchedule, saveBlock, savePlan, saveProfile, saveSchedule } from '@/lib/data/crud';
+import { getBlock, getPlan, getProfile, getSchedule, saveBlocks, savePlan, saveProfile, saveSchedule } from '@/lib/data/crud';
 import { Workoutold } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
 // lib/actions/workoutActions.ts
@@ -14,7 +14,13 @@ import { getStravaActivities, getStravaActivityById } from '@/lib/strava-service
 import { mapStravaToCompletedData } from '@/lib/strava-mapper';
 import { Block, Plan, Profile, Schedule } from '@/lib/data/DatabaseTypes';
 import { randomUUID } from 'crypto';
-
+import { 
+  differenceInWeeks, 
+  addWeeks, 
+  startOfISOWeek, 
+  endOfISOWeek, 
+  format 
+} from 'date-fns';
 
 
 
@@ -32,10 +38,10 @@ import { randomUUID } from 'crypto';
  * - None
  ******************************************************************************/
 export async function CreateNewPlan(
-    blockFocus: string, 
-    customTheme: string | null, 
-    startDate: string, 
-    numWeeks: number, 
+    blockFocus: string,
+    customTheme: string | null,
+    startDate: string,
+    numWeeks: number,
     userID: string
 ) {
     const existingPlan = await getPlan();
@@ -45,7 +51,7 @@ export async function CreateNewPlan(
     goalDate.setDate(goalDate.getDate() + (numWeeks * 7));
 
     const newPlan: Plan = {
-        ID: randomUUID(),
+        id: randomUUID(),
         userID,
         blocksID: [],
         name: blockFocus,
@@ -56,11 +62,13 @@ export async function CreateNewPlan(
     };
 
     // Combiner les plans existants avec le nouveau
-    const allPlans = Array.isArray(existingPlan) 
-        ? [...existingPlan, newPlan] 
+    const allPlans = Array.isArray(existingPlan)
+        ? [...existingPlan, newPlan]
         : [newPlan];
 
     await savePlan(allPlans);
+
+    await generateMacroPlan(newPlan);
 }
 
 /******************************************************************************
@@ -72,30 +80,112 @@ export async function CreateNewPlan(
  * output: 
  * - None
  ******************************************************************************/
-async function createBlock(newPlan : Plan) {
+export async function generateMacroPlan(plan: Plan) {
+
+    // 1. Initialisation des dates (On cale tout sur le Lundi)
+    const start = startOfISOWeek(new Date(plan.startDate));
+    const goal = endOfISOWeek(new Date(plan.goalDate)); // Fin de la semaine de l'objectif
+
+    // Nombre total de semaines disponibles
+    const totalWeeks = differenceInWeeks(goal, start) + 1; // +1 pour inclure la semaine de fin
+
+    if (totalWeeks < 1) throw new Error("Le plan est trop court !");
+
+    // 2. Découpage en tranches de 4 semaines (Cycle classique 3+1)
+    // On part du début vers la fin.
+    const blockSkeletons: { index: number; duration: number; isLast: boolean }[] = [];
+
+    let weeksRemaining = totalWeeks;
+    let index = 1;
+
+    while (weeksRemaining > 0) {
+        let duration = 4;
+
+        // Gestion de la fin de plan (Affûtage / Race logic)
+        if (weeksRemaining <= 5) {
+            // S'il reste 5 semaines ou moins, on fait un seul dernier bloc "Pic/Course"
+            // Pour éviter d'avoir un bloc de 4 sem + un bloc orphelin de 1 sem.
+            duration = weeksRemaining;
+            weeksRemaining = 0; // On a tout pris
+            blockSkeletons.push({ index, duration, isLast: true });
+        } else {
+            // Cas standard
+            blockSkeletons.push({ index, duration, isLast: false });
+            weeksRemaining -= 4;
+        }
+        index++;
+    }
+
+    // 3. Appel à l'IA pour donner du sens à ces coquilles vides
+    // On prépare le prompt avec le contexte
+    const aiPrompt = `
+    Agis comme un coach de triathlon expert. Je crée un plan pour : ${plan.macroStrategyDescription}.
+    L'objectif est le ${plan.goalDate}.
+    J'ai découpé le temps en ${blockSkeletons.length} blocs.
     
-    const existingBlock = await getBlock();
-    const newBlock: Block = {
-        ID: randomUUID(),
-        userID: newPlan.userID,
-        weeksID: [],
-        planID : newPlan.ID,
-        orderIndex: 0,
-        theme: "",
-        comment: "",
-        weekCount: 0,
-    };
+    Voici la structure temporelle :
+    ${blockSkeletons.map(b =>
+        `- Bloc ${b.index} : Durée ${b.duration} semaines ${b.isLast ? "(Dernier bloc avant course)" : ""}`
+    ).join('\n')}
 
-    // Combiner les blocs existants avec le nouveau
-    const allBlocks = Array.isArray(existingBlock) 
-        ? [...existingBlock, newBlock] 
-        : [newBlock];
+    Tâche : Donne-moi le "type" (Base, Build, Peak, Taper) et un "theme" court pour chaque bloc.
+    Le dernier bloc DOIT être focalisé sur l'affûtage et la course.
+    Les premiers blocs doivent suivre une logique de progression.
 
-    await saveBlock(allBlocks);
+    Réponds UNIQUEMENT en JSON formaté ainsi :
+    [
+      { "index": 1, "type": "Base", "theme": "Endurance Fondamentale & Force" },
+      ...
+    ]
+  `;
+
+    // SIMULATION APPEL IA (Remplacer par ton appel réel Gemini/OpenAI)
+    const aiResponse = await callMyAI(aiPrompt);
+    const aiBlocksData = JSON.parse(aiResponse); // On suppose que l'IA renvoie le bon JSON
+
+    // 4. Création des objets Block finaux et sauvegarde
+    const blocksToSave: Block[] = [];
+    let currentBlockStartDate = start;
+
+    for (const skeleton of blockSkeletons) {
+        // Retrouver les infos données par l'IA pour ce bloc
+        const aiInfo = aiBlocksData.find((b: { index: number; }) => b.index === skeleton.index);
+
+        const newBlock: Block = {
+            id: randomUUID(),
+            planId: plan.id,
+            userId: plan.userID,
+            orderIndex: skeleton.index,
+            type: aiInfo?.type || "General", // Fallback si l'IA échoue
+            theme: aiInfo?.theme || "Préparation",
+            weekCount: skeleton.duration,
+            startDate: format(currentBlockStartDate, 'yyyy-MM-dd'),
+            weeksId: [], // Sera rempli quand on générera les semaines plus tard
+        };
+
+        blocksToSave.push(newBlock);
+
+        // Avancer la date de début pour le prochain bloc
+        currentBlockStartDate = addWeeks(currentBlockStartDate, skeleton.duration);
+    }
+
+    // 5. Sauvegarde en BDD
+    // await prisma.block.createMany({ data: blocksToSave }); 
+    // OU ta fonction existante :
+    await saveBlocks(blocksToSave);
+
+    return blocksToSave;
 }
 
 
 
+async function callMyAI(prompt: string): Promise<string> {
+    // Stub
+    return JSON.stringify([
+        { index: 1, type: "Base", theme: "Endurance et Technique" },
+        { index: 2, type: "Build", theme: "Seuil et Spécifique" }
+    ])
+}
 
 
 

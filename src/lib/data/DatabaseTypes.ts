@@ -76,7 +76,7 @@ export interface Schedule {
 }
 
 export interface Plan {
-    ID: string;
+    id: string;
     userID: string;
     blocksID: string[];
     name: string;
@@ -87,14 +87,15 @@ export interface Plan {
 }
 
 export interface Block {
-    ID: string;
-    userID: string;
-    weeksID: string[];
-    planID: string;
-    orderIndex: number;
-    theme: string;
-    comment: string;
-    weekCount: number;
+  id: string; // J'ai harmonisé ID -> id (standard JS)
+  planId: string;
+  userId: string;
+  orderIndex: number; // 1, 2, 3...
+  type: string; // "Base", "Build", "Peak", "Race"
+  theme: string; // Généré par IA : "Développement PMA longue"
+  weekCount: number; // Combien de semaines dans ce bloc (souvent 4, parfois moins)
+  startDate: string; // Utile pour savoir quand le bloc commence
+  weeksId: string[]; // IDs des semaines (créés plus tard)
 }
 
 export interface Week {

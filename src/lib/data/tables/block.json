@@ -1,14 +1,24 @@
 [
   {
-    "ID": "c0d5e0de-b30b-451d-9b1a-c254fdda0e20",
-    "userID": "1",
-    "weeksID": [],
-    "planID": "new block"
+    "id": "4ec7f7f7-ccb2-4cf5-93f9-e2ee3ff10afe",
+    "planId": "4639b2d4-7ad9-40ee-b4b6-7a78cfcc6a35",
+    "userId": "666",
+    "orderIndex": 1,
+    "type": "Base",
+    "theme": "Endurance et Technique",
+    "weekCount": 4,
+    "startDate": "2026-02-09",
+    "weeksId": []
   },
   {
-    "ID": "c57589c7-20b6-4dfa-a797-0c20cfba104d",
-    "userID": "1",
-    "weeksID": [],
-    "planID": "new block"
+    "id": "fd4f6d1c-034b-4d5f-b2a6-d514c62d3c5a",
+    "planId": "4639b2d4-7ad9-40ee-b4b6-7a78cfcc6a35",
+    "userId": "666",
+    "orderIndex": 2,
+    "type": "Build",
+    "theme": "Seuil et Spécifique",
+    "weekCount": 5,
+    "startDate": "2026-03-09",
+    "weeksId": []
   }
 ]

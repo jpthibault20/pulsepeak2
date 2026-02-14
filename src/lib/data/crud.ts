@@ -115,7 +115,7 @@ export async function savePlan(plan: Plan[]): Promise<void> {
     await writeJsonFile('plan.json', plan);
 }
 
-export async function saveBlock(blocks: Block[]): Promise<void> {
+export async function saveBlocks(blocks: Block[]): Promise<void> {
     await writeJsonFile('block.json', blocks);
 }   
 
