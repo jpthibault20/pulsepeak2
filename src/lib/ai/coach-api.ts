@@ -2,7 +2,7 @@ import { Profile, Workout, SportType } from "../data/type";
 
 // Lecture de la clé API depuis les variables d'environnement du serveur
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent";
+const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 const MAX_RETRIES = 5;
 
 interface RawAIWorkout {
@@ -154,7 +154,7 @@ FORMAT DE RÉPONSE :
 
     const userPrompt = `
     PROFIL ATHLÈTE:
-    - Sport pratiqué: ${profile.sports.join(', ')}
+    - Sport pratiqué: ${(profile.sports || []).join(', ')}
     - Niveau: ${profile.experience}
     - FTP (Vélo): ${profile.ftp}W
     - Poids: ${profile.weight || '?'}kg

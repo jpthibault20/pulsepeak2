@@ -1,6 +1,6 @@
 {
   "name": "JEANPIERRE Thibault",
-  "ftp": 245,
+  "ftp": 271,
   "experience": "Avancé",
   "goal": "Course sur route (Compétition)",
   "objectiveDate": "",
@@ -9,63 +9,62 @@
   "weeklyAvailability": {
     "Lundi": 0,
     "Mardi": 90,
-    "Mercredi": 0,
-    "Jeudi": 90,
+    "Mercredi": 60,
+    "Jeudi": 120,
     "Vendredi": 0,
     "Samedi": 150,
     "Dimanche": 210
   },
   "weight": 58,
   "powerTests": {
-    "p5min": 310,
+    "p5min": 330,
     "p8min": 0,
     "p15min": 0,
-    "p20min": 261
+    "p20min": 0
   },
   "zones": {
     "z1": {
       "min": 0,
-      "max": 135
+      "max": 149
     },
     "z2": {
-      "min": 137,
-      "max": 184
+      "min": 152,
+      "max": 203
     },
     "z3": {
-      "min": 186,
-      "max": 221
+      "min": 206,
+      "max": 244
     },
     "z4": {
-      "min": 223,
-      "max": 257
+      "min": 247,
+      "max": 285
     },
     "z5": {
-      "min": 260,
-      "max": 294
+      "min": 287,
+      "max": 325
     },
     "z6": {
-      "min": 296,
-      "max": 310
+      "min": 328,
+      "max": 330
     },
     "z7": {
-      "min": 311,
+      "min": 331,
       "max": 2000
     }
   },
   "seasonData": {
-    "calculatedAt": "2026-01-17T21:39:31.239Z",
-    "wPrime": 19600,
-    "criticalPower": 245,
-    "method": "Critical Power Regression",
+    "calculatedAt": "2026-03-03T20:38:39.399Z",
+    "wPrime": 0,
+    "criticalPower": 271,
+    "method": "Single Test Estimation",
     "sourceTests": [
-      "5min",
-      "20min"
+      "5min"
     ]
   },
   "strava": {
-    "accessToken": "3f8d921e93d8e6a31504485c1d641f8b492c9ae9",
+    "accessToken": "b97289b0137b9bb027ba23f95519d204340f3915",
     "refreshToken": "35180b31d539959a45bb305fff0171b412a106fc",
-    "expiresAt": 1769120207,
+    "expiresAt": 1772584398,
     "athleteId": 31596042
   }
 }
