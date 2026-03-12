@@ -3895,7 +3895,7 @@
       "title": "Activation PMA",
       "workoutType": "VO2 Max Intervals",
       "mode": "Indoor",
-      "status": "pending",
+      "status": "completed",
       "plannedData": {
         "durationMinutes": 60,
         "plannedTSS": 75,
@@ -3906,7 +3906,97 @@
         "descriptionOutdoor": "Courte séance d'activation. Concentre-toi sur la fluidité du pédalage et l'engagement musculaire dès les premières répétitions. La clé est la fraîcheur.",
         "descriptionIndoor": "10min Z1 (<149W), 5min Z2 (152-203W) progressive, 3x(1min Z5 @300W / 1min Z1 recovery), 5min Z2 (152-203W), 3x(1min Z5 @300W / 1min Z1 recovery), 15min Z1 (<149W) cool down."
       },
-      "completedData": null
+      "completedData": {
+        "actualDurationMinutes": 60,
+        "distanceKm": 31.32,
+        "perceivedEffort": null,
+        "notes": "",
+        "caloriesBurned": 577,
+        "source": {
+          "type": "strava",
+          "stravaId": 17603428598
+        },
+        "map": {
+          "polyline": "cknhH}u}k@bAeFCk@mAgAwCgE{EeIi`@et@_DmGyF}JiBsDcGeKy@_B]mAw@y@}LoTw@sCyFqWMgANgAAe@Q_@s@e@[w@mEgS_EgPe@kCUmBy@yBwEuSw@uD[iCk@}AcAaEiBwIk@qB}FwWIm@Fg@PWbGcDvWuPri@q]fToNz@_@hBBRK`AcAlAsBh@g@ba@cW`HuEzEcCbOcDzC}@TUAw@u@{BK_AHc@b@[^u@]wDSe@]Kq@Bm@]aAkEU}BAgALmE_@qJB{@PwA@}@u@wK_@wBm@gBg@{@qA}@Q_@Ko@?y@VaANuAXw@^kB?sBG_AqA{DSgAa@uLIw@}HtAgACk@g@uI{Lu@i@{@W}OYuATiDhA{@GKSU_C_@oAsD_JwGmNm@eBaEoDoGsDy@?sB\\oC@}CoBmCsAc@g@s@aCWI[Fo@n@g@lA}@tD]vBSb@i@p@iBpAeDfByIjBgCpBiBhBg@xAkElWo@dB{@hAg@h@i@XoJz@kAh@aCbEcArAeEtD_F|Da@z@WjBSn@eAtAaA|AuDdBkAxAYDoAQu@H_HhEw@TsAJqQMo@Li@f@Yp@M`AHtEMdCoD~Ui@nCwAhF_BnIoApDuAfFe@f@k@B{EsB}@Oe@BiAf@}CrCyA|@_D|@_LzEoBvAiBbBcAnA{A|BcE`FyIbHmDrHe@t@kHfGSZIf@HlCfA~C`@jBx@dFv@zDE|@oAzBmA~Dk@rA_@d@YFgAUqACcCb@yDlBkD|BkEdEiIzO_A|Ba@lBcBtNQj@MJYC{@iBoAsAcYeUsAoA_AqAyXie@USWNExBJtFlAlL`AtPb@bCzAfEXtAP|BZpKRzBb@xBjBzGtBbJlAxHN|AAzEp@xFPNr@EdAu@nCo@fFC\\JLRp@rEnC~JlBpLd@bGz@tNL`AZ~@rFlM`IhM`ItNr@~@fDpC|AdCnArCn@hA~@hAnA`AbCv@rAtAp@b@|Bj@lEbDnB\\rBWr@[Rm@b@_D\\u@TKl@H`BlArAd@bDJ~PjAx@I~LqDrLwCzIaAvCAlAPnF~AvAdAjErE`Al@|@\\vBXdESvADbQtCvJjCxEpBv@RnB@lGyArBGfALvD|At@NzF[bE`@rCv@tAn@xBrAd@v@\\VvD}@lBGPRDP@xFBNdCJb@JrSvNxD~EjF|HbB~CrAdB~@ZjB{Al@WVD~JvUV~BV~@bInR"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 167.4,
+          "maxBPM": 187,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 42,
+            "avgPowerWatts": 161.1,
+            "normalizedPowerWatts": 176,
+            "maxPowerWatts": 516,
+            "intensityFactor": null,
+            "avgCadenceRPM": 87.3,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 288,
+            "avgSpeedKmH": 31.1868,
+            "maxSpeedKmH": 62.568
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
+    },
+    {
+      "id": "strava_17603975340",
+      "date": "2026-03-04",
+      "sportType": "cycling",
+      "title": "Entraînement aux poids en soirée",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 23,
+        "distanceKm": 0,
+        "perceivedEffort": null,
+        "notes": "",
+        "caloriesBurned": 194,
+        "source": {
+          "type": "strava",
+          "stravaId": 17603975340
+        },
+        "map": {
+          "polyline": null
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 104,
+          "maxBPM": 123,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": null,
+            "avgPowerWatts": null,
+            "normalizedPowerWatts": null,
+            "maxPowerWatts": null,
+            "intensityFactor": null,
+            "avgCadenceRPM": null,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 0,
+            "avgSpeedKmH": 0,
+            "maxSpeedKmH": 0
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
     },
     {
       "id": "cycling_20260305_hwigz",
@@ -3929,13 +4019,68 @@
       "completedData": null
     },
     {
+      "id": "strava_17626993668",
+      "date": "2026-03-06",
+      "sportType": "cycling",
+      "title": "Endurance Z2 +",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 119,
+        "distanceKm": 62.85,
+        "perceivedEffort": null,
+        "notes": "Avec de très bonnes jambes",
+        "caloriesBurned": 1422,
+        "source": {
+          "type": "strava",
+          "stravaId": 17626993668
+        },
+        "map": {
+          "polyline": "olnhHkt}k@jBwHxA}Bzf@a`@jCy@td@bAhEjGhGrDvmAr\\pDf@lHQdFqCrNwMpGuCzEYvQAbPZ~FmAtDyBdFmFj@uAvSySr@oFqAyIxFsJw@oF~Gm@dBrDxGf@hCfChAZRl@pEpBnElDhKzCvKvGhCV`GjDnCp@nIxIjNhJhGbApO`FfAmBbE_@hJpAzCGfEoAfGqFrG{CnEiIhJmNpIqIzC_AdBgBvDqI~DeQ|EgC`EgH`CaP|FkLrB}HdAyBvCg@fK~Cl@y@nCcA`CqEGkA_BeCc@kBg@kLq@iGbAeGN}CxAkGTk@bAWlNmk@|BoGtGcJnUoQ`CoC\\gBz@u@nBuE|A_KLwI_A}QsA_o@ZaJzA}NJsFk@aKaDsXMeJbAwO`AkAlCcV[wHa@sBcBeb@NoHv@_GnBkHhMg[~DcFrHuC`Gp@tDi@lDsBbL{LfC{@jIi@D_BmAk@_@s@oB_OdHq_@tHif@gEkA[k@u@cMy@kILyCjAiEaBWyBkBoAj@oAg@DsCn@mEg@_AKsJy@iCsJgIqG_EY\\yHyAyD~BiAiAoC}@yLc@gLaIuCcAoEcIwCoDiCyB`@oHoBgMm@gRc@wBs@kBgBsBkE_As@q@mC_G}BmHmCoTeG{GwDuC|a@gxAxE{NvQch@rLqb@`GmQdYs`AeFeHRqGk@aEr@oDyB_EgCdAyEc@uJaEiEsAwExDmTzCmBnBoAvFmDvAsAOcD{CfDca@iDyYCsMgAuIGcClC_v@|@oOHa@TH~g@trAdVtf@dEjPb@~H]z@qA\\_Fk@mQqGwEvDcFToMdCmBpBmApF_F~AgIoHeIsF{TwZuI{CcKaHsD_@{E\\yDrA{BjBiACw\\l`AcDhGe@bDLvPUb@oRzB{\\hGqUw@cC_AmCcEuC{A}LoAqOgEmJXaLcIyFNk@}@g@mEcAgAYdCmBdAc@bAIpDf@lLSvA{a@cO{O|CgNhD}HJip@t~@_DfC{Cn@_@rCk@pO@|HvAdWdDbWJzEyJhOaFlDoGnCmMzIcE|AVjBzCfFb@bGcBbOq@pXuAjM?tIj@fItEh^lBnXA`GaBvTYjNcKnZaGdVeBjM}@vPmGt]GfK~Cj]oAr]BhMp@pPG`CaCtM_AjB{Mx@YNO|@?jJfAlBJfAs@`d@kA|R}AnFYvCpAfH`@xUxDzYB`CaC`TkCtOe@hLqBbIwAlSkB|K_AnC_CbD{H`G_EtIoBxImAdLU~ENlCqNpi@{@hKsBbKoY`b@}FtNuMde@gQhZmBnEuAbAVtIk@jW`Itv@m@vGpDfE[fC"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 166.5,
+          "maxBPM": 189,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 116,
+            "avgPowerWatts": 199.3,
+            "normalizedPowerWatts": 207,
+            "maxPowerWatts": 736,
+            "intensityFactor": null,
+            "avgCadenceRPM": 88.2,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 644,
+            "avgSpeedKmH": 31.5144,
+            "maxSpeedKmH": 64.00800000000001
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
+    },
+    {
       "id": "cycling_20260307_silt5",
       "date": "2026-03-07",
       "sportType": "cycling",
       "title": "Blocs PMA progressifs",
       "workoutType": "VO2 Max Intervals",
       "mode": "Indoor",
-      "status": "pending",
+      "status": "completed",
       "plannedData": {
         "durationMinutes": 135,
         "plannedTSS": 105,
@@ -3946,7 +4091,97 @@
         "descriptionOutdoor": "Recherche un parcours avec des portions vallonnées pour simuler les efforts de course. Concentre-toi sur la puissance maximale atteignable durant tes intervalles PMA en te relevant de temps en temps. Maintenir un effort constant est clé. Finis fort mais sans être à l'agonie.",
         "descriptionIndoor": "15min Z1 (<149W), 15min Z2 (152-203W) progressive, 2x(5min Z3 @220W / 2min Z1), 3x(3min Z5 @310W / 3min Z1), 10min Z2 (152-203W), 2x(5min Z3 @220W / 2min Z1), 3x(3min Z5 @310W / 3min Z1), 15min Z1 (<149W) cool down."
       },
-      "completedData": null
+      "completedData": {
+        "actualDurationMinutes": 139,
+        "distanceKm": 63.74,
+        "perceivedEffort": null,
+        "notes": "",
+        "caloriesBurned": 1471,
+        "source": {
+          "type": "strava",
+          "stravaId": 17638034069
+        },
+        "map": {
+          "polyline": "_lnhHcv}k@xDeJdi@qb@vl@pAbBxF~CxBhFfWW|M|C`SsHrDea@uIuHxOyDtTcFfE_A_A_CtDgFxC}EwQaC}EaCo@{FzDsBoHmImKkJrNf@pFp@vc@`BzJpBhDdSlQvNtVfNtJhAlGN|OpZj^zCtItBzLxIlMtMp]lCxLxClTxCtBhEsEvFJzKrO|EdBrKhNtDrB~GLY`_@g@tLtA|DpEpGdCnLzH|DI~NrFjMJrQdGja@~F`OtGjJrEdLpAdA~H`AdUnM|G~F|@Yx@xNhEpLvEtI|CrD|WxQxJKz@eAuKwEiCeIoJ}M[mCRqDj@HpF~ItE|CvEv@dSk@jP|CbNbO|@dFBfIhAfDpDjC|EfAdAjCTdDy@lLxB`F{QdU?rMi@rFoIzWmBpNcBfF[|W_CrNmBzDkHpIqEjLiBbLgAdOuCpJyGjM_D`UwClFyA`GW~JdCnQjCnK}CTgWcFqAsCMmGqAiJcCmCsBj@_M|LeDt@eCs@uOcP{ViUq@TJbAtGvKvJlItK`QnQdPnGhJtIvE`X`XvJdGjL~AhLiDdNt@tMkI~Hy@DiAuFmG~EcOdEwHX_Q|BmK|DyG|G_DJw\\nCmKlDsEfCk@|D|AlH~IlDY|@_BzBaNvIuMdEmBtFTtBsAXcQxHuPzE{IM}CoBkDo@aDg@qI^iCtMkB|LtB~@uA{AcQx@aM{@yGHcKrEeOvGwKdME~AyAE{BgBaI`@qMW{OTmErBeG|BmAfF`CzCeD|ChC~FjLhAlHPxK`BtCx@w@rCcO~GaCjDkEg@oBcEJ}BkAkCuKe@uFCaHdBoHk@{KpCqRpB{FgAoMaAeAiAJeEdH{FbFqB\\eAcAeAuDi@aL_BoIQoZmDoPmCoYuAqCoDqBqLB_CkEi@oFlEmTlNqFdGkStKiFlEh@dBzCh@jIOnUhAhBbFiAtEsC~NwNzCt@fA|Dt@m@o@mCwBqC}TxGkAB{@iAdBqZkByVjByKr@kZq@eE_BcDcGqa@{Dp^wDhLqBh@oBy@aCgHqC_DkIUsAlAaDbHu@rM{CeEiEaPmDmDmCl@}B~EiBzIyBZoFyFsBvBeTEqMgKkFeAk[yCyOVuApC_BzU~CvNVtEbNnXF`Bg@LyJ_M}Bw@qCsQgF{L_A_RaCkEmHw@wMjDmFuCmGhD_@~FuEuL{HeGsGqBsBgBmBuDeBwIaIeOoOoPaFkIgGoCgPj@cDsLaFaG_Ii@kIvAqKHuOmC}GyG}LqCuM`H_NfBeI_BaFxD_IhCoB]sAuCa@gKkBuDmDwCcHwAmT}N}E_IaGeTaDsEkHeG_NaWa@oB~@kGBuOkHw\\yByDmAk@yGvDy@wEy@yBmIeKpBeLcAgLRcB"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 158.6,
+          "maxBPM": 186,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 132,
+            "avgPowerWatts": 176.4,
+            "normalizedPowerWatts": 204,
+            "maxPowerWatts": 758,
+            "intensityFactor": null,
+            "avgCadenceRPM": 84.7,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 1098,
+            "avgSpeedKmH": 27.3636,
+            "maxSpeedKmH": 86.328
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
+    },
+    {
+      "id": "strava_17638700141",
+      "date": "2026-03-07",
+      "sportType": "cycling",
+      "title": "Sortie vélo dans l'après-midi",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 19,
+        "distanceKm": 4.74,
+        "perceivedEffort": null,
+        "notes": "",
+        "caloriesBurned": 54,
+        "source": {
+          "type": "strava",
+          "stravaId": 17638700141
+        },
+        "map": {
+          "polyline": "smnhHsr}k@]m@GAAPEWM]HMBWCSKWQW{@[UOe@u@[u@a@y@EOAc@Ka@u@_Bi@k@OSOo@c@iAg@gAgAqCgB_EqC_HgB_E{DiIq@y@i@wAQ{@sFsMkDqHEOBIHBALPNnArBHXVd@Tl@R^Xr@b@~@JJ@A?GM]Oi@yAcCu@{Ak@wAYW?ENRRj@P\\Rh@x@tApAxCLTJH@LD@?KeA_CoCkFUm@GEAACFFPD@?GOIAE@CJLZv@?EOUMYIKKBBL|EfKb@nAh@jAzApDZl@VdAf@pAHLRPJNfBfEdD~GtKbWPd@Rz@n@|@z@vBBV?LGT}@lAa@t@aCvCg@l@w@v@w@~@yBrCKXCN?\\Pf@z@pBxApDlCzFHAHIPa@b@g@x@iBJ_@`@]^u@V_@Xi@La@JENUX{@x@cBVs@Te@Pk@l@{AT[Ne@"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 120.5,
+          "maxBPM": 144,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 2,
+            "avgPowerWatts": 48.8,
+            "normalizedPowerWatts": 66,
+            "maxPowerWatts": 423,
+            "intensityFactor": null,
+            "avgCadenceRPM": 53.4,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 24,
+            "avgSpeedKmH": 14.8752,
+            "maxSpeedKmH": 29.592000000000002
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
     },
     {
       "id": "cycling_20260308_zaymv",
@@ -3955,7 +4190,7 @@
       "title": "Sortie Endurance Fondamentale",
       "workoutType": "Endurance",
       "mode": "Outdoor",
-      "status": "pending",
+      "status": "completed",
       "plannedData": {
         "durationMinutes": 180,
         "plannedTSS": 95,
@@ -3966,36 +4201,159 @@
         "descriptionOutdoor": "Longue sortie à intensité modérée. Choisis un parcours varié mais sans difficultés majeures. L'objectif est d'accumuler du volume en Z2, en gérant ton alimentation et ton hydratation pour soutenir l'effort sur la durée. Garde le contrôle, c'est ta base.",
         "descriptionIndoor": "15min Z1 (<149W), 150min Z2 (152-203W) @170W, 15min Z1 (<149W) cool down."
       },
-      "completedData": null
+      "completedData": {
+        "actualDurationMinutes": 215,
+        "distanceKm": 104.29,
+        "perceivedEffort": null,
+        "notes": "",
+        "caloriesBurned": 2138,
+        "source": {
+          "type": "strava",
+          "stravaId": 17646497510
+        },
+        "map": {
+          "polyline": "slnhHst}k@vBmHyDsFj@mG}H}u@r@w]bC_K|Ro]lTwr@jYsa@nDkV|p@kH|RqIh[sFpBdh@jCrKzInKcAnOlO~OpHnWpP\\pa@x]f`@|SrN_Az@~JdDxAjBvFcGjKxDxPxCcAnM~ErNvM`Xx`@rPhg@jRfHpDfO|NrA`NhLfVhKh]df@Yx`@xArGgAvn@te@~p@pPzL`HrXpFrGbJ`Ub@bI|DqZnDsObGk@lPpIvD`LbHpl@k@jLcJrKrS{Cj@iHbE_@kAcU~BaY~AnW~ElWbDhAhQwFfNbKzCk@uGV|KaApJsOtRxKrYoOrP{DfXf@`CyCjIjIjKi@lA{B]qIvNsMeE_Tp@oCpLdJjE`LfC`@h]mRjAsJjDaE|PjMPtD_DjGh@nCjc@xa@sIlo@UpUpCvPaFtTaBbWtDlDrJq@hHv`@|O\\vMd_@fJ~FQhL`TfEwAvW~FzAzBmQlEdO{CnFr@vBtG}F~B}GeIm]Tw_@yAiZnEaK`@sNhJ}O`HwXBwVfDeTq@sNjQqZhS}HlJuTpJeMfIsUbSkc@jBcU]aMfCuHwIcBuEoMup@yTgF_GtEgb@mCqr@{Osa@aSa[uJaJeI_@_Rmn@sJek@aJgPhSaWpS}o@zLiMfRa[rIoBl@qMrWoEgAgWl@ye@uHAaR_N}X_b@mN}m@eCuGgCs@mFk]eKoViCcNyAek@rBat@kGoEqIm]yGsi@NsZ}E_AjCoXe@id@lCyYyBw[bAk\\gF}Xs@gO{v@x@s^bJgDgz@k`@ocBe@cRhF{z@o@_o@hAgGeBoDe^sNoOgWwHqCkNgTyBkT_i@cH_\\iNeG}HNuS}BiE_GfAiSgHmElDoU~CyD~IsD`BqFqD~Cg`@yF}v@dFoiAeByCah@kKmq@eUwFPmNdJqa@gF_B{G~BqG`L{~@`Aqb@dHoPtDa`@Smn@iIcDg@eHoDmA`BsWaG}BmQ}RmT{\\a]kP}UtJiPuDa@fOgSSm[x`@{N|a@sCp_@_FrIcEdQiHzHsHfXwAhg@sGdTe@jP}E`W|AjH`ELlFjF]`Lp@`o@lFx\\pAbqCsHt[mp@t~@{HhEmA|[hGdx@mLfPsa@pUzEhPmF`bAnJviAiCle@wS~s@kC`]oGf^bDhh@sAj^n@fb@_EhQeOzB@dKlBzBwA~g@sDx[fHb~@qRx~AwTd[}Dn`@uNpk@gDtV{Ypb@gUrt@uW~b@Sda@dI~v@i@jHvDrFqApE"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 156.7,
+          "maxBPM": 184,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 166,
+            "avgPowerWatts": 166.2,
+            "normalizedPowerWatts": 184,
+            "maxPowerWatts": 661,
+            "intensityFactor": null,
+            "avgCadenceRPM": 84.8,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 1440,
+            "avgSpeedKmH": 28.976399999999998,
+            "maxSpeedKmH": 74.664
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
     },
     {
-      "id": "cycling_20260310_p6as2",
-      "date": "2026-03-10",
+      "id": "strava_17651481110",
+      "date": "2026-03-08",
       "sportType": "cycling",
-      "title": "Anaérobie Puissance",
-      "workoutType": "Anaerobic Intervals",
-      "mode": "Indoor",
-      "status": "pending",
+      "title": "Récup",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
       "plannedData": {
-        "durationMinutes": 75,
-        "plannedTSS": 65,
-        "distanceKm": null,
-        "targetPowerWatts": 329,
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
         "targetPaceMinPerKm": null,
         "targetHeartRateBPM": null,
-        "descriptionOutdoor": "Séance courte mais explosive. L'objectif est de générer une puissance maximale sur de courtes durées. Visualise les attaques en course et la capacité à les soutenir.",
-        "descriptionIndoor": "10min Z1 (<149W), 5min Z2 (152-203W), 5min Z3 (206-244W), 5x(1min Z4 @260W / 1min Z1 recovery), 3x(30s Z6 @329W / 90s Z1 recovery), 5min Z2 (152-203W), 3x(30s Z6 @329W / 90s Z1 recovery), 20min Z1 (<149W) cool down."
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
       },
-      "completedData": null
+      "completedData": {
+        "actualDurationMinutes": 187,
+        "distanceKm": 57.15,
+        "perceivedEffort": null,
+        "notes": "",
+        "caloriesBurned": 983,
+        "source": {
+          "type": "strava",
+          "stravaId": 17651481110
+        },
+        "map": {
+          "polyline": "{onhHot}k@?wBeCoBsC}HnAlDgGhJx@hBzCsDpAlCdBRdArAu@lCrAlDe@pDrAlAi@tEtIlKnAnHhALfFqDfAb@rBlDpHl]DvPw@xH`LbTjNtOrCnG|DjNrBrDrG~GjOtJtGjAvDpDhA|Bp@jLtArBjBZvGeC~FyEtFhBvEYtIyA~JiFlDa@|JnCxGjHhKlBfGd@|SwBvFj@pFdH|CzK|Nm@xHbDnEjInOtP|H~NrB~IjChEhI~CfIfGxFzLRgG`G{C|FzCdNeErGdArC~Fr@bPhEpKdDpSvChApJbMDqB}LqW_EsXhB_QxC_FdIw@te@hEpNjLdTW~ByBbAl@v@rDv@n@fCk@rCqKlB{ChBc@rEzBdBjFlArJhCtDPmJfA_FnCmEhEuA`G`ArCbDbChJrAfAnAU~C}Gl@cDDeL~DgRfCbQpGxXw@|ZkBlL~AjVoAfZlA|@xEs@pLiGlBv@rBjGc@Ta@_CqAaBiACeUjRiHlA]qAAi[_DoHkE_@qCdCoGpBqF~RcOzFkDvPIrCz@dGhBvCnLE|CxAjBbDfCvXnDnQVrY~BjWbArDnDx@vGwF`E}GjASlAnA\\tMeB|EkCnRl@tLcBjGGxFb@dGzC~LlBrA|ECTdBoD~DsGzB}CrOs@h@oAiCYoLiAyH}HqMoBmAwCdDmE_CcDhB{BtJXzQWnF`GnQN`HmB~DoHlE}AdD]tD|AfHvCv@pAw@|AeDVgFs@aA}BDyAbEVz@lAAuAYJqBlAaBpBE~@|Ag@hEsBjD{BXsBeCcAkFtAwFnIeGzBgF]wG{FkQGxGfBrIO|BqBx@{KAwHbMuDdMO`Jz@jIs@zL`BhOQjAcAr@eNkB{Ir@sAdBOnBt@lKnClGHbDiOlZYfN_@|DwAp@}H]yBjA_J|MuBxLeBxCcC?mFeHmFwCcCF}DjFmCzJ[`^cGzB_EdGmCnL]`QcEtH}EzNL~AbFbEH~@sIjAqLrH{O{@}LxCyIkA_FgCc]e\\kJsFyGgJsP_OwKeQcJyHiHaMwE}AeSaBwKwFwRsGgDqCaEyJiG{BcKuKkCoG_BlChAjB_IePc@[AnAc@JyDsN{EgI_CnBeQkDkCeBiB}DuAyE^wC_AsXJ}Ny@gNyLyg@iAmBoC_AaHpEiD@cCwB{DwIaAuWgA{ATsHo@}FjAu@EqA{JcZcAgH`@c_@tB{L`NqY`Soy@vFqc@nIeh@`CkB`GfArCeAhBeErCoQhDwHzDcE~GwBrB}BhA_GQ{Kf@eMgDmRwC_[cDuHcRyZkBaSiB}HyDyE{JoDuBsCiB_Mo@{QkBkJyNgK{MuViJ}HkKgMkAmIT_l@iFeMdO{["
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 131.8,
+          "maxBPM": 167,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 48,
+            "avgPowerWatts": 89,
+            "normalizedPowerWatts": 106,
+            "maxPowerWatts": 522,
+            "intensityFactor": null,
+            "avgCadenceRPM": 67.6,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 829,
+            "avgSpeedKmH": 18.306,
+            "maxSpeedKmH": 67.68
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
+    },
+    {
+      "id": "strava_17651928447",
+      "date": "2026-03-08",
+      "sportType": "running",
+      "title": "Course à pied le soir",
+      "workoutType": "Sortie Libre",
+      "mode": "Outdoor",
+      "status": "completed",
+      "plannedData": {
+        "durationMinutes": 0,
+        "targetPowerWatts": null,
+        "targetPaceMinPerKm": null,
+        "targetHeartRateBPM": null,
+        "distanceKm": null,
+        "plannedTSS": null,
+        "descriptionOutdoor": null,
+        "descriptionIndoor": null
+      },
+      "completedData": {
+        "actualDurationMinutes": 16,
+        "distanceKm": 2.99,
+        "perceivedEffort": null,
+        "notes": "",
+        "caloriesBurned": 204,
+        "source": {
+          "type": "strava",
+          "stravaId": 17651928447
+        },
+        "map": {
+          "polyline": "clnhHct}k@QGE??H]p@A?IMMIa@m@IQ@QHc@CSOQe@Sk@a@GM?GU]IY[c@]s@IA@MJQ@QMc@[w@Ui@q@o@KSKWG]K]]}@[i@K_@_@w@mAsCM]KOIYq@wAAM[e@i@}AiAkCgDeHgBaEMOUQIMGC?OIMKc@Q]C[CMaB{Da@y@sAiD}BgFsAoCJLbCpFFFRh@p@zA^dAl@jADTTd@^bARZP^Vp@Lt@p@bBBLPHNPb@|@hBdEj@dAj@vAFFJX`@v@Tn@NRb@jAh@lALb@PZBJXr@d@t@Pt@P^HFFRDBb@fAh@fADT`@|@Rf@Nr@DFHXTVZPJXHLf@jA@L?^LLJ^DVPf@PZZb@LAJRXTDNVRD@H`@Mz@PRRPTb@D@HKXq@"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 145.3,
+          "maxBPM": 159,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": null,
+          "running": {
+            "avgPaceMinPerKm": null,
+            "bestPaceMinPerKm": null,
+            "elevationGainMeters": 14.4,
+            "avgCadenceSPM": null,
+            "maxCadenceSPM": null,
+            "avgSpeedKmH": 10.9224,
+            "maxSpeedKmH": 18.36,
+            "strideLength": null
+          },
+          "swimming": null
+        }
+      }
     },
     {
       "id": "cycling_20260311_zhpsm",
-      "date": "2026-03-11",
+      "date": "2026-03-10",
       "sportType": "cycling",
       "title": "Récupération Active",
       "workoutType": "Recovery",
       "mode": "Indoor",
-      "status": "pending",
+      "status": "completed",
       "plannedData": {
         "durationMinutes": 60,
         "plannedTSS": 20,
@@ -4006,31 +4364,101 @@
         "descriptionOutdoor": "Pédalage très facile et décontracté. Concentre-toi sur la légèreté des jambes et la circulation sanguine. Pas d'effort, juste du mouvement pour favoriser la récupération.",
         "descriptionIndoor": "60min Z1 (<149W) @130W. Cadence légère (90+ rpm), sans forcer."
       },
-      "completedData": null
+      "completedData": {
+        "actualDurationMinutes": 92,
+        "distanceKm": 30.67,
+        "perceivedEffort": null,
+        "notes": "",
+        "caloriesBurned": 589,
+        "source": {
+          "type": "strava",
+          "stravaId": 17675574347
+        },
+        "map": {
+          "polyline": "ymnhHuq}k@wCbGaCjGgA`ByBrElFhMSxl@TxCp@|CbA`CtHxIrGtEdG|I|CfGhDvFbAr@p@z@~GvDhBhCn@pBf@pDA~CnAxO@|AjA`G|@jBfA`AnGhBnBlA|AzAtAdCn@xBj@zC~@lM~@bFrH`MTz@dBrBhChEfDdHbAzEp@|M\\zCxAzDbBA?eAHIl@`DtBfCv@\\n@W~@kBhBaBpAUdBN`BlAhBvDl@~ApClCz@~A`@XlDp@vE~HrB|BrHpDfA?hBy@h@F\\ZTfB?jBu@nFGlBFbEVnE_@zHEjC^~Cd@fBlAbClChD|AlG\\pCt@r@nDb@tAdA^bBC|B_@hDBxBbAlCbCjEf@Zv@BbAs@hB}BxAi@dLh@fLSjB\\~BrAzC`DdBbAxD^fAs@xEsA|HwEfDT~EMdFvA~EJxEvGtCvC`CxAjB\\fB?z@a@\\aATKB`AMdAq@|@mCJi@Vc@rB}@vBJt@`@o@r@uCp@SdBFfEcCd@kA@qDpAcCtBoBjBeC|@_@fCyBfAeBhCcDGe@QO_GhAyA[kAsA[Qy@l@_@LU[BUdA}@lCCvAq@tCiC|B{DxAkArEo@xAqBh@yCCgAw@kC?_AXmDq@gDaCwEsA_DgDoKiByGOgA@iDPqA|@_DPyB[yBeC_FUmCHmBT{Ad@m@bEuAjBLrBtBbAj@xAYnCmAvBGdBgAn@M~B@pAh@z@t@h@v@`A|D`@lFXnI^dAxA|B`AnCnBzIhAlI^n@zBh@xDrEdD`F^?^y@@}@iAiC_McUo@uGyCsNDgCDpC~@fFcAkFE_GPeDc@}GYoAGgAMy@[q@gDuCV}K`@{FpBuHn@u@x@IRUZkM`@_FfAsI@mE]cHu@aIB}@d@e@fGsBlImDfJuCNUw@aG\\s@xAaANu@o@uFgA{FH{DSgHKkAgBqIaBeGaBoDiAoDiBsDkByIiDgYiAuPqAaHy@eJw@_Dy@yAaBgAaDuAqHcBy@c@oC}JqAgGkD{G}CaJiIaNyFsF_E_IgEaFcIaHyEyAoF_CaA@_BnA[OwAeFm@qFa@{AJe@|@o@|@mAzB}E?[gBkFaDyAe@DqAxE]j@i@`@iA@_AhAsClJwC~GgC~CiDzA{HvKoFrEcGtGeIlCgD`ByAPu@`@{GLqDhAcCrAaO`OuBlAcCr@qBPeDGqtAg_@wBeAuBiBsAgBwA}CwN]gAOo@_@qA`@sO]aBj@qf@da@kBfCeDvK"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 127.9,
+          "maxBPM": 181,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 37,
+            "avgPowerWatts": 107.4,
+            "normalizedPowerWatts": 133,
+            "maxPowerWatts": 651,
+            "intensityFactor": null,
+            "avgCadenceRPM": 73.8,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 429,
+            "avgSpeedKmH": 19.8,
+            "maxSpeedKmH": 75.384
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
     },
     {
-      "id": "cycling_20260312_ypiel",
-      "date": "2026-03-12",
+      "id": "cycling_20260310_p6as2",
+      "date": "2026-03-11",
       "sportType": "cycling",
-      "title": "PMA Spécifique Course",
-      "workoutType": "VO2 Max Intervals",
+      "title": "Anaérobie Puissance",
+      "workoutType": "Anaerobic Intervals",
       "mode": "Indoor",
-      "status": "pending",
+      "status": "completed",
       "plannedData": {
-        "durationMinutes": 90,
-        "plannedTSS": 75,
+        "durationMinutes": 75,
+        "plannedTSS": 65,
         "distanceKm": null,
-        "targetPowerWatts": 315,
+        "targetPowerWatts": 329,
         "targetPaceMinPerKm": null,
         "targetHeartRateBPM": null,
-        "descriptionOutdoor": "Prépare-toi pour la course avec des efforts intenses et spécifiques. Visualise les moments clés où il faudra accélérer et maintenir l'effort. C'est le moment d'affûter ta puissance.",
-        "descriptionIndoor": "10min Z1 (<149W), 5min Z2 (152-203W), 5min Z3 (206-244W), 2x(4min Z4 @270W / 2min Z1), 3x(1min Z6 @329W + 3min Z5 @315W / 3min Z1), 10min Z2 (152-203W), 1x(1min Z6 @329W), 15min Z1 (<149W) cool down."
+        "descriptionOutdoor": "Séance courte mais explosive. L'objectif est de générer une puissance maximale sur de courtes durées. Visualise les attaques en course et la capacité à les soutenir.",
+        "descriptionIndoor": "10min Z1 (<149W), 5min Z2 (152-203W), 5min Z3 (206-244W), 5x(1min Z4 @260W / 1min Z1 recovery), 3x(30s Z6 @329W / 90s Z1 recovery), 5min Z2 (152-203W), 3x(30s Z6 @329W / 90s Z1 recovery), 20min Z1 (<149W) cool down."
       },
-      "completedData": null
+      "completedData": {
+        "actualDurationMinutes": 73,
+        "distanceKm": 33.63,
+        "perceivedEffort": null,
+        "notes": "🗺️ Hilltop Hustle in Watopia",
+        "caloriesBurned": 649,
+        "source": {
+          "type": "strava",
+          "stravaId": 17688245977
+        },
+        "map": {
+          "polyline": "r|ofAicbz^gCuAYl@KnDmGBa@m@EaJuDi@SqOd@_@xB?xAu@ZaAe@sCmAkAf@mF{@kEoFkDoCuDkAIgGbAuFoB}DGcBy@c@L@v@tGCfHvB|HaA~CbEhF`Dz@vEi@|ErApA`@hCY|@qAr@wB?s@h@RpOtCXd@b@NvJfHHXkE`@UnHtGBhBaJlCwB_AkB`AqzA?cAUkEoCcAd@y@|FgAr@iAi@OmF_As@eBl@IvEk@t@oAYW{Fw@w@{Aj@QjFa@d@{@YSsFy@eAsA`@HbFe@f@aBuAkASiKJGh@l@^|BmA|GLnBzAp@e@KwEt@o@~@^^tGbA`@j@}@ViFfAYr@v@PlF|@h@dAYNiFp@w@fBb@J~EhAfAxAq@r@mFlAy@lGfD`zAAjC`AzDyBrFeAl@kAYaAgHqGw@b@?~CW\\oGC[kKwDq@MiOb@_@rEu@\\sAe@cCoAcAf@kFeA}EmFgD{CyDkHdAoGsBcEG_Aq@y@DId@VZjGKjHvBpHaA|CzD`FxCfAvEg@tFjA|@h@pCW`AwAx@aDTPdPpDf@HlJV`@`H?PaEZ]hI|Hm@tAuFhAk@p@d@|@jFdAd@f@W|BLrHcAx@wEFaFnCm@jAKjDcBrBc@xHkBpD{@bD}@b@uC@q@r@d@|EqAdDChAdA~@xEt@n@~AMtAaCrEG|C_FxEiHdAm@YaCmF{@SoDlEmHr@e@j@LzAvGfArAbBZpIjA`BiArMn@rBs@hADh@dAr@xDiBr@~BrAxA~BNJdB}JbBKl@f@~B_DhMmE|AiAlCgLrNqAhHuDpB}BvEsGr@kCK_Bg@y@gCi@_@iIl@wC{A{Ei@gDhAkFSiFnC_BxB}@ZeM@{CnCyEp@yBhCe@fCH`CnD|BbArBqA~D}BfA}DmAWsB_Ag@uAIeA|AaAXyC?w@YaAoCk@a@eBC}Br@y@aASwBo@k@yB]}Ah@_Fl@qE{@eBsBoC{@_B}DmDcDc@mGiDmBCoAzAaAi@oCl@MdA`@Va@_@qBoByAc@sAhBsBvDfAbB{@McBd@aCm@cBoByA^_Cx@UbEjBnAmANgChD?tB`BFbB`@j@vTtHvHDp@xA|Al@^`CKp@s@t@uAa@w@TUfCu@\\yDMiAZaDaBoDs@{AnAt@~DWfDjCrBo@lDvA`BzAXzB`BrDgAbBFfAqAOaBRk@"
+        },
+        "laps": [],
+        "heartRate": {
+          "avgBPM": 142.1,
+          "maxBPM": 172,
+          "zoneDistribution": []
+        },
+        "metrics": {
+          "cycling": {
+            "tss": 48,
+            "avgPowerWatts": 154.4,
+            "normalizedPowerWatts": 170,
+            "maxPowerWatts": 367,
+            "intensityFactor": null,
+            "avgCadenceRPM": 85.5,
+            "maxCadenceRPM": null,
+            "elevationGainMeters": 469,
+            "avgSpeedKmH": 27.5256,
+            "maxSpeedKmH": 83.44800000000001
+          },
+          "running": null,
+          "swimming": null
+        }
+      }
     },
     {
       "id": "cycling_20260314_vxgo6",
-      "date": "2026-03-14",
+      "date": "2026-03-13",
       "sportType": "cycling",
       "title": "Activateur Course",
       "workoutType": "Race Prep / Opener",
@@ -4050,7 +4478,7 @@
     },
     {
       "id": "cycling_20260315_3nmvm",
-      "date": "2026-03-15",
+      "date": "2026-03-14",
       "sportType": "cycling",
       "title": "Course Acces 1",
       "workoutType": "Race",
@@ -4070,15 +4498,16 @@
     },
     {
       "id": "cycling_20260317_59ndz",
-      "date": "2026-03-17",
+      "date": "2026-03-15",
       "sportType": "cycling",
       "title": "Récupération Post-Course",
       "workoutType": "Recovery",
       "mode": "Outdoor",
       "status": "pending",
       "plannedData": {
-        "durationMinutes": 60,
-        "plannedTSS": 15,
+        "durationMinutes": 180,
+        "plannedTSS": 90,
+        
         "distanceKm": null,
         "targetPowerWatts": 120,
         "targetPaceMinPerKm": null,
