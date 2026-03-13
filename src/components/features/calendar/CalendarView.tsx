@@ -181,7 +181,7 @@ export function CalendarView({
                         onClick={() => setShowGenModal(true)}
                         disabled={isGenerating}
                     >
-                        Nouveau Bloc
+                        Calculer un nouveau plan
                     </Button>
                 </div>
             </div>

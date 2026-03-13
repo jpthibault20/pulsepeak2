@@ -132,7 +132,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
             setError('Impossible de générer le plan. Réessayez.');
             setIsRefreshing(false);
         }
-    }, [refreshData]);
+    }, [profile.id, refreshData]);
 
     const handleSaveProfile = useCallback(async (data: Profile) => {
         try {

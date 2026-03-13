@@ -66,9 +66,21 @@ export async function CreateNewPlan(
         ? [...existingPlan, newPlan]
         : [newPlan];
 
-    await savePlan(allPlans);
+const result = await generatBlocks(newPlan);
+const blockIds = result.map((block: Block) => block.id);
 
-    await generateMacroPlan(newPlan);
+// Mettre à jour newPlan avec les blockIds
+const updatedPlan = {
+  ...newPlan,
+  blocksID: blockIds,
+};
+
+// Remplacer le plan dans allPlans
+const updatedAllPlans = allPlans.map((plan) =>
+  plan.id === newPlan.id ? updatedPlan : plan
+);
+
+await savePlan(updatedAllPlans);
 }
 
 /******************************************************************************
@@ -80,7 +92,7 @@ export async function CreateNewPlan(
  * output: 
  * - None
  ******************************************************************************/
-export async function generateMacroPlan(plan: Plan) {
+export async function generatBlocks(plan: Plan) {
 
     // 1. Initialisation des dates (On cale tout sur le Lundi)
     const start = startOfISOWeek(new Date(plan.startDate));
