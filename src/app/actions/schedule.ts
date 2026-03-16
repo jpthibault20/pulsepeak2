@@ -14,13 +14,14 @@ import { getStravaActivities, getStravaActivityById } from '@/lib/strava-service
 import { mapStravaToCompletedData } from '@/lib/strava-mapper';
 import { Block, Plan, Profile, Schedule } from '@/lib/data/DatabaseTypes';
 import { randomUUID } from 'crypto';
-import { 
-  differenceInWeeks, 
-  addWeeks, 
-  startOfISOWeek, 
-  endOfISOWeek, 
-  format 
+import {
+    differenceInWeeks,
+    addWeeks,
+    startOfISOWeek,
+    endOfISOWeek,
+    format
 } from 'date-fns';
+import { callGeminiAPI } from '@/lib/ai/coach-api';
 
 
 
@@ -45,6 +46,7 @@ export async function CreateNewPlan(
     userID: string
 ) {
     const existingPlan = await getPlan();
+    const Profile = await getProfile();
 
     // Calculer la date de fin
     const goalDate = new Date(startDate);
@@ -66,10 +68,10 @@ export async function CreateNewPlan(
         ? [...existingPlan, newPlan]
         : [newPlan];
 
-const result = await generatBlocks(newPlan);
+
+const result = await generatBlocks(newPlan, Profile);
 const blockIds = result.map((block: Block) => block.id);
 
-// Mettre à jour newPlan avec les blockIds
 const updatedPlan = {
   ...newPlan,
   blocksID: blockIds,
@@ -92,7 +94,7 @@ await savePlan(updatedAllPlans);
  * output: 
  * - None
  ******************************************************************************/
-export async function generatBlocks(plan: Plan) {
+export async function generatBlocks(plan: Plan, profile: Profile) {
 
     // 1. Initialisation des dates (On cale tout sur le Lundi)
     const start = startOfISOWeek(new Date(plan.startDate));
@@ -131,29 +133,57 @@ export async function generatBlocks(plan: Plan) {
     // 3. Appel à l'IA pour donner du sens à ces coquilles vides
     // On prépare le prompt avec le contexte
     const aiPrompt = `
-    Agis comme un coach de triathlon expert. Je crée un plan pour : ${plan.macroStrategyDescription}.
-    L'objectif est le ${plan.goalDate}.
-    J'ai découpé le temps en ${blockSkeletons.length} blocs.
-    
-    Voici la structure temporelle :
-    ${blockSkeletons.map(b =>
-        `- Bloc ${b.index} : Durée ${b.duration} semaines ${b.isLast ? "(Dernier bloc avant course)" : ""}`
+Tu es un coach de triathlon certifié (ITU Level 3) avec 15 ans d'expérience en périodisation.
+
+## CONTEXTE ATHLÈTE
+- Objectif : ${plan.macroStrategyDescription}
+- Date de course : ${plan.goalDate}
+- Niveau : ${profile.experience ?? "Intermédiaire"} 
+- Volume hebdo actuel : ${"Non spécifié"}h
+- Discipline faible : ${"Non spécifié"}
+
+## STRUCTURE TEMPORELLE
+${blockSkeletons.length} blocs de méso-cycles :
+${blockSkeletons.map(b =>
+        `- Bloc ${b.index} : ${b.duration} semaines${b.isLast ? " (DERNIER → inclut la semaine de course)" : ""}`
     ).join('\n')}
 
-    Tâche : Donne-moi le "type" (Base, Build, Peak, Taper) et un "theme" court pour chaque bloc.
-    Le dernier bloc DOIT être focalisé sur l'affûtage et la course.
-    Les premiers blocs doivent suivre une logique de progression.
+## RÈGLES DE PÉRIODISATION (OBLIGATOIRES)
+1. **Progression logique** : Base → Build → Peak → Taper (dans cet ordre, sans retour en arrière)
+2. **Base** : minimum 30% du nombre total de semaines — construction aérobie et technique
+3. **Build** : intensité progressive, travail spécifique au format de course
+4. **Peak** : volume maximal + simulations course (1-2 blocs max)
+5. **Taper** : le DERNIER bloc uniquement — réduction progressive 40-60% du volume, activation pré-course
+6. Si seulement 2 blocs → Base puis Build+Taper combiné
+7. Si seulement 1 bloc → Taper uniquement
 
-    Réponds UNIQUEMENT en JSON formaté ainsi :
-    [
-      { "index": 1, "type": "Base", "theme": "Endurance Fondamentale & Force" },
-      ...
-    ]
-  `;
+## FORMAT DE RÉPONSE
+Réponds UNIQUEMENT avec un tableau JSON valide, sans markdown, sans explication.
+Chaque objet contient exactement 3 clés :
+- "index" (number) : numéro du bloc
+- "type" (string) : exactement l'un de ["Base", "Build", "Peak", "Taper"]
+- "theme" (string) : objectif principal en 3-6 mots, spécifique au triathlon
+
+Exemple pour 4 blocs :
+[{"index":1,"type":"Base","theme":"Endurance aérobie & technique nage"},{"index":2,"type":"Build","theme":"Seuil & force spécifique vélo"},{"index":3,"type":"Peak","theme":"Simulations course & volume max"},{"index":4,"type":"Taper","theme":"Affûtage & activation pré-course"}]
+
+## RÉPONSE (JSON uniquement) :
+`;
+
 
     // SIMULATION APPEL IA (Remplacer par ton appel réel Gemini/OpenAI)
-    const aiResponse = await callMyAI(aiPrompt);
-    const aiBlocksData = JSON.parse(aiResponse); // On suppose que l'IA renvoie le bon JSON
+const aiResponse = await callGeminiAPI({
+  contents: [
+    {
+      parts: [{ text: aiPrompt }]
+    }
+  ],
+  generationConfig: {
+    temperature: 0.7,
+    maxOutputTokens: 2048,
+    responseMimeType: "application/json",
+  },
+}) as { index: number; type: string; theme: string }[];
 
     // 4. Création des objets Block finaux et sauvegarde
     const blocksToSave: Block[] = [];
@@ -161,7 +191,7 @@ export async function generatBlocks(plan: Plan) {
 
     for (const skeleton of blockSkeletons) {
         // Retrouver les infos données par l'IA pour ce bloc
-        const aiInfo = aiBlocksData.find((b: { index: number; }) => b.index === skeleton.index);
+        const aiInfo = aiResponse.find((b: { index: number; }) => b.index === skeleton.index);
 
         const newBlock: Block = {
             id: randomUUID(),
@@ -181,22 +211,9 @@ export async function generatBlocks(plan: Plan) {
         currentBlockStartDate = addWeeks(currentBlockStartDate, skeleton.duration);
     }
 
-    // 5. Sauvegarde en BDD
-    // await prisma.block.createMany({ data: blocksToSave }); 
-    // OU ta fonction existante :
     await saveBlocks(blocksToSave);
 
     return blocksToSave;
-}
-
-
-
-async function callMyAI(prompt: string): Promise<string> {
-    // Stub
-    return JSON.stringify([
-        { index: 1, type: "Base", theme: "Endurance et Technique" },
-        { index: 2, type: "Build", theme: "Seuil et Spécifique" }
-    ])
 }
 
 

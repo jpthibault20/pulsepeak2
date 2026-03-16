@@ -10,9 +10,9 @@
   "aiPersonality": "Analytique",
   "experience": "Avancé",
   "strava": {
-    "accessToken": "df565bd21d28a82f03601b2a31e5129c8350f035",
+    "accessToken": "811c4817767d10ea1f70dfd1938978da662d7424",
     "refreshToken": "2e4173af55d98b2c4a3e407f998c96b3125c7e34",
-    "expiresAt": 1770400033,
+    "expiresAt": 1773699664,
     "athleteId": 31596042
   },
   "activeSports": {

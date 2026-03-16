@@ -3,7 +3,7 @@ import { Workoutold, SportType } from "../data/type";
 
 // Lecture de la clé API depuis les variables d'environnement du serveur
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent";
+const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 const MAX_RETRIES = 5;
 
 interface RawAIWorkout {
@@ -48,7 +48,7 @@ interface RawAIWorkout {
 }
 
 // Fonction générique pour appeler l'API
-async function callGeminiAPI(payload: unknown) {
+export async function callGeminiAPI(payload: unknown) {
     if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set.");
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {

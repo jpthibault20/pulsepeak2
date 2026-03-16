@@ -58,12 +58,12 @@ export async function writeJsonFile<T>(filename: string, data: T): Promise<void>
 
 
 /* CRUD Get Functions */
-export async function getProfile(): Promise<Profile | null> {
+export async function getProfile(): Promise<Profile > {
     const data = await readJsonFile<Partial<Profile>>('profile.json');
     if (data && data.firstName && data.cycling?.Test?.ftp) {
         return data as Profile;
     }
-    return null;
+    throw new Error("Profile not found");
 }
 
 export async function getSchedule(): Promise<Schedule> {
