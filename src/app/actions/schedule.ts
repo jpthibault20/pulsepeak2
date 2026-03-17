@@ -56,10 +56,10 @@ export async function CreateNewPlan(
         id: randomUUID(),
         userID,
         blocksID: [],
-        name: blockFocus,
+        name: "Spécifique " + blockFocus,
         startDate,
         goalDate: goalDate.toISOString().split('T')[0],
-        macroStrategyDescription: customTheme || "",
+        macroStrategyDescription: customTheme || blockFocus,
         status: "active"
     };
 
@@ -141,7 +141,7 @@ export async function generatBlocks(plan: Plan, profile: Profile) {
     // 3. Appel à l'IA pour donner du sens à ces coquilles vides
     // On prépare le prompt avec le contexte
     const aiPrompt = `
-Tu es un coach de triathlon certifié (ITU Level 3) avec 15 ans d'expérience en périodisation.
+Tu es un coach de ${"cyclisme"}, certifié avec 15 ans d'expérience dans le domaine.
 
 ## CONTEXTE ATHLÈTE
 - Objectif : ${plan.macroStrategyDescription}
@@ -156,24 +156,17 @@ ${blockSkeletons.map(b =>
         `- Bloc ${b.index} : ${b.duration} semaines${b.isLast ? " (DERNIER → inclut la semaine de course)" : ""}`
     ).join('\n')}
 
-## RÈGLES DE PÉRIODISATION (OBLIGATOIRES)
-1. **Progression logique** : Base → Build → Peak → Taper (dans cet ordre, sans retour en arrière)
-2. **Base** : minimum 30% du nombre total de semaines — construction aérobie et technique
-3. **Build** : intensité progressive, travail spécifique au format de course
-4. **Peak** : volume maximal + simulations course (1-2 blocs max)
-5. **Taper** : le DERNIER bloc uniquement — réduction progressive 40-60% du volume, activation pré-course
-6. Si seulement 2 blocs → Base puis Build+Taper combiné
-7. Si seulement 1 bloc → Taper uniquement
+## RÈGLES OBLIGATOIRES
+1. tu dois prendre en compte le profil de l'athlète et son objectif pour définir un thème spécifique à chaque bloc 
+2. tu dois prendre en compte l'historique a disposition pour s'adapter au mieux a l'athlète
+3. Dans le mesure du possible suivre une progression logique progressive et pertinente
+4. Si il n'y a qu'un seul bloc, part du principe que l'athlète a déjà une base et qu'on est dans une logique de préparation spécifique (pas de bloc de base sauf si demandé)
 
-## FORMAT DE RÉPONSE
-Réponds UNIQUEMENT avec un tableau JSON valide, sans markdown, sans explication.
-Chaque objet contient exactement 3 clés :
+
+Chaque objet contient exactement :
 - "index" (number) : numéro du bloc
-- "type" (string) : exactement l'un de ["Base", "Build", "Peak", "Taper"]
-- "theme" (string) : objectif principal en 3-6 mots, spécifique au triathlon
-
-Exemple pour 4 blocs :
-[{"index":1,"type":"Base","theme":"Endurance aérobie & technique nage"},{"index":2,"type":"Build","theme":"Seuil & force spécifique vélo"},{"index":3,"type":"Peak","theme":"Simulations course & volume max"},{"index":4,"type":"Taper","theme":"Affûtage & activation pré-course"}]
+- "type" (string) : l'un de ["Base", "Build", "Peak", "Taper", ${plan.name}]
+- "theme" (string) : objectif principal en 3 à 6 mots, spécifique à ${"cyclisme"}
 
 ## RÉPONSE (JSON uniquement) :
 `;
