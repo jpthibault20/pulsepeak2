@@ -9,10 +9,10 @@
   "weeklyAvailability": {
     "Lundi": 0,
     "Mardi": 90,
-    "Mercredi": 60,
-    "Jeudi": 120,
+    "Mercredi": 90,
+    "Jeudi": 90,
     "Vendredi": 0,
-    "Samedi": 150,
+    "Samedi": 120,
     "Dimanche": 210
   },
   "weight": 58,
@@ -62,9 +62,9 @@
     ]
   },
   "strava": {
-    "accessToken": "e4792e95951ab0c0b39b0960c69a82a4486f00e2",
+    "accessToken": "b6d6d2aafb79f5c3bb879ef89237ed3f9984fe0b",
     "refreshToken": "35180b31d539959a45bb305fff0171b412a106fc",
-    "expiresAt": 1773364857,
+    "expiresAt": 1773797995,
     "athleteId": 31596042
   }
 }
