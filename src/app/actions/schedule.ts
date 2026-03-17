@@ -121,7 +121,15 @@ export async function generatBlocks(plan: Plan, profile: Profile) {
             // Pour éviter d'avoir un bloc de 4 sem + un bloc orphelin de 1 sem.
             duration = weeksRemaining;
             weeksRemaining = 0; // On a tout pris
-            blockSkeletons.push({ index, duration, isLast: true });
+            if (index == 1)
+            {
+                blockSkeletons.push({ index, duration, isLast: false });
+            }
+            else 
+            {
+                blockSkeletons.push({ index, duration, isLast: true });
+            }
+            
         } else {
             // Cas standard
             blockSkeletons.push({ index, duration, isLast: false });
@@ -171,19 +179,18 @@ Exemple pour 4 blocs :
 `;
 
 
-    // SIMULATION APPEL IA (Remplacer par ton appel réel Gemini/OpenAI)
-const aiResponse = await callGeminiAPI({
-  contents: [
-    {
-      parts: [{ text: aiPrompt }]
-    }
-  ],
-  generationConfig: {
-    temperature: 0.7,
-    maxOutputTokens: 2048,
-    responseMimeType: "application/json",
-  },
-}) as { index: number; type: string; theme: string }[];
+    const aiResponse = await callGeminiAPI({
+        contents: [
+            {
+                parts: [{ text: aiPrompt }]
+            }
+        ],
+        generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 2048,
+        responseMimeType: "application/json",
+        },
+    }) as { index: number; type: string; theme: string }[];
 
     // 4. Création des objets Block finaux et sauvegarde
     const blocksToSave: Block[] = [];
