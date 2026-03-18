@@ -56,7 +56,7 @@ export async function CreateNewPlan(
         id: randomUUID(),
         userID,
         blocksID: [],
-        name: "Spécifique " + blockFocus,
+        name: blockFocus,
         startDate,
         goalDate: goalDate.toISOString().split('T')[0],
         macroStrategyDescription: customTheme || blockFocus,
@@ -146,7 +146,7 @@ ${blockSkeletons.map(b =>
 
 Chaque objet contient exactement :
 - "index" (number) : numéro du bloc
-- "type" (string) : l'un de ["Base", "Build", "Peak", "Taper", ${plan.name}]
+- "type" (string) : l'un de ["Base", "Build", "Peak", "Taper"]
 - "theme" (string) : objectif principal en 3 à 6 mots, spécifique à ${"cyclisme"}
 
 ## RÉPONSE (JSON uniquement) :
@@ -167,6 +167,8 @@ Chaque objet contient exactement :
     }) as { index: number; type: string; theme: string }[];
 
     // 4. Création des blocs avec CTL progressive
+    const oldBlocks = await getBlock();
+
     const blocksToSave: Block[] = [];
     let currentBlockStartDate = start;
     let previousTargetCTL = profile.currentCTL; // Point de départ = CTL actuelle du profil
@@ -176,10 +178,10 @@ Chaque objet contient exactement :
 
         // Progression CTL selon le type de bloc
         const ctlProgression: Record<string, number> = {
-            Base:    6,   // +6 CTL sur le bloc
-            Build:   8,   // +8 CTL
-            Peak:    4,   // +4 CTL (volume baisse, intensité monte)
-            Taper:  -4,   // -4 CTL (décharge)
+            Base:    5, 
+            Build:   10,
+            Peak:    5, 
+            Taper:  -15,
         };
         const progression = ctlProgression[aiInfo?.type ?? "Base"] ?? 5;
 
@@ -209,31 +211,28 @@ Chaque objet contient exactement :
 
     // 5. Génération des semaines
     const oldWeeks = await getWeek();
+
     let allNewWeeks: Week[] = Array.isArray(oldWeeks) ? [...oldWeeks] : [];
 
-    const updatedBlocks = await Promise.all(
-        blocksToSave.map(async (block) => {
-            const resultWeeks = await generatWeeks(plan, block, profile);
-            const weeksArray = Array.isArray(resultWeeks) ? resultWeeks : [resultWeeks];
+const updatedBlocks = await Promise.all(
+    blocksToSave.map(async (block) => {
+        const resultWeeks = await generatWeeks(plan, block, profile);
+        const weeksArray = Array.isArray(resultWeeks) ? resultWeeks : [resultWeeks];
 
-            allNewWeeks = [...allNewWeeks, ...weeksArray];
+        allNewWeeks = [...allNewWeeks, ...weeksArray];
 
-            // Recalcul de avgWeeklyTSS réel depuis les TSS des weeks générées
-            const actualAvgWeeklyTSS = Math.round(
-                weeksArray.reduce((sum, w) => sum + w.targetTSS, 0) / weeksArray.length
-            );
+        return {
+            ...block,
+            weeksId: [...block.weeksId, ...weeksArray.map(w => w.id)],
+        };
+    })
+);
 
-            return {
-                ...block,
-                weeksId: weeksArray.map(w => w.id),
-                avgWeeklyTSS: actualAvgWeeklyTSS, // On écrase l'estimation par la valeur réelle
-            };
-        })
-    );
-
-    await saveWeek(allNewWeeks);
-    await saveBlocks(updatedBlocks);
-
+await saveWeek(allNewWeeks);
+await saveBlocks([
+    ...Array.isArray(oldBlocks) ? oldBlocks : [],
+    ...updatedBlocks
+]);
     return updatedBlocks;
 }
 

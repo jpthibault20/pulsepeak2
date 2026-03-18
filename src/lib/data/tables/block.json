@@ -1,1 +1,42 @@
-[]
+[
+  {
+    "id": "2378ecb9-2fae-433f-b782-3dcd42d90f03",
+    "planId": "d5572062-7957-4c1b-b395-0ec98f58d354",
+    "userId": "666",
+    "orderIndex": 1,
+    "type": "Build",
+    "theme": "Optimisation PMA et tolérance lactique",
+    "weekCount": 5,
+    "startDate": "2026-03-16",
+    "weeksId": [
+      "bc0b3fda-d346-4a7b-bde7-3c9a9bea622b",
+      "218d520d-f4ca-487f-88d6-e31b7dc6653f",
+      "cfdcec42-c29c-4d36-97f3-48ae6c022276",
+      "1f81279c-9d2f-4f1f-a2a2-3e06d31841fd",
+      "4ad1a6ba-81d1-4de1-8845-87d1ee583f75"
+    ],
+    "startCTL": 78,
+    "targetCTL": 88,
+    "avgWeeklyTSS": 581
+  },
+  {
+    "id": "f790cbb8-2094-4bad-a44d-03e7eb964cc0",
+    "planId": "5809d1be-2597-4bc0-a587-5f8857fa46af",
+    "userId": "666",
+    "orderIndex": 1,
+    "type": "Build",
+    "theme": "Développement puissance sprint et vélocité maximale",
+    "weekCount": 5,
+    "startDate": "2026-03-16",
+    "weeksId": [
+      "26de8ddb-ea9e-4fc4-8f71-1c040385579f",
+      "01725679-fe2f-4465-bbf3-82d50bcb6b13",
+      "6021433b-fcfb-4653-9d54-5a893c9022ef",
+      "0f6a67ed-758f-4125-8398-e0b813cfb2cf",
+      "dfdc3354-d5b7-4a25-9487-aed56631a8f5"
+    ],
+    "startCTL": 78,
+    "targetCTL": 88,
+    "avgWeeklyTSS": 581
+  }
+]
