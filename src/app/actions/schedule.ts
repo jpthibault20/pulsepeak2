@@ -2,7 +2,7 @@
 
 // Import de la fonction generatePlanFromAI
 import { generatePlanFromAI, generateSingleWorkoutFromAI } from '@/lib/ai/coach-api';
-import { getBlock, getPlan, getProfile, getSchedule, saveBlocks, savePlan, saveProfile, saveSchedule } from '@/lib/data/crud';
+import { getBlock, getPlan, getProfile, getSchedule, getWeek, saveBlocks, savePlan, saveProfile, saveSchedule } from '@/lib/data/crud';
 import { Workoutold } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
 // lib/actions/workoutActions.ts
@@ -36,7 +36,7 @@ import { callGeminiAPI } from '@/lib/ai/coach-api';
  * - numWeeks: Nombre de semaines pour le plan
  * - userID: ID de l'utilisateur
  * output: 
- * - None
+ * - plan
  ******************************************************************************/
 export async function CreateNewPlan(
     blockFocus: string,
@@ -92,7 +92,7 @@ await savePlan(updatedAllPlans);
  * - userID: ID de l'utilisateur
  * - planID: ID du plan
  * output: 
- * - None
+ * - blocks[]
  ******************************************************************************/
 export async function generatBlocks(plan: Plan, profile: Profile) {
 
@@ -137,9 +137,7 @@ export async function generatBlocks(plan: Plan, profile: Profile) {
         }
         index++;
     }
-
-    // 3. Appel à l'IA pour donner du sens à ces coquilles vides
-    // On prépare le prompt avec le contexte
+// @TODO: remplacer les spécification au cyclisme en adaptatif au triathlon 
     const aiPrompt = `
 Tu es un coach de ${"cyclisme"}, certifié avec 15 ans d'expérience dans le domaine.
 
@@ -211,13 +209,38 @@ Chaque objet contient exactement :
         currentBlockStartDate = addWeeks(currentBlockStartDate, skeleton.duration);
     }
 
+    
+    let newBlock;
+
+    // Génération des semaines pour chaque blocks 
+    blocksToSave.forEach(async block => {
+
+        const oldWeeks = await getWeek();
+        const resultWeeks = await generatWeeks(plan, block, profile);
+
+        newBlock = Array.isArray(oldWeeks)
+        ? [...oldWeeks, resultWeeks]
+        : [resultWeeks];
+
+    });
+    
     await saveBlocks(blocksToSave);
 
     return blocksToSave;
 }
 
 
-
+/******************************************************************************
+ * function: createWeeks
+ * brrief: Création des différentes semaines.
+ * input: 
+ * - user: utilisateur
+ * - plan: plan
+ * output: 
+ * - weeks
+ ******************************************************************************/
+export async function generatWeeks(plan: Plan, block: Block, profile: Profile) {
+}
 
 
 
