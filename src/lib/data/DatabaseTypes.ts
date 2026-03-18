@@ -16,6 +16,8 @@ export interface Profile {
     weight?: number;
     height?: number;
     experience: 'Débutant' | 'Intermédiaire' | 'Avancé' | string;
+    currentCTL: number;        // CTL au démarrage du plan (ex: 50)
+    currentATL: number;        // fatigue court terme (7 jours)
     activeSports: {
         swimming: boolean;
         cycling: boolean;
@@ -96,10 +98,13 @@ export interface Block {
   weekCount: number; // Combien de semaines dans ce bloc (souvent 4, parfois moins)
   startDate: string; // Utile pour savoir quand le bloc commence
   weeksId: string[]; // IDs des semaines (créés plus tard)
+  startCTL: number;          // CTL visée en début de bloc
+  targetCTL: number;         // CTL visée en fin de bloc
+  avgWeeklyTSS: number;      // TSS hebdo moyen du bloc (calculé)
 }
 
 export interface Week {
-    ID: string;
+    id: string;
     userID: string;
     workoutsID: string[];
     blockID: string;

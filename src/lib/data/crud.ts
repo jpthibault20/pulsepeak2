@@ -119,7 +119,7 @@ export async function saveBlocks(blocks: Block[]): Promise<void> {
     await writeJsonFile('block.json', blocks);
 }   
 
-export async function saveWeek(week: Week): Promise<void> {
+export async function saveWeek(week: Week[]): Promise<void> {
     await writeJsonFile('week.json', week);
 }
 

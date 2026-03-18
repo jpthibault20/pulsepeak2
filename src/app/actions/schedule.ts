@@ -2,7 +2,7 @@
 
 // Import de la fonction generatePlanFromAI
 import { generatePlanFromAI, generateSingleWorkoutFromAI } from '@/lib/ai/coach-api';
-import { getBlock, getPlan, getProfile, getSchedule, getWeek, saveBlocks, savePlan, saveProfile, saveSchedule } from '@/lib/data/crud';
+import { getBlock, getPlan, getProfile, getSchedule, getWeek, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek } from '@/lib/data/crud';
 import { Workoutold } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
 // lib/actions/workoutActions.ts
@@ -12,7 +12,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { getStravaActivities, getStravaActivityById } from '@/lib/strava-service';
 import { mapStravaToCompletedData } from '@/lib/strava-mapper';
-import { Block, Plan, Profile, Schedule } from '@/lib/data/DatabaseTypes';
+import { Block, Plan, Profile, Schedule, Week } from '@/lib/data/DatabaseTypes';
 import { randomUUID } from 'crypto';
 import {
     differenceInWeeks,
@@ -96,42 +96,25 @@ await savePlan(updatedAllPlans);
  ******************************************************************************/
 export async function generatBlocks(plan: Plan, profile: Profile) {
 
-    // 1. Initialisation des dates (On cale tout sur le Lundi)
+    // 1. Initialisation des dates
     const start = startOfISOWeek(new Date(plan.startDate));
-    const goal = endOfISOWeek(new Date(plan.goalDate)); // Fin de la semaine de l'objectif
-
-    // Nombre total de semaines disponibles
-    const totalWeeks = differenceInWeeks(goal, start) + 1; // +1 pour inclure la semaine de fin
+    const goal = endOfISOWeek(new Date(plan.goalDate));
+    const totalWeeks = differenceInWeeks(goal, start) + 1;
 
     if (totalWeeks < 1) throw new Error("Le plan est trop court !");
 
-    // 2. Découpage en tranches de 4 semaines (Cycle classique 3+1)
-    // On part du début vers la fin.
+    // 2. Découpage en blocs
     const blockSkeletons: { index: number; duration: number; isLast: boolean }[] = [];
-
     let weeksRemaining = totalWeeks;
     let index = 1;
 
     while (weeksRemaining > 0) {
         let duration = 4;
-
-        // Gestion de la fin de plan (Affûtage / Race logic)
         if (weeksRemaining <= 5) {
-            // S'il reste 5 semaines ou moins, on fait un seul dernier bloc "Pic/Course"
-            // Pour éviter d'avoir un bloc de 4 sem + un bloc orphelin de 1 sem.
             duration = weeksRemaining;
-            weeksRemaining = 0; // On a tout pris
-            if (index == 1)
-            {
-                blockSkeletons.push({ index, duration, isLast: false });
-            }
-            else 
-            {
-                blockSkeletons.push({ index, duration, isLast: true });
-            }
-            
+            weeksRemaining = 0;
+            blockSkeletons.push({ index, duration, isLast: index === 1 ? false : true });
         } else {
-            // Cas standard
             blockSkeletons.push({ index, duration, isLast: false });
             weeksRemaining -= 4;
         }
@@ -183,52 +166,76 @@ Chaque objet contient exactement :
         },
     }) as { index: number; type: string; theme: string }[];
 
-    // 4. Création des objets Block finaux et sauvegarde
+    // 4. Création des blocs avec CTL progressive
     const blocksToSave: Block[] = [];
     let currentBlockStartDate = start;
+    let previousTargetCTL = profile.currentCTL; // Point de départ = CTL actuelle du profil
 
     for (const skeleton of blockSkeletons) {
-        // Retrouver les infos données par l'IA pour ce bloc
-        const aiInfo = aiResponse.find((b: { index: number; }) => b.index === skeleton.index);
+        const aiInfo = aiResponse.find(b => b.index === skeleton.index);
+
+        // Progression CTL selon le type de bloc
+        const ctlProgression: Record<string, number> = {
+            Base:    6,   // +6 CTL sur le bloc
+            Build:   8,   // +8 CTL
+            Peak:    4,   // +4 CTL (volume baisse, intensité monte)
+            Taper:  -4,   // -4 CTL (décharge)
+        };
+        const progression = ctlProgression[aiInfo?.type ?? "Base"] ?? 5;
+
+        const startCTL = previousTargetCTL;
+        const targetCTL = startCTL + progression;
+        const avgWeeklyTSS = Math.round(((startCTL + targetCTL) / 2) * 7); // CTL moy * 7j
 
         const newBlock: Block = {
             id: randomUUID(),
             planId: plan.id,
             userId: plan.userID,
             orderIndex: skeleton.index,
-            type: aiInfo?.type || "General", // Fallback si l'IA échoue
+            type: aiInfo?.type || "General",
             theme: aiInfo?.theme || "Préparation",
             weekCount: skeleton.duration,
             startDate: format(currentBlockStartDate, 'yyyy-MM-dd'),
-            weeksId: [], // Sera rempli quand on générera les semaines plus tard
+            weeksId: [],
+            startCTL,
+            targetCTL,
+            avgWeeklyTSS,
         };
 
         blocksToSave.push(newBlock);
-
-        // Avancer la date de début pour le prochain bloc
+        previousTargetCTL = targetCTL; // Le prochain bloc part d'où celui-ci s'arrête
         currentBlockStartDate = addWeeks(currentBlockStartDate, skeleton.duration);
     }
 
-    
-    let newBlock;
+    // 5. Génération des semaines
+    const oldWeeks = await getWeek();
+    let allNewWeeks: Week[] = Array.isArray(oldWeeks) ? [...oldWeeks] : [];
 
-    // Génération des semaines pour chaque blocks 
-    blocksToSave.forEach(async block => {
+    const updatedBlocks = await Promise.all(
+        blocksToSave.map(async (block) => {
+            const resultWeeks = await generatWeeks(plan, block, profile);
+            const weeksArray = Array.isArray(resultWeeks) ? resultWeeks : [resultWeeks];
 
-        const oldWeeks = await getWeek();
-        const resultWeeks = await generatWeeks(plan, block, profile);
+            allNewWeeks = [...allNewWeeks, ...weeksArray];
 
-        newBlock = Array.isArray(oldWeeks)
-        ? [...oldWeeks, resultWeeks]
-        : [resultWeeks];
+            // Recalcul de avgWeeklyTSS réel depuis les TSS des weeks générées
+            const actualAvgWeeklyTSS = Math.round(
+                weeksArray.reduce((sum, w) => sum + w.targetTSS, 0) / weeksArray.length
+            );
 
-    });
-    
-    await saveBlocks(blocksToSave);
+            return {
+                ...block,
+                weeksId: weeksArray.map(w => w.id),
+                avgWeeklyTSS: actualAvgWeeklyTSS, // On écrase l'estimation par la valeur réelle
+            };
+        })
+    );
 
-    return blocksToSave;
+    await saveWeek(allNewWeeks);
+    await saveBlocks(updatedBlocks);
+
+    return updatedBlocks;
 }
-
 
 /******************************************************************************
  * function: createWeeks
@@ -239,7 +246,34 @@ Chaque objet contient exactement :
  * output: 
  * - weeks
  ******************************************************************************/
-export async function generatWeeks(plan: Plan, block: Block, profile: Profile) {
+export async function generatWeeks(plan: Plan, block: Block, profile: Profile): Promise<Week[]> {
+    const weeks: Week[] = await Promise.all(
+        Array.from({ length: block.weekCount }, async (_, i) => {
+            /* provisoire */
+            const weekNumber = i + 1;
+            const isLastWeek = weekNumber === block.weekCount;
+            const baseTSS = 200;
+            const progressionPerWeek = 20;
+
+            const week: Week = {
+                id: randomUUID(),
+                userID: profile.id,
+                workoutsID: [],
+                blockID: block.id,
+                weekNumber,
+                type: isLastWeek ? 'Recovery' : 'Load',
+                targetTSS: isLastWeek
+                    ? baseTSS + progressionPerWeek * (weekNumber - 1) - 20
+                    : baseTSS + progressionPerWeek * (weekNumber - 1),
+                actualTSS: 0,
+                userFeedback: "Test développement !",
+            };
+
+            return week;
+        })
+    );
+
+    return weeks;
 }
 
 
