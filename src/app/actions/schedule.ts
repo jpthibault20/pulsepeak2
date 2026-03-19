@@ -26,6 +26,25 @@ import { callGeminiAPI } from '@/lib/ai/coach-api';
 
 
 
+
+export async function GenerateAdvancedPlan(
+    blockFocus: string,
+    customTheme: string | null,
+    startDate: string,
+    numWeeks: number,
+    userID: string
+)
+{
+
+    /* 1. Check valid parameters    */
+
+    /* 2. Create new plan    */
+
+    /* 3. Ccreate new block(s)   */
+
+    /* 4. Create new week(s)    */
+
+}
 /******************************************************************************
  * function: CreateNewPlan
  * brrief: Création d'un nouveau training plan basé sur les inputs de l'utilisateur.
@@ -45,7 +64,7 @@ export async function CreateNewPlan(
     numWeeks: number,
     userID: string
 ) {
-    const existingPlan = await getPlan();
+    const oldPlans = await getPlan();
     const Profile = await getProfile();
 
     // Calculer la date de fin
@@ -63,26 +82,16 @@ export async function CreateNewPlan(
         status: "active"
     };
 
-    // Combiner les plans existants avec le nouveau
-    const allPlans = Array.isArray(existingPlan)
-        ? [...existingPlan, newPlan]
+    const result = await generatBlocks(newPlan, Profile);
+    const blockIds = result.map((block: Block) => block.id);
+
+    newPlan.blocksID = blockIds;
+
+    const allPlans = Array.isArray(oldPlans)
+        ? [...oldPlans, newPlan]
         : [newPlan];
 
-
-const result = await generatBlocks(newPlan, Profile);
-const blockIds = result.map((block: Block) => block.id);
-
-const updatedPlan = {
-  ...newPlan,
-  blocksID: blockIds,
-};
-
-// Remplacer le plan dans allPlans
-const updatedAllPlans = allPlans.map((plan) =>
-  plan.id === newPlan.id ? updatedPlan : plan
-);
-
-await savePlan(updatedAllPlans);
+    await savePlan(allPlans);
 }
 
 /******************************************************************************
@@ -101,8 +110,6 @@ export async function generatBlocks(plan: Plan, profile: Profile) {
     const goal = endOfISOWeek(new Date(plan.goalDate));
     const totalWeeks = differenceInWeeks(goal, start) + 1;
 
-    if (totalWeeks < 1) throw new Error("Le plan est trop court !");
-
     // 2. Découpage en blocs
     const blockSkeletons: { index: number; duration: number; isLast: boolean }[] = [];
     let weeksRemaining = totalWeeks;
@@ -120,37 +127,39 @@ export async function generatBlocks(plan: Plan, profile: Profile) {
         }
         index++;
     }
+
+    // 3. création du prompte + demande IA
 // @TODO: remplacer les spécification au cyclisme en adaptatif au triathlon 
     const aiPrompt = `
-Tu es un coach de ${"cyclisme"}, certifié avec 15 ans d'expérience dans le domaine.
+        Tu es un coach de ${"cyclisme"}, certifié avec 15 ans d'expérience dans le domaine.
 
-## CONTEXTE ATHLÈTE
-- Objectif : ${plan.macroStrategyDescription}
-- Date de course : ${plan.goalDate}
-- Niveau : ${profile.experience ?? "Intermédiaire"} 
-- Volume hebdo actuel : ${"Non spécifié"}h
-- Discipline faible : ${"Non spécifié"}
+        ## CONTEXTE ATHLÈTE
+        - Objectif : ${plan.macroStrategyDescription}
+        - Date de course : ${plan.goalDate}
+        - Niveau : ${profile.experience ?? "Intermédiaire"} 
+        - Volume hebdo actuel : ${"Non spécifié"}h
+        - Discipline faible : ${"Non spécifié"}
 
-## STRUCTURE TEMPORELLE
-${blockSkeletons.length} blocs de méso-cycles :
-${blockSkeletons.map(b =>
-        `- Bloc ${b.index} : ${b.duration} semaines${b.isLast ? " (DERNIER → inclut la semaine de course)" : ""}`
-    ).join('\n')}
+        ## STRUCTURE TEMPORELLE
+        ${blockSkeletons.length} blocs de méso-cycles :
+        ${blockSkeletons.map(b =>
+                `- Bloc ${b.index} : ${b.duration} semaines${b.isLast ? " (DERNIER → inclut la semaine de course)" : ""}`
+            ).join('\n')}
 
-## RÈGLES OBLIGATOIRES
-1. tu dois prendre en compte le profil de l'athlète et son objectif pour définir un thème spécifique à chaque bloc 
-2. tu dois prendre en compte l'historique a disposition pour s'adapter au mieux a l'athlète
-3. Dans le mesure du possible suivre une progression logique progressive et pertinente
-4. Si il n'y a qu'un seul bloc, part du principe que l'athlète a déjà une base et qu'on est dans une logique de préparation spécifique (pas de bloc de base sauf si demandé)
+        ## RÈGLES OBLIGATOIRES
+        1. tu dois prendre en compte le profil de l'athlète et son objectif pour définir un thème spécifique à chaque bloc 
+        2. tu dois prendre en compte l'historique a disposition pour s'adapter au mieux a l'athlète
+        3. Dans le mesure du possible suivre une progression logique progressive et pertinente
+        4. Si il n'y a qu'un seul bloc, part du principe que l'athlète a déjà une base et qu'on est dans une logique de préparation spécifique (pas de bloc de base sauf si demandé)
 
 
-Chaque objet contient exactement :
-- "index" (number) : numéro du bloc
-- "type" (string) : l'un de ["Base", "Build", "Peak", "Taper"]
-- "theme" (string) : objectif principal en 3 à 6 mots, spécifique à ${"cyclisme"}
+        Chaque objet contient exactement :
+        - "index" (number) : numéro du bloc
+        - "type" (string) : l'un de ["Base", "Build", "Peak", "Taper"]
+        - "theme" (string) : objectif principal en 3 à 6 mots, spécifique à ${"cyclisme"}
 
-## RÉPONSE (JSON uniquement) :
-`;
+        ## RÉPONSE (JSON uniquement) :
+        `;
 
 
     const aiResponse = await callGeminiAPI({
@@ -171,12 +180,11 @@ Chaque objet contient exactement :
 
     const blocksToSave: Block[] = [];
     let currentBlockStartDate = start;
-    let previousTargetCTL = profile.currentCTL; // Point de départ = CTL actuelle du profil
+    let previousTargetCTL = profile.currentCTL; 
 
     for (const skeleton of blockSkeletons) {
         const aiInfo = aiResponse.find(b => b.index === skeleton.index);
 
-        // Progression CTL selon le type de bloc
         const ctlProgression: Record<string, number> = {
             Base:    5, 
             Build:   10,
@@ -205,34 +213,38 @@ Chaque objet contient exactement :
         };
 
         blocksToSave.push(newBlock);
-        previousTargetCTL = targetCTL; // Le prochain bloc part d'où celui-ci s'arrête
+        previousTargetCTL = targetCTL; 
         currentBlockStartDate = addWeeks(currentBlockStartDate, skeleton.duration);
     }
 
     // 5. Génération des semaines
     const oldWeeks = await getWeek();
+    let allNewWeeks: Week[] = [];
 
-    let allNewWeeks: Week[] = Array.isArray(oldWeeks) ? [...oldWeeks] : [];
+    const updatedBlocks = await Promise.all( // mise a jour des IDs des semaines dans les blocks
+        blocksToSave.map(async (block) => {
+            const resultWeeks = await generatWeeks(plan, block, profile);
+            const weeksArray = Array.isArray(resultWeeks) ? resultWeeks : [resultWeeks];
 
-const updatedBlocks = await Promise.all(
-    blocksToSave.map(async (block) => {
-        const resultWeeks = await generatWeeks(plan, block, profile);
-        const weeksArray = Array.isArray(resultWeeks) ? resultWeeks : [resultWeeks];
+            allNewWeeks = [...allNewWeeks, ...weeksArray];
 
-        allNewWeeks = [...allNewWeeks, ...weeksArray];
+            return {
+                ...block,
+                weeksId: [...block.weeksId, ...weeksArray.map(w => w.id)],
+            };
+        })
+    );
 
-        return {
-            ...block,
-            weeksId: [...block.weeksId, ...weeksArray.map(w => w.id)],
-        };
-    })
-);
+    // 5. Enregistrement
+    await saveWeek([
+        ...Array.isArray(oldWeeks) ? oldWeeks : [],
+        ...allNewWeeks
+    ]);
+    await saveBlocks([
+        ...Array.isArray(oldBlocks) ? oldBlocks : [],
+        ...updatedBlocks
+    ]);
 
-await saveWeek(allNewWeeks);
-await saveBlocks([
-    ...Array.isArray(oldBlocks) ? oldBlocks : [],
-    ...updatedBlocks
-]);
     return updatedBlocks;
 }
 
@@ -242,6 +254,7 @@ await saveBlocks([
  * input: 
  * - user: utilisateur
  * - plan: plan
+ * - block: block theme de travail
  * output: 
  * - weeks
  ******************************************************************************/

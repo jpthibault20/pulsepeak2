@@ -5,7 +5,7 @@ import React, { useState, useCallback } from 'react';
 // Import des Server Actions
 import {
     saveAthleteProfile,
-    CreateNewPlan,
+    GenerateAdvancedPlan,
     updateWorkoutStatus,
     toggleWorkoutMode,
     moveWorkout,
@@ -125,7 +125,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
     ) => {
         try {
             setIsRefreshing(true);
-            await CreateNewPlan(blockFocus, customTheme, startDate, numWeeks, profile.id);
+            await GenerateAdvancedPlan(blockFocus, customTheme, startDate, numWeeks, profile.id);
             await refreshData();
         } catch (e) {
             console.error('Erreur génération plan:', e);
