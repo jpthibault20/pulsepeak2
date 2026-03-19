@@ -259,13 +259,31 @@ export async function generatBlocks(plan: Plan, profile: Profile) {
  * - weeks
  ******************************************************************************/
 export async function generatWeeks(plan: Plan, block: Block, profile: Profile): Promise<Week[]> {
+    const hasRecoveryWeek = block.weekCount > 3;
+
+    const startWeeklyTSS = block.startCTL * 7;
+    const targetWeeklyTSS = block.targetCTL * 7;
+// NOK
+    // Nombre de semaines de charge (toutes sauf la dernière si récupération)
+    const loadWeeksCount = hasRecoveryWeek ? block.weekCount - 1 : block.weekCount;
+    const progressionPerWeek = loadWeeksCount > 1
+        ? (targetWeeklyTSS - startWeeklyTSS) / (loadWeeksCount - 1)
+        : 0;
+
     const weeks: Week[] = await Promise.all(
         Array.from({ length: block.weekCount }, async (_, i) => {
-            /* provisoire */
             const weekNumber = i + 1;
-            const isLastWeek = weekNumber === block.weekCount;
-            const baseTSS = 200;
-            const progressionPerWeek = 20;
+            const isRecoveryWeek = hasRecoveryWeek && weekNumber === block.weekCount;
+
+            let targetTSS: number;
+
+            if (isRecoveryWeek) {
+                // Semaine de récupération : -10% du TSS de départ du bloc
+                targetTSS = Math.round(startWeeklyTSS * 0.9);
+            } else {
+                // Progression linéaire entre startCTL et targetCTL
+                targetTSS = Math.round(startWeeklyTSS + progressionPerWeek * (weekNumber - 1));
+            }
 
             const week: Week = {
                 id: randomUUID(),
@@ -273,12 +291,10 @@ export async function generatWeeks(plan: Plan, block: Block, profile: Profile): 
                 workoutsID: [],
                 blockID: block.id,
                 weekNumber,
-                type: isLastWeek ? 'Recovery' : 'Load',
-                targetTSS: isLastWeek
-                    ? baseTSS + progressionPerWeek * (weekNumber - 1) - 20
-                    : baseTSS + progressionPerWeek * (weekNumber - 1),
+                type: isRecoveryWeek ? 'Recovery' : 'Load',
+                targetTSS,
                 actualTSS: 0,
-                userFeedback: "Test développement !",
+                userFeedback: "",
             };
 
             return week;
