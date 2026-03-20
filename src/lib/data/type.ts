@@ -1,5 +1,12 @@
 export type aiPersonality = 'Strict' | 'Encourageant' | 'Analytique';
 
+export enum ReturnCode {
+  RC_OK,
+  RC_Warning,
+  RC_Error,
+  RC_Undefined
+}
+
 export interface AvailabilitySlot {
   swimming: number;
   cycling: number;
