@@ -1,15 +1,15 @@
 'use server';
 
 import { generatePlanFromAI, generateSingleWorkoutFromAI } from '@/lib/ai/coach-api';
-import { getBlock, getPlan, getProfile, getSchedule, getWeek, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek } from '@/lib/data/crud';
+import { getBlock, getPlan, getProfile, getSchedule, getWeek, getWorkout, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek, saveWorkout } from '@/lib/data/crud';
 import { ReturnCode, Workoutold } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
-import type { CompletedData, CompletedDataFeedback } from '@/lib/data/type';
+import type { AvailabilitySlot, CompletedData, CompletedDataFeedback, SportType } from '@/lib/data/type';
 import fs from 'fs/promises';
 import path from 'path';
 import { getStravaActivities, getStravaActivityById } from '@/lib/strava-service';
 import { mapStravaToCompletedData } from '@/lib/strava-mapper';
-import { Block, Plan, Profile, Schedule, Week } from '@/lib/data/DatabaseTypes';
+import { Block, Plan, Profile, Schedule, Week, Workout } from '@/lib/data/DatabaseTypes';
 import { randomUUID } from 'crypto';
 import {
     differenceInWeeks,
@@ -20,7 +20,7 @@ import {
 } from 'date-fns';
 import { callGeminiAPI } from '@/lib/ai/coach-api';
 import { CTL_PROGRESSION, RECOVERY_WEEK_THRESHOLD, RECOVERY_TSS_RATIO } from './constants';
-import { computeBlockSkeletons, computeWeeklyTSS } from './helpers';
+import { computeBlockSkeletons, computeWeeklyTSS, formatAvailability, getActiveSports } from './helpers';
 
 
 
@@ -50,11 +50,12 @@ export async function CreateAdvancedPlan(
     if (numWeeks <= 0)      return { state: ReturnCode.RC_Error, error: "Nombre de semaines invalide" };
     if (userID.length < 3)  return { state: ReturnCode.RC_Error, error: "ID utilisateur invalide" }; // ✅ corrigé
 
-    const [plan, profile, existingBlocks, existingWeeks] = await Promise.all([
+    const [plan, profile, existingBlocks, existingWeeks, existingWorkouts] = await Promise.all([
         getPlan(),
         getProfile(),
         getBlock(),
         getWeek(),
+        getWorkout(),
     ]);
 
     // Création du plan
@@ -74,11 +75,21 @@ export async function CreateAdvancedPlan(
         })
     );
 
+    const newWorkouts: Workout[] = [];
+    const updatedWeeks = await Promise.all(
+        newWeeks.map(async (week) => {
+            const workouts = await CreateWorkoutForWeek(profile, newPlan, newBlocks[0], week, null, 100, profile.weeklyAvailability);
+            newWorkouts.push(...workouts);
+            return { ...week, workoutsId: workouts.map(w => w.id) };
+        })
+    );
+
     // Sauvegarde
     await Promise.all([
         savePlan([...(Array.isArray(plan) ? plan : []), newPlan]),
         saveBlocks([...(Array.isArray(existingBlocks) ? existingBlocks : []), ...updatedBlocks]),
-        saveWeek([...(Array.isArray(existingWeeks) ? existingWeeks : []), ...newWeeks]),
+        saveWeek([...(Array.isArray(existingWeeks) ? existingWeeks : []), ...updatedWeeks]),
+        saveWorkout([...(Array.isArray(existingWorkouts) ? existingWorkouts : []), ...newWorkouts]),
     ]);
 
     return { state: ReturnCode.RC_OK };
@@ -135,7 +146,7 @@ function CreatePlan(
  * - Block[] : tableau de blocs ordonnés, avec CTL, TSS et thème renseignés
  *             (weeksId vide, sera rempli par CreateWeeks)
  ******************************************************************************/
-export async function CreateBlocks(plan: Plan, profile: Profile): Promise<Block[]> {
+async function CreateBlocks(plan: Plan, profile: Profile): Promise<Block[]> {
     const start = startOfISOWeek(new Date(plan.startDate));
     const goal  = endOfISOWeek(new Date(plan.goalDate));
     const totalWeeks = differenceInWeeks(goal, start) + 1;
@@ -234,7 +245,7 @@ export async function CreateBlocks(plan: Plan, profile: Profile): Promise<Block[
  * - Week[]  : tableau de semaines ordonnées avec TSS cible, type (Load /
  *             Recovery) et thème hérité du bloc (workoutsID vide)
  ******************************************************************************/
-export async function CreateWeeks(plan: Plan, block: Block, profile: Profile): Promise<Week[]> {
+async function CreateWeeks(plan: Plan, block: Block, profile: Profile): Promise<Week[]> {
     const hasRecoveryWeek  = block.weekCount > RECOVERY_WEEK_THRESHOLD;
     const startWeeklyTSS   = computeWeeklyTSS(block.startCTL);
     const targetWeeklyTSS  = computeWeeklyTSS(block.targetCTL);
@@ -265,8 +276,158 @@ export async function CreateWeeks(plan: Plan, block: Block, profile: Profile): P
     });
 }
 
+/******************************************************************************
+ * @access Private
+ * @function CreateWorkoutForWeek
+ * @brief Génère les séances d'une semaine via IA en tenant compte du profil
+ *        athlète (disciplines actives, niveau), du thème du bloc, du TSS
+ *        cible et de l'historique de complétion des semaines précédentes.
+ * @input
+ * - profile     : Profil athlète (ID, niveau, disciplines, CTL...)
+ * - plan        : Plan parent (référence)
+ * - block       : Bloc parent (theme, type, startCTL, targetCTL...)
+ * - week        : Semaine cible (weekNumber, targetTSS, type...)
+ * - userComment : Commentaire libre (fatigue, blessure, contraintes...)
+ * - avgCompletion     : Historique de complétion des semaines précédentes (ex: [80, 90, 95])
+ * @output
+ * - Workout[]   : Séances prêtes à être sauvegardées (status: 'pending')
+ ******************************************************************************/
+export async function CreateWorkoutForWeek(
+    profile: Profile,
+    plan: Plan,
+    block: Block,
+    week: Week,
+    userComment: string | null,
+    avgCompletion: number,
+    weeklyAvailability: { [key: string]: AvailabilitySlot }, 
+): Promise<Workout[]>
+{
+    const weekStartDate = new Date(block.startDate);
+    weekStartDate.setDate(weekStartDate.getDate() + (week.weekNumber - 1) * 7);
+    const activeSports = getActiveSports(profile.activeSports);
+    const formattedAvailability = formatAvailability(weeklyAvailability);
 
+   const aiPrompt = `
+Tu es un coach certifié, spécialisé en ${activeSports.join(", ")}, avec 15 ans d'expérience.
 
+## PROFIL ATHLÈTE
+- Niveau : ${profile.experience ?? "Intermédiaire"}
+- CTL actuelle : ${profile.currentCTL}
+- Disciplines actives : ${activeSports.join(", ")}
+
+## DISPONIBILITÉS DE LA SEMAINE
+${formattedAvailability || "Non spécifiées"}
+
+## CONTEXTE DE LA SEMAINE
+- Thème du bloc : ${block.theme}
+- Type de bloc : ${block.type}
+- Type de semaine : ${week.type}
+- TSS cible total : ${week.targetTSS}
+- Semaine n°${week.weekNumber} / ${block.weekCount}
+${userComment        ? `- Commentaire athlète : "${userComment}"` : ""}
+- Complétion actuelle du bloc : ${avgCompletion}%
+${avgCompletion < 80 ? `- ⚠️ Complétion faible : réduire l'intensité et le volume global` : ""}
+${avgCompletion > 95 ? `- ✅ Complétion excellente : l'athlète peut absorber plus de charge` : ""}
+
+## RÈGLES
+1. Placer chaque séance UNIQUEMENT aux jours disponibles.
+2. Respecter la durée max par sport et par jour (ex: vélo=2h → durationMinutes ≤ 120).
+3. Répartir les séances UNIQUEMENT sur les disciplines actives : ${activeSports.join(", ")}.
+4. La somme des plannedTSS doit être égale à ${week.targetTSS} (±5%).
+5. Respecter le thème "${block.theme}" dans le choix des types de séances.
+6. Ne pas placer 2 séances dures (Interval, Tempo) consécutives.
+7. En semaine Recovery : séances courtes, faible intensité uniquement.
+8. Le dayOffset doit correspondre exactement au jour disponible (0=Lundi ... 6=Dimanche).
+
+## FORMAT DE RÉPONSE
+Réponds UNIQUEMENT avec un tableau JSON valide — sans markdown, sans explication.
+Chaque objet contient exactement :
+- "dayOffset"          (number)  : 0=Lundi, 6=Dimanche
+- "sportType"          (string)  : l'un de ${activeSports.join(", ")}
+- "title"              (string)  : titre court (ex: "Endurance Z2 vélo")
+- "workoutType"        (string)  : l'un de ["Endurance", "Tempo", "Interval", "Recovery", "Long", "Strength"]
+- "durationMinutes"    (number)  : durée totale en minutes (respecter le max du créneau)
+- "plannedTSS"         (number)  : TSS prévu pour cette séance
+- "targetPowerWatts"   (number | null) : watts cibles (cycling uniquement)
+- "targetPaceMinPerKm" (string | null) : allure cible (running uniquement, ex: "4:30")
+- "targetHeartRateBPM" (number | null) : FC cible si pas de puissance/allure
+- "distanceKm"         (number | null) : distance estimée
+- "structure" (array) : tableau ordonné de segments, chaque objet contient :
+    - "type"               : l'un de ["Warmup", "Active", "Rest", "Cooldown"]
+    - "durationActifSecondes"(number)        : durée du segment en secondes
+    - "targetPowerWatts"   (number | null) : watts cibles (cycling uniquement)
+    - "targetPaceMinPerKm" (string | null) : allure cible (running uniquement, ex: "4:30")
+    - "targetHeartRateBPM" (number | null) : FC cible si pas de puissance/allure
+    - "distanceKm"         (number | null) : distance estimée du segment
+    - "plannedTSS"         (number | null) : TSS du segment
+    - "description"        (string)        : description courte du segment (ex: "5x5min @ Z4 / 2min récup")
+  }
+
+## JSON :
+`.trim();
+
+    // ---- Appel IA -----------------------------------------------------------
+    type AIWorkout = {
+        dayOffset:          number;
+        sportType:          SportType;
+        title:              string;
+        workoutType:        string;
+        durationMinutes:    number;
+        plannedTSS:         number;
+        targetPowerWatts:   number | null;
+        targetPaceMinPerKm: string | null;
+        targetHeartRateBPM: number | null;
+        distanceKm:         number | null;
+        structure: {
+        type:               'Warmup' | 'Active' | 'Rest' | 'Cooldown';
+        durationActifSecondes:      number;
+        targetPowerWatts:   number | null;
+        targetPaceMinPerKm: string | null;
+        targetHeartRateBPM: number | null;
+        distanceKm:         number | null;
+        plannedTSS:         number | null;
+        description:        string;
+    }[];
+    };
+
+    const aiResponse = await callGeminiAPI({
+        contents: [{ parts: [{ text: aiPrompt }] }],
+        generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 8192,
+            responseMimeType: "application/json",
+        },
+    }) as AIWorkout[];
+
+    return aiResponse.map((w) => {
+    const workoutDate = new Date(weekStartDate);
+    workoutDate.setDate(workoutDate.getDate() + w.dayOffset);
+
+    return {
+        ID:          randomUUID(),
+        id:          randomUUID(),
+        userID:      profile.id,
+        weekID:      week.id,
+        date:        workoutDate.toISOString().split('T')[0],
+        sportType:   w.sportType as SportType,
+        title:       w.title,
+        workoutType: w.workoutType,
+        mode:        'Outdoor',
+        status:      'pending',
+        plannedData: {
+            durationMinutes:    w.durationMinutes,
+            targetPowerWatts:   w.targetPowerWatts,
+            targetPaceMinPerKm: w.targetPaceMinPerKm,
+            targetHeartRateBPM: w.targetHeartRateBPM,
+            distanceKm:         w.distanceKm,
+            plannedTSS:         w.plannedTSS,
+            description: null,
+            structure:          w.structure, 
+        },
+        completedData: null,
+    } satisfies Workout;
+});
+}
 
 
 
@@ -836,8 +997,7 @@ export async function syncStravaActivities() {
                         targetHeartRateBPM: null,
                         distanceKm: null,
                         plannedTSS: null,
-                        descriptionOutdoor: null,
-                        descriptionIndoor: null
+                        description: null,
                     },
                     completedData: completedData
                 };

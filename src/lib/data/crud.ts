@@ -123,7 +123,7 @@ export async function saveWeek(week: Week[]): Promise<void> {
     await writeJsonFile('week.json', week);
 }
 
-export async function saveWorkout(workout: Workout): Promise<void> {
+export async function saveWorkout(workout: Workout[]): Promise<void> {
     await writeJsonFile('workout.json', workout);
 }
 

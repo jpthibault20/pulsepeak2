@@ -4,7 +4,7 @@ import { Workoutold, SportType } from "../data/type";
 // Lecture de la clé API depuis les variables d'environnement du serveur
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
-const MAX_RETRIES = 5;
+const MAX_RETRIES = 2;
 
 interface RawAIWorkout {
     date: string; // Présent uniquement dans la génération de plan complet
@@ -65,15 +65,27 @@ export async function callGeminiAPI(payload: unknown) {
             }
 
             const data = await response.json();
-            const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-            if (!jsonText) throw new Error("AI response empty.");
+            if (!rawText) throw new Error("AI response empty.");
 
-            return JSON.parse(jsonText);
+            // Nettoyage du markdown éventuel
+            const cleanText = rawText
+                .trim()
+                .replace(/^```json\s*/i, '')
+                .replace(/^```\s*/i, '')
+                .replace(/\s*```$/i, '');
+
+            try {
+                return JSON.parse(cleanText);
+            } catch (parseError) {
+                console.error("JSON invalide reçu de Gemini :", cleanText);
+                throw new Error(`JSON parsing failed: ${parseError}`);
+            }
 
         } catch (error) {
             if (attempt < MAX_RETRIES - 1) {
-                console.warn(`Tentative ${attempt + 1} échouée. Retry...`);
+                console.warn(`Tentative ${attempt + 1} échouée. Retry dans ${Math.pow(2, attempt)}s...`);
                 await delay(Math.pow(2, attempt) * 1000);
             } else {
                 throw error;

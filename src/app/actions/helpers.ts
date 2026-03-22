@@ -4,7 +4,9 @@
  *          d'entraînement. Aucune I/O, aucun effet de bord.
  ******************************************************************************/
 
+import { AvailabilitySlot } from "@/lib/data/type";
 import { RECOVERY_TSS_RATIO, RECOVERY_WEEK_THRESHOLD } from "./constants";
+import { Profile } from "@/lib/data/DatabaseTypes";
 
 
 // ---- TSS / CTL -------------------------------------------------------------
@@ -102,4 +104,32 @@ export const computeProgressionPerWeek = (
     return loadWeeksCount > 1
         ? (targetWeeklyTSS - startWeeklyTSS) / (loadWeeksCount - 1)
         : 0;
+};
+
+export const getActiveSports = (activeSports: Profile['activeSports']): string[] => {
+    return Object.entries(activeSports)
+        .filter(([_, isActive]) => isActive)
+        .map(([sport]) => sport);
+};
+
+export const formatAvailability = (availability: { [key: string]: AvailabilitySlot }): string => {
+    const days: Record<string, string> = {
+        monday: "Lundi", tuesday: "Mardi", wednesday: "Mercredi",
+        thursday: "Jeudi", friday: "Vendredi", saturday: "Samedi", sunday: "Dimanche",
+    };
+
+    return Object.entries(availability)
+        .map(([day, slot]) => {
+            const sports = [
+                slot.swimming > 0 ? `natation ${slot.swimming}h` : null,
+                slot.cycling   > 0 ? `vélo ${slot.cycling}h`     : null,
+                slot.running   > 0 ? `course ${slot.running}h`   : null,
+            ].filter(Boolean).join(", ");
+
+            if (!sports) return null;
+
+            return `- ${days[day] ?? day} : ${sports}${slot.comment ? ` (${slot.comment})` : ""}`;
+        })
+        .filter(Boolean)
+        .join("\n");
 };

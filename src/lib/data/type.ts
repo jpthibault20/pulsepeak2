@@ -33,13 +33,17 @@ export interface PlannedData {
   targetHeartRateBPM: number | null;
   distanceKm: number | null;
   plannedTSS: number | null;
-  descriptionOutdoor: string | null;
-  descriptionIndoor: string | null;
-  structure?: {
-    type: 'Warmup' | 'Active' | 'Rest' | 'Cooldown';
-    sets: number; // ex: 5 répétitions
-    repsDescription: string; // ex: "5x 5min @ Z4"
-  };
+  description: string | null;
+structure?: {
+        type:               'Warmup' | 'Active' | 'Rest' | 'Cooldown';
+        durationActifSecondes:      number;
+        targetPowerWatts:   number | null;
+        targetPaceMinPerKm: string | null;
+        targetHeartRateBPM: number | null;
+        distanceKm:         number | null;
+        plannedTSS:         number | null;
+        description:        string;
+    }[];
 }
 
 export interface CompletedData {
