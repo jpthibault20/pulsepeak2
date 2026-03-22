@@ -1,13 +1,10 @@
 'use server';
 
-// Import de la fonction generatePlanFromAI
 import { generatePlanFromAI, generateSingleWorkoutFromAI } from '@/lib/ai/coach-api';
 import { getBlock, getPlan, getProfile, getSchedule, getWeek, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek } from '@/lib/data/crud';
 import { ReturnCode, Workoutold } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
-// lib/actions/workoutActions.ts
 import type { CompletedData, CompletedDataFeedback } from '@/lib/data/type';
-
 import fs from 'fs/promises';
 import path from 'path';
 import { getStravaActivities, getStravaActivityById } from '@/lib/strava-service';
@@ -22,21 +19,25 @@ import {
     format
 } from 'date-fns';
 import { callGeminiAPI } from '@/lib/ai/coach-api';
+import { CTL_PROGRESSION, RECOVERY_WEEK_THRESHOLD, RECOVERY_TSS_RATIO } from './constants';
+import { computeBlockSkeletons, computeWeeklyTSS } from './helpers';
 
 
 
 /******************************************************************************
  * @access Public
  * @function CreateAdvancedPlan
- * @brief Creates a new training plan for advanced users, with theme selection and single block creation
+ * @brief Crée un plan d'entraînement complet avec blocs et semaines générés
+ *        par IA, basé sur la CTL actuelle de l'athlète.
  * @input
- * - blockFocus: Training block name
- * - customTheme: Custom theme for the training block
- * - startDate: Plan start date
- * - numWeeks: Number of weeks for the plan
- * - userID: User ID
+ * - blockFocus     : Nom / focus du bloc d'entraînement
+ * - customTheme    : Thème personnalisé (optionnel, remplace blockFocus si fourni)
+ * - startDate      : Date de début du plan (format YYYY-MM-DD)
+ * - numWeeks       : Nombre de semaines du plan (> 0)
+ * - userID         : Identifiant de l'utilisateur (min. 3 caractères)
  * @output
- * - state: {state, message}
+ * - { state: RC_OK }                        en cas de succès
+ * - { state: RC_Error, error: string }      en cas d'erreur de validation
  ******************************************************************************/
 export async function CreateAdvancedPlan(
     blockFocus: string,
@@ -44,146 +45,105 @@ export async function CreateAdvancedPlan(
     startDate: string,
     numWeeks: number,
     userID: string
-)
-{
-    const plan = await getPlan();
-    const profile = await getProfile();
-    const blocks = await getBlock();
-    const weeks = await getWeek();
-    let newWeeks: Week[] = [];
+) {
+    // Validation
+    if (numWeeks <= 0)      return { state: ReturnCode.RC_Error, error: "Nombre de semaines invalide" };
+    if (userID.length < 3)  return { state: ReturnCode.RC_Error, error: "ID utilisateur invalide" }; // ✅ corrigé
 
-    /* 1. Check valid parameters    */
-    if (numWeeks <= 0) 
-    {
-        return { state: ReturnCode.RC_Error, error: "Error number of week" };
-      }
+    const [plan, profile, existingBlocks, existingWeeks] = await Promise.all([
+        getPlan(),
+        getProfile(),
+        getBlock(),
+        getWeek(),
+    ]);
 
-    if (userID.length > 3)
-    {
-        return { state: ReturnCode.RC_Error, error: "Invalid user id" };
-    }
-    
+    // Création du plan
+    const newPlan = CreatePlan(blockFocus, customTheme, startDate, numWeeks, userID);
 
-    /* 2. Create new plan    */
-    const newPlan = await CreatePlan(blockFocus, customTheme, startDate, numWeeks, userID);
-
-    /* 3. Ccreate new block(s)   */
+    // Création des blocs
     const newBlocks = await CreateBlocks(newPlan, profile);
+    newPlan.blocksID = newBlocks.map(b => b.id);
 
-    /* 4. Create new week(s)    */
-    const updatedBlocks = await Promise.all( // mise a jour des IDs des semaines dans les blocks
+    // Création des semaines + injection des IDs dans les blocs
+    const newWeeks: Week[] = [];
+    const updatedBlocks = await Promise.all(
         newBlocks.map(async (block) => {
-            const resultWeeks = await CreateWeeks(newPlan, block, profile);
-            const weeksArray = Array.isArray(resultWeeks) ? resultWeeks : [resultWeeks];
-
-            newWeeks = [...newWeeks, ...weeksArray];
-
-            return {
-                ...block,
-                weeksId: [...block.weeksId, ...weeksArray.map(w => w.id)],
-            };
+            const weeks = await CreateWeeks(newPlan, block, profile);
+            newWeeks.push(...weeks);
+            return { ...block, weeksId: weeks.map(w => w.id) };
         })
     );
 
-    /* 5. Enregistrement */
-    await savePlan(Array.isArray(plan) ? [...plan, newPlan] : [newPlan] );
-    await saveBlocks([...Array.isArray(blocks) ? blocks : [], ...updatedBlocks]);
-    await saveWeek([...Array.isArray(weeks) ? weeks : [],...newWeeks]);
-    await saveWeek(newWeeks);
+    // Sauvegarde
+    await Promise.all([
+        savePlan([...(Array.isArray(plan) ? plan : []), newPlan]),
+        saveBlocks([...(Array.isArray(existingBlocks) ? existingBlocks : []), ...updatedBlocks]),
+        saveWeek([...(Array.isArray(existingWeeks) ? existingWeeks : []), ...newWeeks]),
+    ]);
 
-    return { state: ReturnCode.RC_OK};
+    return { state: ReturnCode.RC_OK };
 }
-
-
 
 
 /******************************************************************************
  * @access Private
- * @function CreateNewPlan
- * @brief Creates a new training plan based on user inputs.
+ * @function CreatePlan
+ * @brief Instancie un objet Plan à partir des paramètres utilisateur.
+ *        Calcule automatiquement la date de fin depuis startDate + numWeeks.
  * @input
- * - blockFocus: Training block name
- * - customTheme: Custom theme for the training block
- * - startDate: Plan start date
- * - numWeeks: Number of weeks for the plan
- * - userID: User ID
+ * - blockFocus  : Nom du plan / focus d'entraînement
+ * - customTheme : Thème personnalisé (optionnel, fallback sur blockFocus)
+ * - startDate   : Date de début (format YYYY-MM-DD)
+ * - numWeeks    : Nombre de semaines du plan
+ * - userID      : Identifiant de l'utilisateur
  * @output
- * - plan
+ * - Plan : objet plan prêt à être sauvegardé (blocksID vide)
  ******************************************************************************/
-async function CreatePlan(
+function CreatePlan(
     blockFocus: string,
     customTheme: string | null,
     startDate: string,
     numWeeks: number,
     userID: string
-) {
-    const oldPlans = await getPlan();
-    const Profile = await getProfile();
-
-    // Calculer la date de fin
+): Plan {
     const goalDate = new Date(startDate);
-    goalDate.setDate(goalDate.getDate() + (numWeeks * 7));
+    goalDate.setDate(goalDate.getDate() + numWeeks * 7);
 
-    const newPlan: Plan = {
+    return {
         id: randomUUID(),
         userID,
         blocksID: [],
         name: blockFocus,
         startDate,
         goalDate: goalDate.toISOString().split('T')[0],
-        macroStrategyDescription: customTheme || blockFocus,
-        status: "active"
+        macroStrategyDescription: customTheme ?? blockFocus,
+        status: "active",
     };
-
-    const result = await CreateBlocks(newPlan, Profile);
-    const blockIds = result.map((block: Block) => block.id);
-
-    newPlan.blocksID = blockIds;
-
-    const allPlans = Array.isArray(oldPlans)
-        ? [...oldPlans, newPlan]
-        : [newPlan];
-
-    await savePlan(allPlans);
-
-    return newPlan;
 }
 
 /******************************************************************************
- * function: createBlock
- * brrief: Création des différents blocs pour arriver a l'objectif du plan.
- * input: 
- * - userID: ID de l'utilisateur
- * - planID: ID du plan
- * output: 
- * - blocks[]
+ * @access Private
+ * @function CreateBlocks
+ * @brief Génère les blocs de méso-cycles d'un plan via IA.
+ *        Découpe le plan en tranches de 4 semaines, soumet le contexte
+ *        athlète à l'IA pour définir type et thème de chaque bloc,
+ *        puis calcule la progression CTL bloc par bloc.
+ * @input
+ * - plan    : Plan parent contenant les dates et la stratégie macro
+ * - profile : Profil athlète (niveau, CTL actuelle, disciplines...)
+ * @output
+ * - Block[] : tableau de blocs ordonnés, avec CTL, TSS et thème renseignés
+ *             (weeksId vide, sera rempli par CreateWeeks)
  ******************************************************************************/
-export async function CreateBlocks(plan: Plan, profile: Profile) {
-
-    // 1. Initialisation des dates
+export async function CreateBlocks(plan: Plan, profile: Profile): Promise<Block[]> {
     const start = startOfISOWeek(new Date(plan.startDate));
-    const goal = endOfISOWeek(new Date(plan.goalDate));
+    const goal  = endOfISOWeek(new Date(plan.goalDate));
     const totalWeeks = differenceInWeeks(goal, start) + 1;
 
-    // 2. Découpage en blocs
-    const blockSkeletons: { index: number; duration: number; isLast: boolean }[] = [];
-    let weeksRemaining = totalWeeks;
-    let index = 1;
+    if (totalWeeks < 1) throw new Error("Le plan est trop court !");
 
-    while (weeksRemaining > 0) {
-        let duration = 4;
-        if (weeksRemaining <= 5) {
-            duration = weeksRemaining;
-            weeksRemaining = 0;
-            blockSkeletons.push({ index, duration, isLast: index === 1 ? false : true });
-        } else {
-            blockSkeletons.push({ index, duration, isLast: false });
-            weeksRemaining -= 4;
-        }
-        index++;
-    }
+    const blockSkeletons = computeBlockSkeletons(totalWeeks);
 
-    // 3. création du prompte + demande IA
 // @TODO: remplacer les spécification au cyclisme en adaptatif au triathlon 
     const aiPrompt = `
         Tu es un coach de ${"cyclisme"}, certifié avec 15 ans d'expérience dans le domaine.
@@ -216,152 +176,94 @@ export async function CreateBlocks(plan: Plan, profile: Profile) {
         ## RÉPONSE (JSON uniquement) :
         `;
 
-
     const aiResponse = await callGeminiAPI({
-        contents: [
-            {
-                parts: [{ text: aiPrompt }]
-            }
-        ],
+        contents: [{ parts: [{ text: aiPrompt }] }],
         generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 2048,
-        responseMimeType: "application/json",
+            temperature: 0.7,
+            maxOutputTokens: 2048,
+            responseMimeType: "application/json",
         },
     }) as { index: number; type: string; theme: string }[];
 
-    // 4. Création des blocs avec CTL progressive
-    const oldBlocks = await getBlock();
+    // Construction des blocs
+    let currentStartDate = start;
+    let previousTargetCTL = profile.currentCTL;
 
-    const blocksToSave: Block[] = [];
-    let currentBlockStartDate = start;
-    let previousTargetCTL = profile.currentCTL; 
-
-    for (const skeleton of blockSkeletons) {
+    return blockSkeletons.map((skeleton) => {
         const aiInfo = aiResponse.find(b => b.index === skeleton.index);
+        const progression = CTL_PROGRESSION[aiInfo?.type ?? "Base"] ?? 5;
 
-        const ctlProgression: Record<string, number> = {
-            Base:    5, 
-            Build:   10,
-            Peak:    5, 
-            Taper:  -15,
-        };
-        const progression = ctlProgression[aiInfo?.type ?? "Base"] ?? 5;
+        const startCTL   = previousTargetCTL;
+        const targetCTL  = startCTL + progression;
+        const avgWeeklyTSS = Math.round(((startCTL + targetCTL) / 2) * 7);
 
-        const startCTL = previousTargetCTL;
-        const targetCTL = startCTL + progression;
-        const avgWeeklyTSS = Math.round(((startCTL + targetCTL) / 2) * 7); // CTL moy * 7j
-
-        const newBlock: Block = {
+        const block: Block = {
             id: randomUUID(),
             planId: plan.id,
             userId: plan.userID,
             orderIndex: skeleton.index,
-            type: aiInfo?.type || "General",
-            theme: aiInfo?.theme || "Préparation",
+            type:  aiInfo?.type  ?? "General",
+            theme: aiInfo?.theme ?? "Préparation",
             weekCount: skeleton.duration,
-            startDate: format(currentBlockStartDate, 'yyyy-MM-dd'),
+            startDate: format(currentStartDate, 'yyyy-MM-dd'),
             weeksId: [],
             startCTL,
             targetCTL,
             avgWeeklyTSS,
         };
 
-        blocksToSave.push(newBlock);
-        previousTargetCTL = targetCTL; 
-        currentBlockStartDate = addWeeks(currentBlockStartDate, skeleton.duration);
-    }
+        previousTargetCTL = targetCTL;
+        currentStartDate  = addWeeks(currentStartDate, skeleton.duration);
 
-    // 5. Génération des semaines
-    const oldWeeks = await getWeek();
-    let allNewWeeks: Week[] = [];
-
-    const updatedBlocks = await Promise.all( // mise a jour des IDs des semaines dans les blocks
-        blocksToSave.map(async (block) => {
-            const resultWeeks = await CreateWeeks(plan, block, profile);
-            const weeksArray = Array.isArray(resultWeeks) ? resultWeeks : [resultWeeks];
-
-            allNewWeeks = [...allNewWeeks, ...weeksArray];
-
-            return {
-                ...block,
-                weeksId: [...block.weeksId, ...weeksArray.map(w => w.id)],
-            };
-        })
-    );
-
-    // 5. Enregistrement
-    await saveWeek([
-        ...Array.isArray(oldWeeks) ? oldWeeks : [],
-        ...allNewWeeks
-    ]);
-    await saveBlocks([
-        ...Array.isArray(oldBlocks) ? oldBlocks : [],
-        ...updatedBlocks
-    ]);
-
-    return updatedBlocks;
+        return block;
+    });
 }
 
 /******************************************************************************
- * function: createWeeks
- * brrief: Création des différentes semaines.
- * input: 
- * - user: utilisateur
- * - plan: plan
- * - block: block theme de travail
- * output: 
- * - weeks
+ * @access Private
+ * @function CreateWeeks
+ * @brief Génère les semaines d'entraînement d'un bloc avec une progression
+ *        linéaire du TSS entre startCTL et targetCTL du bloc.
+ *        Si le bloc contient plus de 3 semaines, la dernière est
+ *        automatiquement une semaine de récupération à 90% du TSS de départ.
+ * @input
+ * - plan    : Plan parent (référence)
+ * - block   : Bloc parent contenant startCTL, targetCTL, weekCount et theme
+ * - profile : Profil athlète (ID utilisateur, niveau...)
+ * @output
+ * - Week[]  : tableau de semaines ordonnées avec TSS cible, type (Load /
+ *             Recovery) et thème hérité du bloc (workoutsID vide)
  ******************************************************************************/
 export async function CreateWeeks(plan: Plan, block: Block, profile: Profile): Promise<Week[]> {
-    const hasRecoveryWeek = block.weekCount > 2;
-
-    const startWeeklyTSS = block.startCTL * 7;
-    const targetWeeklyTSS = block.targetCTL * 7;
-
-    const loadWeeksCount = hasRecoveryWeek ? block.weekCount - 1 : block.weekCount;
+    const hasRecoveryWeek  = block.weekCount > RECOVERY_WEEK_THRESHOLD;
+    const startWeeklyTSS   = computeWeeklyTSS(block.startCTL);
+    const targetWeeklyTSS  = computeWeeklyTSS(block.targetCTL);
+    const loadWeeksCount   = hasRecoveryWeek ? block.weekCount - 1 : block.weekCount;
     const progressionPerWeek = loadWeeksCount > 1
         ? (targetWeeklyTSS - startWeeklyTSS) / (loadWeeksCount - 1)
         : 0;
 
-    const weeks: Week[] = await Promise.all(
-        Array.from({ length: block.weekCount }, async (_, i) => {
-            const weekNumber = i + 1;
-            const isRecoveryWeek = hasRecoveryWeek && weekNumber === block.weekCount;
+    return Array.from({ length: block.weekCount }, (_, i) => {
+        const weekNumber     = i + 1;
+        const isRecoveryWeek = hasRecoveryWeek && weekNumber === block.weekCount;
 
-            let targetTSS: number;
+        const targetTSS = isRecoveryWeek
+            ? Math.round(startWeeklyTSS * RECOVERY_TSS_RATIO)
+            : Math.round(startWeeklyTSS + progressionPerWeek * (weekNumber - 1));
 
-            if (isRecoveryWeek) {
-                targetTSS = Math.round(startWeeklyTSS * 0.9);
-            } else {
-                targetTSS = Math.round(startWeeklyTSS + progressionPerWeek * (weekNumber - 1));
-            }
-
-            const week: Week = {
-                id: randomUUID(),
-                userID: profile.id,
-                workoutsID: [],
-                blockID: block.id,
-                weekNumber,
-                type: isRecoveryWeek ? 'Recovery' : 'Load',
-                targetTSS,
-                actualTSS: 0,
-                userFeedback: "",
-            };
-
-            return week;
-        })
-    );
-
-    return weeks;
+        return {
+            id: randomUUID(),
+            userID: profile.id,
+            workoutsID: [],
+            blockID: block.id,
+            weekNumber,
+            type: isRecoveryWeek ? 'Recovery' : 'Load',
+            targetTSS,
+            actualTSS: 0,
+            userFeedback: "",
+        } satisfies Week;
+    });
 }
-
-
-
-
-
-
-
 
 
 
