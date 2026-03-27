@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { BrainCircuit, Calendar, Sliders } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modale';
+import { FeatureGate } from '@/components/features/billing/FeatureGate';
 
 interface GenerationModalProps {
     isOpen: boolean;
@@ -77,22 +78,33 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ isOpen, onClos
               - grid-cols-2 (mobile) -> sm:grid-cols-3 (desktop)
           */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
-                        {themes.map((focus) => (
-                            <button
-                                key={focus}
-                                onClick={() => setBlockFocus(focus)}
-                                // DESIGN: whitespace-normal permet au texte de passer à la ligne au lieu d'être coupé
-                                className={`
-                  p-3 rounded-lg text-xs sm:text-sm text-left transition-all border whitespace-normal h-full min-h-[50px] flex items-center
+                        {themes.map((focus) => {
+                            const btn = (
+                                <button
+                                    key={focus}
+                                    onClick={() => setBlockFocus(focus)}
+                                    className={`
+                  p-3 rounded-lg text-xs sm:text-sm text-left transition-all border whitespace-normal h-full min-h-[50px] flex items-center w-full
                   ${blockFocus === focus
-                                        ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)]'
-                                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-750 hover:border-slate-600'
-                                    }
+                                            ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)]'
+                                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-750 hover:border-slate-600'
+                                        }
                 `}
-                            >
-                                {focus === 'Semaine de Tests (FTP, VO2max)' ? 'Semaine de Tests' : focus}
-                            </button>
-                        ))}
+                                >
+                                    {focus === 'Semaine de Tests (FTP, VO2max)' ? 'Semaine de Tests' : focus}
+                                </button>
+                            );
+
+                            if (focus === 'Personnalisé') {
+                                return (
+                                    <FeatureGate key={focus} feature="custom-plan-theme" mode="modal" label="Thème personnalisé">
+                                        {btn}
+                                    </FeatureGate>
+                                );
+                            }
+
+                            return btn;
+                        })}
                     </div>
                 </div>
 

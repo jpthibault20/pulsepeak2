@@ -5,8 +5,12 @@ import {
     ChevronLeft,
     LucideIcon,
     UserRound,
+    Zap,
 } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { PlanBadge } from '@/components/features/billing/PlanBadge';
+import { useSubscription, hasFullAccess } from '@/lib/subscription/context';
 
 // Définition des vues acceptées
 export type View = 'dashboard' | 'settings' | 'stats' | 'workout-detail' | 'onboarding' | 'loading';
@@ -26,8 +30,8 @@ export const Nav: React.FC<NavProps> = ({
     showBack = false,
     onBack
 }) => {
-
-    // Cette fonction aide à déterminer si un bouton est actif
+    const router = useRouter();
+    const { plan, status, role } = useSubscription();
     const isActive = (viewName: View) => currentView === viewName;
 
     return (
@@ -89,6 +93,22 @@ export const Nav: React.FC<NavProps> = ({
                             icon={UserRound}
                             label="Profil"
                         />
+
+                        {/* Séparateur + Badge plan */}
+                        <div className="flex items-center gap-3 pl-3 border-l border-slate-700/50">
+                            <button onClick={() => router.push('/billing')} className="hover:opacity-80 transition-opacity">
+                                <PlanBadge plan={plan} status={status} size="sm" />
+                            </button>
+                            {plan === 'free' && !hasFullAccess(role) && (
+                                <button
+                                    onClick={() => router.push('/pricing')}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600/10 border border-blue-500/30 text-blue-400 hover:bg-blue-600/20 transition-colors text-xs font-semibold"
+                                >
+                                    <Zap size={12} />
+                                    Upgrade
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     {/* Placeholder Mobile (pour équilibrer le layout si besoin, vide ici) */}

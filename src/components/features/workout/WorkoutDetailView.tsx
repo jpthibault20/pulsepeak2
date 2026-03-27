@@ -17,6 +17,7 @@ import { Card } from '@/components/ui/Card';
 import { formatDate } from '@/lib/utils';
 import { FeedbackForm } from './FeedbackForm';
 import { Profile } from '@/lib/data/DatabaseTypes';
+import { FeatureGate } from '@/components/features/billing/FeatureGate';
 
 // --- Types ---
 interface WorkoutDetailViewProps {
@@ -465,15 +466,17 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                                     </Button>
                                     {/* Bouton Régénérer */}
                                     {workout.status === 'pending' && (
-                                        <Button
-                                            variant="ghost"
-                                            className="whitespace-nowrap h-9 text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
-                                            onClick={() => setShowRegenInput(true)}
-                                            disabled={isMutating}
-                                        >
-                                            <RefreshCw size={14} className="mr-1.5" />
-                                            Régénérer l&apos;IA
-                                        </Button>
+                                        <FeatureGate feature="regenerate-workout" mode="modal">
+                                            <Button
+                                                variant="ghost"
+                                                className="whitespace-nowrap h-9 text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
+                                                onClick={() => setShowRegenInput(true)}
+                                                disabled={isMutating}
+                                            >
+                                                <RefreshCw size={14} className="mr-1.5" />
+                                                Régénérer l&apos;IA
+                                            </Button>
+                                        </FeatureGate>
                                     )}
                                 </div>
                             )}

@@ -47,7 +47,7 @@ export async function CreateAdvancedPlan(
 ) {
     // Validation
     if (numWeeks <= 0)      return { state: ReturnCode.RC_Error, error: "Nombre de semaines invalide" };
-    if (userID.length < 3)  return { state: ReturnCode.RC_Error, error: "ID utilisateur invalide" }; // ✅ corrigé
+    if (userID.length < 3)  return { state: ReturnCode.RC_Error, error: "ID utilisateur invalide" };
 
     const [plan, profile, existingBlocks, existingWeeks, existingWorkouts] = await Promise.all([
         getPlan(),
@@ -56,6 +56,23 @@ export async function CreateAdvancedPlan(
         getWeek(),
         getWorkout(),
     ]);
+
+    // ── Contrôle d'accès selon rôle et plan ──────────────────────────────────
+    // admin et freeUse : accès illimité
+    const role = profile.role ?? 'user';
+    if (role !== 'admin' && role !== 'freeUse') {
+        // TODO Phase 4 : vérifier plan Stripe (pro/elite = illimité)
+        // Pour l'instant tous les 'user' normaux = plan free → 1 génération/mois
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        const recentPlans = (plan ?? []).filter((p) => new Date(p.startDate) >= oneMonthAgo);
+        if (recentPlans.length >= 1) {
+            return {
+                state: ReturnCode.RC_Error,
+                error: "Limite atteinte : 1 génération de plan par mois sur le plan gratuit. Passez à Athlete pour des générations illimitées.",
+            };
+        }
+    }
 
     // Création du plan
     const newPlan = CreatePlan(blockFocus, customTheme, startDate, numWeeks, userID);
@@ -87,13 +104,12 @@ export async function CreateAdvancedPlan(
             : week
     );
 
-    // Sauvegarde
-    await Promise.all([
-        savePlan([...(Array.isArray(plan) ? plan : []), newPlan]),
-        saveBlocks([...(Array.isArray(existingBlocks) ? existingBlocks : []), ...updatedBlocks]),
-        saveWeek([...(Array.isArray(existingWeeks) ? existingWeeks : []), ...updatedWeeks]),
-        saveWorkout([...(Array.isArray(existingWorkouts) ? existingWorkouts : []), ...newWorkouts]),
-    ]);
+    // Sauvegarde séquentielle — respecte les contraintes FK :
+    // plans → blocks → weeks → workouts
+    await savePlan([...(Array.isArray(plan) ? plan : []), newPlan]);
+    await saveBlocks([...(Array.isArray(existingBlocks) ? existingBlocks : []), ...updatedBlocks]);
+    await saveWeek([...(Array.isArray(existingWeeks) ? existingWeeks : []), ...updatedWeeks]);
+    await saveWorkout([...(Array.isArray(existingWorkouts) ? existingWorkouts : []), ...newWorkouts]);
 
     return { state: ReturnCode.RC_OK };
 }

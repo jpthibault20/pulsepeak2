@@ -9,6 +9,7 @@ import {
 import type { Workout } from '@/lib/data/DatabaseTypes';
 import { Card } from '@/components/ui/Card';
 import { Profile, Schedule } from '@/lib/data/DatabaseTypes';
+import { FeatureGate } from '@/components/features/billing/FeatureGate';
 
 interface StatsViewProps {
     scheduleData: Schedule;
@@ -287,6 +288,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
 
             {/* --- GRAPHIQUE ANNUEL --- */}
             {viewMode === 'annual' && (
+            <FeatureGate feature="annual-stats" mode="blur" label="Stats annuelles · Plan Athlete">
                 <Card className="p-4 md:p-6 animate-in fade-in duration-500">
                     <h3 className="text-base md:text-lg font-semibold text-white mb-4 md:mb-6 flex items-center">
                         <CalendarDays className="mr-2 text-blue-400" size={20} />
@@ -357,12 +359,14 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
                         </div>
                     </div>
                 </Card>
+            </FeatureGate>
             )}
 
             {/* --- CARTES DETAILS COACH --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
 
                 {/* Qualité */}
+                <FeatureGate feature="advanced-stats" mode="blur" label="Stats avancées · Plan Athlete">
                 <Card className="p-4 md:p-6">
                     <h3 className="text-base md:text-lg font-semibold text-white mb-4 md:mb-6 flex items-center">
                         <Zap className="mr-2 text-yellow-400" size={20} /> Qualité
@@ -400,6 +404,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
                         </div>
                     </div>
                 </Card>
+                </FeatureGate>
 
                 {/* Charge vs Objectif */}
                 <Card className="p-4 md:p-6">

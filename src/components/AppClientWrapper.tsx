@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { Sparkles, X } from 'lucide-react';
 
 // Import des Server Actions
 import {
@@ -18,6 +20,7 @@ import {
 
 // Import des types
 import type { CompletedDataFeedback } from '@/lib/data/type';
+import { ReturnCode } from '@/lib/data/type';
 import type { Workout } from '@/lib/data/DatabaseTypes';
 
 // Import des composants
@@ -29,6 +32,7 @@ import { Nav, View } from '@/components/layout/nav';
 import { Card } from '@/components/ui';
 import { createCompletedData } from '@/lib/utils';
 import { Profile, Schedule } from '@/lib/data/DatabaseTypes';
+import { SubscriptionProvider } from '@/lib/subscription/context';
 
 // Definition des Props reçues du Server Component
 interface AppClientWrapperProps {
@@ -49,8 +53,11 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
 
     // Etats UI
     const [error, setError] = useState<string | null>(null);
+    const [paywallError, setPaywallError] = useState<string | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
+
+    const router = useRouter();
 
     // --- Re-Fetch des données (Utile après une action de l'utilisateur) ---
     const refreshData = useCallback(async () => {
@@ -126,7 +133,22 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
     ) => {
         try {
             setIsRefreshing(true);
-            await CreateAdvancedPlan(blockFocus, customTheme, startDate, numWeeks, profile.id);
+            setError(null);
+            setPaywallError(null);
+
+            const result = await CreateAdvancedPlan(blockFocus, customTheme, startDate, numWeeks, profile.id);
+
+            if (result && result.state === ReturnCode.RC_Error) {
+                // Erreur de quota / abonnement
+                if (result.error?.includes('Limite atteinte')) {
+                    setPaywallError(result.error);
+                } else {
+                    setError(result.error ?? 'Impossible de générer le plan. Réessayez.');
+                }
+                setIsRefreshing(false);
+                return;
+            }
+
             await refreshData();
         } catch (e) {
             console.error('Erreur génération plan:', e);
@@ -253,6 +275,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
     }
 
     return (
+        <SubscriptionProvider subscription={{ role: profile.role }}>
         <div className="flex flex-col min-h-dvh">
             {/* Navigation */}
             {showNav && (
@@ -269,6 +292,39 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
 
             {/* Main Content */}
             <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 pb-20 sm:pb-8">
+
+                {/* Paywall Error — limite de génération */}
+                {paywallError && (
+                    <Card className="bg-amber-900/20 border-amber-500/40 mb-6 animate-in slide-in-from-top-2">
+                        <div className="p-4">
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="flex-1">
+                                    <p className="text-amber-300 font-bold flex items-center gap-2 mb-1">
+                                        <Sparkles size={16} className="shrink-0" />
+                                        Limite du plan gratuit atteinte
+                                    </p>
+                                    <p className="text-amber-400/80 text-sm leading-relaxed">
+                                        Le plan gratuit inclut <strong>1 génération par mois</strong>.
+                                        Passez à <strong>Athlete</strong> pour des générations illimitées.
+                                    </p>
+                                    <button
+                                        onClick={() => { setPaywallError(null); router.push('/pricing?highlight=pro'); }}
+                                        className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors"
+                                    >
+                                        <Sparkles size={12} />
+                                        Essayer Athlete — 14 jours gratuits
+                                    </button>
+                                </div>
+                                <button
+                                    onClick={() => setPaywallError(null)}
+                                    className="text-amber-400/60 hover:text-amber-300 transition-colors shrink-0"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    </Card>
+                )}
 
                 {/* Error Display */}
                 {error && (
@@ -361,5 +417,6 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
                 )}
             </main>
         </div>
+        </SubscriptionProvider>
     );
 }

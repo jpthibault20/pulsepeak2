@@ -31,6 +31,7 @@ export const weekTypeEnum      = pgEnum('week_type',    ['Load', 'Recovery', 'Ta
 export const workoutStatusEnum = pgEnum('workout_status', ['pending', 'completed', 'missed']);
 export const workoutModeEnum   = pgEnum('workout_mode', ['Outdoor', 'Indoor']);
 export const sportTypeEnum     = pgEnum('sport_type',   ['cycling', 'running', 'swimming']);
+export const userRoleEnum      = pgEnum('user_role',    ['user', 'freeUse', 'admin']);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // profiles
@@ -89,6 +90,7 @@ export const profiles = pgTable('profiles', {
                   }>(),
 
     aiPersonality: aiPersonalityEnum('ai_personality').default('Analytique').notNull(),
+    role:          userRoleEnum('role').default('user').notNull(),
     strava:        jsonb('strava').$type<StravaConfig>(),
 
     goal:          text('goal').default('').notNull(),
