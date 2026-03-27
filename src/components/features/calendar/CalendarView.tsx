@@ -201,6 +201,7 @@ export function CalendarView({
                     onOpenManualModal={handleOpenManualModal}
                     onViewWorkout={onViewWorkout}
                     onRefresh={onRefresh}
+                    onOpenGenModal={() => setShowGenModal(true)}
                 />
             </div>
 

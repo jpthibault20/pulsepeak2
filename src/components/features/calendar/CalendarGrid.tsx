@@ -13,6 +13,7 @@ interface CalendarGridProps {
     onOpenManualModal: (e: React.MouseEvent, date: Date) => void;
     onViewWorkout: (workout: Workout) => void;
     onRefresh: () => void;
+    onOpenGenModal: () => void;
 }
 
 export function CalendarGrid({
@@ -23,6 +24,7 @@ export function CalendarGrid({
     onOpenManualModal,
     onViewWorkout,
     onRefresh,
+    onOpenGenModal,
 }: CalendarGridProps) {
 
     const allWeekStats = useMemo(() => {
@@ -165,6 +167,7 @@ export function CalendarGrid({
                                     profileAvailability={profile.weeklyAvailability}
                                     activeSports={profile.activeSports}
                                     onRefresh={onRefresh}
+                                    onOpenGenModal={onOpenGenModal}
                                 />
                             </div>
                         </div>

@@ -29,6 +29,7 @@ interface WeekSummaryCellProps {
     profileAvailability: { [key: string]: AvailabilitySlot };
     activeSports: { swimming: boolean; cycling: boolean; running: boolean };
     onRefresh: () => void;
+    onOpenGenModal: () => void;
 }
 
 export function WeekSummaryCell({
@@ -37,6 +38,7 @@ export function WeekSummaryCell({
     profileAvailability,
     activeSports,
     onRefresh,
+    onOpenGenModal,
 }: WeekSummaryCellProps) {
     const [showPopover, setShowPopover]      = useState(false);
     const [openUpward, setOpenUpward]        = useState(false);
@@ -336,9 +338,21 @@ export function WeekSummaryCell({
                                     </p>
                                 </div>
                             ) : (
-                                <div className="flex items-start gap-2 text-amber-400 text-xs bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2.5">
-                                    <AlertCircle size={13} className="shrink-0 mt-0.5" />
-                                    Aucun plan actif trouvé pour cette semaine. La génération utilisera votre profil par défaut.
+                                <div className="flex flex-col gap-3 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
+                                    <div className="flex items-start gap-2 text-red-400 text-sm font-medium">
+                                        <AlertCircle size={15} className="shrink-0 mt-0.5" />
+                                        <span>Impossible de générer la semaine : aucun bloc ni plan actif pour cette période.</span>
+                                    </div>
+                                    <p className="text-xs text-slate-400 leading-relaxed">
+                                        La génération de semaine nécessite un plan avec des blocs d&apos;entraînement. Commencez par calculer un plan.
+                                    </p>
+                                    <button
+                                        onClick={() => { setShowAIModal(false); onOpenGenModal(); }}
+                                        className="self-start flex items-center gap-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded-lg transition-colors"
+                                    >
+                                        <Plus size={12} />
+                                        Calculer un nouveau plan
+                                    </button>
                                 </div>
                             )}
 
@@ -489,7 +503,7 @@ export function WeekSummaryCell({
                                 </button>
                                 <button
                                     onClick={handleGenerate}
-                                    disabled={isGenerating || !weekStartDate}
+                                    disabled={isGenerating || !weekStartDate || (!isLoadingContext && !weekContext)}
                                     className={`flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
                                         confirmOverwrite ? 'bg-orange-600 hover:bg-orange-500' : 'bg-blue-600 hover:bg-blue-500'
                                     }`}

@@ -160,7 +160,7 @@ async function CreateBlocks(plan: Plan, profile: Profile): Promise<Block[]> {
 
 // @TODO: remplacer les spécification au cyclisme en adaptatif au triathlon 
     const aiPrompt = `
-        Tu es un coach de ${"cyclisme"}, certifié avec 15 ans d'expérience dans le domaine.
+        Tu es un coach de ${profile.activeSports.cycling ? 'cyclisme' : ''}${profile.activeSports.running ? ', course à pied' : ''}${profile.activeSports.swimming ? ', natation' : ''} certifié et avec 15 ans d'experience dans le monde du sport.
 
         ## CONTEXTE ATHLÈTE
         - Objectif : ${plan.macroStrategyDescription}
@@ -185,7 +185,7 @@ async function CreateBlocks(plan: Plan, profile: Profile): Promise<Block[]> {
         Chaque objet contient exactement :
         - "index" (number) : numéro du bloc
         - "type" (string) : l'un de ["Base", "Build", "Peak", "Taper"]
-        - "theme" (string) : objectif principal en 3 à 6 mots, spécifique à ${"cyclisme"}
+        - "theme" (string) : objectif principal en 3 à 6 mots, spécifique à ${profile.activeSports.cycling ? 'cyclisme' : ''}${profile.activeSports.running ? ', course à pied' : ''}${profile.activeSports.swimming ? ', natation' : ''}
 
         ## RÉPONSE (JSON uniquement) :
         `;
@@ -331,7 +331,7 @@ Tu es un coach certifié, spécialisé en ${activeSports.join(", ")}, avec 15 an
 ## PROFIL ATHLÈTE
 - Niveau : ${profile.experience ?? "Intermédiaire"}
 - CTL actuelle : ${profile.currentCTL}
-- Disciplines actives : ${"cyclisme"}
+- Disciplines actives :${profile.activeSports.cycling ? 'cyclisme' : ''}${profile.activeSports.running ? ', course à pied' : ''}${profile.activeSports.swimming ? ', natation' : ''}
 ${zonesContext}
 
 ## DISPONIBILITÉS DE LA SEMAINE
