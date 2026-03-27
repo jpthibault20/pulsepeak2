@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import AppClientWrapper from '@/components/AppClientWrapper';
-import { getProfile } from '@/lib/profile-db';
-import { getSchedule } from '@/lib/data/crud';
+import { getProfile, getSchedule } from '@/lib/data/crud';
 import { createClient } from '@/lib/supabase/server';
 
 export default async function Home() {
