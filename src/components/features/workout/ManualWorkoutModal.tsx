@@ -1,5 +1,6 @@
 import { Card, Button } from "@/components/ui";
-import type { Workout, SportType, CompletedData } from "@/lib/data/type";
+import type { SportType, CompletedData } from "@/lib/data/type";
+import type { Workout } from "@/lib/data/DatabaseTypes";
 import {
     Plus, Calendar, Activity, Timer, TrendingUp,
     AlignLeft, Bike, Waves, User
@@ -8,12 +9,14 @@ import { useState } from "react";
 
 interface ManualWorkoutModalProps {
     date: Date;
+    userID: string;
     onClose: () => void;
     onSave: (workout: Workout) => Promise<void>;
 }
 
 export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
     date,
+    userID,
     onClose,
     onSave
 }) => {
@@ -96,8 +99,11 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
             };
 
             const newWorkout: Workout = {
-                title: title || 'Sortie Libre',
+                ID: crypto.randomUUID(),
                 id: `manual-${Date.now()}`,
+                userID,
+                weekID: '',
+                title: title || 'Sortie Libre',
                 date: dateStr,
                 sportType,
                 workoutType,
@@ -110,8 +116,7 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                     targetPowerWatts: null,
                     targetPaceMinPerKm: null,
                     targetHeartRateBPM: null,
-                    descriptionIndoor: description || 'Séance manuelle',
-                    descriptionOutdoor: description || 'Séance manuelle',
+                    description: description || 'Séance manuelle',
                 },
                 completedData
             };
@@ -129,14 +134,12 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
         cycling: <Bike size={16} />,
         running: <User size={16} />,
         swimming: <Waves size={16} />,
-        other: <Activity size={16} />
     };
 
     const workoutTypes: Record<SportType, string[]> = {
         cycling: ['Endurance', 'Tempo', 'Threshold', 'VO2max', 'Sprint', 'Recovery', 'Force'],
         running: ['Endurance', 'Tempo', 'Threshold', 'Intervals', 'Recovery', 'Long Run'],
         swimming: ['Endurance', 'Technique', 'Intervals', 'Recovery', 'Sprints'],
-        other: ['Endurance', 'Intervals', 'Recovery', 'Sprints']
     };
 
     return (

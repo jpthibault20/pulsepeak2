@@ -1,9 +1,11 @@
-import { Profile, Workout, SportType } from "../data/type";
+import { Profile } from "../data/DatabaseTypes";
+import { SportType } from "../data/type";
+import { Workout } from "../data/DatabaseTypes";
 
 // Lecture de la clé API depuis les variables d'environnement du serveur
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
-const MAX_RETRIES = 5;
+const MAX_RETRIES = 2;
 
 interface RawAIWorkout {
     date: string; // Présent uniquement dans la génération de plan complet
@@ -46,6 +48,53 @@ interface RawAIWorkout {
     description_indoor: string;
 }
 
+// Fonction générique pour appeler l'API
+export async function callGeminiAPI(payload: unknown) {
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set.");
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        try {
+            const response = await fetch(`${API_URL}?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}. ${errorBody.substring(0, 200)}`);
+            }
+
+            const data = await response.json();
+            const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (!rawText) throw new Error("AI response empty.");
+
+            // Nettoyage du markdown éventuel
+            const cleanText = rawText
+                .trim()
+                .replace(/^```json\s*/i, '')
+                .replace(/^```\s*/i, '')
+                .replace(/\s*```$/i, '');
+
+            try {
+                return JSON.parse(cleanText);
+            } catch (parseError) {
+                console.error("JSON invalide reçu de Gemini :", cleanText);
+                throw new Error(`JSON parsing failed: ${parseError}`);
+            }
+
+        } catch (error) {
+            if (attempt < MAX_RETRIES - 1) {
+                console.warn(`Tentative ${attempt + 1} échouée. Retry dans ${Math.pow(2, attempt)}s...`);
+                await delay(Math.pow(2, attempt) * 1000);
+            } else {
+                throw error;
+            }
+        }
+    }
+}
+
 /**
  * Génère un plan d'entraînement (Compatible Multisport & Multi-séance)
  */
@@ -56,7 +105,7 @@ export async function generatePlanFromAI(
     customTheme: string | null,
     startDateInput: string | null,
     numWeeks?: number
-): Promise<{ synthesis: string, workouts: Workout[] }> {
+): Promise<{ synthesis: string, workouts: Omit<Workout, 'ID' | 'userID' | 'weekID'>[] }> {
     if (!GEMINI_API_KEY) {
         console.error("ERREUR CRITIQUE: GEMINI_API_KEY est NULL.");
         throw new Error("GEMINI_API_KEY is not set.");
@@ -97,7 +146,7 @@ export async function generatePlanFromAI(
             const availability = profile.weeklyAvailability[dayName] || 0;
             const dateStr = d.toISOString().split('T')[0];
 
-            if (availability === 0) {
+            if (availability.cycling === 0 && availability.running === 0 && availability.swimming === 0) {
                 dateConstraints += `- ${dateStr} (${dayName}): REPOS OBLIGATOIRE (0 min dispo).\n`;
             } else {
                 dateConstraints += `- ${dateStr} (${dayName}): Max ${availability} min dispo.\n`;
@@ -112,8 +161,8 @@ export async function generatePlanFromAI(
     // Contexte Zones
     let zonesContext = "ZONES: Utilise les % FTP/VMA standard car les zones exactes ne sont pas définies.";
     
-    if (profile.zones) {
-        const z = profile.zones;
+    if (profile.cycling?.Test?.zones) {
+        const z = profile.cycling.Test.zones;
         zonesContext = `
         ZONES CYCLISME ATHLÈTE (Watts) - À RESPECTER IMPÉRATIVEMENT :
         - Z1 (Récupération): < ${z.z1.max} W
@@ -121,8 +170,8 @@ export async function generatePlanFromAI(
         - Z3 (Tempo): ${z.z3.min} - ${z.z3.max} W
         - Z4 (Seuil/FTP): ${z.z4.min} - ${z.z4.max} W
         - Z5 (VO2 Max): ${z.z5.min} - ${z.z5.max} W
-        - Z6 (Anaérobie): ${z.z6.min} - ${z.z6.max} W
-        - Z7 (Neuromusculaire): > ${z.z7.min} W
+        - Z6 (Anaérobie): ${z?.z6?.min} - ${z?.z6?.max} W
+        - Z7 (Neuromusculaire): > ${z?.z7?.min} W
         `;
     }
 
@@ -154,9 +203,9 @@ FORMAT DE RÉPONSE :
 
     const userPrompt = `
     PROFIL ATHLÈTE:
-    - Sport pratiqué: ${(profile.sports || []).join(', ')}
+    - Sport pratiqué: ${profile.activeSports.cycling ? 'Cyclisme' : ''}${profile.activeSports.running ? ', Course à pied' : ''}${profile.activeSports.swimming ? ', Natation' : ''}
     - Niveau: ${profile.experience}
-    - FTP (Vélo): ${profile.ftp}W
+    - FTP (Vélo): ${profile.cycling?.Test?.ftp}W
     - Poids: ${profile.weight || '?'}kg
     ${zonesContext}
 
@@ -231,7 +280,7 @@ FORMAT DE RÉPONSE :
 
     // --- 4. Transformation et Nettoyage des données ---
     
-    const structuredWorkouts: Workout[] = rawResponse.workouts
+    const structuredWorkouts: Omit<Workout, 'ID' | 'userID' | 'weekID'>[] = rawResponse.workouts
         // Sécurité 1: On filtre les objets invalides ou les jours de repos explicites si l'IA s'est trompée
         .filter(w => w.duration > 0 && w.title.toLowerCase() !== "repos")
         .map((w) => {
@@ -260,8 +309,7 @@ FORMAT DE RÉPONSE :
                     targetPaceMinPerKm: w.sport !== 'cycling' ? w.target_pace : null,
                     targetHeartRateBPM: w.target_hr || null,
 
-                    descriptionOutdoor: w.description_outdoor,
-                    descriptionIndoor: w.description_indoor,
+                    description: w.description_outdoor ?? w.description_indoor ?? null,
                 },
                 
                 // Pas de données réalisées pour le futur
@@ -287,7 +335,7 @@ export async function generateSingleWorkoutFromAI(
     oldWorkout?: Workout,
     currentBlockFocus: string = "General Fitness",
     userInstruction?: string
-): Promise<Workout> {
+): Promise<Omit<Workout, 'ID' | 'userID' | 'weekID'>> {
 
     // Le type de sport est forcé à vélo pour l'instant
     const currentSport: SportType = 'cycling'; // TODO: Passer le sport en paramètre si on supporte la course à pied plus tard
@@ -298,9 +346,9 @@ export async function generateSingleWorkoutFromAI(
     const availability = profile.weeklyAvailability[dayName] || 60;
 
     let zonesContext = "";
-    if (profile.zones) {
+    if (profile.cycling?.Test?.zones) {
         // Version simplifiée pour économiser des tokens
-        const z = profile.zones;
+        const z = profile.cycling.Test.zones;
         zonesContext = `ZONES (W): Z2 ${z.z2.min}-${z.z2.max}, Z4 ${z.z4.min}-${z.z4.max}, Z5 ${z.z5.min}-${z.z5.max}`;
     }
 
@@ -319,7 +367,7 @@ export async function generateSingleWorkoutFromAI(
 
     const userPrompt = `
     DATE: ${date}. SPORT: ${currentSport.toUpperCase()}.
-    PROFIL: FTP ${profile.ftp}. ${zonesContext}.
+    PROFIL: FTP ${profile.cycling?.Test?.ftp}. ${zonesContext}.
     DISPO MAX: ${availability} min.
     FOCUS: ${currentBlockFocus}.
     
@@ -372,45 +420,14 @@ export async function generateSingleWorkoutFromAI(
         status: 'pending',
         plannedData: {
             durationMinutes: w.duration,
-            plannedTSS: w.tss,
-            descriptionOutdoor: w.description_outdoor,
-            descriptionIndoor: w.description_indoor
+            plannedTSS: w.tss ?? null,
+            targetPowerWatts: null,
+            targetPaceMinPerKm: null,
+            targetHeartRateBPM: null,
+            distanceKm: null,
+            description: w.description_outdoor ?? w.description_indoor ?? null,
         },
-        completedData: null
-    } as Workout;
+        completedData: null,
+    };
 }
 
-// Fonction générique pour appeler l'API
-async function callGeminiAPI(payload: unknown) {
-    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set.");
-
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-        try {
-            const response = await fetch(`${API_URL}?key=${GEMINI_API_KEY}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                const errorBody = await response.text();
-                throw new Error(`HTTP error! status: ${response.status}. ${errorBody.substring(0, 200)}`);
-            }
-
-            const data = await response.json();
-            const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-            if (!jsonText) throw new Error("AI response empty.");
-
-            return JSON.parse(jsonText);
-
-        } catch (error) {
-            if (attempt < MAX_RETRIES - 1) {
-                console.warn(`Tentative ${attempt + 1} échouée. Retry...`);
-                await delay(Math.pow(2, attempt) * 1000);
-            } else {
-                throw error;
-            }
-        }
-    }
-}

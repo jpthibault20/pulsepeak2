@@ -1,53 +1,24 @@
+export type aiPersonality = 'Strict' | 'Encourageant' | 'Analytique';
 
-// ______________________________________________________
-// --- TYPES PRINCIPALES ---
-// ______________________________________________________
-
-// Définition de l'interface pour le profil athlète
-export interface Profile {
-  name: string;
-  strava?: StravaConfig; 
-  sports: SportType[];
-  weight?: number;
-  experience: 'Débutant' | 'Intermédiaire' | 'Avancé' | string;
-  ftp: number;
-  goal: string;
-  objectiveDate: string;
-  weaknesses: string;
-  weeklyAvailability: {
-    [key: string]: number;
-  };
-  powerTests?: {
-    p5min: number;
-    p8min: number;
-    p15min: number;
-    p20min: number;
-  };
-  zones?: PowerZones;
-  seasonData?: {
-    calculatedAt: string;
-    wPrime: number;
-    criticalPower: number;
-    method: string;
-    sourceTests: string[];
-  };
+export enum ReturnCode {
+  RC_OK,
+  RC_Warning,
+  RC_Error,
+  RC_Undefined
 }
 
-// Definition de l'interface pour le calendrier (Tableau de Workout)
-export interface Schedule {
-  dbVersion: string;
-  workouts: Workout[];
-  summary: string | null;
-  lastGenerated: string | null;
+export interface AvailabilitySlot {
+  swimming: number;
+  cycling: number;
+  running: number;
+  comment: string;
 }
-
-// Définition de l'interface pour les données d'une séance
-export interface Workout {
-  id: string; 
+export interface Workoutold {
+  id: string;
   date: string; // "YYYY-MM-DD"
-  sportType: SportType; 
+  sportType: SportType;
   title: string;
-  workoutType: string; 
+  workoutType: string;
   mode: 'Outdoor' | 'Indoor';
   status: 'pending' | 'completed' | 'missed';
 
@@ -55,64 +26,57 @@ export interface Workout {
   completedData: CompletedData | null;
 }
 
-// Définition de l'interface pour les données des séances planifiées
 export interface PlannedData {
-  durationMinutes: number; 
+  durationMinutes: number;
   targetPowerWatts: number | null;
   targetPaceMinPerKm: string | null;
   targetHeartRateBPM: number | null;
-  distanceKm: number | null;    
-  plannedTSS: number | null;    
-  descriptionOutdoor: string | null; 
-  descriptionIndoor: string | null;  
-  
-  // NOUVEAU (Optionnel) Structure des intervalles prévus
-  structure?: {
-    type: 'intervals' | 'steady';
-    sets: number; // ex: 5 répétitions
-    repsDescription: string; // ex: "5x 5min @ Z4"
-  };
+  distanceKm: number | null;
+  plannedTSS: number | null;
+  description: string | null;
+structure?: {
+        type:               'Warmup' | 'Active' | 'Rest' | 'Cooldown';
+        durationActifSecondes:      number;
+        targetPowerWatts:   number | null;
+        targetPaceMinPerKm: string | null;
+        targetHeartRateBPM: number | null;
+        distanceKm:         number | null;
+        plannedTSS:         number | null;
+        description:        string;
+    }[];
 }
 
-// Définition de l'interface pour les données des séances réalisées
 export interface CompletedData {
   // --- Données Globales ---
-  actualDurationMinutes: number; 
+  actualDurationMinutes: number;
   distanceKm: number;
   perceivedEffort: number | null; // RPE 1-10
   notes: string;
-  
-  // NOUVEAU: Source de la donnée (import Strava, manuel, etc.)
   source: {
     type: 'manual' | 'strava';
     stravaId?: number | string | null;   // ID unique de l'activité Strava
     stravaUrl?: string;           // Lien direct
     fullJson?: boolean;           // Flag si on a stocké tout le JSON (rarement utile)
   };
-
-  // NOUVEAU: Données Géographiques (pour affichage simple)
   map?: {
     polyline: string | null; // La trace GPS compressée
   };
-
-  // --- Physiologie Globale ---
   heartRate?: {
     avgBPM: number | null;
     maxBPM: number | null;
     zoneDistribution?: number[]; // % du temps passé en Z1, Z2... (Top pour l'analyse)
   };
   caloriesBurned?: number | null;
-
-  // --- Analyse Structurelle (COACHING CRITIQUE) ---
-  // Permet de voir les intervalles (Lap 1, Lap 2...)
   laps: CompletedLap[];
-
-  // --- Métriques Spécifiques par Sport ---
   metrics: {
     cycling: CyclingMetrics | null;
     running: RunningMetrics | null;
     swimming: SwimmingMetrics | null;
   };
+
+  calculatedTSS?: number; // Calculé par TON code (pas Strava) avec le FTP du profil
+  intensityFactor?: number; // IF (Normalised Power / FTP)
+  variabilityIndex?: number; // VI (NP / Avg Power) - utile pour voir si la séance était stable
 }
 
 
@@ -124,16 +88,11 @@ export interface CompletedData {
 // ______________________________________________________
 // --- Sous Types ---
 // ______________________________________________________
-
-// NOUVEAU: Représente un Tour (Lap) ou un Intervalle
-// C'est ici qu'on vérifie si l'athlète a tenu les watts sur ses 5 répétitions.
 export interface CompletedLap {
   index: number;         // 1, 2, 3...
   name: string;          // "Lap 1"
   durationSeconds: number;
   distanceMeters: number;
-  
-  // Métriques du tour
   avgPower?: number | null;
   normalizedPower?: number | null; // Très utile sur des efforts longs
   avgHeartRate?: number | null;
@@ -142,7 +101,6 @@ export interface CompletedLap {
   avgSpeedKmh?: number | null;
 }
 
-// Définition de l'interface pour les données cycle
 export interface CyclingMetrics {
   tss: number | null;               // Training Stress Score (Fatigue)
   avgPowerWatts: number | null;
@@ -156,19 +114,16 @@ export interface CyclingMetrics {
   maxSpeedKmH: number | null;
 }
 
-// Définition de l'interface pour les données de running
 export interface RunningMetrics {
-  avgPaceMinPerKm: number | null; // Format "5:30"
-  bestPaceMinPerKm: string | null; 
+  avgPaceMinPerKm: string | null; // Format "5:30"
+  bestPaceMinPerKm: string | null;
   elevationGainMeters: number | null;
   avgCadenceSPM: number | null;   // Steps Per Minute (Cadence)
   maxCadenceSPM: number | null;
-  avgSpeedKmH: number | null; 
+  avgSpeedKmH: number | null;
   maxSpeedKmH: number | null;
   strideLength?: number | null;   // NOUVEAU: Longueur de foulée (souvent dispo sur Strava)
 }
-
-// Définition de l'interface pour les données de swimming
 export interface SwimmingMetrics {
   avgPace100m: string | null;
   bestPace100m: string | null;
@@ -179,33 +134,34 @@ export interface SwimmingMetrics {
   totalStrokes: number | null;
 }
 
-
-
-// ______________________________________________________
-// --- AUTRES / UTILITAIRES ---
-// ______________________________________________________
-
-// Définition complète des 7 zones de Coggan
-export interface PowerZones {
-  z1: PowerZone; // Récupération active
-  z2: PowerZone; // Endurance
-  z3: PowerZone; // Tempo
-  z4: PowerZone; // Seuil (FTP)
-  z5: PowerZone; // VO2max
-  z6: PowerZone; // Capacité Anaérobie
-  z7: PowerZone; // Neuromusculaire
+export interface CyclingTest {
+  ftp?: number;
+  p5min?: number;
+  p8min?: number;
+  p15min?: number;
+  p20min?: number;
+  zones?: Zones;
+  seasonData?: SeasonData;
+  sourceTests?: string[];
 }
 
-// Définition d'une zone unique (plage de puissance)
-export interface PowerZone {
+export interface Zones {
+  z1: Zone; // Récupération active
+  z2: Zone; // Endurance
+  z3: Zone; // Tempo
+  z4: Zone; // Seuil (FTP)
+  z5: Zone; // VO2max
+  z6?: Zone; // Capacité Anaérobie
+  z7?: Zone; // Neuromusculaire
+}
+
+export interface Zone {
   min: number;
   max: number;
 }
 
-// Définition de l'interface pour le type de sport
-export type SportType = 'cycling' | 'running' | 'swimming' | 'other';
+export type SportType = 'cycling' | 'running' | 'swimming';
 
-// Définition de l'interface pour le profil strava
 export interface StravaConfig {
   athleteId: number;
   accessToken: string;
@@ -213,36 +169,25 @@ export interface StravaConfig {
   expiresAt: number;
 }
 
-
-// Définition de l'interface pour les données des feedbacks
 export interface CompletedDataFeedback {
   rpe: number;
   actualDuration: number;
   distance: number;
   notes: string;
   sportType: SportType;
-
-  // Universel
   avgHeartRate?: number;
   calories?: number;
   elevation?: number;
-
-  // Cyclisme
   avgPower?: number;
   maxPower?: number;
   normalizedPower?: number;
   tss?: number;
   intensityFactor?: number;
-  
-
-  // Running/Cycling
   avgPace?: string;
   avgCadence?: number;
   maxCadence?: number;
-  avgSpeed?: number; // ✅ AJOUTÉ
-  maxSpeed?: number; // ✅ AJOUTÉ
-
-  // Swimming
+  avgSpeed?: number;
+  maxSpeed?: number;
   strokeType?: string;
   avgStrokeRate?: number;
   avgSwolf?: number;
@@ -250,41 +195,17 @@ export interface CompletedDataFeedback {
   totalStrokes?: number;
 }
 
+export interface PowerTests {
+  p5min: number;
+  p8min: number;
+  p15min: number;
+  p20min: number;
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+export interface SeasonData {
+  calculatedAt?: string;       // ISO 8601
+  wPrime?: number;             // W' en joules
+  criticalPower?: number;      // CP (FTP) en watts
+  method?: 'Critical Power Regression' | 'Single Test Estimation';
+  sourceTests?: string[];      // Ex: ['5min', '20min']
+}

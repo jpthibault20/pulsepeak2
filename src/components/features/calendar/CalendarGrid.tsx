@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { Schedule, Workout } from '@/lib/data/type';
+import type { Workout, Profile, Schedule } from '@/lib/data/DatabaseTypes';
 import { DayCell } from './DayCell';
 import { WeekSummaryCell } from './WeekSummaryCell';
 import { formatDateKey, DAY_NAMES_SHORT, type DayName } from '@/lib/utils';
@@ -9,16 +9,22 @@ interface CalendarGridProps {
     currentMonth: number;
     currentYear: number;
     scheduleData: Schedule;
+    profile: Profile;
     onOpenManualModal: (e: React.MouseEvent, date: Date) => void;
     onViewWorkout: (workout: Workout) => void;
+    onRefresh: () => void;
+    onOpenGenModal: () => void;
 }
 
 export function CalendarGrid({
     weekRows,
     currentMonth,
     scheduleData,
+    profile,
     onOpenManualModal,
-    onViewWorkout
+    onViewWorkout,
+    onRefresh,
+    onOpenGenModal,
 }: CalendarGridProps) {
 
     const allWeekStats = useMemo(() => {
@@ -155,7 +161,14 @@ export function CalendarGrid({
 
                             {/* La cellule de résumé de la semaine (8ème colonne) */}
                             <div className="bg-slate-900/40 min-h-[120px] relative border-l border-slate-800/50 hover:bg-slate-900/80 transition-colors">
-                                <WeekSummaryCell stats={stats} />
+                                <WeekSummaryCell
+                                    stats={stats}
+                                    weekDates={week}
+                                    profileAvailability={profile.weeklyAvailability}
+                                    activeSports={profile.activeSports}
+                                    onRefresh={onRefresh}
+                                    onOpenGenModal={onOpenGenModal}
+                                />
                             </div>
                         </div>
                     );

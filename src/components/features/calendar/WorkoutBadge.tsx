@@ -4,7 +4,7 @@ import {
     Bike, Footprints, Waves, Dumbbell, Activity,
     Home, Sun
 } from 'lucide-react';
-import type { Workout } from '@/lib/data/type';
+import type { Workout } from '@/lib/data/DatabaseTypes';
 
 interface WorkoutBadgeProps {
     workout: Workout;

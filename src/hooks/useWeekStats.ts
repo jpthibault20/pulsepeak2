@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
-import type { Schedule, SportType } from '@/lib/data/type';
+import type { SportType } from '@/lib/data/type';
 import { formatDateKey } from '@/lib/utils';
+import { Schedule } from '@/lib/data/DatabaseTypes';
 
 export interface WeekStats {
     plannedTSS: number;
@@ -26,8 +27,8 @@ export function useWeekStats(
             completed: 0,
             completedTSS: 0,
             total: 0,
-            sportBreakdown: { cycling: 0, running: 0, swimming: 0, other: 0 },
-            sportDuration: { cycling: 0, running: 0, swimming: 0, other: 0 }
+            sportBreakdown: { cycling: 0, running: 0, swimming: 0  },
+            sportDuration: { cycling: 0, running: 0, swimming: 0  }
         };
 
         const uniqueDates = new Set(

@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Plus, BrainCircuit, Info, X, Target } from 'lucide-react';
-import type { Workout, Schedule } from '@/lib/data/type';
+import { ChevronLeft, ChevronRight, Plus, Info, X, Target, Home } from 'lucide-react';
+import type { Workout, Profile } from '@/lib/data/DatabaseTypes';
 import { Button } from '@/components/ui/Button';
 import { ManualWorkoutModal } from '../workout/ManualWorkoutModal';
 import { GenerationModal } from './GenerationModal';
@@ -10,21 +10,28 @@ import { CalendarGrid } from '@/components/features/calendar/CalendarGrid';
 import { MobileCalendarList } from '@/components/features/calendar/MobileCalendarList';
 import { useCalendarDays } from '@/hooks/useCalendarDays';
 import { MONTH_NAMES } from '@/lib/utils';
+import { Schedule } from '@/lib/data/DatabaseTypes';
 
 interface CalendarViewProps {
     scheduleData: Schedule;
+    profile: Profile;
+    userID: string;
     onViewWorkout: (workout: Workout) => void;
-    onGenerate: (blockFocus: string, customTheme: string | null, startDate: string | null, numWeeks?: number) => void;
+    onGenerate: (blockFocus: string, customTheme: string | null, startDate: string, numWeeks: number) => void;
     onAddManualWorkout: (workout: Workout) => void;
+    onRefresh: () => void;
     onSyncStrava?: () => void;
     isSyncing?: boolean;
 }
 
 export function CalendarView({
     scheduleData,
+    profile,
+    userID,
     onViewWorkout,
     onGenerate,
     onAddManualWorkout,
+    onRefresh,
     onSyncStrava,
     isSyncing = false
 }: CalendarViewProps) {
@@ -41,12 +48,12 @@ export function CalendarView({
     const handleGeneratePlan = async (
         blockFocus: string,
         customTheme: string | null,
-        startDate: string | null,
-        numWeeks?: number
+        startDate: string,
+        numWeeks: number
     ) => {
         setIsGenerating(true);
         try {
-            await onGenerate(blockFocus, customTheme, startDate, numWeeks);
+            onGenerate(blockFocus, customTheme, startDate, numWeeks);
         } finally {
             setIsGenerating(false);
         }
@@ -64,6 +71,7 @@ export function CalendarView({
     };
 
     const handlePrevMonth = () => setSelectedDate(new Date(year, month - 1));
+    const handleActualMonth = () => setSelectedDate(new Date(new Date().getFullYear(), new Date().getMonth()));
     const handleNextMonth = () => setSelectedDate(new Date(year, month + 1));
 
     return (
@@ -90,35 +98,42 @@ export function CalendarView({
                             >
                                 <ChevronRight size={18} />
                             </button>
+                            <div className="h-6 w-px bg-slate-800 mx-1" />
+                            <button
+                                onClick={handleActualMonth}
+                                className="p-1.5 hover:bg-slate-700 rounded-full text-slate-400 transition-colors"
+                            >
+                                <Home size={18} />
+                            </button>
                         </div>
 
                         {/* Bouton Info Stratégie (Mobile) - Si un résumé existe */}
-                    {onSyncStrava && (
-                        <button
-                            onClick={onSyncStrava}
-                            disabled={isSyncing}
-                            className={`
+                        {onSyncStrava && (
+                            <button
+                                onClick={onSyncStrava}
+                                disabled={isSyncing}
+                                className={`
                 flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all
                 border border-orange-500/30 text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/60
                 ${isSyncing ? 'opacity-50 cursor-not-allowed' : ''}
             `}
-                            title="Synchroniser avec Strava"
-                        >
-                            {/* Icône de Sync / Refresh */}
-                            <svg
-                                className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`}
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
+                                title="Synchroniser avec Strava"
                             >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
+                                {/* Icône de Sync / Refresh */}
+                                <svg
+                                    className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`}
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
 
-                            <span className="hidden sm:inline">
-                                {isSyncing ? 'Synchro...' : 'Strava'}
-                            </span>
-                        </button>
-                    )}
+                                <span className="hidden sm:inline">
+                                    {isSyncing ? 'Synchro...' : 'Strava'}
+                                </span>
+                            </button>
+                        )}
                     </div>
 
                     {scheduleData.summary && (
@@ -156,23 +171,13 @@ export function CalendarView({
                     )}
 
                     <div className="h-6 w-px bg-slate-800 mx-1" />
-
-                    <Button
-                        variant="ghost"
-                        icon={BrainCircuit}
-                        onClick={() => handleGeneratePlan('Objectif Principal', null, null)}
-                        disabled={isGenerating}
-                        className="text-sm text-slate-400 hover:text-white"
-                    >
-                        Recalculer
-                    </Button>
                     <Button
                         variant="primary"
                         icon={Plus}
                         onClick={() => setShowGenModal(true)}
                         disabled={isGenerating}
                     >
-                        Nouveau Bloc
+                        Calculer un nouveau plan
                     </Button>
                 </div>
             </div>
@@ -192,8 +197,11 @@ export function CalendarView({
                     currentMonth={month}
                     currentYear={year}
                     scheduleData={scheduleData}
+                    profile={profile}
                     onOpenManualModal={handleOpenManualModal}
                     onViewWorkout={onViewWorkout}
+                    onRefresh={onRefresh}
+                    onOpenGenModal={() => setShowGenModal(true)}
                 />
             </div>
 
@@ -264,6 +272,7 @@ export function CalendarView({
             {showManualModal && dateForManual && (
                 <ManualWorkoutModal
                     date={dateForManual}
+                    userID={userID}
                     onClose={() => setShowManualModal(false)}
                     onSave={handleSaveManual}
                 />

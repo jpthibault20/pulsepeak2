@@ -3,10 +3,11 @@
 // src/lib/profile-db.ts
 import fs from 'fs/promises';
 import path from 'path';
-import { Profile, StravaConfig } from '@/lib/data/type';
+import { StravaConfig } from '@/lib/data/type';
+import { Profile } from './data/DatabaseTypes';
 
 // On définit le chemin ici
-const PROFILE_PATH = path.join(process.cwd(), '/src/lib/data/profile.json');
+const PROFILE_PATH = path.join(process.cwd(), '/src/lib/data/tables/profile.json');
 
 export async function getProfile(): Promise<Profile> {
     try {
