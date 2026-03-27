@@ -11,6 +11,7 @@ import { SportsAndAppLink } from './SportsAndAppLink';
 import { Availability } from './Availability';
 import { CalibrationTest } from './CalibrationTest';
 import { Goals } from './Goals';
+import { AccountSettings } from './AccountSettings';
 import { Profile } from '@/lib/data/DatabaseTypes';
 
 
@@ -219,6 +220,9 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave,  
                 formData={formData}
                 setFormData={setFormData}
             />
+
+            {/* 5. COMPTE & SÉCURITÉ */}
+            <AccountSettings />
 
             {/* ACTIONS FOOTER (Sticky mobile) */}
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-slate-950/90 backdrop-blur-md border-t border-slate-800 flex justify-end gap-3 z-50 md:static md:bg-transparent md:border-none md:p-0">
