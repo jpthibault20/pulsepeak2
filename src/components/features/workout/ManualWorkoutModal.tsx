@@ -7,6 +7,15 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+/** UUID v4 compatible SSR (crypto.randomUUID n'est pas disponible côté serveur dans tous les env) */
+function generateUUID(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = Math.random() * 16 | 0;
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+}
+
+
 interface ManualWorkoutModalProps {
     date: Date;
     userID: string;
@@ -99,7 +108,7 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
             };
 
             const newWorkout: Workout = {
-                ID: crypto.randomUUID(),
+                ID: generateUUID(),
                 id: `manual-${Date.now()}`,
                 userID,
                 weekID: '',
@@ -243,8 +252,8 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                                     onChange={e => setMode(e.target.value as 'Outdoor' | 'Indoor')}
                                     className="w-full h-11 appearance-none bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                                 >
-                                    <option value="outdoor">Extérieur</option>
-                                    <option value="indoor">Intérieur</option>
+                                    <option value="Outdoor">Extérieur</option>
+                                    <option value="Indoor">Intérieur</option>
                                 </select>
                                 <div className="absolute right-3 top-3.5 pointer-events-none text-slate-500">
                                     <svg width="10" height="6" viewBox="0 0 10 6" fill="none">

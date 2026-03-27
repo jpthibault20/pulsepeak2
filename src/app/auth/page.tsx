@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Activity, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, ArrowRight, Zap } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { createInitialProfile } from '@/app/actions/auth';
 
 type Tab = 'login' | 'register';
 
@@ -116,7 +117,7 @@ export default function AuthPage() {
             return;
         }
         setIsLoading(true);
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
             email: registerEmail,
             password: registerPassword,
             options: {
@@ -126,6 +127,18 @@ export default function AuthPage() {
         if (error) {
             setError(error.message);
             setIsLoading(false);
+            return;
+        }
+        // Créer le profil en DB dès que l'userId est disponible.
+        // Si confirmation email désactivée : session déjà active, profil créé immédiatement.
+        // Si confirmation email requise : profil créé ici en avance, callback n'a rien à faire.
+        if (data.user) {
+            await createInitialProfile(data.user.id, firstName, lastName, registerEmail);
+        }
+        // Si session immédiate (pas de confirmation email), rediriger directement.
+        if (data.session) {
+            router.push('/');
+            router.refresh();
             return;
         }
         setSuccess('Compte créé ! Vérifiez votre boîte mail pour confirmer votre adresse.');
