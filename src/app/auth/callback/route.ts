@@ -5,14 +5,21 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
     const { searchParams, origin } = new URL(request.url);
     const code = searchParams.get('code');
+    const type = searchParams.get('type');                    // 'recovery' pour reset password
     const next = searchParams.get('next') ?? '/';
 
     if (code) {
         const supabase = await createClient();
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (!error) {
-            // Créer le profil si pas encore existant (confirmation email tardive).
             const { data: { user } } = await supabase.auth.getUser();
+
+            if (type === 'recovery') {
+                // Lien de reset password → rediriger vers la page de saisie du nouveau mot de passe
+                return NextResponse.redirect(`${origin}/auth/reset-password`);
+            }
+
+            // Confirmation email → créer le profil si pas encore existant
             if (user) {
                 const meta = user.user_metadata ?? {};
                 await createInitialProfile(

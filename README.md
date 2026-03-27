@@ -1,118 +1,172 @@
-/*
-# 🚴‍♂️ PulsePeak
+# PulsePeak
 
-**Votre Directeur Sportif Personnel propulsé par l'IA.**
+Application web de planification et suivi d'entraînement **triathlon** (natation · cyclisme · course à pied), pilotée par l'IA.
 
-PulsePeak est une application web moderne construite avec **Next.js** qui utilise l'intelligence artificielle (**Google Gemini**) pour générer, adapter et analyser des plans d'entraînement cycliste sur mesure.
+---
 
-L'application agit comme un véritable coach "World Tour", prenant en compte votre profil physiologique (FTP, PMA, Poids), vos disponibilités hebdomadaires et votre historique de performance pour créer une périodisation optimale.
+## Stack technique
 
-## ✨ Fonctionnalités Clés
+| Couche | Technologie |
+|---|---|
+| Framework | Next.js 16 (App Router, Server Components, Server Actions) |
+| UI | React 19 + Tailwind CSS v4 + Lucide React |
+| Base de données | Supabase (PostgreSQL) |
+| ORM | Drizzle ORM |
+| Auth | Supabase Auth (`@supabase/ssr`) |
+| IA | Google Gemini API (`gemini-2.5-flash`) |
+| Intégration sport | Strava API (OAuth 2.0) |
+| Langage | TypeScript strict |
 
-### 🧠 Planification Intelligente
-- **Génération IA :** Création de blocs d'entraînement (ex: 3 semaines de charge + 1 semaine de récupération) adaptés à un objectif spécifique (Gran Fondo, Critérium, Endurance...).
-- **Adaptabilité :** L'IA analyse votre historique récent (conformité, RPE) pour ajuster la charge du prochain bloc.
-- **Double Version :** Chaque séance est générée avec une variante **Outdoor** (Route) et **Indoor** (Home Trainer).
+---
 
-### 📊 Profil & Physiologie
-- **Calculateur de Zones Avancé :** Utilisation du modèle de **Puissance Critique** (Critical Power) si plusieurs tests sont disponibles (5', 8', 15', 20') pour déterminer votre FTP et votre W' (réserve anaérobie) avec précision.
-- **Gestion des Disponibilités :** Définissez vos heures disponibles pour chaque jour de la semaine ; l'IA respectera strictement ces contraintes pour calculer le volume cible.
+## Fonctionnalités
 
-### 📅 Calendrier Interactif
-- **Suivi :** Marquez vos séances comme "Faites", "Ratées" ou "À faire".
-- **Feedback :** Saisissez votre RPE (Ressenti), la durée réelle et la distance pour nourrir l'algorithme.
-- **Flexibilité :** Déplacez une séance, échangez deux séances ou régénérez une séance spécifique via l'IA si elle ne vous convient pas.
-- **Ajout Manuel :** Ajoutez des sorties libres non prévues au programme.
+**Planification IA**
+- Génération de plans d'entraînement complets (blocs → semaines → séances) via Gemini
+- Adaptation du prochain bloc selon la conformité et le RPE déclarés
+- Double variante Outdoor / Indoor par séance
 
-### 📈 Analyse de Performance (Dashboard Directeur Sportif)
-- **KPIs :** Suivi du TSS (Training Stress Score), du volume horaire et de la distance.
-- **Santé :** Surveillance de l'indice de **Monotonie** pour prévenir le surentraînement.
-- **Comparatif :** Graphiques visuels comparant le "Planifié" vs "Réalisé" sur une période donnée ou sur la saison entière.
+**Calendrier interactif**
+- Vue semaine/mois avec résumé de charge hebdomadaire
+- Marquage séance : À faire / Faite / Ratée
+- Saisie du feedback post-séance (RPE, durée réelle, distance)
+- Ajout manuel d'une sortie libre
 
-## 🛠️ Stack Technique
+**Intégration Strava**
+- Connexion OAuth 2.0 et synchronisation des activités
+- Dédoublonnage automatique par `stravaId`
 
-- **Framework :** [Next.js 14+](https://nextjs.org/) (App Router, Server Components, Server Actions).
-- **Langage :** TypeScript.
-- **Styling :** [Tailwind CSS](https://tailwindcss.com/) & [Lucide React](https://lucide.dev/) (Icônes).
-- **IA :** Google Gemini API (`gemini-2.5-flash`).
-- **Base de Données :** Système de fichiers local (JSON) pour une portabilité maximale et une simplicité de déploiement (simule une NoSQL DB).
+**Profil athlète**
+- Zones FC et de puissance par sport
+- Disponibilités hebdomadaires (contraintes respectées par l'IA)
+- Calculateur FTP / Critical Power
 
-## 🚀 Installation et Démarrage
+**Statistiques**
+- TSS, CTL, ATL, charge hebdomadaire par sport
+- Comparatif Planifié vs Réalisé
 
-### Prérequis
-- Node.js 18+ installé.
-- Une clé API Google Gemini (gratuite via Google AI Studio).
+**Authentification**
+- Inscription / connexion email + mot de passe
+- Réinitialisation du mot de passe par email
+- Changement de mot de passe en profil
+- Déconnexion
 
-### 1. Cloner le projet
+---
+
+## Installation
+
 ```bash
-git clone [https://github.com/votre-pseudo/pulsepeak.git](https://github.com/votre-pseudo/pulsepeak.git)
-cd pulsepeak
-```
+# 1. Cloner le projet
+git clone https://github.com/ton-compte/pulsepeak2025.git
+cd pulsepeak2025
 
-### 2. Installer les dépendances
-```bash
+# 2. Installer les dépendances
 npm install
-```
 
-### 3. Configuration des Variables d'Environnement
-Créez un fichier `.env.local` à la racine du projet et ajoutez votre clé API :
+# 3. Configurer les variables d'environnement
+cp .env.example .env.local
+# Remplir les valeurs dans .env.local
 
-```env
-GEMINI_API_KEY="VOTRE_CLE_API_ICI"
-```
+# 4. Pousser le schéma de base de données
+npm run db:push
 
-### 4. Initialiser les données locales
-Assurez-vous que le dossier pour la base de données JSON existe (il sera utilisé pour stocker le profil et le calendrier).
-```bash
-mkdir -p src/lib/data
-```
-
-### 5. Lancer le serveur de développement
-```bash
+# 5. Lancer en développement
 npm run dev
 ```
-Ouvrez [http://localhost:3000](http://localhost:3000) dans votre navigateur.
 
-## 📂 Structure du Projet
+---
 
-L'architecture suit une approche "Feature-First" pour une meilleure maintenabilité.
+## Variables d'environnement
+
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+
+# PostgreSQL direct (Drizzle ORM)
+DATABASE_URL=postgresql://postgres.xxx:password@aws-0-region.pooler.supabase.com:6543/postgres
+
+# IA
+GEMINI_API_KEY=AIza...
+
+# Strava OAuth
+STRAVA_CLIENT_ID=000000
+STRAVA_CLIENT_SECRET=xxx
+
+# URL de base (redirections OAuth et email)
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+```
+
+---
+
+## Scripts
+
+```bash
+npm run dev              # Serveur de développement
+npm run build            # Build de production
+npm run lint             # ESLint
+
+# Base de données
+npm run db:push          # Pousser le schéma Drizzle vers Supabase
+npm run db:generate      # Générer les fichiers de migration
+npm run db:migrate       # Appliquer les migrations
+npm run db:studio        # Interface visuelle Drizzle Studio
+
+# Utilitaires
+npm run db:migrate-json  # Migration initiale JSON → Supabase (usage unique)
+npm run db:dedup-strava  # Supprimer les doublons Strava (basé sur stravaId)
+```
+
+---
+
+## Structure du projet
 
 ```
 src/
 ├── app/
-│   ├── actions/              # Server Actions (Logique métier backend)
-│   │   └── schedule.ts       # Gestion du calendrier, appels IA, sauvegardes
-│   ├── page.tsx              # Page principale (Client Wrapper)
-│   └── layout.tsx            # Layout global
+│   ├── auth/                  # Pages : login/register, forgot-password, reset-password
+│   ├── auth/callback/         # Échange de code Supabase (OAuth, reset password)
+│   ├── api/strava/            # Route API OAuth Strava
+│   ├── actions/               # Server Actions : schedule, auth, profile
+│   ├── layout.tsx
+│   └── page.tsx               # Page principale (calendrier)
 │
 ├── components/
-│   ├── ui/                   # Composants Design System (Boutons, Cards, Modales...)
-│   └── features/             # Composants Métier
-│       ├── calendar/         # Vue Calendrier, Modal Génération
-│       ├── workout/          # Détails séance, Feedback, Ajout Manuel
-│       ├── profile/          # Formulaire profil, Calcul Zones
-│       └── stats/            # Dashboard Analyse
+│   ├── ui/                    # Design system : Button, Card, Modal…
+│   └── features/
+│       ├── calendar/          # CalendarView, CalendarGrid, WeekSummaryCell
+│       ├── profile/           # ProfileForm, Availability, AccountSettings
+│       ├── stats/             # Dashboard de charge
+│       └── workout/           # ManualWorkoutModal, WorkoutCard
 │
 └── lib/
-    ├── ai/                   # Intégration API Gemini & Prompts
-    ├── data/                 # Types TypeScript & CRUD JSON
-    └── utils.ts              # Fonctions utilitaires (Dates, Formatage)
+    ├── ai/                    # Prompts et appels Gemini
+    ├── data/                  # Types TypeScript (DatabaseTypes, type.ts), crud.ts
+    ├── db/                    # Schéma Drizzle (schema.ts) + migrations
+    ├── supabase/              # Clients Supabase (client.ts, server.ts)
+    ├── strava-service.ts      # OAuth Strava + synchronisation
+    └── strava-mapper.ts       # Mapping activités Strava → Workout
 ```
 
-## 🤖 Le Prompt Engineering
+---
 
-Le "cerveau" de PulsePeak réside dans `src/lib/ai/coach-api.ts`. Le prompt est structuré pour forcer l'IA à :
-1.  Agir comme un coach UCI.
-2.  Analyser la conformité passée (si vous roulez moins que prévu, elle réduit le volume futur).
-3.  Respecter une périodisation 3+1 (Charge/Récup) par défaut, ou adaptée au thème.
-4.  Utiliser des descriptions précises basées sur les **Zones de Puissance** (Watts) calculées.
-5.  Retourner un format JSON strict pour une intégration directe dans l'interface.
+## Base de données
 
-## 📝 Notes
+Schéma défini dans `src/lib/db/schema.ts` — 5 tables PostgreSQL :
 
-Les données sont stockées dans `src/lib/data/*.json`. En production sur Vercel, ce système de fichier est éphémère (les données seront perdues au redéploiement). Pour une persistance réelle en production, il est recommandé de remplacer les fonctions dans `crud.ts` pour pointer vers une base de données comme Firebase, Supabase ou MongoDB.
+| Table | Description |
+|---|---|
+| `profiles` | Profil athlète, lié à `auth.users` de Supabase |
+| `plans` | Plans d'entraînement macro |
+| `blocks` | Blocs de périodisation (charge, récupération, compétition…) |
+| `weeks` | Semaines d'entraînement avec TSS cible/réalisé |
+| `workouts` | Séances individuelles (données planifiées + réalisées en `jsonb`) |
 
-## 📄 Licence
+Les données complexes (`plannedData`, `completedData`, zones FC, metrics sport) sont stockées en colonnes `jsonb`.
 
-Distribué sous la licence MIT.
-*/
+---
+
+## Auth
+
+Supabase Auth avec `@supabase/ssr` — session gérée côté serveur via cookies HTTP-only.
+Protection des routes via `src/proxy.ts` (convention Next.js 16).
