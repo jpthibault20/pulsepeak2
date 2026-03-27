@@ -234,7 +234,7 @@ export default function AuthPage() {
                                     <button
                                         type="button"
                                         className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-                                        onClick={() => {/* TODO: mot de passe oublié */ }}
+                                        onClick={() => router.push('/auth/forgot-password')}
                                     >
                                         Mot de passe oublié ?
                                     </button>

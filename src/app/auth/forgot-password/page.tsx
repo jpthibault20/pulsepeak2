@@ -28,7 +28,14 @@ export default function ForgotPasswordPage() {
         });
 
         if (error) {
-            setError(error.message);
+            const msg = error.message.toLowerCase();
+            if (msg.includes('sending') || msg.includes('email') || msg.includes('smtp')) {
+                setError("Impossible d'envoyer l'email. Vérifiez la configuration SMTP dans Supabase → Project Settings → Authentication, ou patientez si vous avez atteint la limite d'envoi (2/heure sur le plan gratuit).");
+            } else if (msg.includes('rate limit') || msg.includes('too many')) {
+                setError('Trop de tentatives. Veuillez patienter quelques minutes avant de réessayer.');
+            } else {
+                setError(error.message);
+            }
             setIsLoading(false);
             return;
         }
