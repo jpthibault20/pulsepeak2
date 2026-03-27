@@ -12,15 +12,9 @@ import { formatDateKey } from '@/lib/utils';
 const DAYS_FR = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'] as const;
 
 const WEEK_TYPE_LABELS: Record<string, { label: string; color: string }> = {
-    Load:     { label: 'Charge',       color: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
+    Load: { label: 'Charge', color: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
     Recovery: { label: 'Récupération', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-    Taper:    { label: 'Affûtage',     color: 'text-purple-400 bg-purple-500/10 border-purple-500/20' },
-};
-
-const SPORT_LABELS: Record<string, string> = {
-    cycling:  'Vélo',
-    running:  'Course',
-    swimming: 'Natation',
+    Taper: { label: 'Affûtage', color: 'text-purple-400 bg-purple-500/10 border-purple-500/20' },
 };
 
 interface WeekSummaryCellProps {
@@ -40,25 +34,20 @@ export function WeekSummaryCell({
     onRefresh,
     onOpenGenModal,
 }: WeekSummaryCellProps) {
-    const [showPopover, setShowPopover]      = useState(false);
-    const [openUpward, setOpenUpward]        = useState(false);
-    const [showAIModal, setShowAIModal]      = useState(false);
+    const [showPopover, setShowPopover] = useState(false);
+    const [openUpward, setOpenUpward] = useState(false);
+    const [showAIModal, setShowAIModal] = useState(false);
     const buttonRef = useRef<HTMLDivElement>(null);
 
     // Modal state
-    const [comment, setComment]                  = useState('');
-    const [availability, setAvailability]        = useState<{ [key: string]: AvailabilitySlot }>({});
-    const [weekContext, setWeekContext]           = useState<WeekContext>(null);
-    const [pendingCount, setPendingCount]         = useState(0);
+    const [comment, setComment] = useState('');
+    const [availability, setAvailability] = useState<{ [key: string]: AvailabilitySlot }>({});
+    const [weekContext, setWeekContext] = useState<WeekContext>(null);
+    const [pendingCount, setPendingCount] = useState(0);
     const [confirmOverwrite, setConfirmOverwrite] = useState(false);
     const [isLoadingContext, setIsLoadingContext] = useState(false);
-    const [isGenerating, setIsGenerating]        = useState(false);
-    const [error, setError]                      = useState<string | null>(null);
-
-    // Sports actifs sous forme de liste
-    const activeSportsList = (
-        Object.entries(activeSports) as [keyof typeof activeSports, boolean][]
-    ).filter(([, v]) => v).map(([k]) => k);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     // Monday of this week (weekDates[0] = Lundi dans la grille ISO)
     const weekStartDate = (() => {
@@ -231,11 +220,10 @@ export function WeekSummaryCell({
                         <div className="w-full space-y-1.5">
                             <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden border border-slate-700/50">
                                 <div
-                                    className={`h-full rounded-full transition-all duration-500 ease-out ${
-                                        durationPercentage >= 100
+                                    className={`h-full rounded-full transition-all duration-500 ease-out ${durationPercentage >= 100
                                             ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'
-                                            : 'bg-gradient-to-r from-blue-600 to-blue-400'
-                                    }`}
+                                            : 'bg-linear-to-r from-blue-600 to-blue-400'
+                                        }`}
                                     style={{ width: `${durationPercentage}%` }}
                                 />
                             </div>
@@ -276,7 +264,7 @@ export function WeekSummaryCell({
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Header modal */}
-                        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-gradient-to-r from-blue-950/30 to-slate-900 shrink-0">
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-linear-to-r from-blue-950/30 to-slate-900 shrink-0">
                             <div className="flex items-center gap-3">
                                 <div className="bg-blue-500/20 p-2 rounded-lg">
                                     <Bot size={20} className="text-blue-400" />
@@ -504,9 +492,8 @@ export function WeekSummaryCell({
                                 <button
                                     onClick={handleGenerate}
                                     disabled={isGenerating || !weekStartDate || (!isLoadingContext && !weekContext)}
-                                    className={`flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                                        confirmOverwrite ? 'bg-orange-600 hover:bg-orange-500' : 'bg-blue-600 hover:bg-blue-500'
-                                    }`}
+                                    className={`flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${confirmOverwrite ? 'bg-orange-600 hover:bg-orange-500' : 'bg-blue-600 hover:bg-blue-500'
+                                        }`}
                                 >
                                     {isGenerating ? (
                                         <>
