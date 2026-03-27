@@ -1,6 +1,7 @@
 'use server';
 
 import { generatePlanFromAI, generateSingleWorkoutFromAI } from '@/lib/ai/coach-api';
+import { formatDateKey } from '@/lib/utils';
 import { getBlock, getPlan, getProfile, getSchedule, getWeek, getWorkout, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek, saveWorkout } from '@/lib/data/crud';
 import { ReturnCode } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
@@ -82,7 +83,7 @@ export async function CreateAdvancedPlan(
     const newWorkouts: Workout[] = [...firstWeekWorkouts];
     const updatedWeeks = newWeeks.map((week) =>
         week.id === firstWeek.id
-            ? { ...week, workoutsId: firstWeekWorkouts.map(w => w.id) }
+            ? { ...week, workoutsID: firstWeekWorkouts.map(w => w.id) }
             : week
     );
 
@@ -420,7 +421,7 @@ Chaque objet contient exactement :
         id:          randomUUID(),
         userID:      profile.id,
         weekID:      week.id,
-        date:        workoutDate.toISOString().split('T')[0],
+        date:        formatDateKey(workoutDate),
         sportType:   w.sportType as SportType,
         title:       w.title,
         workoutType: w.workoutType,
@@ -915,6 +916,28 @@ export async function deleteWorkout(workoutIdOrDate: string) {
 export async function syncStravaActivities() {
     console.log("⚡ Début Sync Strava...");
 
+    // Helper : retry avec backoff exponentiel
+    async function fetchWithRetry<T>(
+        fn: () => Promise<T | null>,
+        id: number,
+        maxRetries = 2
+    ): Promise<T | null> {
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                const result = await fn();
+                if (result !== null) return result;
+            } catch {
+                // fall through to retry
+            }
+            if (attempt < maxRetries) {
+                await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+                console.log(`   🔁 Retry ${attempt + 1}/${maxRetries} pour l'activité ${id}...`);
+            }
+        }
+        console.warn(`   ⚠️ Activité ${id} non récupérée après ${maxRetries} retry.`);
+        return null;
+    }
+
     try {
         // 1. Charger les données actuelles
         const [profile, existingWorkouts, existingWeeks, existingBlocks] = await Promise.all([
@@ -936,15 +959,15 @@ export async function syncStravaActivities() {
         if (stravaWorkouts.length > 0) {
             stravaWorkouts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
             lastStravaTimestamp = Math.floor(new Date(stravaWorkouts[0].date).getTime() / 1000);
-            console.log(`📅 Dernière activité Strava connue : ${stravaWorkouts[0].date} (Epoch: ${lastStravaTimestamp})`);
+            console.log(`📅 Dernière activité Strava connue : ${stravaWorkouts[0].date}`);
         } else {
-            console.log("⚠️ Aucune activité Strava trouvée en DB. Récupération des 20 dernières.");
+            console.log("⚠️ Aucune activité Strava en DB. Récupération des 30 dernières.");
         }
 
-        // 3. Appeler Strava API
+        // 3. Appeler Strava API (liste des résumés)
         const activitiesSummary = await getStravaActivities(
             lastStravaTimestamp > 0 ? lastStravaTimestamp : null,
-            20
+            60
         );
 
         if (!activitiesSummary || activitiesSummary.length === 0) {
@@ -952,51 +975,63 @@ export async function syncStravaActivities() {
             return { success: true, count: 0 };
         }
 
-        console.log(`📥 ${activitiesSummary.length} nouvelles activités détectées.`);
+        // 4. Filtrer les doublons avant tout fetch
+        const newSummaries = activitiesSummary.filter((summary: { id: number }) =>
+            !workouts.some(w =>
+                w.completedData?.source?.type === 'strava' &&
+                w.completedData.source.stravaId === summary.id
+            )
+        );
+
+        if (newSummaries.length === 0) {
+            console.log("✅ Toutes les activités sont déjà à jour.");
+            return { success: true, count: 0 };
+        }
+
+        console.log(`📥 ${newSummaries.length} nouvelles activités à récupérer (sur ${activitiesSummary.length}).`);
+
+        // 5. Récupérer tous les détails en PARALLÈLE avec retry
+        const detailResults = await Promise.allSettled(
+            newSummaries.map((summary: { id: number }) =>
+                fetchWithRetry(() => getStravaActivityById(summary.id), summary.id)
+            )
+        );
 
         let newItemsCount = 0;
         const updatedWeeks = existingWeeks ? [...existingWeeks] : [];
 
-        // 4. Traiter chaque activité (Boucle)
-        for (const summary of activitiesSummary) {
-            // Vérification de doublon (par ID Strava)
-            const exists = workouts.some(w =>
-                w.completedData?.source?.type === 'strava' &&
-                w.completedData.source.stravaId === summary.id
-            );
+        // 6. Traiter chaque résultat
+        for (let i = 0; i < newSummaries.length; i++) {
+            const summary = newSummaries[i];
+            const result = detailResults[i];
 
-            if (exists) {
-                console.log(`   ⏭  Skip: Activité ${summary.id} déjà présente.`);
+            if (result.status === 'rejected' || !result.value) {
+                console.warn(`   ⏭  Skip: impossible de récupérer l'activité ${summary.id}.`);
                 continue;
             }
 
-            // Récupération du DÉTAIL (pour avoir les LAPS)
-            const detail = await getStravaActivityById(summary.id);
-            if (!detail) continue;
-
+            const detail = result.value;
             const completedData = await mapStravaToCompletedData(detail);
-            const activityDate = summary.start_date.split('T')[0]; // YYYY-MM-DD
+            const activityDate = summary.start_date.split('T')[0];
 
-            // 🧠 MATCHING : Est-ce qu'un entrainement prévu correspond à cette date ?
+            // 🧠 MATCHING : séance planifiée existante pour cette date ?
             const matchingIndex = workouts.findIndex(w =>
                 w.date === activityDate &&
                 w.status !== 'completed'
             );
 
             if (matchingIndex !== -1) {
-                // MATCH TROUVÉ : Mise à jour de la séance planifiée
-                console.log(`   🤝 Match trouvé pour le ${activityDate} -> Mise à jour du plan.`);
+                console.log(`   🤝 Match le ${activityDate} -> mise à jour du plan.`);
                 workouts[matchingIndex].status = 'completed';
                 workouts[matchingIndex].completedData = completedData;
             } else {
-                // PAS DE MATCH : Créer une nouvelle séance et l'attacher au bloc actif si disponible
-                console.log(`   ➕ Nouvelle activité libre ajoutée : ${activityDate}`);
+                console.log(`   ➕ Activité libre ajoutée : ${activityDate}`);
 
                 const sportType = completedData.metrics.swimming ? 'swimming'
                     : completedData.metrics.running ? 'running'
                     : 'cycling';
 
-                // Trouver le bloc actif et la semaine correspondant à la date de l'activité
+                // Trouver la semaine du bloc actif correspondant à cette date
                 let activeWeekID = '';
                 if (existingBlocks && existingWeeks) {
                     const activityDateObj = new Date(activityDate);
@@ -1034,7 +1069,7 @@ export async function syncStravaActivities() {
                     }
                 }
 
-                const newWorkout: Workout = {
+                workouts.push({
                     ID: randomUUID(),
                     id: `strava_${summary.id}`,
                     userID: profile?.id ?? '',
@@ -1053,22 +1088,22 @@ export async function syncStravaActivities() {
                         distanceKm: null,
                         plannedTSS: null,
                         description: null,
+                        structure: [],
                     },
                     completedData,
-                };
-                workouts.push(newWorkout);
+                });
             }
             newItemsCount++;
         }
 
-        // 5. Sauvegarder si changements
+        // 7. Sauvegarder si changements
         if (newItemsCount > 0) {
             workouts.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
             await saveWorkout(workouts);
             if (existingWeeks && updatedWeeks.some((w, i) => w !== existingWeeks[i])) {
                 await saveWeek(updatedWeeks);
             }
-            console.log("💾 DB mise à jour avec succès.");
+            console.log(`💾 ${newItemsCount} activité(s) sauvegardée(s).`);
         }
 
         return { success: true, count: newItemsCount };
@@ -1142,6 +1177,20 @@ export async function getWeekContextForDate(weekStartDate: string): Promise<Week
 }
 
 /**
+ * Retourne le nombre de séances en statut 'pending' pour la semaine donnée.
+ * Utilisé côté client pour demander confirmation avant d'écraser.
+ */
+export async function getWeekPendingCount(weekStartDate: string): Promise<number> {
+    const [blocks, weeks, workouts] = await Promise.all([getBlock(), getWeek(), getWorkout()]);
+    if (!blocks || !weeks || !workouts) return 0;
+
+    const result = findBlockAndWeekForDate(blocks, weeks, new Date(weekStartDate));
+    if (!result) return 0;
+
+    return workouts.filter(w => w.weekID === result.week.id && w.status === 'pending').length;
+}
+
+/**
  * Génère les séances IA pour la semaine contenant weekStartDate,
  * en remplaçant les séances pending existantes de cette semaine.
  */
@@ -1167,11 +1216,6 @@ export async function generateWeekWorkoutsFromDate(
     const plan = plans?.find(p => p.id === block.planId);
     if (!plan) throw new Error("Plan introuvable.");
 
-    // Supprimer les séances pending de cette semaine (on régénère)
-    const keptWorkouts = (existingWorkouts ?? []).filter(
-        w => !(w.weekID === week.id && w.status === 'pending')
-    );
-
     const newWorkouts = await CreateWorkoutForWeek(
         profile,
         plan,
@@ -1180,6 +1224,15 @@ export async function generateWeekWorkoutsFromDate(
         comment,
         100,
         weeklyAvailability
+    );
+
+    if (!newWorkouts || newWorkouts.length === 0) {
+        throw new Error("L'IA n'a retourné aucune séance. Les séances existantes sont conservées.");
+    }
+
+    // Supprimer les séances pending de cette semaine uniquement si la génération a réussi
+    const keptWorkouts = (existingWorkouts ?? []).filter(
+        w => !(w.weekID === week.id && w.status === 'pending')
     );
 
     // Mettre à jour workoutsID de la semaine

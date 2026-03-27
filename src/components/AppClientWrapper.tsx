@@ -46,11 +46,11 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
     const [profile, setProfile] = useState<Profile>(initialProfile);
     const [schedule, setSchedule] = useState<Schedule | null>(initialSchedule);
     const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
-    
+
     // Etats UI
     const [error, setError] = useState<string | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [isSyncing, setIsSyncing] = useState(false); 
+    const [isSyncing, setIsSyncing] = useState(false);
 
     // --- Re-Fetch des données (Utile après une action de l'utilisateur) ---
     const refreshData = useCallback(async () => {
@@ -86,7 +86,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
                     // Optionnel : Notification "Pas de nouvelle activité"
                     console.log("Strava : À jour");
                 }
-            } 
+            }
 
         } catch (e) {
             console.error('Erreur synchro Strava:', e);
@@ -100,7 +100,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
         if (initialProfile?.firstName) {
             handleSyncStrava();
         }
-    },[handleSyncStrava, initialProfile?.firstName]);
+    }, [handleSyncStrava, initialProfile?.firstName]);
 
 
     // --- Navigation Handler ---
@@ -293,14 +293,6 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
                     <div className="fixed top-20 right-4 z-40 bg-blue-500/90 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in slide-in-from-top-2">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         <span className="text-sm font-medium">Actualisation...</span>
-                    </div>
-                )}
-                
-                {/* Strava Sync Indicator */}
-                {isSyncing && (
-                    <div className="fixed top-20 right-4 z-40 bg-orange-600/90 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in slide-in-from-top-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span className="text-sm font-medium">Synchro Strava...</span>
                     </div>
                 )}
 

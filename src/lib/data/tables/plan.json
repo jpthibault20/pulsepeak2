@@ -1,14 +1,1 @@
-[
-  {
-    "id": "fb4164ae-a030-4e32-b198-c8e58b90bd19",
-    "userID": "666",
-    "blocksID": [
-      "1971523b-3e88-4af0-b619-2e70f95b5feb"
-    ],
-    "name": "PMA",
-    "startDate": "2026-03-28",
-    "goalDate": "2026-04-24",
-    "macroStrategyDescription": "PMA",
-    "status": "active"
-  }
-]
+[]

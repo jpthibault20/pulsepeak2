@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { BarChart3, Bot, Plus, Sparkles, Zap, X, Loader2, AlertCircle, Target, Calendar } from 'lucide-react';
+import { BarChart3, Bot, Plus, Sparkles, Zap, X, Loader2, AlertCircle, Target, Calendar, Bike, Waves, Footprints } from 'lucide-react';
+import { DurationInput } from '@/components/features/profile/Availability';
 import { WeekStatsPopover } from './WeekStatsPopover';
 import type { WeekStats } from '@/hooks/useWeekStats';
 import type { AvailabilitySlot } from '@/lib/data/type';
-import { getWeekContextForDate, generateWeekWorkoutsFromDate, type WeekContext } from '@/app/actions/schedule';
+import { getWeekContextForDate, generateWeekWorkoutsFromDate, getWeekPendingCount, type WeekContext } from '@/app/actions/schedule';
+import { formatDateKey } from '@/lib/utils';
 
 const DAYS_FR = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'] as const;
 
@@ -45,6 +47,8 @@ export function WeekSummaryCell({
     const [comment, setComment]                  = useState('');
     const [availability, setAvailability]        = useState<{ [key: string]: AvailabilitySlot }>({});
     const [weekContext, setWeekContext]           = useState<WeekContext>(null);
+    const [pendingCount, setPendingCount]         = useState(0);
+    const [confirmOverwrite, setConfirmOverwrite] = useState(false);
     const [isLoadingContext, setIsLoadingContext] = useState(false);
     const [isGenerating, setIsGenerating]        = useState(false);
     const [error, setError]                      = useState<string | null>(null);
@@ -61,8 +65,26 @@ export function WeekSummaryCell({
         const idx = weekDates.indexOf(firstNonNull);
         const monday = new Date(firstNonNull);
         monday.setDate(monday.getDate() - idx);
-        return monday.toISOString().split('T')[0];
+        return formatDateKey(monday);
     })();
+
+    // Calcul du lundi de la semaine courante (local)
+    const thisMonday = (() => {
+        const today = new Date();
+        const day = today.getDay();
+        const daysToMon = day === 0 ? -6 : 1 - day;
+        const mon = new Date(today);
+        mon.setDate(today.getDate() + daysToMon);
+        mon.setHours(0, 0, 0, 0);
+        return mon;
+    })();
+
+    const weekStartLocal = weekStartDate ? new Date(weekStartDate + 'T00:00:00') : null;
+    const isPastWeek = weekStartLocal ? weekStartLocal < thisMonday : false;
+    const weeksAhead = weekStartLocal
+        ? Math.round((weekStartLocal.getTime() - thisMonday.getTime()) / (7 * 24 * 60 * 60 * 1000))
+        : 0;
+    const isFarFuture = weeksAhead >= 2;
 
     const handleAIClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
@@ -77,17 +99,29 @@ export function WeekSummaryCell({
         setComment('');
         setError(null);
         setWeekContext(null);
+        setPendingCount(0);
+        setConfirmOverwrite(false);
         setShowAIModal(true);
 
         setIsLoadingContext(true);
-        getWeekContextForDate(weekStartDate)
-            .then(ctx => setWeekContext(ctx))
-            .catch(() => setWeekContext(null))
+        Promise.all([
+            getWeekContextForDate(weekStartDate),
+            getWeekPendingCount(weekStartDate),
+        ])
+            .then(([ctx, count]) => { setWeekContext(ctx); setPendingCount(count); })
+            .catch(() => { setWeekContext(null); setPendingCount(0); })
             .finally(() => setIsLoadingContext(false));
     }, [weekStartDate, profileAvailability]);
 
     const handleGenerate = async () => {
         if (!weekStartDate) return;
+
+        // Si des séances pending existent et que l'utilisateur n'a pas encore confirmé
+        if (pendingCount > 0 && !confirmOverwrite) {
+            setConfirmOverwrite(true);
+            return;
+        }
+
         setIsGenerating(true);
         setError(null);
         try {
@@ -98,6 +132,7 @@ export function WeekSummaryCell({
             setError(e instanceof Error ? e.message : 'Erreur lors de la génération.');
         } finally {
             setIsGenerating(false);
+            setConfirmOverwrite(false);
         }
     };
 
@@ -148,18 +183,29 @@ export function WeekSummaryCell({
 
                 {/* Overlay IA au hover */}
                 <div className="absolute inset-0 top-6 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100">
-                    <button
-                        onClick={handleAIClick}
-                        className="flex flex-col items-center gap-1 group/btn"
-                    >
-                        <div className="w-10 h-10 rounded-full bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.5)] flex items-center justify-center text-white group-hover/btn:scale-110 transition-transform duration-200">
-                            <Plus size={24} strokeWidth={3} />
+                    {isPastWeek ? (
+                        <div className="flex flex-col items-center gap-1">
+                            <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-slate-500 cursor-not-allowed">
+                                <Plus size={24} strokeWidth={3} />
+                            </div>
+                            <div className="text-[9px] font-bold text-slate-500 bg-slate-900/80 px-2 py-0.5 rounded-full border border-slate-700 backdrop-blur-md">
+                                Semaine passée
+                            </div>
                         </div>
-                        <div className="flex items-center gap-1 text-[9px] font-bold text-blue-200 bg-slate-900/80 px-2 py-0.5 rounded-full border border-blue-500/30 backdrop-blur-md">
-                            <Sparkles size={8} />
-                            <span>Générer IA</span>
-                        </div>
-                    </button>
+                    ) : (
+                        <button
+                            onClick={handleAIClick}
+                            className="flex flex-col items-center gap-1 group/btn"
+                        >
+                            <div className="w-10 h-10 rounded-full bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.5)] flex items-center justify-center text-white group-hover/btn:scale-110 transition-transform duration-200">
+                                <Plus size={24} strokeWidth={3} />
+                            </div>
+                            <div className="flex items-center gap-1 text-[9px] font-bold text-blue-200 bg-slate-900/80 px-2 py-0.5 rounded-full border border-blue-500/30 backdrop-blur-md">
+                                <Sparkles size={8} />
+                                <span>Générer IA</span>
+                            </div>
+                        </button>
+                    )}
                 </div>
 
                 {/* Données (floutées au hover) */}
@@ -296,6 +342,16 @@ export function WeekSummaryCell({
                                 </div>
                             )}
 
+                            {/* Avertissement semaine trop éloignée */}
+                            {isFarFuture && (
+                                <div className="flex items-start gap-2 text-yellow-400 text-xs bg-yellow-500/10 border border-yellow-500/20 rounded-lg px-3 py-2.5">
+                                    <AlertCircle size={13} className="shrink-0 mt-0.5" />
+                                    <span>
+                                        Génération <strong>+{weeksAhead} semaines</strong> en avance — la précision sera moindre car les paramètres de forme et de fatigue ne sont pas encore connus.
+                                    </span>
+                                </div>
+                            )}
+
                             {/* Commentaire */}
                             <div>
                                 <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
@@ -314,51 +370,88 @@ export function WeekSummaryCell({
                             <div>
                                 <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
                                     Disponibilités
-                                    <span className="text-slate-500 normal-case font-normal ml-1">(minutes par sport)</span>
                                 </label>
 
-                                <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl overflow-hidden text-xs">
-                                    {/* Header */}
-                                    <div className="flex items-center border-b border-slate-700/50 bg-slate-800/60">
-                                        <div className="w-24 shrink-0 px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                            Jour
-                                        </div>
-                                        {activeSportsList.map(sport => (
-                                            <div key={sport} className="flex-1 px-2 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">
-                                                {SPORT_LABELS[sport]}
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {/* Rows */}
-                                    {DAYS_FR.map((day, i) => {
-                                        const slot = availability[day] ?? { swimming: 0, cycling: 0, running: 0, comment: '' };
-                                        const hasAvail = activeSportsList.some(s => (slot[s as keyof typeof slot] as number) > 0);
-                                        return (
-                                            <div
-                                                key={day}
-                                                className={`flex items-center border-b border-slate-800/40 last:border-0 transition-colors ${hasAvail ? 'bg-slate-800/20' : ''}`}
-                                            >
-                                                <div className={`w-24 shrink-0 px-3 py-1.5 font-medium ${hasAvail ? 'text-slate-300' : 'text-slate-600'}`}>
-                                                    {day.slice(0, 3)}.
-                                                </div>
-                                                {activeSportsList.map(sport => (
-                                                    <div key={sport} className="flex-1 px-2 py-1">
-                                                        <input
-                                                            type="number"
-                                                            min={0}
-                                                            step={15}
-                                                            value={(slot[sport as keyof typeof slot] as number) ?? 0}
-                                                            onChange={e =>
-                                                                updateSlot(day, sport as keyof Omit<AvailabilitySlot, 'comment'>, Number(e.target.value))
-                                                            }
-                                                            className="w-full bg-slate-700/50 border border-slate-600/50 rounded px-1.5 py-1 text-xs text-slate-200 text-center focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20 transition-colors"
-                                                        />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        );
-                                    })}
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm border-collapse">
+                                        <thead>
+                                            <tr className="border-b border-slate-800">
+                                                <th className="text-left py-2 font-medium text-slate-500 w-20 pl-1">Jour</th>
+                                                {activeSports.swimming && (
+                                                    <th className="py-2 w-20 text-center">
+                                                        <div className="flex justify-center">
+                                                            <div className="p-1.5 bg-cyan-500/10 rounded-md text-cyan-400">
+                                                                <Waves size={16} />
+                                                            </div>
+                                                        </div>
+                                                    </th>
+                                                )}
+                                                {activeSports.cycling && (
+                                                    <th className="py-2 w-20 text-center">
+                                                        <div className="flex justify-center">
+                                                            <div className="p-1.5 bg-orange-500/10 rounded-md text-orange-400">
+                                                                <Bike size={16} />
+                                                            </div>
+                                                        </div>
+                                                    </th>
+                                                )}
+                                                {activeSports.running && (
+                                                    <th className="py-2 w-20 text-center">
+                                                        <div className="flex justify-center">
+                                                            <div className="p-1.5 bg-emerald-500/10 rounded-md text-emerald-400">
+                                                                <Footprints size={16} />
+                                                            </div>
+                                                        </div>
+                                                    </th>
+                                                )}
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-800/50">
+                                            {DAYS_FR.map(day => {
+                                                const slot = availability[day] ?? { swimming: 0, cycling: 0, running: 0, comment: '' };
+                                                return (
+                                                    <tr key={day} className="group hover:bg-slate-800/30 transition-colors">
+                                                        <td className="py-1 pl-1 text-slate-400 font-medium capitalize text-xs">
+                                                            {day}
+                                                        </td>
+                                                        {activeSports.swimming && (
+                                                            <td className="p-1">
+                                                                <DurationInput
+                                                                    value={slot.swimming}
+                                                                    onChange={val => updateSlot(day, 'swimming', val)}
+                                                                    placeholder="-"
+                                                                    className="focus:text-cyan-400 focus:ring-cyan-500/50"
+                                                                />
+                                                            </td>
+                                                        )}
+                                                        {activeSports.cycling && (
+                                                            <td className="p-1">
+                                                                <DurationInput
+                                                                    value={slot.cycling}
+                                                                    onChange={val => updateSlot(day, 'cycling', val)}
+                                                                    placeholder="-"
+                                                                    className="focus:text-orange-400 focus:ring-orange-500/50"
+                                                                />
+                                                            </td>
+                                                        )}
+                                                        {activeSports.running && (
+                                                            <td className="p-1">
+                                                                <DurationInput
+                                                                    value={slot.running}
+                                                                    onChange={val => updateSlot(day, 'running', val)}
+                                                                    placeholder="-"
+                                                                    className="focus:text-emerald-400 focus:ring-emerald-500/50"
+                                                                />
+                                                            </td>
+                                                        )}
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                    <p className="mt-2 text-[10px] text-slate-600 italic text-right">
+                                        &quot;1h30&quot;, &quot;90&quot;, &quot;1:30&quot; ou &quot;1.5&quot;
+                                    </p>
                                 </div>
                             </div>
 
@@ -372,31 +465,53 @@ export function WeekSummaryCell({
                         </div>
 
                         {/* Footer */}
-                        <div className="px-5 py-4 border-t border-slate-800 flex justify-end gap-3 bg-slate-950/30 shrink-0">
-                            <button
-                                onClick={() => setShowAIModal(false)}
-                                disabled={isGenerating}
-                                className="text-slate-400 hover:text-white text-sm transition-colors px-3 py-2 rounded-lg hover:bg-slate-800"
-                            >
-                                Annuler
-                            </button>
-                            <button
-                                onClick={handleGenerate}
-                                disabled={isGenerating || !weekStartDate}
-                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-                            >
-                                {isGenerating ? (
-                                    <>
-                                        <Loader2 size={14} className="animate-spin" />
-                                        Génération en cours...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Sparkles size={14} />
-                                        Générer
-                                    </>
-                                )}
-                            </button>
+                        <div className="px-5 py-4 border-t border-slate-800 bg-slate-950/30 shrink-0">
+                            {confirmOverwrite && (
+                                <div className="flex items-start gap-2 text-orange-300 text-xs bg-orange-500/10 border border-orange-500/30 rounded-lg px-3 py-2.5 mb-3">
+                                    <AlertCircle size={13} className="shrink-0 mt-0.5 text-orange-400" />
+                                    <span>
+                                        <strong>{pendingCount} séance{pendingCount > 1 ? 's' : ''} planifiée{pendingCount > 1 ? 's' : ''}</strong> sera{pendingCount > 1 ? 'ont' : ''} remplacée{pendingCount > 1 ? 's' : ''}.
+                                        Les séances complétées (Strava, manuel) sont conservées.
+                                        Confirmer ?
+                                    </span>
+                                </div>
+                            )}
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    onClick={() => {
+                                        if (confirmOverwrite) { setConfirmOverwrite(false); return; }
+                                        setShowAIModal(false);
+                                    }}
+                                    disabled={isGenerating}
+                                    className="text-slate-400 hover:text-white text-sm transition-colors px-3 py-2 rounded-lg hover:bg-slate-800"
+                                >
+                                    {confirmOverwrite ? 'Retour' : 'Annuler'}
+                                </button>
+                                <button
+                                    onClick={handleGenerate}
+                                    disabled={isGenerating || !weekStartDate}
+                                    className={`flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                                        confirmOverwrite ? 'bg-orange-600 hover:bg-orange-500' : 'bg-blue-600 hover:bg-blue-500'
+                                    }`}
+                                >
+                                    {isGenerating ? (
+                                        <>
+                                            <Loader2 size={14} className="animate-spin" />
+                                            Génération en cours...
+                                        </>
+                                    ) : confirmOverwrite ? (
+                                        <>
+                                            <AlertCircle size={14} />
+                                            Confirmer et remplacer
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles size={14} />
+                                            Générer
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

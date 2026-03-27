@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Plus, BrainCircuit, Info, X, Target, Home } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Info, X, Target, Home } from 'lucide-react';
 import type { Workout, Profile } from '@/lib/data/DatabaseTypes';
 import { Button } from '@/components/ui/Button';
 import { ManualWorkoutModal } from '../workout/ManualWorkoutModal';
@@ -171,16 +171,6 @@ export function CalendarView({
                     )}
 
                     <div className="h-6 w-px bg-slate-800 mx-1" />
-
-                    <Button
-                        variant="ghost"
-                        icon={BrainCircuit}
-                        onClick={() => handleGeneratePlan('Objectif Principal', null, "", 0)}
-                        disabled={isGenerating}
-                        className="text-sm text-slate-400 hover:text-white"
-                    >
-                        Recalculer
-                    </Button>
                     <Button
                         variant="primary"
                         icon={Plus}
