@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Activity, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, ArrowRight, Zap } from 'lucide-react';
+import { Activity, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { createInitialProfile } from '@/app/actions/auth';
+import Image from 'next/image';
+
 
 type Tab = 'login' | 'register';
 
@@ -69,6 +71,7 @@ export default function AuthPage() {
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         if (params.get('error')) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setError('Une erreur est survenue. Veuillez réessayer.');
         }
     }, []);
@@ -159,8 +162,14 @@ export default function AuthPage() {
                 {/* Branding */}
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-600 shadow-lg shadow-blue-900/40 mb-4">
-                        <Zap size={28} className="text-white" fill="currentColor" />
+                        <Image
+                            src="/logoWhite.png"
+                            alt="Logo"
+                            width={40}
+                            height={40}
+                        />
                     </div>
+
                     <h1 className="text-2xl font-bold text-white tracking-tight">PulsePeak</h1>
                     <p className="text-slate-400 text-sm mt-1">Votre coach triathlon intelligent</p>
                 </div>
@@ -174,11 +183,10 @@ export default function AuthPage() {
                             <button
                                 key={t}
                                 onClick={() => { setTab(t); resetMessages(); }}
-                                className={`flex-1 py-3.5 text-sm font-semibold transition-colors ${
-                                    tab === t
-                                        ? 'text-white border-b-2 border-blue-500 bg-blue-600/5'
-                                        : 'text-slate-400 hover:text-slate-200'
-                                }`}
+                                className={`flex-1 py-3.5 text-sm font-semibold transition-colors ${tab === t
+                                    ? 'text-white border-b-2 border-blue-500 bg-blue-600/5'
+                                    : 'text-slate-400 hover:text-slate-200'
+                                    }`}
                             >
                                 {t === 'login' ? 'Connexion' : 'Créer un compte'}
                             </button>
@@ -226,7 +234,7 @@ export default function AuthPage() {
                                     <button
                                         type="button"
                                         className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-                                        onClick={() => {/* TODO: mot de passe oublié */}}
+                                        onClick={() => {/* TODO: mot de passe oublié */ }}
                                     >
                                         Mot de passe oublié ?
                                     </button>
