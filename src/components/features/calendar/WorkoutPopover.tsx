@@ -1,7 +1,7 @@
 import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom'; // Import nécessaire pour la téléportation
 import { X } from 'lucide-react';
-import type { Workout } from '@/lib/data/type';
+import type { Workout } from '@/lib/data/DatabaseTypes';
 import { WorkoutBadge } from './WorkoutBadge';
 
 interface WorkoutPopoverProps {

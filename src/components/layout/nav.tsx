@@ -55,7 +55,7 @@ export const Nav: React.FC<NavProps> = ({
                             >
                                 <div className="relative w-8 h-8">
                                     <Image
-                                        src="/image_0.png"
+                                        src="/logoWhite.png"
                                         alt="PulsePeak Logo"
                                         width={32}
                                         height={32}

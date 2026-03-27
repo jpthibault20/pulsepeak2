@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Plus, BrainCircuit, Info, X, Target, Home } from 'lucide-react';
-import type { Workout } from '@/lib/data/type';
+import { ChevronLeft, ChevronRight, Plus, Info, X, Target, Home } from 'lucide-react';
+import type { Workout, Profile } from '@/lib/data/DatabaseTypes';
 import { Button } from '@/components/ui/Button';
 import { ManualWorkoutModal } from '../workout/ManualWorkoutModal';
 import { GenerationModal } from './GenerationModal';
@@ -14,18 +14,24 @@ import { Schedule } from '@/lib/data/DatabaseTypes';
 
 interface CalendarViewProps {
     scheduleData: Schedule;
+    profile: Profile;
+    userID: string;
     onViewWorkout: (workout: Workout) => void;
-    onGenerate: (blockFocus: string, customTheme: string | null, startDate: string | null, numWeeks?: number) => void;
+    onGenerate: (blockFocus: string, customTheme: string | null, startDate: string, numWeeks: number) => void;
     onAddManualWorkout: (workout: Workout) => void;
+    onRefresh: () => void;
     onSyncStrava?: () => void;
     isSyncing?: boolean;
 }
 
 export function CalendarView({
     scheduleData,
+    profile,
+    userID,
     onViewWorkout,
     onGenerate,
     onAddManualWorkout,
+    onRefresh,
     onSyncStrava,
     isSyncing = false
 }: CalendarViewProps) {
@@ -42,12 +48,12 @@ export function CalendarView({
     const handleGeneratePlan = async (
         blockFocus: string,
         customTheme: string | null,
-        startDate: string | null,
-        numWeeks?: number
+        startDate: string,
+        numWeeks: number
     ) => {
         setIsGenerating(true);
         try {
-            await onGenerate(blockFocus, customTheme, startDate, numWeeks);
+            onGenerate(blockFocus, customTheme, startDate, numWeeks);
         } finally {
             setIsGenerating(false);
         }
@@ -165,23 +171,13 @@ export function CalendarView({
                     )}
 
                     <div className="h-6 w-px bg-slate-800 mx-1" />
-
-                    <Button
-                        variant="ghost"
-                        icon={BrainCircuit}
-                        onClick={() => handleGeneratePlan('Objectif Principal', null, null)}
-                        disabled={isGenerating}
-                        className="text-sm text-slate-400 hover:text-white"
-                    >
-                        Recalculer
-                    </Button>
                     <Button
                         variant="primary"
                         icon={Plus}
                         onClick={() => setShowGenModal(true)}
                         disabled={isGenerating}
                     >
-                        Nouveau Bloc
+                        Calculer un nouveau plan
                     </Button>
                 </div>
             </div>
@@ -201,8 +197,11 @@ export function CalendarView({
                     currentMonth={month}
                     currentYear={year}
                     scheduleData={scheduleData}
+                    profile={profile}
                     onOpenManualModal={handleOpenManualModal}
                     onViewWorkout={onViewWorkout}
+                    onRefresh={onRefresh}
+                    onOpenGenModal={() => setShowGenModal(true)}
                 />
             </div>
 
@@ -273,6 +272,7 @@ export function CalendarView({
             {showManualModal && dateForManual && (
                 <ManualWorkoutModal
                     date={dateForManual}
+                    userID={userID}
                     onClose={() => setShowManualModal(false)}
                     onSave={handleSaveManual}
                 />

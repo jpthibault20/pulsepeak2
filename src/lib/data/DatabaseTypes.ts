@@ -1,4 +1,4 @@
-import { aiPersonality, AvailabilitySlot, CyclingTest, StravaConfig, Workout, Zones } from "./type";
+import { aiPersonality, AvailabilitySlot, CompletedData, CyclingTest, PlannedData, SportType, StravaConfig, Zones } from "./type";
 
 
 export interface Profile {
@@ -14,8 +14,10 @@ export interface Profile {
     email: string;
     birthDate: string;
     weight?: number;
-    height?: number; 
+    height?: number;
     experience: 'Débutant' | 'Intermédiaire' | 'Avancé' | string;
+    currentCTL: number;        // CTL au démarrage du plan (ex: 50)
+    currentATL: number;        // fatigue court terme (7 jours)
     activeSports: {
         swimming: boolean;
         cycling: boolean;
@@ -73,4 +75,59 @@ export interface Schedule {
     workouts: Workout[];
     summary: string | null;
     lastGenerated: string | null;
+}
+
+export interface Plan {
+    id: string;
+    userID: string;
+    blocksID: string[];
+    name: string;
+    goalDate: string;
+    startDate: string;
+    macroStrategyDescription: string;
+    status: 'active' | 'archived';
+}
+
+export interface Block {
+  id: string; // J'ai harmonisé ID -> id (standard JS)
+  planId: string;
+  userId: string;
+  orderIndex: number; // 1, 2, 3...
+  type: string; // "Base", "Build", "Peak", "Race"
+  theme: string; // Généré par IA : "Développement PMA longue"
+  weekCount: number; // Combien de semaines dans ce bloc (souvent 4, parfois moins)
+  startDate: string; // Utile pour savoir quand le bloc commence
+  weeksId: string[]; // IDs des semaines (créés plus tard)
+  startCTL: number;          // CTL visée en début de bloc
+  targetCTL: number;         // CTL visée en fin de bloc
+  avgWeeklyTSS: number;      // TSS hebdo moyen du bloc (calculé)
+}
+
+export interface Week {
+    id: string;
+    userID: string;
+    workoutsID: string[];
+    blockID: string;
+    weekNumber: number;
+    type: 'Load' | 'Recovery' | 'Taper'; // Charge ou Assimilation
+    targetTSS: number; // ex: 500
+    actualTSS: number; // Somme calculée des séances complétées
+    // Feedback global de la semaine (pour l'IA de la semaine suivante)
+    userFeedback?: string; // "J'étais KO cette semaine"}
+}
+
+export interface Workout {
+    ID: string;
+    userID: string;
+    weekID: string;
+    id: string;
+    date: string; // "YYYY-MM-DD"
+    sportType: SportType;
+    title: string;
+    workoutType: string;
+    mode: 'Outdoor' | 'Indoor';
+    status: 'pending' | 'completed' | 'missed';
+
+    plannedData: PlannedData;
+    completedData: CompletedData | null;
 }

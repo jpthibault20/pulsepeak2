@@ -2,8 +2,9 @@
 
 import React, { useState, useMemo } from 'react';
 import {
-    Save, 
-    MessageSquare    } from 'lucide-react';
+    Save,
+    MessageSquare
+} from 'lucide-react';
 import { Button } from '@/components/ui'; // Assure-toi que ces imports existent ou utilise des div/button standards
 import { BasicInformation } from './BasicInformation';
 import { ChatWidget } from './ChatWidget';
@@ -11,6 +12,7 @@ import { SportsAndAppLink } from './SportsAndAppLink';
 import { Availability } from './Availability';
 import { CalibrationTest } from './CalibrationTest';
 import { Goals } from './Goals';
+import { AccountSettings } from './AccountSettings';
 import { Profile } from '@/lib/data/DatabaseTypes';
 
 
@@ -29,7 +31,7 @@ interface ProfileFormProps {
     onSuccess?: () => void;
 }
 
-export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave,  onCancel }) => {
+export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, onCancel }) => {
     const [isChatOpen, setIsChatOpen] = useState(false);
 
     // État initial par défaut
@@ -39,6 +41,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave,  
         activeSports: { swimming: true, cycling: true, running: true },
         aiPersonality: 'Analytique',
         strava: { accessToken: '', refreshToken: '', expiresAt: 0, athleteId: 0 },
+        currentATL: 0, currentCTL: 0,
         weeklyAvailability: {
             'Lundi': { swimming: 0, cycling: 0, running: 0, comment: '' },
             'Mardi': { swimming: 60, cycling: 0, running: 45, comment: '' },
@@ -70,7 +73,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave,  
             email: safeValue(initialData.email, defaultData.email),
             birthDate: safeValue(initialData.birthDate, defaultData.birthDate),
             weight: safeValue(initialData.weight, defaultData.weight),
-            
+
             // --- CONFIGURATION & ENUMS ---
             aiPersonality: safeValue(initialData.aiPersonality, defaultData.aiPersonality),
             experience: safeValue(initialData.experience, defaultData.experience),
@@ -82,7 +85,8 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave,  
                 cycling: safeValue(initialData.activeSports?.cycling, defaultData.activeSports.cycling),
                 running: safeValue(initialData.activeSports?.running, defaultData.activeSports.running),
             },
-
+            currentATL: safeValue(initialData.currentATL, defaultData.currentATL),
+            currentCTL: safeValue(initialData.currentCTL, defaultData.currentCTL),
             // --- TESTS POWER ---
             cycling: {
                 Test: {
@@ -156,7 +160,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave,  
 
 
     const [formData, setFormData] = useState<Profile>(initialFormData);
-    
+
     const [isSaving, setIsSaving] = useState(false);
 
 
@@ -190,13 +194,13 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave,  
 
             {/* 1. INFOS DE BASE & CONNEXIONS */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <BasicInformation 
+                <BasicInformation
                     formData={formData}
                     setFormData={setFormData}
                 />
 
                 {/* Colonne Droite : Sports & Strava */}
-                <SportsAndAppLink 
+                <SportsAndAppLink
                     formData={formData}
                     setFormData={setFormData}
                 />
@@ -209,7 +213,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave,  
             />
 
             {/* 3. ZONES & TESTS (TABS) */}
-            <CalibrationTest 
+            <CalibrationTest
                 formData={formData}
                 setFormData={setFormData}
             />
@@ -219,6 +223,9 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave,  
                 formData={formData}
                 setFormData={setFormData}
             />
+
+            {/* 5. COMPTE & SÉCURITÉ */}
+            <AccountSettings />
 
             {/* ACTIONS FOOTER (Sticky mobile) */}
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-slate-950/90 backdrop-blur-md border-t border-slate-800 flex justify-end gap-3 z-50 md:static md:bg-transparent md:border-none md:p-0">

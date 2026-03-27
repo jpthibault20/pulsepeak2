@@ -1,10 +1,11 @@
 import { Profile } from "../data/DatabaseTypes";
-import { Workout, SportType } from "../data/type";
+import { SportType } from "../data/type";
+import { Workout } from "../data/DatabaseTypes";
 
 // Lecture de la clé API depuis les variables d'environnement du serveur
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent";
-const MAX_RETRIES = 5;
+const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+const MAX_RETRIES = 2;
 
 interface RawAIWorkout {
     date: string; // Présent uniquement dans la génération de plan complet
@@ -47,6 +48,53 @@ interface RawAIWorkout {
     description_indoor: string;
 }
 
+// Fonction générique pour appeler l'API
+export async function callGeminiAPI(payload: unknown) {
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set.");
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        try {
+            const response = await fetch(`${API_URL}?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}. ${errorBody.substring(0, 200)}`);
+            }
+
+            const data = await response.json();
+            const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (!rawText) throw new Error("AI response empty.");
+
+            // Nettoyage du markdown éventuel
+            const cleanText = rawText
+                .trim()
+                .replace(/^```json\s*/i, '')
+                .replace(/^```\s*/i, '')
+                .replace(/\s*```$/i, '');
+
+            try {
+                return JSON.parse(cleanText);
+            } catch (parseError) {
+                console.error("JSON invalide reçu de Gemini :", cleanText);
+                throw new Error(`JSON parsing failed: ${parseError}`);
+            }
+
+        } catch (error) {
+            if (attempt < MAX_RETRIES - 1) {
+                console.warn(`Tentative ${attempt + 1} échouée. Retry dans ${Math.pow(2, attempt)}s...`);
+                await delay(Math.pow(2, attempt) * 1000);
+            } else {
+                throw error;
+            }
+        }
+    }
+}
+
 /**
  * Génère un plan d'entraînement (Compatible Multisport & Multi-séance)
  */
@@ -57,7 +105,7 @@ export async function generatePlanFromAI(
     customTheme: string | null,
     startDateInput: string | null,
     numWeeks?: number
-): Promise<{ synthesis: string, workouts: Workout[] }> {
+): Promise<{ synthesis: string, workouts: Omit<Workout, 'ID' | 'userID' | 'weekID'>[] }> {
     if (!GEMINI_API_KEY) {
         console.error("ERREUR CRITIQUE: GEMINI_API_KEY est NULL.");
         throw new Error("GEMINI_API_KEY is not set.");
@@ -232,7 +280,7 @@ FORMAT DE RÉPONSE :
 
     // --- 4. Transformation et Nettoyage des données ---
     
-    const structuredWorkouts: Workout[] = rawResponse.workouts
+    const structuredWorkouts: Omit<Workout, 'ID' | 'userID' | 'weekID'>[] = rawResponse.workouts
         // Sécurité 1: On filtre les objets invalides ou les jours de repos explicites si l'IA s'est trompée
         .filter(w => w.duration > 0 && w.title.toLowerCase() !== "repos")
         .map((w) => {
@@ -261,8 +309,7 @@ FORMAT DE RÉPONSE :
                     targetPaceMinPerKm: w.sport !== 'cycling' ? w.target_pace : null,
                     targetHeartRateBPM: w.target_hr || null,
 
-                    descriptionOutdoor: w.description_outdoor,
-                    descriptionIndoor: w.description_indoor,
+                    description: w.description_outdoor ?? w.description_indoor ?? null,
                 },
                 
                 // Pas de données réalisées pour le futur
@@ -288,7 +335,7 @@ export async function generateSingleWorkoutFromAI(
     oldWorkout?: Workout,
     currentBlockFocus: string = "General Fitness",
     userInstruction?: string
-): Promise<Workout> {
+): Promise<Omit<Workout, 'ID' | 'userID' | 'weekID'>> {
 
     // Le type de sport est forcé à vélo pour l'instant
     const currentSport: SportType = 'cycling'; // TODO: Passer le sport en paramètre si on supporte la course à pied plus tard
@@ -373,45 +420,14 @@ export async function generateSingleWorkoutFromAI(
         status: 'pending',
         plannedData: {
             durationMinutes: w.duration,
-            plannedTSS: w.tss,
-            descriptionOutdoor: w.description_outdoor,
-            descriptionIndoor: w.description_indoor
+            plannedTSS: w.tss ?? null,
+            targetPowerWatts: null,
+            targetPaceMinPerKm: null,
+            targetHeartRateBPM: null,
+            distanceKm: null,
+            description: w.description_outdoor ?? w.description_indoor ?? null,
         },
-        completedData: null
-    } as Workout;
+        completedData: null,
+    };
 }
 
-// Fonction générique pour appeler l'API
-async function callGeminiAPI(payload: unknown) {
-    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set.");
-
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-        try {
-            const response = await fetch(`${API_URL}?key=${GEMINI_API_KEY}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                const errorBody = await response.text();
-                throw new Error(`HTTP error! status: ${response.status}. ${errorBody.substring(0, 200)}`);
-            }
-
-            const data = await response.json();
-            const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-            if (!jsonText) throw new Error("AI response empty.");
-
-            return JSON.parse(jsonText);
-
-        } catch (error) {
-            if (attempt < MAX_RETRIES - 1) {
-                console.warn(`Tentative ${attempt + 1} échouée. Retry...`);
-                await delay(Math.pow(2, attempt) * 1000);
-            } else {
-                throw error;
-            }
-        }
-    }
-}

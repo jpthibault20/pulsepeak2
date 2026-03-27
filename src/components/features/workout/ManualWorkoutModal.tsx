@@ -1,19 +1,31 @@
 import { Card, Button } from "@/components/ui";
-import type { Workout, SportType, CompletedData } from "@/lib/data/type";
+import type { SportType, CompletedData } from "@/lib/data/type";
+import type { Workout } from "@/lib/data/DatabaseTypes";
 import {
     Plus, Calendar, Activity, Timer, TrendingUp,
     AlignLeft, Bike, Waves, User
 } from "lucide-react";
 import { useState } from "react";
 
+/** UUID v4 compatible SSR (crypto.randomUUID n'est pas disponible côté serveur dans tous les env) */
+function generateUUID(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = Math.random() * 16 | 0;
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+}
+
+
 interface ManualWorkoutModalProps {
     date: Date;
+    userID: string;
     onClose: () => void;
     onSave: (workout: Workout) => Promise<void>;
 }
 
 export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
     date,
+    userID,
     onClose,
     onSave
 }) => {
@@ -96,8 +108,11 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
             };
 
             const newWorkout: Workout = {
-                title: title || 'Sortie Libre',
+                ID: generateUUID(),
                 id: `manual-${Date.now()}`,
+                userID,
+                weekID: '',
+                title: title || 'Sortie Libre',
                 date: dateStr,
                 sportType,
                 workoutType,
@@ -110,8 +125,7 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                     targetPowerWatts: null,
                     targetPaceMinPerKm: null,
                     targetHeartRateBPM: null,
-                    descriptionIndoor: description || 'Séance manuelle',
-                    descriptionOutdoor: description || 'Séance manuelle',
+                    description: description || 'Séance manuelle',
                 },
                 completedData
             };
@@ -238,8 +252,8 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                                     onChange={e => setMode(e.target.value as 'Outdoor' | 'Indoor')}
                                     className="w-full h-11 appearance-none bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                                 >
-                                    <option value="outdoor">Extérieur</option>
-                                    <option value="indoor">Intérieur</option>
+                                    <option value="Outdoor">Extérieur</option>
+                                    <option value="Indoor">Intérieur</option>
                                 </select>
                                 <div className="absolute right-3 top-3.5 pointer-events-none text-slate-500">
                                     <svg width="10" height="6" viewBox="0 0 10 6" fill="none">

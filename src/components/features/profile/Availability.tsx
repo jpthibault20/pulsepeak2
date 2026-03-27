@@ -21,7 +21,7 @@ const formatMinutesToDuration = (minutes: number | undefined): string => {
 };
 
 // --- 2. COMPOSANT CORRIGÉ ---
-const DurationInput = ({
+export const DurationInput = ({
     value,
     onChange,
     placeholder,

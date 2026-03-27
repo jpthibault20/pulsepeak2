@@ -6,7 +6,7 @@ import {
     BarChart2, CalendarDays, Target,
     TrendingUp, MapPin, Filter
 } from 'lucide-react';
-import type { Workout } from '@/lib/data/type';
+import type { Workout } from '@/lib/data/DatabaseTypes';
 import { Card } from '@/components/ui/Card';
 import { Profile, Schedule } from '@/lib/data/DatabaseTypes';
 

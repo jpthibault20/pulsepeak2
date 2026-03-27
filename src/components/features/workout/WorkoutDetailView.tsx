@@ -9,7 +9,8 @@ import {
     Bike, FootprintsIcon as Running, Waves, Heart,
     Timer // Ajout pour la durée
 } from 'lucide-react';
-import type { Workout, SportType, CompletedDataFeedback } from '@/lib/data/type';
+import type { SportType, CompletedDataFeedback } from '@/lib/data/type';
+import type { Workout } from '@/lib/data/DatabaseTypes';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -216,9 +217,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
     const sportConfig = SPORT_CONFIG[workout.sportType];
     const SportIcon = sportConfig.icon;
 
-    const currentDescription = workout.mode === 'Outdoor'
-        ? workout.plannedData?.descriptionOutdoor
-        : workout.plannedData?.descriptionIndoor;
+    const currentDescription = workout.plannedData?.description;
 
     const ModeIcon = workout.mode === 'Outdoor' ? Mountain : Home;
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, BedDouble, Layers } from 'lucide-react';
-import type { Workout } from '@/lib/data/type';
+import type { Workout } from '@/lib/data/DatabaseTypes';
 import { WorkoutBadge } from './WorkoutBadge';
 import { WorkoutPopover } from './WorkoutPopover';
 
