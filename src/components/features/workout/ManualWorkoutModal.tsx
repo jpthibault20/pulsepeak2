@@ -1,5 +1,6 @@
 import { Card, Button } from "@/components/ui";
-import type { Workoutold, SportType, CompletedData } from "@/lib/data/type";
+import type { SportType, CompletedData } from "@/lib/data/type";
+import type { Workout } from "@/lib/data/DatabaseTypes";
 import {
     Plus, Calendar, Activity, Timer, TrendingUp,
     AlignLeft, Bike, Waves, User
@@ -8,12 +9,14 @@ import { useState } from "react";
 
 interface ManualWorkoutModalProps {
     date: Date;
+    userID: string;
     onClose: () => void;
-    onSave: (workout: Workoutold) => Promise<void>;
+    onSave: (workout: Workout) => Promise<void>;
 }
 
 export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
     date,
+    userID,
     onClose,
     onSave
 }) => {
@@ -95,9 +98,12 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                 }
             };
 
-            const newWorkout: Workoutold = {
-                title: title || 'Sortie Libre',
+            const newWorkout: Workout = {
+                ID: crypto.randomUUID(),
                 id: `manual-${Date.now()}`,
+                userID,
+                weekID: '',
+                title: title || 'Sortie Libre',
                 date: dateStr,
                 sportType,
                 workoutType,
@@ -110,8 +116,7 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                     targetPowerWatts: null,
                     targetPaceMinPerKm: null,
                     targetHeartRateBPM: null,
-                    descriptionIndoor: description || 'Séance manuelle',
-                    descriptionOutdoor: description || 'Séance manuelle',
+                    description: description || 'Séance manuelle',
                 },
                 completedData
             };

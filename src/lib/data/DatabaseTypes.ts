@@ -1,4 +1,4 @@
-import { aiPersonality, AvailabilitySlot, CompletedData, CyclingTest, PlannedData, SportType, StravaConfig, Workoutold, Zones } from "./type";
+import { aiPersonality, AvailabilitySlot, CompletedData, CyclingTest, PlannedData, SportType, StravaConfig, Zones } from "./type";
 
 
 export interface Profile {
@@ -72,7 +72,7 @@ export interface Profile {
 
 export interface Schedule {
     dbVersion: string;
-    workouts: Workoutold[];
+    workouts: Workout[];
     summary: string | null;
     lastGenerated: string | null;
 }

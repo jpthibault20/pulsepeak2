@@ -1,5 +1,6 @@
 import { Profile } from "../data/DatabaseTypes";
-import { Workoutold, SportType } from "../data/type";
+import { SportType } from "../data/type";
+import { Workout } from "../data/DatabaseTypes";
 
 // Lecture de la clé API depuis les variables d'environnement du serveur
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -104,7 +105,7 @@ export async function generatePlanFromAI(
     customTheme: string | null,
     startDateInput: string | null,
     numWeeks?: number
-): Promise<{ synthesis: string, workouts: Workoutold[] }> {
+): Promise<{ synthesis: string, workouts: Omit<Workout, 'ID' | 'userID' | 'weekID'>[] }> {
     if (!GEMINI_API_KEY) {
         console.error("ERREUR CRITIQUE: GEMINI_API_KEY est NULL.");
         throw new Error("GEMINI_API_KEY is not set.");
@@ -279,7 +280,7 @@ FORMAT DE RÉPONSE :
 
     // --- 4. Transformation et Nettoyage des données ---
     
-    const structuredWorkouts: Workoutold[] = rawResponse.workouts
+    const structuredWorkouts: Omit<Workout, 'ID' | 'userID' | 'weekID'>[] = rawResponse.workouts
         // Sécurité 1: On filtre les objets invalides ou les jours de repos explicites si l'IA s'est trompée
         .filter(w => w.duration > 0 && w.title.toLowerCase() !== "repos")
         .map((w) => {
@@ -308,8 +309,7 @@ FORMAT DE RÉPONSE :
                     targetPaceMinPerKm: w.sport !== 'cycling' ? w.target_pace : null,
                     targetHeartRateBPM: w.target_hr || null,
 
-                    descriptionOutdoor: w.description_outdoor,
-                    descriptionIndoor: w.description_indoor,
+                    description: w.description_outdoor ?? w.description_indoor ?? null,
                 },
                 
                 // Pas de données réalisées pour le futur
@@ -332,10 +332,10 @@ export async function generateSingleWorkoutFromAI(
     history: unknown,
     date: string,
     surroundingWorkouts: Record<string, string>,
-    oldWorkout?: Workoutold,
+    oldWorkout?: Workout,
     currentBlockFocus: string = "General Fitness",
     userInstruction?: string
-): Promise<Workoutold> {
+): Promise<Omit<Workout, 'ID' | 'userID' | 'weekID'>> {
 
     // Le type de sport est forcé à vélo pour l'instant
     const currentSport: SportType = 'cycling'; // TODO: Passer le sport en paramètre si on supporte la course à pied plus tard
@@ -420,11 +420,14 @@ export async function generateSingleWorkoutFromAI(
         status: 'pending',
         plannedData: {
             durationMinutes: w.duration,
-            plannedTSS: w.tss,
-            descriptionOutdoor: w.description_outdoor,
-            descriptionIndoor: w.description_indoor
+            plannedTSS: w.tss ?? null,
+            targetPowerWatts: null,
+            targetPaceMinPerKm: null,
+            targetHeartRateBPM: null,
+            distanceKm: null,
+            description: w.description_outdoor ?? w.description_indoor ?? null,
         },
-        completedData: null
-    } as Workoutold;
+        completedData: null,
+    };
 }
 

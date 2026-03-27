@@ -17,7 +17,8 @@ import {
 } from '@/app/actions/schedule';
 
 // Import des types
-import type { Workoutold, CompletedDataFeedback } from '@/lib/data/type';
+import type { CompletedDataFeedback } from '@/lib/data/type';
+import type { Workout } from '@/lib/data/DatabaseTypes';
 
 // Import des composants
 import { CalendarView } from '@/components/features/calendar/CalendarView';
@@ -44,7 +45,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
 
     const [profile, setProfile] = useState<Profile>(initialProfile);
     const [schedule, setSchedule] = useState<Schedule | null>(initialSchedule);
-    const [selectedWorkout, setSelectedWorkout] = useState<Workoutold | null>(null);
+    const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
     
     // Etats UI
     const [error, setError] = useState<string | null>(null);
@@ -111,7 +112,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }, []);
 
-    const handleViewWorkout = useCallback((workout: Workoutold) => {
+    const handleViewWorkout = useCallback((workout: Workout) => {
         setSelectedWorkout(workout);
         setView('workout-detail');
     }, []);
@@ -201,7 +202,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
         }
     }, [refreshData]);
 
-    const handleAddManualWorkout = useCallback(async (workout: Workoutold) => {
+    const handleAddManualWorkout = useCallback(async (workout: Workout) => {
         try {
             await addManualWorkout(workout);
             await refreshData();
@@ -331,10 +332,12 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
                     <div className="animate-in fade-in duration-300">
                         <CalendarView
                             scheduleData={schedule}
+                            profile={profile}
+                            userID={profile.id}
                             onViewWorkout={handleViewWorkout}
                             onGenerate={handleGenerate}
                             onAddManualWorkout={handleAddManualWorkout}
-                            // Nouveaux Props pour Strava
+                            onRefresh={refreshData}
                             onSyncStrava={handleSyncStrava}
                             isSyncing={isSyncing}
                         />

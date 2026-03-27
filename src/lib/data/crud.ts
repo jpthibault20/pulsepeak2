@@ -67,7 +67,13 @@ export async function getProfile(): Promise<Profile > {
 }
 
 export async function getSchedule(): Promise<Schedule> {
-    return readJsonFile<Schedule>('schedule.json');
+    const workouts = await getWorkout();
+    return {
+        dbVersion: "2.0",
+        workouts: workouts ?? [],
+        summary: null,
+        lastGenerated: null,
+    };
 }
 
 export async function getPlan(): Promise<Plan[] | null> {
@@ -108,7 +114,7 @@ export async function saveProfile(profile: Profile): Promise<void> {
 }
 
 export async function saveSchedule(schedule: Schedule): Promise<void> {
-    await writeJsonFile('schedule.json', schedule);    
+    await saveWorkout(schedule.workouts);
 }
 
 export async function savePlan(plan: Plan[]): Promise<void> {

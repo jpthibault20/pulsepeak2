@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Plus, BrainCircuit, Info, X, Target, Home } from 'lucide-react';
-import type { Workoutold } from '@/lib/data/type';
+import type { Workout, Profile } from '@/lib/data/DatabaseTypes';
 import { Button } from '@/components/ui/Button';
 import { ManualWorkoutModal } from '../workout/ManualWorkoutModal';
 import { GenerationModal } from './GenerationModal';
@@ -14,18 +14,24 @@ import { Schedule } from '@/lib/data/DatabaseTypes';
 
 interface CalendarViewProps {
     scheduleData: Schedule;
-    onViewWorkout: (workout: Workoutold) => void;
+    profile: Profile;
+    userID: string;
+    onViewWorkout: (workout: Workout) => void;
     onGenerate: (blockFocus: string, customTheme: string | null, startDate: string, numWeeks: number) => void;
-    onAddManualWorkout: (workout: Workoutold) => void;
+    onAddManualWorkout: (workout: Workout) => void;
+    onRefresh: () => void;
     onSyncStrava?: () => void;
     isSyncing?: boolean;
 }
 
 export function CalendarView({
     scheduleData,
+    profile,
+    userID,
     onViewWorkout,
     onGenerate,
     onAddManualWorkout,
+    onRefresh,
     onSyncStrava,
     isSyncing = false
 }: CalendarViewProps) {
@@ -59,7 +65,7 @@ export function CalendarView({
         setShowManualModal(true);
     };
 
-    const handleSaveManual = async (workout: Workoutold) => {
+    const handleSaveManual = async (workout: Workout) => {
         await onAddManualWorkout(workout);
         setShowManualModal(false);
     };
@@ -201,8 +207,10 @@ export function CalendarView({
                     currentMonth={month}
                     currentYear={year}
                     scheduleData={scheduleData}
+                    profile={profile}
                     onOpenManualModal={handleOpenManualModal}
                     onViewWorkout={onViewWorkout}
+                    onRefresh={onRefresh}
                 />
             </div>
 
@@ -273,6 +281,7 @@ export function CalendarView({
             {showManualModal && dateForManual && (
                 <ManualWorkoutModal
                     date={dateForManual}
+                    userID={userID}
                     onClose={() => setShowManualModal(false)}
                     onSave={handleSaveManual}
                 />

@@ -2,7 +2,12 @@
   {
     "id": "5472753e-4f71-4002-94c8-319122875b65",
     "userID": "666",
-    "workoutsID": [],
+    "workoutsID": [
+      "a0d72e7b-595e-47d1-ab69-ce2913eb1c64",
+      "90ea89bc-03f1-4e5b-8c6c-7696dfa3504a",
+      "c7b90c42-f471-4662-b7f5-801297c4ccc6",
+      "f81b8946-68d6-4832-b9c7-235da6e690d0"
+    ],
     "blockID": "1971523b-3e88-4af0-b619-2e70f95b5feb",
     "weekNumber": 1,
     "type": "Load",

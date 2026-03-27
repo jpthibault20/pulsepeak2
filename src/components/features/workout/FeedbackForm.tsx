@@ -7,17 +7,17 @@ import {
     Heart, Zap, Gauge, Mountain, Flame
 } from 'lucide-react';
 import type {
-    Workoutold,
     CompletedData,
     CompletedDataFeedback,
     SportType,
 } from '@/lib/data/type';
+import type { Workout } from '@/lib/data/DatabaseTypes';
 import { Button } from '@/components/ui/Button';
 import { Profile } from '@/lib/data/DatabaseTypes';
 
 // --- Types Props ---
 interface FeedbackFormProps {
-    workout: Workoutold;
+    workout: Workout;
     profile: Profile;
     onSave: (feedback: CompletedDataFeedback) => Promise<void>;
     onCancel: () => void;

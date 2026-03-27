@@ -2,11 +2,9 @@
 
 import { generatePlanFromAI, generateSingleWorkoutFromAI } from '@/lib/ai/coach-api';
 import { getBlock, getPlan, getProfile, getSchedule, getWeek, getWorkout, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek, saveWorkout } from '@/lib/data/crud';
-import { ReturnCode, Workoutold } from '@/lib/data/type';
+import { ReturnCode } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
 import type { AvailabilitySlot, CompletedData, CompletedDataFeedback, SportType } from '@/lib/data/type';
-import fs from 'fs/promises';
-import path from 'path';
 import { getStravaActivities, getStravaActivityById } from '@/lib/strava-service';
 import { mapStravaToCompletedData } from '@/lib/strava-mapper';
 import { Block, Plan, Profile, Schedule, Week, Workout } from '@/lib/data/DatabaseTypes';
@@ -463,7 +461,6 @@ Chaque objet contient exactement :
 
 
 
-const DB_PATH = path.join(process.cwd(), 'src/lib/data/tables/schedule.json');
 
 // --- Helpers ---
 
@@ -525,7 +522,7 @@ const getRecentPerformanceHistory = (schedule: Schedule): string => {
 
 
 // Helper pour trouver une séance par ID ou par Date (pour rétro-compatibilité)
-const findWorkoutIndex1 = (workouts: Workoutold[], identifier: string): number => {
+const findWorkoutIndex1 = (workouts: Workout[], identifier: string): number => {
     return workouts.findIndex(w => w.id === identifier || w.date === identifier);
 };
 
@@ -578,16 +575,19 @@ export async function generateNewPlanOld(blockFocus: string, customTheme: string
         // 2. On garde toutes les anciennes séances QUI NE SONT PAS sur les dates générées
         const keptWorkouts = (existingSchedule.workouts || []).filter(w => !newDates.has(w.date));
 
-        // 3. On prépare les nouvelles séances
-        const newWorkouts = aiResponse.workouts.map(w => ({
+        // 3. On prépare les nouvelles séances (ajout des champs obligatoires Workout)
+        const newWorkouts: Workout[] = aiResponse.workouts.map(w => ({
             ...w,
+            ID: randomUUID(),
+            userID: existingProfile.id,
+            weekID: '',
             status: 'pending' as const,
         }));
 
         // 4. On fusionne
         const newSchedule: Schedule = {
             ...existingSchedule,
-            workouts: [...keptWorkouts, ...newWorkouts], // Fusion des tableaux
+            workouts: [...keptWorkouts, ...newWorkouts],
             summary: aiResponse.synthesis,
             lastGenerated: new Date().toISOString().split('T')[0]
         };
@@ -633,13 +633,16 @@ export async function regenerateWorkout(workoutIdOrDate: string, instruction?: s
             instruction
         );
 
-        // Remplacement dans le tableau
+        // Remplacement dans le tableau en préservant les clés relationnelles
         existingSchedule.workouts[targetIndex] = {
             ...newWorkoutData,
-            id: oldWorkout.id, // On garde le même ID si possible, ou on prend le nouveau
+            ID: oldWorkout.ID,
+            id: oldWorkout.id,
+            userID: oldWorkout.userID,
+            weekID: oldWorkout.weekID,
             date: dateKey,
             status: 'pending',
-            completedData: null // Reset des données complétées
+            completedData: null,
         };
 
         await saveSchedule(existingSchedule);
@@ -680,7 +683,7 @@ function getSurroundingWorkouts(schedule: Schedule, targetDate: string) {
 /**
  * Trouve l'index d'un workout par ID ou Date
  */
-function findWorkoutIndex(workouts: Workoutold[], idOrDate: string): number {
+function findWorkoutIndex(workouts: Workout[], idOrDate: string): number {
     return workouts.findIndex(w => w.id === idOrDate || w.date === idOrDate);
 }
 
@@ -873,7 +876,7 @@ export async function moveWorkout(originalDateOrId: string, newDateStr: string) 
     revalidatePath('/');
 }
 
-export async function addManualWorkout(workout: Workoutold) {
+export async function addManualWorkout(workout: Workout) {
     const schedule = await getSchedule();
 
     // ✅ Validation : vérifier que l'ID est unique (sécurité)
@@ -913,37 +916,35 @@ export async function syncStravaActivities() {
     console.log("⚡ Début Sync Strava...");
 
     try {
-        // 1. Charger la DB actuelle
-        const data = await fs.readFile(DB_PATH, 'utf-8');
-        const schedule: Schedule = JSON.parse(data);
+        // 1. Charger les données actuelles
+        const [profile, existingWorkouts, existingWeeks, existingBlocks] = await Promise.all([
+            getProfile(),
+            getWorkout(),
+            getWeek(),
+            getBlock(),
+        ]);
+
+        const workouts: Workout[] = existingWorkouts ?? [];
 
         // 2. Trouver la date de la dernière activité Strava importée
         let lastStravaTimestamp = 0;
-
-        // On regarde toutes les activités complétées qui viennent de Strava
-        const stravaWorkouts = schedule.workouts.filter(w =>
+        const stravaWorkouts = workouts.filter(w =>
             w.status === 'completed' &&
             w.completedData?.source?.type === 'strava'
         );
 
         if (stravaWorkouts.length > 0) {
-            // Trier par date pour trouver la plus récente
             stravaWorkouts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-            const lastWorkout = stravaWorkouts[0];
-            // On convertit la date en Timestamp UNIX (secondes) pour Strava
-            // On ajoute un buffer de quelques heures pour être sûr (ou on prend la date exacte)
-            lastStravaTimestamp = Math.floor(new Date(lastWorkout.date).getTime() / 1000);
-            console.log(`📅 Dernière activité Strava connue : ${lastWorkout.date} (Epoch: ${lastStravaTimestamp})`);
+            lastStravaTimestamp = Math.floor(new Date(stravaWorkouts[0].date).getTime() / 1000);
+            console.log(`📅 Dernière activité Strava connue : ${stravaWorkouts[0].date} (Epoch: ${lastStravaTimestamp})`);
         } else {
             console.log("⚠️ Aucune activité Strava trouvée en DB. Récupération des 20 dernières.");
         }
 
         // 3. Appeler Strava API
-        // Si lastStravaTimestamp est 0, on envoie null, Strava renverra les plus récents par défaut
         const activitiesSummary = await getStravaActivities(
             lastStravaTimestamp > 0 ? lastStravaTimestamp : null,
-            20 // Max items à sync d'un coup
+            20
         );
 
         if (!activitiesSummary || activitiesSummary.length === 0) {
@@ -954,12 +955,12 @@ export async function syncStravaActivities() {
         console.log(`📥 ${activitiesSummary.length} nouvelles activités détectées.`);
 
         let newItemsCount = 0;
+        const updatedWeeks = existingWeeks ? [...existingWeeks] : [];
 
         // 4. Traiter chaque activité (Boucle)
         for (const summary of activitiesSummary) {
-
             // Vérification de doublon (par ID Strava)
-            const exists = schedule.workouts.some(w =>
+            const exists = workouts.some(w =>
                 w.completedData?.source?.type === 'strava' &&
                 w.completedData.source.stravaId === summary.id
             );
@@ -969,42 +970,82 @@ export async function syncStravaActivities() {
                 continue;
             }
 
-            // 📝 Récupération du DÉTAIL (pour avoir les LAPS)
-            // C'est ici qu'on fait l'appel API individuel
+            // Récupération du DÉTAIL (pour avoir les LAPS)
             const detail = await getStravaActivityById(summary.id);
             if (!detail) continue;
 
             const completedData = await mapStravaToCompletedData(detail);
             const activityDate = summary.start_date.split('T')[0]; // YYYY-MM-DD
 
-            // 🧠 LOGIQUE DE MATCHING : Est-ce qu'un entrainement était prévu ce jour-là ?
-            // On cherche un workout à "pending" ou "missed" à cette date
-            const unplannedId = `strava_${summary.id}`; // ID temporaire par défaut
-
-            const matchingIndex = schedule.workouts.findIndex(w =>
+            // 🧠 MATCHING : Est-ce qu'un entrainement prévu correspond à cette date ?
+            const matchingIndex = workouts.findIndex(w =>
                 w.date === activityDate &&
-                w.status !== 'completed' // On n'écrase pas un truc déjà fait
+                w.status !== 'completed'
             );
 
             if (matchingIndex !== -1) {
-                // MATCH TROUVÉ : On met à jour l'entrainement prévu
+                // MATCH TROUVÉ : Mise à jour de la séance planifiée
                 console.log(`   🤝 Match trouvé pour le ${activityDate} -> Mise à jour du plan.`);
-                schedule.workouts[matchingIndex].status = 'completed';
-                schedule.workouts[matchingIndex].completedData = completedData;
-                // Optionnel : On peut renommer le titre ou garder le titre Strava
-                // schedule.workouts[matchingIndex].title = detail.name; 
+                workouts[matchingIndex].status = 'completed';
+                workouts[matchingIndex].completedData = completedData;
             } else {
-                // PAS DE MATCH : On crée une nouvelle entrée "Activité Libre"
+                // PAS DE MATCH : Créer une nouvelle séance et l'attacher au bloc actif si disponible
                 console.log(`   ➕ Nouvelle activité libre ajoutée : ${activityDate}`);
-                const newWorkout: Workoutold = {
-                    id: unplannedId,
+
+                const sportType = completedData.metrics.swimming ? 'swimming'
+                    : completedData.metrics.running ? 'running'
+                    : 'cycling';
+
+                // Trouver le bloc actif et la semaine correspondant à la date de l'activité
+                let activeWeekID = '';
+                if (existingBlocks && existingWeeks) {
+                    const activityDateObj = new Date(activityDate);
+                    const activeBlock = existingBlocks.find(block => {
+                        const blockStart = new Date(block.startDate);
+                        const blockEnd = new Date(blockStart);
+                        blockEnd.setDate(blockEnd.getDate() + block.weekCount * 7);
+                        return activityDateObj >= blockStart && activityDateObj < blockEnd;
+                    });
+
+                    if (activeBlock) {
+                        const blockStart = new Date(activeBlock.startDate);
+                        const blockWeeks = existingWeeks.filter(w => activeBlock.weeksId?.includes(w.id));
+                        const activeWeek = blockWeeks.find(week => {
+                            const weekStart = new Date(blockStart);
+                            weekStart.setDate(weekStart.getDate() + (week.weekNumber - 1) * 7);
+                            const weekEnd = new Date(weekStart);
+                            weekEnd.setDate(weekEnd.getDate() + 6);
+                            return activityDateObj >= weekStart && activityDateObj <= weekEnd;
+                        });
+
+                        if (activeWeek) {
+                            activeWeekID = activeWeek.id;
+                            const weekIdx = updatedWeeks.findIndex(w => w.id === activeWeek.id);
+                            if (weekIdx !== -1) {
+                                const newId = `strava_${summary.id}`;
+                                if (!updatedWeeks[weekIdx].workoutsID.includes(newId)) {
+                                    updatedWeeks[weekIdx] = {
+                                        ...updatedWeeks[weekIdx],
+                                        workoutsID: [...updatedWeeks[weekIdx].workoutsID, newId],
+                                    };
+                                }
+                            }
+                        }
+                    }
+                }
+
+                const newWorkout: Workout = {
+                    ID: randomUUID(),
+                    id: `strava_${summary.id}`,
+                    userID: profile?.id ?? '',
+                    weekID: activeWeekID,
                     date: activityDate,
-                    sportType: completedData.metrics.running ? 'running' : 'cycling', // Simplifié
-                    title: detail.name, // Titre Strava
+                    sportType,
+                    title: detail.name,
                     workoutType: 'Sortie Libre',
-                    mode: 'Outdoor', // Hypothèse par défaut
+                    mode: 'Outdoor',
                     status: 'completed',
-                    plannedData: { // Pas de plan, donc vide
+                    plannedData: {
                         durationMinutes: 0,
                         targetPowerWatts: null,
                         targetPaceMinPerKm: null,
@@ -1013,19 +1054,20 @@ export async function syncStravaActivities() {
                         plannedTSS: null,
                         description: null,
                     },
-                    completedData: completedData
+                    completedData,
                 };
-                schedule.workouts.push(newWorkout);
+                workouts.push(newWorkout);
             }
             newItemsCount++;
         }
 
         // 5. Sauvegarder si changements
         if (newItemsCount > 0) {
-            // Re-trier le calendrier par date pour garder l'ordre
-            schedule.workouts.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-            await fs.writeFile(DB_PATH, JSON.stringify(schedule, null, 2));
+            workouts.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            await saveWorkout(workouts);
+            if (existingWeeks && updatedWeeks.some((w, i) => w !== existingWeeks[i])) {
+                await saveWeek(updatedWeeks);
+            }
             console.log("💾 DB mise à jour avec succès.");
         }
 
@@ -1033,6 +1075,124 @@ export async function syncStravaActivities() {
 
     } catch (error) {
         console.error("❌ Erreur Sync Strava:", error);
-        return { success: false, error: error };
+        return { success: false, error };
     }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers partagés pour la recherche bloc/semaine par date
+// ─────────────────────────────────────────────────────────────────────────────
+
+function findBlockAndWeekForDate(
+    blocks: Block[],
+    weeks: Week[],
+    targetDate: Date
+): { block: Block; week: Week } | null {
+    const block = blocks.find(b => {
+        const start = new Date(b.startDate);
+        const end = new Date(start);
+        end.setDate(end.getDate() + b.weekCount * 7);
+        return targetDate >= start && targetDate < end;
+    });
+    if (!block) return null;
+
+    const blockStart = new Date(block.startDate);
+    const blockWeeks = weeks.filter(w => block.weeksId?.includes(w.id));
+    const week = blockWeeks.find(w => {
+        const wStart = new Date(blockStart);
+        wStart.setDate(wStart.getDate() + (w.weekNumber - 1) * 7);
+        const wEnd = new Date(wStart);
+        wEnd.setDate(wEnd.getDate() + 6);
+        return targetDate >= wStart && targetDate <= wEnd;
+    });
+
+    if (!week) return null;
+    return { block, week };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type WeekContext = {
+    blockTheme: string;
+    blockType: string;
+    weekType: 'Load' | 'Recovery' | 'Taper';
+    targetTSS: number;
+    weekNumber: number;
+    blockWeekCount: number;
+} | null;
+
+/**
+ * Retourne le contexte (bloc + semaine) pour une date de début de semaine.
+ */
+export async function getWeekContextForDate(weekStartDate: string): Promise<WeekContext> {
+    const [blocks, weeks] = await Promise.all([getBlock(), getWeek()]);
+    if (!blocks || !weeks) return null;
+
+    const result = findBlockAndWeekForDate(blocks, weeks, new Date(weekStartDate));
+    if (!result) return null;
+
+    return {
+        blockTheme: result.block.theme,
+        blockType: result.block.type,
+        weekType: result.week.type,
+        targetTSS: result.week.targetTSS,
+        weekNumber: result.week.weekNumber,
+        blockWeekCount: result.block.weekCount,
+    };
+}
+
+/**
+ * Génère les séances IA pour la semaine contenant weekStartDate,
+ * en remplaçant les séances pending existantes de cette semaine.
+ */
+export async function generateWeekWorkoutsFromDate(
+    weekStartDate: string,
+    comment: string | null,
+    weeklyAvailability: { [key: string]: AvailabilitySlot }
+): Promise<void> {
+    const [profile, blocks, weeks, existingWorkouts, plans] = await Promise.all([
+        getProfile(),
+        getBlock(),
+        getWeek(),
+        getWorkout(),
+        getPlan(),
+    ]);
+
+    if (!blocks || !weeks) throw new Error("Aucun plan trouvé.");
+
+    const result = findBlockAndWeekForDate(blocks, weeks, new Date(weekStartDate));
+    if (!result) throw new Error("Aucun bloc actif pour cette semaine.");
+
+    const { block, week } = result;
+    const plan = plans?.find(p => p.id === block.planId);
+    if (!plan) throw new Error("Plan introuvable.");
+
+    // Supprimer les séances pending de cette semaine (on régénère)
+    const keptWorkouts = (existingWorkouts ?? []).filter(
+        w => !(w.weekID === week.id && w.status === 'pending')
+    );
+
+    const newWorkouts = await CreateWorkoutForWeek(
+        profile,
+        plan,
+        block,
+        week,
+        comment,
+        100,
+        weeklyAvailability
+    );
+
+    // Mettre à jour workoutsID de la semaine
+    const updatedWeeks = weeks.map(w =>
+        w.id === week.id
+            ? { ...w, workoutsID: newWorkouts.map(wo => wo.id) }
+            : w
+    );
+
+    await Promise.all([
+        saveWorkout([...keptWorkouts, ...newWorkouts]),
+        saveWeek(updatedWeeks),
+    ]);
+
+    revalidatePath('/');
 }
