@@ -1,332 +1,63 @@
 [
   {
-    "id": "9dcabad2-c935-4053-904a-fd7ee464cd48",
+    "id": "5472753e-4f71-4002-94c8-319122875b65",
     "userID": "666",
     "workoutsID": [],
-    "blockID": "4b220ab6-dccf-452c-86f6-8a6f4877b9be",
+    "blockID": "1971523b-3e88-4af0-b619-2e70f95b5feb",
     "weekNumber": 1,
     "type": "Load",
-    "targetTSS": 200,
+    "targetTSS": 546,
     "actualTSS": 0,
-    "userFeedback": "Test développement !"
+    "userFeedback": "",
+    "workoutsId": [
+      "d2ed94f9-59bb-400e-aa02-0836986b3ae7",
+      "fbb31f04-98c6-4c52-8d2d-6951500e5bb1",
+      "feaa9f1e-8b24-4429-8c1e-a394cec037c4",
+      "27562f3b-515f-410d-ae67-fa3a736a9d9d"
+    ]
   },
   {
-    "id": "0fc75021-ee08-4b80-8a87-43c179e882ab",
+    "id": "8fc2631d-69aa-4097-8cb7-789fb5ee35d8",
     "userID": "666",
     "workoutsID": [],
-    "blockID": "4b220ab6-dccf-452c-86f6-8a6f4877b9be",
+    "blockID": "1971523b-3e88-4af0-b619-2e70f95b5feb",
     "weekNumber": 2,
     "type": "Load",
-    "targetTSS": 220,
+    "targetTSS": 569,
     "actualTSS": 0,
-    "userFeedback": "Test développement !"
+    "userFeedback": ""
   },
   {
-    "id": "d4a16882-1ef0-4a5e-a4a8-dd764b8a6765",
+    "id": "cccffb53-e62a-4d5b-b390-ed5edc504390",
     "userID": "666",
     "workoutsID": [],
-    "blockID": "4b220ab6-dccf-452c-86f6-8a6f4877b9be",
+    "blockID": "1971523b-3e88-4af0-b619-2e70f95b5feb",
     "weekNumber": 3,
     "type": "Load",
-    "targetTSS": 240,
+    "targetTSS": 593,
     "actualTSS": 0,
-    "userFeedback": "Test développement !"
+    "userFeedback": ""
   },
   {
-    "id": "b18cf1de-cb7e-468f-8286-1da0aeea583b",
+    "id": "dec7b97d-dc79-4f12-81dd-931a25b69bfc",
     "userID": "666",
     "workoutsID": [],
-    "blockID": "4b220ab6-dccf-452c-86f6-8a6f4877b9be",
+    "blockID": "1971523b-3e88-4af0-b619-2e70f95b5feb",
     "weekNumber": 4,
     "type": "Load",
-    "targetTSS": 260,
+    "targetTSS": 616,
     "actualTSS": 0,
-    "userFeedback": "Test développement !"
+    "userFeedback": ""
   },
   {
-    "id": "2114a3e1-71ce-487b-868f-61f80e10af74",
+    "id": "06da4a7d-ac6d-48a7-83dd-45456895e647",
     "userID": "666",
     "workoutsID": [],
-    "blockID": "4b220ab6-dccf-452c-86f6-8a6f4877b9be",
+    "blockID": "1971523b-3e88-4af0-b619-2e70f95b5feb",
     "weekNumber": 5,
     "type": "Recovery",
-    "targetTSS": 260,
+    "targetTSS": 491,
     "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "f6fd0656-03e2-417d-8392-069c85716ecf",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "de3b90b9-97c9-4841-8c05-7985ba109620",
-    "weekNumber": 1,
-    "type": "Load",
-    "targetTSS": 200,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "776643f1-a7ce-4ece-ade1-858343ed169c",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "de3b90b9-97c9-4841-8c05-7985ba109620",
-    "weekNumber": 2,
-    "type": "Load",
-    "targetTSS": 220,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "791a4769-82eb-4185-8e31-98c67c85fb31",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "de3b90b9-97c9-4841-8c05-7985ba109620",
-    "weekNumber": 3,
-    "type": "Load",
-    "targetTSS": 240,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "85c947ac-f041-4b17-8d50-b7617dbd6700",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "de3b90b9-97c9-4841-8c05-7985ba109620",
-    "weekNumber": 4,
-    "type": "Load",
-    "targetTSS": 260,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "a2ecc3b6-2fdb-4f0d-963f-86380ac73f26",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "de3b90b9-97c9-4841-8c05-7985ba109620",
-    "weekNumber": 5,
-    "type": "Recovery",
-    "targetTSS": 260,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "9f0aadd0-c8f2-48d5-a08a-b63147941e82",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "507508e8-2789-44ed-aa38-fc6f5bc81ac3",
-    "weekNumber": 1,
-    "type": "Load",
-    "targetTSS": 200,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "cd0f6d01-5b7e-47a4-a425-c5b3ed15b193",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "507508e8-2789-44ed-aa38-fc6f5bc81ac3",
-    "weekNumber": 2,
-    "type": "Load",
-    "targetTSS": 220,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "cfde42eb-f043-46a4-ad1a-8bb1231ba528",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "507508e8-2789-44ed-aa38-fc6f5bc81ac3",
-    "weekNumber": 3,
-    "type": "Load",
-    "targetTSS": 240,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "c423e79b-f4be-405a-8392-7dd7f4dcbef1",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "507508e8-2789-44ed-aa38-fc6f5bc81ac3",
-    "weekNumber": 4,
-    "type": "Load",
-    "targetTSS": 260,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "aac3da3d-d508-4929-bfbf-47a606130fef",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "507508e8-2789-44ed-aa38-fc6f5bc81ac3",
-    "weekNumber": 5,
-    "type": "Recovery",
-    "targetTSS": 260,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "cc0ce95e-358b-4763-9a84-8afb71b69de0",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "da52b903-ee3a-4b0f-bc19-3a35b4f39e24",
-    "weekNumber": 1,
-    "type": "Load",
-    "targetTSS": 200,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "9d1443c2-2dc0-45e7-8493-0589ec75ff2d",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "da52b903-ee3a-4b0f-bc19-3a35b4f39e24",
-    "weekNumber": 2,
-    "type": "Load",
-    "targetTSS": 220,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "22ab4f35-66e3-41eb-9d83-8fa1c53ff1c9",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "da52b903-ee3a-4b0f-bc19-3a35b4f39e24",
-    "weekNumber": 3,
-    "type": "Load",
-    "targetTSS": 240,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "acdbe8f9-3572-41e8-bc0e-5fd351c0c074",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "da52b903-ee3a-4b0f-bc19-3a35b4f39e24",
-    "weekNumber": 4,
-    "type": "Load",
-    "targetTSS": 260,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "a25cec84-ff41-4121-808d-da91c9f6b84c",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "da52b903-ee3a-4b0f-bc19-3a35b4f39e24",
-    "weekNumber": 5,
-    "type": "Recovery",
-    "targetTSS": 260,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "bc0b3fda-d346-4a7b-bde7-3c9a9bea622b",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "2378ecb9-2fae-433f-b782-3dcd42d90f03",
-    "weekNumber": 1,
-    "type": "Load",
-    "targetTSS": 200,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "218d520d-f4ca-487f-88d6-e31b7dc6653f",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "2378ecb9-2fae-433f-b782-3dcd42d90f03",
-    "weekNumber": 2,
-    "type": "Load",
-    "targetTSS": 220,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "cfdcec42-c29c-4d36-97f3-48ae6c022276",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "2378ecb9-2fae-433f-b782-3dcd42d90f03",
-    "weekNumber": 3,
-    "type": "Load",
-    "targetTSS": 240,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "1f81279c-9d2f-4f1f-a2a2-3e06d31841fd",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "2378ecb9-2fae-433f-b782-3dcd42d90f03",
-    "weekNumber": 4,
-    "type": "Load",
-    "targetTSS": 260,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "4ad1a6ba-81d1-4de1-8845-87d1ee583f75",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "2378ecb9-2fae-433f-b782-3dcd42d90f03",
-    "weekNumber": 5,
-    "type": "Recovery",
-    "targetTSS": 260,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "26de8ddb-ea9e-4fc4-8f71-1c040385579f",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "f790cbb8-2094-4bad-a44d-03e7eb964cc0",
-    "weekNumber": 1,
-    "type": "Load",
-    "targetTSS": 200,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "01725679-fe2f-4465-bbf3-82d50bcb6b13",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "f790cbb8-2094-4bad-a44d-03e7eb964cc0",
-    "weekNumber": 2,
-    "type": "Load",
-    "targetTSS": 220,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "6021433b-fcfb-4653-9d54-5a893c9022ef",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "f790cbb8-2094-4bad-a44d-03e7eb964cc0",
-    "weekNumber": 3,
-    "type": "Load",
-    "targetTSS": 240,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "0f6a67ed-758f-4125-8398-e0b813cfb2cf",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "f790cbb8-2094-4bad-a44d-03e7eb964cc0",
-    "weekNumber": 4,
-    "type": "Load",
-    "targetTSS": 260,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
-  },
-  {
-    "id": "dfdc3354-d5b7-4a25-9487-aed56631a8f5",
-    "userID": "666",
-    "workoutsID": [],
-    "blockID": "f790cbb8-2094-4bad-a44d-03e7eb964cc0",
-    "weekNumber": 5,
-    "type": "Recovery",
-    "targetTSS": 260,
-    "actualTSS": 0,
-    "userFeedback": "Test développement !"
+    "userFeedback": ""
   }
 ]

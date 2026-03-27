@@ -1,1 +1,94 @@
-[]
+[
+  {
+    "ID": "2cedb483-e805-403a-b6b3-0c7165dc5d91",
+    "id": "d2ed94f9-59bb-400e-aa02-0836986b3ae7",
+    "userID": "666",
+    "weekID": "5472753e-4f71-4002-94c8-319122875b65",
+    "date": "2026-03-24",
+    "sportType": "cycling",
+    "title": "PMA - Intervalles Courts",
+    "workoutType": "Interval",
+    "mode": "Outdoor",
+    "status": "pending",
+    "plannedData": {
+      "durationMinutes": 90,
+      "targetPowerWatts": null,
+      "targetPaceMinPerKm": null,
+      "targetHeartRateBPM": null,
+      "distanceKm": null,
+      "plannedTSS": 95,
+      "description": "Échauffement: 20 min progressif de Z1 (<135W) à Z2 (137-184W). Corps de séance: 3 séries de 5x(30s @ 296-310W (Z6) / 30s @ 137-150W (bas Z2)). Récupération 8 min Z1 (sous 135W) entre les séries. Retour au calme: 15 min Z1 (<135W).",
+      "structure": []
+    },
+    "completedData": null
+  },
+  {
+    "ID": "2ff0595a-b025-42fc-97c1-e03233680641",
+    "id": "fbb31f04-98c6-4c52-8d2d-6951500e5bb1",
+    "userID": "666",
+    "weekID": "5472753e-4f71-4002-94c8-319122875b65",
+    "date": "2026-03-26",
+    "sportType": "cycling",
+    "title": "Tolérance Lactique - Tempo/Seuil",
+    "workoutType": "Tempo",
+    "mode": "Outdoor",
+    "status": "pending",
+    "plannedData": {
+      "durationMinutes": 120,
+      "targetPowerWatts": null,
+      "targetPaceMinPerKm": null,
+      "targetHeartRateBPM": null,
+      "distanceKm": null,
+      "plannedTSS": 130,
+      "description": "Échauffement: 20 min progressif de Z1 (<135W) à Z2 (137-184W). Corps de séance: 2x20 min @ 190-210W (Z3 haut / Z4 bas), avec 10 min de récupération active @ 137-150W (bas Z2) entre les efforts. Retour au calme: 20 min Z1 (<135W) et Z2 (137-184W).",
+      "structure": []
+    },
+    "completedData": null
+  },
+  {
+    "ID": "b7ce5040-12c1-407e-a06d-ff40865b627b",
+    "id": "feaa9f1e-8b24-4429-8c1e-a394cec037c4",
+    "userID": "666",
+    "weekID": "5472753e-4f71-4002-94c8-319122875b65",
+    "date": "2026-03-28",
+    "sportType": "cycling",
+    "title": "Endurance Active avec Seuil",
+    "workoutType": "Endurance",
+    "mode": "Outdoor",
+    "status": "pending",
+    "plannedData": {
+      "durationMinutes": 150,
+      "targetPowerWatts": null,
+      "targetPaceMinPerKm": null,
+      "targetHeartRateBPM": null,
+      "distanceKm": null,
+      "plannedTSS": 140,
+      "description": "Échauffement: 20 min Z1 (<135W) à Z2 (137-184W). Corps de séance: 2x30 min @ 186-200W (Z3) avec 10 min de récupération @ 137-160W (Z2) entre les blocs. Puis, 3x5 min @ 223-240W (Z4) avec 5 min de récupération @ 137-160W (Z2) entre les efforts. Le reste en Z2. Retour au calme: 25 min Z1 (<135W) et Z2 (137-184W).",
+      "structure": []
+    },
+    "completedData": null
+  },
+  {
+    "ID": "9514ecf9-39ff-491b-a30c-b107b2549cbd",
+    "id": "27562f3b-515f-410d-ae67-fa3a736a9d9d",
+    "userID": "666",
+    "weekID": "5472753e-4f71-4002-94c8-319122875b65",
+    "date": "2026-03-29",
+    "sportType": "cycling",
+    "title": "Longue Sortie - PMA Intégrée",
+    "workoutType": "Long",
+    "mode": "Outdoor",
+    "status": "pending",
+    "plannedData": {
+      "durationMinutes": 200,
+      "targetPowerWatts": null,
+      "targetPaceMinPerKm": null,
+      "targetHeartRateBPM": null,
+      "distanceKm": null,
+      "plannedTSS": 180,
+      "description": "Échauffement: 30 min Z1 (<135W) à Z2 (137-184W). Corps de séance: Alterner 20 min @ 150-170W (Z2) avec 5x(1 min @ 260-280W (Z5) / 2 min @ 137-160W (Z2)) toutes les 45 minutes. Reste de la séance en Z2 (137-184W). Retour au calme: 20 min Z1 (<135W).",
+      "structure": []
+    },
+    "completedData": null
+  }
+]

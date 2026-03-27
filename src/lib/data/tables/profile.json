@@ -12,9 +12,9 @@
   "currentCTL": 78,
   "currentATL": 75,
   "strava": {
-    "accessToken": "f664c450ec3a1993bd99379bd0d08cc3ce81a235",
+    "accessToken": "ef6471ca264dc583441dbb1682b272074b329b42",
     "refreshToken": "2e4173af55d98b2c4a3e407f998c96b3125c7e34",
-    "expiresAt": 1773881814,
+    "expiresAt": 1774617599,
     "athleteId": 31596042
   },
   "activeSports": {
@@ -134,11 +134,11 @@
     "Lundi": {
       "swimming": 0,
       "cycling": 0,
-      "running": 60,
+      "running": 0,
       "comment": ""
     },
     "Mardi": {
-      "swimming": 60,
+      "swimming": 0,
       "cycling": 90,
       "running": 0,
       "comment": ""
@@ -146,17 +146,17 @@
     "Mercredi": {
       "swimming": 0,
       "cycling": 0,
-      "running": 60,
+      "running": 0,
       "comment": ""
     },
     "Jeudi": {
-      "swimming": 60,
+      "swimming": 0,
       "cycling": 120,
       "running": 0,
       "comment": ""
     },
     "Vendredi": {
-      "swimming": 72,
+      "swimming": 0,
       "cycling": 0,
       "running": 0,
       "comment": ""
@@ -169,8 +169,8 @@
     },
     "Dimanche": {
       "swimming": 0,
-      "cycling": 0,
-      "running": 210,
+      "cycling": 200,
+      "running": 0,
       "comment": ""
     }
   },

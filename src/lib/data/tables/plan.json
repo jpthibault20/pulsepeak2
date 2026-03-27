@@ -1,74 +1,14 @@
 [
   {
-    "id": "24984e97-a19d-48d2-a168-dee9ffa97b0b",
+    "id": "fb4164ae-a030-4e32-b198-c8e58b90bd19",
     "userID": "666",
     "blocksID": [
-      "4b220ab6-dccf-452c-86f6-8a6f4877b9be"
+      "1971523b-3e88-4af0-b619-2e70f95b5feb"
     ],
     "name": "PMA",
-    "startDate": "2026-03-19",
-    "goalDate": "2026-04-15",
+    "startDate": "2026-03-28",
+    "goalDate": "2026-04-24",
     "macroStrategyDescription": "PMA",
-    "status": "active"
-  },
-  {
-    "id": "351d08f0-fc16-472f-ba9e-5d50d59a2d9c",
-    "userID": "666",
-    "blocksID": [
-      "de3b90b9-97c9-4841-8c05-7985ba109620"
-    ],
-    "name": "Seuil",
-    "startDate": "2026-03-19",
-    "goalDate": "2026-04-15",
-    "macroStrategyDescription": "Seuil",
-    "status": "active"
-  },
-  {
-    "id": "871c0367-0677-4b6b-9f44-b8928910dbce",
-    "userID": "666",
-    "blocksID": [
-      "507508e8-2789-44ed-aa38-fc6f5bc81ac3"
-    ],
-    "name": "Ascension",
-    "startDate": "2026-03-19",
-    "goalDate": "2026-04-15",
-    "macroStrategyDescription": "Ascension",
-    "status": "active"
-  },
-  {
-    "id": "4cef7639-089c-4b11-8242-48bd9fd37d1c",
-    "userID": "666",
-    "blocksID": [
-      "da52b903-ee3a-4b0f-bc19-3a35b4f39e24"
-    ],
-    "name": "Semaine de Tests (FTP, VO2max)",
-    "startDate": "2026-03-19",
-    "goalDate": "2026-04-15",
-    "macroStrategyDescription": "Semaine de Tests (FTP, VO2max)",
-    "status": "active"
-  },
-  {
-    "id": "d5572062-7957-4c1b-b395-0ec98f58d354",
-    "userID": "666",
-    "blocksID": [
-      "2378ecb9-2fae-433f-b782-3dcd42d90f03"
-    ],
-    "name": "PMA",
-    "startDate": "2026-03-19",
-    "goalDate": "2026-04-15",
-    "macroStrategyDescription": "PMA",
-    "status": "active"
-  },
-  {
-    "id": "5809d1be-2597-4bc0-a587-5f8857fa46af",
-    "userID": "666",
-    "blocksID": [
-      "f790cbb8-2094-4bad-a44d-03e7eb964cc0"
-    ],
-    "name": "Sprint",
-    "startDate": "2026-03-19",
-    "goalDate": "2026-04-15",
-    "macroStrategyDescription": "Sprint",
     "status": "active"
   }
 ]

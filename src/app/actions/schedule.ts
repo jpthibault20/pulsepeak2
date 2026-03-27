@@ -75,13 +75,17 @@ export async function CreateAdvancedPlan(
         })
     );
 
-    const newWorkouts: Workout[] = [];
-    const updatedWeeks = await Promise.all(
-        newWeeks.map(async (week) => {
-            const workouts = await CreateWorkoutForWeek(profile, newPlan, newBlocks[0], week, null, 100, profile.weeklyAvailability);
-            newWorkouts.push(...workouts);
-            return { ...week, workoutsId: workouts.map(w => w.id) };
-        })
+    // On génère les séances uniquement pour la première semaine.
+    // Les semaines suivantes seront générées le dimanche précédant chaque semaine.
+    const firstWeek = newWeeks[0];
+    const firstBlock = updatedBlocks.find(b => b.id === firstWeek.blockID) ?? updatedBlocks[0];
+    const firstWeekWorkouts = await CreateWorkoutForWeek(profile, newPlan, firstBlock, firstWeek, null, 100, profile.weeklyAvailability);
+
+    const newWorkouts: Workout[] = [...firstWeekWorkouts];
+    const updatedWeeks = newWeeks.map((week) =>
+        week.id === firstWeek.id
+            ? { ...week, workoutsId: firstWeekWorkouts.map(w => w.id) }
+            : week
     );
 
     // Sauvegarde
@@ -307,13 +311,29 @@ export async function CreateWorkoutForWeek(
     const activeSports = getActiveSports(profile.activeSports);
     const formattedAvailability = formatAvailability(weeklyAvailability);
 
+    // Zones context pour des descriptions précises en watts
+    let zonesContext = "";
+    if (profile.cycling?.Test?.zones) {
+        const z = profile.cycling.Test.zones;
+        zonesContext = `
+## ZONES DE PUISSANCE CYCLISME (à utiliser dans les descriptions)
+- Z1 (Récupération) : < ${z.z1.max} W
+- Z2 (Endurance) : ${z.z2.min}–${z.z2.max} W
+- Z3 (Tempo) : ${z.z3.min}–${z.z3.max} W
+- Z4 (Seuil/FTP) : ${z.z4.min}–${z.z4.max} W
+- Z5 (VO2 Max) : ${z.z5.min}–${z.z5.max} W
+- Z6 (Anaérobie) : ${z.z6?.min}–${z.z6?.max} W
+- Z7 (Neuromusculaire) : > ${z.z7?.min} W`;
+    }
+
    const aiPrompt = `
 Tu es un coach certifié, spécialisé en ${activeSports.join(", ")}, avec 15 ans d'expérience.
 
 ## PROFIL ATHLÈTE
 - Niveau : ${profile.experience ?? "Intermédiaire"}
 - CTL actuelle : ${profile.currentCTL}
-- Disciplines actives : ${activeSports.join(", ")}
+- Disciplines actives : ${"cyclisme"}
+${zonesContext}
 
 ## DISPONIBILITÉS DE LA SEMAINE
 ${formattedAvailability || "Non spécifiées"}
@@ -325,77 +345,71 @@ ${formattedAvailability || "Non spécifiées"}
 - TSS cible total : ${week.targetTSS}
 - Semaine n°${week.weekNumber} / ${block.weekCount}
 ${userComment        ? `- Commentaire athlète : "${userComment}"` : ""}
-- Complétion actuelle du bloc : ${avgCompletion}%
+- Complétion des 4 dernières semaines : ${avgCompletion}%
 ${avgCompletion < 80 ? `- ⚠️ Complétion faible : réduire l'intensité et le volume global` : ""}
 ${avgCompletion > 95 ? `- ✅ Complétion excellente : l'athlète peut absorber plus de charge` : ""}
 
 ## RÈGLES
 1. Placer chaque séance UNIQUEMENT aux jours disponibles.
-2. Respecter la durée max par sport et par jour (ex: vélo=2h → durationMinutes ≤ 120).
+2. Respecter la durée max par sport et par jour.
 3. Répartir les séances UNIQUEMENT sur les disciplines actives : ${activeSports.join(", ")}.
 4. La somme des plannedTSS doit être égale à ${week.targetTSS} (±5%).
 5. Respecter le thème "${block.theme}" dans le choix des types de séances.
 6. Ne pas placer 2 séances dures (Interval, Tempo) consécutives.
 7. En semaine Recovery : séances courtes, faible intensité uniquement.
 8. Le dayOffset doit correspondre exactement au jour disponible (0=Lundi ... 6=Dimanche).
+9. La "description" doit être précise, technique et inclure les valeurs de watts/allure réelles de l'athlète.
+   Exemple de format attendu : "Échauffement: 20 min Z1-Z2. Corps de séance: 3x10 min Over/Under. Chaque 10 min = 2x(1 min @ 260-270W (Z5) / 4 min @ 230-240W (Z4)). Récupération 8 min Z1/Z2 entre les 10 min. Retour au calme: 16 min Z1."
 
 ## FORMAT DE RÉPONSE
 Réponds UNIQUEMENT avec un tableau JSON valide — sans markdown, sans explication.
 Chaque objet contient exactement :
-- "dayOffset"          (number)  : 0=Lundi, 6=Dimanche
-- "sportType"          (string)  : l'un de ${activeSports.join(", ")}
-- "title"              (string)  : titre court (ex: "Endurance Z2 vélo")
-- "workoutType"        (string)  : l'un de ["Endurance", "Tempo", "Interval", "Recovery", "Long", "Strength"]
-- "durationMinutes"    (number)  : durée totale en minutes (respecter le max du créneau)
-- "plannedTSS"         (number)  : TSS prévu pour cette séance
-- "targetPowerWatts"   (number | null) : watts cibles (cycling uniquement)
-- "targetPaceMinPerKm" (string | null) : allure cible (running uniquement, ex: "4:30")
-- "targetHeartRateBPM" (number | null) : FC cible si pas de puissance/allure
-- "distanceKm"         (number | null) : distance estimée
-- "structure" (array) : tableau ordonné de segments, chaque objet contient :
-    - "type"               : l'un de ["Warmup", "Active", "Rest", "Cooldown"]
-    - "durationActifSecondes"(number)        : durée du segment en secondes
-    - "targetPowerWatts"   (number | null) : watts cibles (cycling uniquement)
-    - "targetPaceMinPerKm" (string | null) : allure cible (running uniquement, ex: "4:30")
-    - "targetHeartRateBPM" (number | null) : FC cible si pas de puissance/allure
-    - "distanceKm"         (number | null) : distance estimée du segment
-    - "plannedTSS"         (number | null) : TSS du segment
-    - "description"        (string)        : description courte du segment (ex: "5x5min @ Z4 / 2min récup")
-  }
+- "dayOffset"       (number) : 0=Lundi, 6=Dimanche
+- "sportType"       (string) : l'un de ${activeSports.join(", ")}
+- "title"           (string) : titre court (ex: "Endurance Z2 vélo")
+- "workoutType"     (string) : l'un de ["Endurance", "Tempo", "Interval", "Recovery", "Long", "Strength"]
+- "durationMinutes" (number) : durée totale en minutes (respecter le max du créneau)
+- "plannedTSS"      (number) : TSS prévu pour cette séance
+- "description"     (string) : description technique complète de la séance (échauffement, corps, retour au calme, avec valeurs de zones/watts réelles)
 
 ## JSON :
 `.trim();
 
     // ---- Appel IA -----------------------------------------------------------
     type AIWorkout = {
-        dayOffset:          number;
-        sportType:          SportType;
-        title:              string;
-        workoutType:        string;
-        durationMinutes:    number;
-        plannedTSS:         number;
-        targetPowerWatts:   number | null;
-        targetPaceMinPerKm: string | null;
-        targetHeartRateBPM: number | null;
-        distanceKm:         number | null;
-        structure: {
-        type:               'Warmup' | 'Active' | 'Rest' | 'Cooldown';
-        durationActifSecondes:      number;
-        targetPowerWatts:   number | null;
-        targetPaceMinPerKm: string | null;
-        targetHeartRateBPM: number | null;
-        distanceKm:         number | null;
-        plannedTSS:         number | null;
-        description:        string;
-    }[];
+        dayOffset:       number;
+        sportType:       SportType;
+        title:           string;
+        workoutType:     string;
+        durationMinutes: number;
+        plannedTSS:      number;
+        description:     string;
+    };
+
+    const responseSchema = {
+        type: "ARRAY",
+        items: {
+            type: "OBJECT",
+            properties: {
+                "dayOffset":       { type: "NUMBER" },
+                "sportType":       { type: "STRING", enum: activeSports },
+                "title":           { type: "STRING" },
+                "workoutType":     { type: "STRING", enum: ["Endurance", "Tempo", "Interval", "Recovery", "Long", "Strength"] },
+                "durationMinutes": { type: "NUMBER" },
+                "plannedTSS":      { type: "NUMBER" },
+                "description":     { type: "STRING" },
+            },
+            required: ["dayOffset", "sportType", "title", "workoutType", "durationMinutes", "plannedTSS", "description"],
+        },
     };
 
     const aiResponse = await callGeminiAPI({
         contents: [{ parts: [{ text: aiPrompt }] }],
         generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 8192,
+            maxOutputTokens: 16384,
             responseMimeType: "application/json",
+            responseSchema,
         },
     }) as AIWorkout[];
 
@@ -416,13 +430,13 @@ Chaque objet contient exactement :
         status:      'pending',
         plannedData: {
             durationMinutes:    w.durationMinutes,
-            targetPowerWatts:   w.targetPowerWatts,
-            targetPaceMinPerKm: w.targetPaceMinPerKm,
-            targetHeartRateBPM: w.targetHeartRateBPM,
-            distanceKm:         w.distanceKm,
+            targetPowerWatts:   null,
+            targetPaceMinPerKm: null,
+            targetHeartRateBPM: null,
+            distanceKm:         null,
             plannedTSS:         w.plannedTSS,
-            description: null,
-            structure:          w.structure, 
+            description:        w.description,
+            structure:          [],
         },
         completedData: null,
     } satisfies Workout;
