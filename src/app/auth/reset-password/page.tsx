@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Zap, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import Image from 'next/image';
 
 export default function ResetPasswordPage() {
     const router = useRouter();
@@ -79,7 +80,12 @@ export default function ResetPasswordPage() {
                 {/* Branding */}
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-600 shadow-lg shadow-blue-900/40 mb-4">
-                        <Zap size={28} className="text-white" fill="currentColor" />
+                        <Image
+                            src="/logoWhite.png"
+                            alt="Logo"
+                            width={40}
+                            height={40}
+                        />
                     </div>
                     <h1 className="text-2xl font-bold text-white tracking-tight">PulsePeak</h1>
                     <p className="text-slate-400 text-sm mt-1">Nouveau mot de passe</p>
@@ -145,19 +151,18 @@ export default function ResetPasswordPage() {
                                             {[1, 2, 3, 4].map((level) => {
                                                 const strength = password.length >= 12 ? 4
                                                     : password.length >= 8 ? 3
-                                                    : password.length >= 6 ? 2
-                                                    : 1;
+                                                        : password.length >= 6 ? 2
+                                                            : 1;
                                                 return (
                                                     <div
                                                         key={level}
-                                                        className={`h-1 flex-1 rounded-full transition-colors ${
-                                                            level <= strength
+                                                        className={`h-1 flex-1 rounded-full transition-colors ${level <= strength
                                                                 ? strength === 4 ? 'bg-emerald-500'
-                                                                  : strength === 3 ? 'bg-blue-500'
-                                                                  : strength === 2 ? 'bg-yellow-500'
-                                                                  : 'bg-red-500'
+                                                                    : strength === 3 ? 'bg-blue-500'
+                                                                        : strength === 2 ? 'bg-yellow-500'
+                                                                            : 'bg-red-500'
                                                                 : 'bg-slate-700'
-                                                        }`}
+                                                            }`}
                                                     />
                                                 );
                                             })}

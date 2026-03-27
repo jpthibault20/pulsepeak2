@@ -28,7 +28,14 @@ export async function proxy(request: NextRequest) {
     // Rafraîchit la session si elle est expirée
     const { data: { user } } = await supabase.auth.getUser();
 
-    const isAuthRoute = request.nextUrl.pathname.startsWith('/auth');
+    const pathname = request.nextUrl.pathname;
+
+    // Ces routes restent accessibles même authentifié (reset password, callback OAuth)
+    const isPublicAuthRoute =
+        pathname === '/auth/reset-password' ||
+        pathname.startsWith('/auth/callback');
+
+    const isAuthRoute = pathname.startsWith('/auth');
 
     // Non authentifié → rediriger vers /auth
     if (!user && !isAuthRoute) {
@@ -37,8 +44,8 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(url);
     }
 
-    // Authentifié sur /auth → rediriger vers /
-    if (user && isAuthRoute) {
+    // Authentifié sur /auth → rediriger vers / (sauf reset-password et callback)
+    if (user && isAuthRoute && !isPublicAuthRoute) {
         const url = request.nextUrl.clone();
         url.pathname = '/';
         return NextResponse.redirect(url);
