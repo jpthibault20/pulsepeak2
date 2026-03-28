@@ -22,10 +22,6 @@ export const metadata: Metadata = {
         description: 'Planification personnalisée, analyse de performance et suivi de forme pour progresser.',
         siteName: 'PulsePeak',
     },
-    icons: {
-        icon: '/logoWhite.png',
-        apple: '/logoWhite.png',
-    },
     manifest: '/manifest.json',
     appleWebApp: {
         capable: true,
