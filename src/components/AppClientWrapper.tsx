@@ -28,6 +28,7 @@ import { StatsView } from '@/components/features/stats/StatsView';
 import { WorkoutDetailView } from '@/components/features/workout/WorkoutDetailView';
 import { Nav, View } from '@/components/layout/nav';
 import { ChatWidget } from '@/components/features/profile/ChatWidget';
+import { GenerationProgressModal, type GenProgressState } from '@/components/features/calendar/GenerationProgressModal';
 import { Card } from '@/components/ui';
 import { createCompletedData } from '@/lib/utils';
 import { Profile, Schedule } from '@/lib/data/DatabaseTypes';
@@ -54,6 +55,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     const [showChat, setShowChat] = useState(false);
+    const [genProgress, setGenProgress] = useState<GenProgressState | null>(null);
 
     // --- Re-Fetch des données (Utile après une action de l'utilisateur) ---
     const refreshData = useCallback(async () => {
@@ -127,16 +129,40 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
         startDate: string,
         numWeeks: number
     ) => {
+        const sports = [
+            profile.activeSports.cycling ? 'Cyclisme' : '',
+            profile.activeSports.running ? 'Course à pied' : '',
+            profile.activeSports.swimming ? 'Natation' : '',
+        ].filter(Boolean).join(', ');
+
+        setGenProgress({
+            active: true,
+            minimized: false,
+            done: false,
+            startedAt: Date.now(),
+            profileInfo: {
+                firstName: profile.firstName,
+                experience: profile.experience,
+                currentCTL: profile.currentCTL,
+                sports,
+            },
+        });
+
         try {
             setIsRefreshing(true);
             await CreateAdvancedPlan(blockFocus, customTheme, startDate, numWeeks, profile.id);
             await refreshData();
+            // Marque comme terminé, ferme après 2.5s
+            setGenProgress(prev => prev ? { ...prev, done: true, minimized: false } : null);
+            setTimeout(() => setGenProgress(null), 1500);
         } catch (e) {
             console.error('Erreur génération plan:', e);
+            setGenProgress(null);
             setError('Impossible de générer le plan. Réessayez.');
+        } finally {
             setIsRefreshing(false);
         }
-    }, [profile.id, refreshData]);
+    }, [profile, refreshData]);
 
     const handleSaveProfile = useCallback(async (data: Profile) => {
         try {
@@ -257,121 +283,130 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
 
     return (
         <SubscriptionProvider subscription={{ role: profile.role }}>
-        <div className="flex flex-col min-h-dvh">
-            {/* Navigation */}
-            {showNav && (
-                <Nav
-                    onViewChange={handleViewChange}
-                    currentView={view}
-                    appName="PulsePeak"
-                    showBack={showBackButton}
-                    onBack={() => handleViewChange('dashboard')}
-                    onOpenChat={() => setShowChat(true)}
+            <div className="flex flex-col min-h-dvh">
+                {/* Navigation */}
+                {showNav && (
+                    <Nav
+                        onViewChange={handleViewChange}
+                        currentView={view}
+                        appName="PulsePeak"
+                        showBack={showBackButton}
+                        onBack={() => handleViewChange('dashboard')}
+                        onOpenChat={() => setShowChat(true)}
+                    />
+                )}
+
+                {/* Main Content */}
+                <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 pb-20 sm:pb-8">
+
+                    {/* Error Display */}
+                    {error && (
+                        <Card className="bg-red-900/50 border-red-500/50 mb-6 animate-in slide-in-from-top-2">
+                            <div className="p-4">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1">
+                                        <p className="text-red-300 font-bold flex items-center gap-2">
+                                            <span className="text-lg">⚠️</span>
+                                            Erreur
+                                        </p>
+                                        <p className="text-red-400 text-sm mt-1">{error}</p>
+                                    </div>
+                                    <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300 transition-colors">✕</button>
+                                </div>
+                            </div>
+                        </Card>
+                    )}
+
+                    {/* Global Loading Indicator (Manual Refresh) */}
+                    {isRefreshing && !isSyncing && (
+                        <div className="fixed top-20 right-4 z-40 bg-blue-500/90 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in slide-in-from-top-2">
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <span className="text-sm font-medium">Actualisation...</span>
+                        </div>
+                    )}
+
+                    {/* Views */}
+                    {view === 'onboarding' && (
+                        <div className="max-w-2xl mx-auto py-4 sm:py-8">
+                            <ProfileForm
+                                initialData={profile}
+                                onSave={handleSaveProfile}
+                                onSuccess={() => handleViewChange('dashboard')}
+                                onCancel={() => handleViewChange('dashboard')}
+                            />
+                        </div>
+                    )}
+
+                    {view === 'settings' && (
+                        <div className="max-w-2xl mx-auto py-4 sm:py-8 animate-in fade-in duration-300">
+                            <ProfileForm
+                                initialData={profile}
+                                onSave={handleSaveProfile}
+                                onSuccess={() => handleViewChange('dashboard')}
+                                onCancel={() => handleViewChange('dashboard')}
+                                isSettings
+                            />
+                        </div>
+                    )}
+
+                    {view === 'dashboard' && (
+                        <div className="animate-in fade-in duration-300">
+                            <CalendarView
+                                scheduleData={schedule}
+                                profile={profile}
+                                userID={profile.id}
+                                onViewWorkout={handleViewWorkout}
+                                onGenerate={handleGenerate}
+                                onAddManualWorkout={handleAddManualWorkout}
+                                onRefresh={refreshData}
+                                onSyncStrava={handleSyncStrava}
+                                isSyncing={isSyncing}
+                            />
+                        </div>
+                    )}
+
+                    {view === 'workout-detail' && selectedWorkout && (
+                        <div className="animate-in slide-in-from-right-4 duration-300">
+                            <WorkoutDetailView
+                                workout={selectedWorkout}
+                                profile={profile}
+                                onClose={() => handleViewChange('dashboard')}
+                                onUpdate={handleUpdateStatus}
+                                onToggleMode={handleToggleMode}
+                                onMoveWorkout={handleMoveWorkout}
+                                onDelete={handleDeleteWorkout}
+                                onRegenerate={handleRegenerateWorkout}
+                            />
+                        </div>
+                    )}
+
+                    {view === 'stats' && (
+                        <div className="animate-in fade-in duration-300">
+                            <StatsView
+                                scheduleData={schedule}
+                                profile={profile}
+                            />
+                        </div>
+                    )}
+                </main>
+            </div>
+
+            {/* ── Progression génération IA ── */}
+            {genProgress && (
+                <GenerationProgressModal
+                    state={genProgress}
+                    onMinimize={() => setGenProgress(prev => prev ? { ...prev, minimized: true } : null)}
+                    onRestore={() => setGenProgress(prev => prev ? { ...prev, minimized: false } : null)}
                 />
             )}
 
-            {/* Main Content */}
-            <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 pb-20 sm:pb-8">
-
-                {/* Error Display */}
-                {error && (
-                    <Card className="bg-red-900/50 border-red-500/50 mb-6 animate-in slide-in-from-top-2">
-                        <div className="p-4">
-                            <div className="flex items-start justify-between gap-2">
-                                <div className="flex-1">
-                                    <p className="text-red-300 font-bold flex items-center gap-2">
-                                        <span className="text-lg">⚠️</span>
-                                        Erreur
-                                    </p>
-                                    <p className="text-red-400 text-sm mt-1">{error}</p>
-                                </div>
-                                <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300 transition-colors">✕</button>
-                            </div>
-                        </div>
-                    </Card>
-                )}
-
-                {/* Global Loading Indicator (Manual Refresh) */}
-                {isRefreshing && !isSyncing && (
-                    <div className="fixed top-20 right-4 z-40 bg-blue-500/90 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in slide-in-from-top-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span className="text-sm font-medium">Actualisation...</span>
-                    </div>
-                )}
-
-                {/* Views */}
-                {view === 'onboarding' && (
-                    <div className="max-w-2xl mx-auto py-4 sm:py-8">
-                        <ProfileForm
-                            initialData={profile}
-                            onSave={handleSaveProfile}
-                            onSuccess={() => handleViewChange('dashboard')}
-                            onCancel={() => handleViewChange('dashboard')}
-                        />
-                    </div>
-                )}
-
-                {view === 'settings' && (
-                    <div className="max-w-2xl mx-auto py-4 sm:py-8 animate-in fade-in duration-300">
-                        <ProfileForm
-                            initialData={profile}
-                            onSave={handleSaveProfile}
-                            onSuccess={() => handleViewChange('dashboard')}
-                            onCancel={() => handleViewChange('dashboard')}
-                            isSettings
-                        />
-                    </div>
-                )}
-
-                {view === 'dashboard' && (
-                    <div className="animate-in fade-in duration-300">
-                        <CalendarView
-                            scheduleData={schedule}
-                            profile={profile}
-                            userID={profile.id}
-                            onViewWorkout={handleViewWorkout}
-                            onGenerate={handleGenerate}
-                            onAddManualWorkout={handleAddManualWorkout}
-                            onRefresh={refreshData}
-                            onSyncStrava={handleSyncStrava}
-                            isSyncing={isSyncing}
-                        />
-                    </div>
-                )}
-
-                {view === 'workout-detail' && selectedWorkout && (
-                    <div className="animate-in slide-in-from-right-4 duration-300">
-                        <WorkoutDetailView
-                            workout={selectedWorkout}
-                            profile={profile}
-                            onClose={() => handleViewChange('dashboard')}
-                            onUpdate={handleUpdateStatus}
-                            onToggleMode={handleToggleMode}
-                            onMoveWorkout={handleMoveWorkout}
-                            onDelete={handleDeleteWorkout}
-                            onRegenerate={handleRegenerateWorkout}
-                        />
-                    </div>
-                )}
-
-                {view === 'stats' && (
-                    <div className="animate-in fade-in duration-300">
-                        <StatsView
-                            scheduleData={schedule}
-                            profile={profile}
-                        />
-                    </div>
-                )}
-            </main>
-        </div>
-
-        {/* ── Chat Coach IA (global, accessible depuis toute l'app) ── */}
-        <ChatWidget
-            isOpen={showChat}
-            onClose={() => setShowChat(false)}
-            profile={profile}
-            schedule={schedule ?? undefined}
-        />
+            {/* ── Chat Coach IA (global, accessible depuis toute l'app) ── */}
+            <ChatWidget
+                isOpen={showChat}
+                onClose={() => setShowChat(false)}
+                profile={profile}
+                schedule={schedule ?? undefined}
+            />
 
         </SubscriptionProvider>
     );

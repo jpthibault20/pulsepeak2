@@ -173,8 +173,23 @@ async function CreateBlocks(plan: Plan, profile: Profile): Promise<Block[]> {
                 `- Bloc ${b.index} : ${b.duration} semaines${b.isLast ? " (DERNIER → inclut la semaine de course)" : ""}`
             ).join('\n')}
 
+        ## PROFIL NIVEAU
+        ${profile.experience === 'Débutant' ? `
+        ⚠️ ATHLÈTE DÉBUTANT — Règles impératives :
+        - Commence TOUJOURS par un bloc "Base" long (fondamentaux, endurance aérobie)
+        - Progression très graduelle (<5% de charge par semaine)
+        - Priorité à la régularité et la récupération, pas à la performance` : profile.experience === 'Avancé' ? `
+        🏆 ATHLÈTE AVANCÉ — Objectif performance :
+        - Blocs Peak, Build et Taper autorisés dès le début si le plan est court
+        - Périodisation polarisée recommandée (blocs alternant volume et intensité)
+        - Peut supporter des blocs courts et intenses` : `
+        📈 ATHLÈTE INTERMÉDIAIRE :
+        - Progression équilibrée entre volume et intensité
+        - Commence par Base si plan ≥ 8 semaines, sinon Build direct
+        - Un bloc de récupération active conseillé en milieu de plan`}
+
         ## RÈGLES OBLIGATOIRES
-        1. tu dois prendre en compte le profil de l'athlète et son objectif pour définir un thème spécifique à chaque bloc 
+        1. tu dois prendre en compte le profil de l'athlète et son objectif pour définir un thème spécifique à chaque bloc
         2. tu dois prendre en compte l'historique a disposition pour s'adapter au mieux a l'athlète
         3. Dans le mesure du possible suivre une progression logique progressive et pertinente
         4. Si il n'y a qu'un seul bloc, part du principe que l'athlète a déjà une base et qu'on est dans une logique de préparation spécifique (pas de bloc de base sauf si demandé)
@@ -346,7 +361,21 @@ ${userComment        ? `- Commentaire athlète : "${userComment}"` : ""}
 ${avgCompletion < 80 ? `- ⚠️ Complétion faible : réduire l'intensité et le volume global` : ""}
 ${avgCompletion > 95 ? `- ✅ Complétion excellente : l'athlète peut absorber plus de charge` : ""}
 
-## RÈGLES
+## RÈGLES NIVEAU ATHLÈTE
+${profile.experience === 'Débutant' ? `⚠️ DÉBUTANT — Appliquer impérativement :
+- Intensité : Z1-Z3 uniquement — peu d'intervalle à haute intensité (pas de Z4-Z5)
+- Pas de double journée
+- Descriptions simples, langage accessible, sans jargon excessif
+- TSS max par séance : 60` : profile.experience === 'Avancé' ? `🏆 AVANCÉ — Autorisations spéciales :
+- Double journée autorisée si disponibilité > 3h ce jour
+- Intensité Z4-Z5 bienvenue (20% max du volume total)
+- Sorties longues pouvant aller jusqu'à la dispo max
+- Descriptions très techniques avec valeurs de zones et intervalles précis` : `📈 INTERMÉDIAIRE :
+- Max 1 double journée par semaine
+- 1-2 séances dures (Z4+) par semaine maximum
+- Descriptions techniques mais accessibles`}
+
+## RÈGLES GÉNÉRALES
 1. Placer chaque séance UNIQUEMENT aux jours disponibles.
 2. Respecter la durée max par sport et par jour.
 3. Répartir les séances UNIQUEMENT sur les disciplines actives : ${activeSports.join(", ")}.

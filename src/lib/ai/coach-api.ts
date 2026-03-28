@@ -52,12 +52,22 @@ interface RawAIWorkout {
 export async function callGeminiAPI(payload: unknown) {
     if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set.");
 
+    // Désactive le mode "thinking" de Gemini 2.5 Flash → 2-3x plus rapide
+    const p = payload as Record<string, unknown>;
+    const enhancedPayload = {
+        ...p,
+        generationConfig: {
+            ...((p.generationConfig as Record<string, unknown>) ?? {}),
+            thinkingConfig: { thinkingBudget: 0 },
+        },
+    };
+
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
         try {
             const response = await fetch(`${API_URL}?key=${GEMINI_API_KEY}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(enhancedPayload)
             });
 
             if (!response.ok) {
