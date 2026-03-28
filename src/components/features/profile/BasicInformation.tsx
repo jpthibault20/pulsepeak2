@@ -1,92 +1,186 @@
 import { Card } from "@/components/ui/Card";
-import { SectionHeader } from "./SessionHeader";
-import { User } from "lucide-react";
-import { Dispatch, SetStateAction } from "react";
+import { User, Ruler, Weight, CalendarDays, GraduationCap } from "lucide-react";
+import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import { Profile } from "@/lib/data/DatabaseTypes";
 
 interface BasicInformationProps {
     formData: Profile;
-    setFormData: Dispatch<SetStateAction<Profile>>
+    setFormData: Dispatch<SetStateAction<Profile>>;
 }
+
+const EXPERIENCE_LEVELS = [
+    { value: 'Débutant',       label: 'Débutant',       desc: '< 1 an' },
+    { value: 'Intermédiaire',  label: 'Intermédiaire',  desc: '1–4 ans' },
+    { value: 'Avancé',         label: 'Avancé',         desc: '5+ ans' },
+] as const;
+
+function Field({
+    label, hint, children
+}: { label: string; hint?: string; children: React.ReactNode }) {
+    return (
+        <div className="space-y-1.5">
+            <label className="block text-xs font-medium text-slate-400 uppercase tracking-wide">
+                {label}
+                {hint && <span className="normal-case ml-1 font-normal text-slate-600">({hint})</span>}
+            </label>
+            {children}
+        </div>
+    );
+}
+
+const inputCls = `
+    w-full h-11 bg-slate-800/60 border border-slate-700 rounded-xl px-3.5
+    text-slate-100 placeholder-slate-600 text-sm
+    focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20
+    hover:border-slate-600 transition-colors
+`.trim();
 
 export const BasicInformation: React.FC<BasicInformationProps> = ({ formData, setFormData }) => {
 
+    const [now] = useState<number>(() => Date.now());
+    const age = useMemo(() => {
+        if (!formData.birthDate) return null;
+        return Math.floor((now - new Date(formData.birthDate).getTime()) / (365.25 * 24 * 3600 * 1000));
+    }, [formData.birthDate, now]);
+
     return (
-        <>
-            {/* Colonne Gauche : Identité */}
-            <Card className="md:col-span-2 p-6 bg-slate-900/50 border-slate-800">
-                <SectionHeader icon={User} title="Informations Personnelles" color="text-blue-400" />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input
-                        placeholder="Prénom"
-                        value={formData.firstName}
-                        onChange={e => setFormData({ ...formData, firstName: e.target.value })}
-                        className="input-perso"
-                    />
-                    <input
-                        placeholder="Nom"
-                        value={formData.lastName}
-                        onChange={e => setFormData({ ...formData, lastName: e.target.value })}
-                        className="input-perso"
-                    />
-                    <input
-                        type="email" placeholder="Email"
-                        value={formData.email}
-                        onChange={e => setFormData({ ...formData, email: e.target.value })}
-                        className="input-perso md:col-span-2"
-                    />
-                    <div className="flex-1 relative">
-                        <input
-                            type="number"
-                            placeholder="taille"
-                            value={formData.height ?? ''}
-                            onChange={e => {
-                                const value = e.target.value === '' ? undefined : parseInt(e.target.value) || 0;
-                                setFormData(prev => ({ ...prev, height: value }));
-                            }}
-                            className="input-perso"
-                        />
-                        <span className="absolute right-3 top-2.5 text-slate-500 text-sm">cm</span>
+        <div className="space-y-4">
+
+            {/* Identité */}
+            <Card className="p-5 bg-slate-900/50 border-slate-800">
+                <div className="flex items-center gap-2 mb-5">
+                    <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                        <User size={14} className="text-blue-400" />
                     </div>
-                    <div className="flex-1 relative">
+                    <h3 className="text-sm font-semibold text-white">Informations personnelles</h3>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Field label="Prénom">
                         <input
-                            type="number"
-                            placeholder="poids"
-                            value={formData.weight ?? ''}
-                            onChange={e => {
-                                const value = e.target.value === '' ? undefined : parseInt(e.target.value) || 0;
-                                setFormData(prev => ({ ...prev, weight: value }));
-                            }}
-                            className="input-perso"
+                            className={inputCls}
+                            placeholder="Thomas"
+                            value={formData.firstName}
+                            onChange={e => setFormData({ ...formData, firstName: e.target.value })}
                         />
-                        <span className="absolute right-3 top-2.5 text-slate-500 text-sm">kg</span>
-                    </div>
-                    <input
-                        type="date"
-                        value={formData.birthDate}
-                        onChange={e => setFormData({ ...formData, birthDate: e.target.value })}
-                        className="input-perso flex-1"
-                    />
+                    </Field>
+
+                    <Field label="Nom">
+                        <input
+                            className={inputCls}
+                            placeholder="Dupont"
+                            value={formData.lastName}
+                            onChange={e => setFormData({ ...formData, lastName: e.target.value })}
+                        />
+                    </Field>
+
+                    <Field label="Email" hint="non modifiable ici">
+                        <input
+                            type="email"
+                            className={`${inputCls} sm:col-span-2 opacity-60 cursor-not-allowed`}
+                            value={formData.email}
+                            readOnly
+                        />
+                    </Field>
                 </div>
             </Card>
 
-            <style jsx global>{`
-        .input-perso {
-          width: 100%;
-          height: 44px;
-          background-color: #0f172a; /* slate-900 */
-          border: 1px solid #334155; /* slate-700 */
-          border-radius: 0.5rem;
-          padding: 0 1rem;
-          color: white;
-          outline: none;
-          transition: all 0.2s;
-        }
-        .input-triathlon:focus {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-        }
-      `}</style>
-        </>
+            {/* Données physiques */}
+            <Card className="p-5 bg-slate-900/50 border-slate-800">
+                <div className="flex items-center gap-2 mb-5">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                        <Ruler size={14} className="text-emerald-400" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-white">Données physiques</h3>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <Field label="Taille" hint="cm">
+                        <div className="relative">
+                            <input
+                                type="number"
+                                className={inputCls}
+                                placeholder="175"
+                                value={formData.height ?? ''}
+                                onChange={e => setFormData(prev => ({
+                                    ...prev,
+                                    height: e.target.value === '' ? undefined : parseInt(e.target.value) || 0
+                                }))}
+                            />
+                            <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs pointer-events-none">cm</span>
+                        </div>
+                    </Field>
+
+                    <Field label="Poids" hint="kg">
+                        <div className="relative">
+                            <input
+                                type="number"
+                                className={inputCls}
+                                placeholder="70"
+                                value={formData.weight ?? ''}
+                                onChange={e => setFormData(prev => ({
+                                    ...prev,
+                                    weight: e.target.value === '' ? undefined : parseInt(e.target.value) || 0
+                                }))}
+                            />
+                            <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs pointer-events-none">kg</span>
+                        </div>
+                    </Field>
+
+                    <Field label="Date de naissance">
+                        <div className="relative">
+                            <input
+                                type="date"
+                                className={inputCls}
+                                value={formData.birthDate}
+                                onChange={e => setFormData({ ...formData, birthDate: e.target.value })}
+                            />
+                            {age !== null && (
+                                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs pointer-events-none">
+                                    {age} ans
+                                </span>
+                            )}
+                        </div>
+                    </Field>
+                </div>
+            </Card>
+
+            {/* Expérience */}
+            <Card className="p-5 bg-slate-900/50 border-slate-800">
+                <div className="flex items-center gap-2 mb-5">
+                    <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                        <GraduationCap size={14} className="text-purple-400" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-white">Niveau d&apos;expérience</h3>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                    {EXPERIENCE_LEVELS.map(lvl => {
+                        const active = formData.experience === lvl.value;
+                        return (
+                            <button
+                                key={lvl.value}
+                                onClick={() => setFormData({ ...formData, experience: lvl.value })}
+                                className={`
+                                    p-3 rounded-xl border text-left transition-all
+                                    ${active
+                                        ? 'bg-purple-600/15 border-purple-500/50 shadow-sm shadow-purple-900/20'
+                                        : 'bg-slate-800/40 border-slate-700 hover:border-slate-600'
+                                    }
+                                `}
+                            >
+                                <p className={`text-sm font-semibold ${active ? 'text-white' : 'text-slate-300'}`}>
+                                    {lvl.label}
+                                </p>
+                                <p className="text-xs text-slate-500 mt-0.5">{lvl.desc}</p>
+                                {active && (
+                                    <div className="mt-2 w-4 h-0.5 rounded-full bg-purple-500" />
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+            </Card>
+        </div>
     );
-}
+};
