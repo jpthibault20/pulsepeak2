@@ -142,13 +142,21 @@ export async function generatePlanFromAI(
             const standardDays = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
             const dayName = standardDays[dayIndex]; // Clé exacte dans profile.weeklyAvailability
             
-            const availability = profile.weeklyAvailability[dayName] || 0;
+            const slot = profile.weeklyAvailability[dayName];
             const dateStr = d.toISOString().split('T')[0];
 
-            if (availability.cycling === 0 && availability.running === 0 && availability.swimming === 0) {
+            const cyclingMin = slot?.cycling ?? 0;
+            const runningMin = slot?.running ?? 0;
+            const swimmingMin = slot?.swimming ?? 0;
+
+            if (cyclingMin === 0 && runningMin === 0 && swimmingMin === 0) {
                 dateConstraints += `- ${dateStr} (${dayName}): REPOS OBLIGATOIRE (0 min dispo).\n`;
             } else {
-                dateConstraints += `- ${dateStr} (${dayName}): Max ${availability} min dispo.\n`;
+                const parts: string[] = [];
+                if (cyclingMin > 0) parts.push(`vélo ${cyclingMin}min`);
+                if (runningMin > 0) parts.push(`course ${runningMin}min`);
+                if (swimmingMin > 0) parts.push(`natation ${swimmingMin}min`);
+                dateConstraints += `- ${dateStr} (${dayName}): ${parts.join(', ')}.\n`;
             }
         }
     }
@@ -272,8 +280,6 @@ FORMAT DE RÉPONSE :
         generationConfig: { responseMimeType: "application/json", responseSchema: responseSchema },
     };
 
-    console.log("Envoi à Gemini...");
-    
     // Appel API
     const rawResponse = await callGeminiAPI(payload) as { synthesis: string, workouts: RawAIWorkout[] };
 

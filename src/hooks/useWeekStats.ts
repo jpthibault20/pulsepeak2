@@ -37,8 +37,6 @@ export function useWeekStats(
                 .map(date => formatDateKey(date))
         );
 
-        console.log('🔍 DEBUG - Dates de la semaine:', Array.from(uniqueDates));
-
         scheduleData.workouts.forEach(workout => {
             if (!uniqueDates.has(workout.date)) return;
 
@@ -55,20 +53,16 @@ export function useWeekStats(
 
             if (workout.status === 'completed' && workout.completedData) {
                 stats.completed++;
-                
-                // 🐛 DEBUG CRITIQUE
-                console.log('🔥 Workout complété:', {
-                    date: workout.date,
-                    sport: workout.sportType,
-                    actualDurationMinutes: workout.completedData.actualDurationMinutes,
-                    AVANT_actualDuration: stats.actualDuration,
-                });
-
                 stats.actualDuration += workout.completedData.actualDurationMinutes;
-
-                console.log('✅ APRES_actualDuration:', stats.actualDuration);
-
                 stats.distance += workout.completedData.distanceKm ?? 0;
+
+                // TSS réalisé : priorité aux métriques cyclisme, sinon TSS calculé, sinon TSS planifié
+                const cd = workout.completedData;
+                const tss =
+                    (cd.metrics?.cycling?.tss ?? 0) > 0 ? cd.metrics!.cycling!.tss! :
+                    (cd.calculatedTSS ?? 0) > 0 ? cd.calculatedTSS! :
+                    workout.plannedData.plannedTSS ?? 0;
+                stats.completedTSS += tss;
 
                 if (stats.sportDuration[workout.sportType] !== undefined) {
                     stats.sportDuration[workout.sportType] += workout.completedData.actualDurationMinutes;
@@ -76,12 +70,6 @@ export function useWeekStats(
                     stats.sportDuration[workout.sportType] = workout.completedData.actualDurationMinutes;
                 }
             }
-        });
-
-        console.log('📊 STATS FINALES:', {
-            actualDuration: stats.actualDuration,
-            completed: stats.completed,
-            total: stats.total
         });
 
         return stats;

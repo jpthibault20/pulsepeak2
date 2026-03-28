@@ -16,7 +16,7 @@ import type { Workout, Objective } from '@/lib/data/DatabaseTypes';
 import { Card } from '@/components/ui/Card';
 import { Profile, Schedule } from '@/lib/data/DatabaseTypes';
 import {
-    computePMC, computeWeeklyTSS, getTSBStatus, aggregateZones,
+    computePMC, computeWeeklyTSS, getTSBStatus, aggregateZones, getWorkoutTSS,
     type PMCPoint,
 } from '@/lib/stats/computePMC';
 
@@ -62,18 +62,6 @@ function daysUntil(dateStr: string): number {
 
 function formatShortDate(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-}
-
-function getWorkoutTSS(w: Workout): number {
-    if (w.status !== 'completed' || !w.completedData) return 0;
-    const cd = w.completedData;
-    if (cd.metrics?.cycling?.tss != null && cd.metrics.cycling.tss > 0) return cd.metrics.cycling.tss;
-    if (cd.calculatedTSS != null && cd.calculatedTSS > 0) return cd.calculatedTSS;
-    const plannedTSS = w.plannedData.plannedTSS ?? 0;
-    const plannedDur = w.plannedData.durationMinutes ?? 0;
-    const actualDur = cd.actualDurationMinutes ?? 0;
-    if (plannedDur > 0 && plannedTSS > 0) return (actualDur / plannedDur) * plannedTSS;
-    return plannedTSS;
 }
 
 // ─── INFO TOOLTIP ────────────────────────────────────────────────────────────

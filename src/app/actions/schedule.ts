@@ -821,66 +821,8 @@ export async function saveAthleteProfile(data: Profile) {
 }
 
 
-export async function generateNewPlanOld(blockFocus: string, customTheme: string | null, startDate: string | null, numWeeks?: number) {
-    console.log(`[Plan Generation] Focus: ${blockFocus}. Theme custom: ${customTheme}. Start Date: ${startDate}`);
-
-    const existingSchedule = await getSchedule();
-    const existingProfile = await getProfile();
-
-    if (!existingProfile) {
-        throw new Error("Impossible de générer un plan sans profil athlète.");
-    }
-
-    const history = getRecentPerformanceHistory(existingSchedule);
-
-    try {
-        // Appel à l'IA
-        const aiResponse = await generatePlanFromAI(
-            existingProfile,
-            history,
-            blockFocus,
-            customTheme,
-            startDate,
-            numWeeks
-        );
-
-        // MODIFICATION STRUCTURELLE
-        // 1. On récupère les dates générées par l'IA
-        const newDates = new Set(aiResponse.workouts.map(w => w.date));
-
-        // 2. On garde toutes les anciennes séances QUI NE SONT PAS sur les dates générées
-        const keptWorkouts = (existingSchedule.workouts || []).filter(w => !newDates.has(w.date));
-
-        // 3. On prépare les nouvelles séances (ajout des champs obligatoires Workout)
-        const newWorkouts: Workout[] = aiResponse.workouts.map(w => ({
-            ...w,
-            ID: randomUUID(),
-            userID: existingProfile.id,
-            weekID: '',
-            status: 'pending' as const,
-        }));
-
-        // 4. On fusionne
-        const newSchedule: Schedule = {
-            ...existingSchedule,
-            workouts: [...keptWorkouts, ...newWorkouts],
-            summary: aiResponse.synthesis,
-            lastGenerated: new Date().toISOString().split('T')[0]
-        };
-
-        await saveSchedule(newSchedule);
-        revalidatePath('/'); // Rafraîchir le cache Next.js
-
-    } catch (error) {
-        console.error("Échec de la génération de plan via l'IA:", error);
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        throw new Error(`Échec de la génération du plan par l'IA. Détail: ${errorMessage}`);
-    }
-}
-
 // Régénération d'une séance unique
 export async function regenerateWorkout(workoutIdOrDate: string, instruction?: string) {
-    console.log(`[Workout Regeneration] ID/Date: ${workoutIdOrDate}, Instruction: ${instruction || 'None'}`);
 
     const existingSchedule = await getSchedule();
     const existingProfile = await getProfile();
@@ -1002,7 +944,7 @@ function extractTSS(workout: Workout, profile?: Profile): number {
  *   CTL_j = CTL_{j-1} × e^(-1/42) + TSS_j × (1 − e^(-1/42))
  *   ATL_j = ATL_{j-1} × e^(-1/7)  + TSS_j × (1 − e^(-1/7))
  */
-async function recalculateFitnessMetrics(): Promise<void> {
+export async function recalculateFitnessMetrics(): Promise<void> {
     const [profile, workoutList] = await Promise.all([getProfile(), getWorkout()]);
 
     const completed = (workoutList ?? [])
@@ -1026,11 +968,17 @@ async function recalculateFitnessMetrics(): Promise<void> {
     const CTL_GAIN  = 1 - CTL_DECAY;
     const ATL_GAIN  = 1 - ATL_DECAY;
 
-    let ctl = 0;
-    let atl = 0;
-
+    // Constante CTL = 42j → après 200j, l'influence d'un workout est < 0.8%.
+    // On peut donc démarrer au max(premier_workout, aujourd'hui - 200j)
+    // en utilisant les valeurs stockées comme seed (leur erreur se dissipe en ~200j).
     const today   = format(new Date(), 'yyyy-MM-dd');
-    let   current = parseISO(completed[0].date);
+    const cutoff  = format(addDays(parseISO(today), -200), 'yyyy-MM-dd');
+    const startDate = completed[0].date > cutoff ? completed[0].date : cutoff;
+
+    let ctl = startDate === completed[0].date ? 0 : (profile.currentCTL ?? 0);
+    let atl = startDate === completed[0].date ? 0 : (profile.currentATL ?? 0);
+
+    let   current = parseISO(startDate);
     const end     = parseISO(today);
 
     while (current <= end) {

@@ -17,7 +17,7 @@ export interface WeeklyTSSPoint {
 }
 
 /** Extract TSS from a completed workout */
-function getWorkoutTSS(w: Workout): number {
+export function getWorkoutTSS(w: Workout): number {
     if (w.status !== 'completed' || !w.completedData) return 0;
     const cd = w.completedData;
     if (cd.metrics?.cycling?.tss != null && cd.metrics.cycling.tss > 0) return cd.metrics.cycling.tss;

@@ -98,8 +98,6 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
             if (result.count) {
                 if (result.count > 0) {
                     await refreshData();
-                } else {
-                    console.log("Strava : À jour");
                 }
             }
         } catch (e) {
