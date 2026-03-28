@@ -27,7 +27,7 @@ const FROM_DATE = fromArg ?? new Date().toISOString().slice(0, 10);
 const client = postgres(process.env.DATABASE_URL!, { prepare: false });
 const db = drizzle(client);
 
-interface WorkoutRow {
+interface WorkoutRow extends Record<string, unknown> {
     id:        string;
     userId:    string;
     date:      string;

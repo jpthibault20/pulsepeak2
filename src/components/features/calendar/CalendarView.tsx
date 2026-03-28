@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { ManualWorkoutModal } from '../workout/ManualWorkoutModal';
 import { GenerationModal } from './GenerationModal';
 import { CalendarGrid } from '@/components/features/calendar/CalendarGrid';
-import { MobileCalendarList } from '@/components/features/calendar/MobileCalendarList';
+import { MobileCalendarStrip } from '@/components/features/calendar/MobileCalendarStrip';
 import { useCalendarDays } from '@/hooks/useCalendarDays';
 import { MONTH_NAMES } from '@/lib/utils';
 import { Schedule } from '@/lib/data/DatabaseTypes';
@@ -36,6 +36,7 @@ export function CalendarView({
     isSyncing = false
 }: CalendarViewProps) {
     const [selectedDate, setSelectedDate] = useState(new Date());
+    const [selectedMobileDay, setSelectedMobileDay] = useState(new Date());
     const [showGenModal, setShowGenModal] = useState(false);
     const [showManualModal, setShowManualModal] = useState(false);
     const [showSummaryModal, setShowSummaryModal] = useState(false); // État pour la popup de résumé
@@ -70,9 +71,23 @@ export function CalendarView({
         setShowManualModal(false);
     };
 
-    const handlePrevMonth = () => setSelectedDate(new Date(year, month - 1));
-    const handleActualMonth = () => setSelectedDate(new Date(new Date().getFullYear(), new Date().getMonth()));
-    const handleNextMonth = () => setSelectedDate(new Date(year, month + 1));
+    const goToMonthDay = (newYear: number, newMonth: number) => {
+        setSelectedDate(new Date(newYear, newMonth));
+        const today = new Date();
+        if (today.getFullYear() === newYear && today.getMonth() === newMonth) {
+            setSelectedMobileDay(today);
+        } else {
+            setSelectedMobileDay(new Date(newYear, newMonth, 1));
+        }
+    };
+
+    const handlePrevMonth = () => goToMonthDay(year, month - 1);
+    const handleActualMonth = () => {
+        const today = new Date();
+        setSelectedDate(new Date(today.getFullYear(), today.getMonth()));
+        setSelectedMobileDay(today);
+    };
+    const handleNextMonth = () => goToMonthDay(year, month + 1);
 
     return (
         <div className="space-y-4 md:space-y-6 animate-in fade-in duration-500 pb-20 md:pb-0">
@@ -205,12 +220,14 @@ export function CalendarView({
                 />
             </div>
 
-            {/* Mobile List */}
+            {/* Mobile Strip */}
             <div className="md:hidden">
-                <MobileCalendarList
+                <MobileCalendarStrip
                     weekRows={weekRows}
                     currentMonth={month}
                     scheduleData={scheduleData}
+                    selectedDay={selectedMobileDay}
+                    onSelectDay={setSelectedMobileDay}
                     onOpenManualModal={handleOpenManualModal}
                     onViewWorkout={onViewWorkout}
                 />
