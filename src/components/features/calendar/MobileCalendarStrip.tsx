@@ -24,11 +24,18 @@ function getDayLabel(date: Date): string {
 }
 
 const SPORT_DOT: Record<string, string> = {
-    cycling:  'bg-blue-500',
+    cycling:  'bg-sky-500',
     running:  'bg-orange-500',
     swimming: 'bg-cyan-500',
-    other:    'bg-purple-500',
+    strength: 'bg-purple-500',
+    default:  'bg-slate-400',
 };
+
+function getDotColor(workout: Workout): string {
+    if (workout.status === 'completed') return 'bg-emerald-500';
+    if (workout.status === 'missed')    return 'bg-red-500';
+    return SPORT_DOT[workout.sportType?.toLowerCase()] ?? SPORT_DOT.default;
+}
 
 export function MobileCalendarStrip({
     weekRows,
@@ -114,7 +121,7 @@ export function MobileCalendarStrip({
                                     : wks.slice(0, 3).map((w, i) => (
                                         <div
                                             key={i}
-                                            className={`w-[5px] h-[5px] rounded-full ${SPORT_DOT[w.sportType] ?? 'bg-slate-400'}`}
+                                            className={`w-[5px] h-[5px] rounded-full ${getDotColor(w)}`}
                                         />
                                     ))
                                 }
