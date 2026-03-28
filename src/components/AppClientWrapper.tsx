@@ -27,6 +27,7 @@ import { ProfileForm } from '@/components/features/profile/ProfileForm';
 import { StatsView } from '@/components/features/stats/StatsView';
 import { WorkoutDetailView } from '@/components/features/workout/WorkoutDetailView';
 import { Nav, View } from '@/components/layout/nav';
+import { ChatWidget } from '@/components/features/profile/ChatWidget';
 import { Card } from '@/components/ui';
 import { createCompletedData } from '@/lib/utils';
 import { Profile, Schedule } from '@/lib/data/DatabaseTypes';
@@ -52,6 +53,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
     const [error, setError] = useState<string | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
+    const [showChat, setShowChat] = useState(false);
 
     // --- Re-Fetch des données (Utile après une action de l'utilisateur) ---
     const refreshData = useCallback(async () => {
@@ -258,15 +260,14 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
         <div className="flex flex-col min-h-dvh">
             {/* Navigation */}
             {showNav && (
-                <div className="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-sm border-b border-slate-800">
-                    <Nav
-                        onViewChange={handleViewChange}
-                        currentView={view}
-                        appName="PulsePeak"
-                        showBack={showBackButton}
-                        onBack={() => handleViewChange('dashboard')}
-                    />
-                </div>
+                <Nav
+                    onViewChange={handleViewChange}
+                    currentView={view}
+                    appName="PulsePeak"
+                    showBack={showBackButton}
+                    onBack={() => handleViewChange('dashboard')}
+                    onOpenChat={() => setShowChat(true)}
+                />
             )}
 
             {/* Main Content */}
@@ -363,6 +364,15 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
                 )}
             </main>
         </div>
+
+        {/* ── Chat Coach IA (global, accessible depuis toute l'app) ── */}
+        <ChatWidget
+            isOpen={showChat}
+            onClose={() => setShowChat(false)}
+            profile={profile}
+            schedule={schedule ?? undefined}
+        />
+
         </SubscriptionProvider>
     );
 }
