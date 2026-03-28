@@ -25,6 +25,22 @@ import { computeBlockSkeletons, computeWeeklyTSS, formatAvailability, getActiveS
 
 
 
+// ─── Rate limiting ────────────────────────────────────────────────────────────
+
+const AI_DAILY_LIMITS = { plan: 3, workout: 10 } as const;
+
+async function checkAndIncrementAICallLimit(type: 'plan' | 'workout'): Promise<void> {
+    const profile = await getProfile();
+    const today   = format(new Date(), 'yyyy-MM-dd');
+    const count   = profile.aiCallsResetDate === today ? (profile.aiCallsCount ?? 0) : 0;
+    if (count >= AI_DAILY_LIMITS[type]) {
+        throw new Error(
+            `Limite journalière atteinte (${AI_DAILY_LIMITS[type]} ${type === 'plan' ? 'plans' : 'régénérations'}/jour). Réessaie demain.`
+        );
+    }
+    await saveProfile({ ...profile, aiCallsCount: count + 1, aiCallsResetDate: today });
+}
+
 /******************************************************************************
  * @access Public
  * @function CreateAdvancedPlan
@@ -49,7 +65,10 @@ export async function CreateAdvancedPlan(
 ) {
     // Validation
     if (numWeeks <= 0)      return { state: ReturnCode.RC_Error, error: "Nombre de semaines invalide" };
-    if (userID.length < 3)  return { state: ReturnCode.RC_Error, error: "ID utilisateur invalide" }; // ✅ corrigé
+    if (userID.length < 3)  return { state: ReturnCode.RC_Error, error: "ID utilisateur invalide" };
+
+    try { await checkAndIncrementAICallLimit('plan'); }
+    catch (e) { return { state: ReturnCode.RC_Error, error: (e as Error).message }; }
 
     const [plan, profile, existingBlocks, existingWeeks, existingWorkouts] = await Promise.all([
         getPlan(),
@@ -117,6 +136,9 @@ export async function CreateAdvancedPlan(
  ******************************************************************************/
 export async function CreatePlanToObjective(userID: string, planStartDate: string) {
     if (userID.length < 3) return { state: ReturnCode.RC_Error, error: 'ID utilisateur invalide' };
+
+    try { await checkAndIncrementAICallLimit('plan'); }
+    catch (e) { return { state: ReturnCode.RC_Error, error: (e as Error).message }; }
 
     const todayStr = format(new Date(), 'yyyy-MM-dd');
 
@@ -823,6 +845,8 @@ export async function saveAthleteProfile(data: Profile) {
 
 // Régénération d'une séance unique
 export async function regenerateWorkout(workoutIdOrDate: string, instruction?: string) {
+
+    await checkAndIncrementAICallLimit('workout');
 
     const existingSchedule = await getSchedule();
     const existingProfile = await getProfile();

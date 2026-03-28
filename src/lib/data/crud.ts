@@ -73,6 +73,8 @@ function toProfile(row: any): Profile {
         goal:               row.goal,
         objectiveDate:      row.objectiveDate ?? '',
         weaknesses:         row.weaknesses,
+        aiCallsCount:       row.aiCallsCount  ?? 0,
+        aiCallsResetDate:   row.aiCallsResetDate ?? undefined,
         workouts:           [],
     };
 }
