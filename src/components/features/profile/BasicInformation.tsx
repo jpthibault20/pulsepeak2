@@ -15,10 +15,10 @@ const EXPERIENCE_LEVELS = [
 ] as const;
 
 function Field({
-    label, hint, children
-}: { label: string; hint?: string; children: React.ReactNode }) {
+    label, hint, cls, children
+}: { label: string; hint?: string; cls?: string; children: React.ReactNode }) {
     return (
-        <div className="space-y-1.5">
+        <div className={`space-y-1.5 ${cls ?? ''}`}>
             <label className="block text-xs font-medium text-slate-400 uppercase tracking-wide">
                 {label}
                 {hint && <span className="normal-case ml-1 font-normal text-slate-600">({hint})</span>}
@@ -94,7 +94,7 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({ formData, se
                     <h3 className="text-sm font-semibold text-white">Données physiques</h3>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                     <Field label="Taille" hint="cm">
                         <div className="relative">
                             <input
@@ -127,20 +127,17 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({ formData, se
                         </div>
                     </Field>
 
-                    <Field label="Date de naissance">
-                        <div className="relative">
-                            <input
-                                type="date"
-                                className={inputCls}
-                                value={formData.birthDate}
-                                onChange={e => setFormData({ ...formData, birthDate: e.target.value })}
-                            />
-                            {age !== null && (
-                                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs pointer-events-none">
-                                    {age} ans
-                                </span>
-                            )}
-                        </div>
+                    <Field label="Date de naissance" cls="col-span-2">
+                        <input
+                            type="date"
+                            className={inputCls}
+                            style={{ colorScheme: 'dark' }}
+                            value={formData.birthDate}
+                            onChange={e => setFormData({ ...formData, birthDate: e.target.value })}
+                        />
+                        {age !== null && (
+                            <p className="text-xs text-slate-500 mt-1 ml-0.5">{age} ans</p>
+                        )}
                     </Field>
                 </div>
             </Card>

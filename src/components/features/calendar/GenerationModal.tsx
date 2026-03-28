@@ -58,6 +58,7 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({ isOpen, onClos
                     </label>
                     <input
                         type="date"
+                        style={{ colorScheme: 'dark' }}
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
                         // DESIGN: h-11 pour une bonne zone de touche sur mobile

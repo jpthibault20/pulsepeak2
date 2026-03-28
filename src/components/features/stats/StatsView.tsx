@@ -190,8 +190,8 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
                     <button
                         onClick={() => setViewMode('custom')}
                         className={`flex-1 md:flex-none px-4 py-2 text-xs md:text-sm font-medium rounded-md transition-all ${viewMode === 'custom'
-                                ? 'bg-blue-600 text-white shadow'
-                                : 'text-slate-400 hover:text-white'
+                            ? 'bg-blue-600 text-white shadow'
+                            : 'text-slate-400 hover:text-white'
                             }`}
                     >
                         Ciblée
@@ -199,8 +199,8 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
                     <button
                         onClick={() => setViewMode('annual')}
                         className={`flex-1 md:flex-none px-4 py-2 text-xs md:text-sm font-medium rounded-md transition-all ${viewMode === 'annual'
-                                ? 'bg-blue-600 text-white shadow'
-                                : 'text-slate-400 hover:text-white'
+                            ? 'bg-blue-600 text-white shadow'
+                            : 'text-slate-400 hover:text-white'
                             }`}
                     >
                         Saison {new Date().getFullYear()}
@@ -216,6 +216,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
                         <span className="text-xs text-slate-400 w-6 sm:w-auto">Du</span>
                         <input
                             type="date"
+                            style={{ colorScheme: 'dark' }}
                             value={dateRange.start}
                             onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
                             className="flex-1 bg-slate-900 border border-slate-600 text-white rounded px-3 py-1.5 text-sm md:text-sm outline-none focus:border-blue-500"
@@ -226,6 +227,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
                         <span className="text-xs text-slate-400 w-6 sm:w-auto">Au</span>
                         <input
                             type="date"
+                            style={{ colorScheme: 'dark' }}
                             value={dateRange.end}
                             onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
                             className="flex-1 bg-slate-900 border border-slate-600 text-white rounded px-3 py-1.5 text-sm md:text-sm outline-none focus:border-blue-500"
@@ -380,7 +382,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
                             <span className="text-slate-400 text-xs md:text-sm">RPE Moyen</span>
                             <div className="text-right">
                                 <span className={`font-bold text-base md:text-lg ${typeof kpis.avgRpe === 'string' ? 'text-white' :
-                                        Number(kpis.avgRpe) > 7 ? 'text-red-400' : 'text-white'
+                                    Number(kpis.avgRpe) > 7 ? 'text-red-400' : 'text-white'
                                     }`}>
                                     {kpis.avgRpe}{typeof kpis.avgRpe !== 'string' && '/10'}
                                 </span>
@@ -419,8 +421,8 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
                             <div className="w-full bg-slate-700/50 rounded-full h-2 md:h-3 overflow-hidden">
                                 <div
                                     className={`h-full rounded-full transition-all duration-1000 ${kpis.totalActualDuration >= kpis.totalPlannedDuration
-                                            ? 'bg-emerald-500'
-                                            : 'bg-blue-500'
+                                        ? 'bg-emerald-500'
+                                        : 'bg-blue-500'
                                         }`}
                                     style={{
                                         width: `${Math.min(100, (kpis.totalActualDuration / (kpis.totalPlannedDuration || 1)) * 100)}%`
@@ -444,8 +446,8 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData }) => {
                             <div className="w-full bg-slate-700/50 rounded-full h-2 md:h-3 overflow-hidden">
                                 <div
                                     className={`h-full rounded-full transition-all duration-1000 ${kpis.totalActualTSS > kpis.totalPlannedTSS * 1.1
-                                            ? 'bg-red-500'
-                                            : 'bg-yellow-500'
+                                        ? 'bg-red-500'
+                                        : 'bg-yellow-500'
                                         }`}
                                     style={{
                                         width: `${Math.min(100, (kpis.totalActualTSS / (kpis.totalPlannedTSS || 1)) * 100)}%`

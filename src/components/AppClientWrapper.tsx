@@ -27,7 +27,7 @@ import { ProfileForm } from '@/components/features/profile/ProfileForm';
 import { StatsView } from '@/components/features/stats/StatsView';
 import { WorkoutDetailView } from '@/components/features/workout/WorkoutDetailView';
 import { Nav, View } from '@/components/layout/nav';
-import { ChatWidget } from '@/components/features/profile/ChatWidget';
+import { ChatView } from '@/components/features/chat/ChatView';
 import { GenerationProgressModal, type GenProgressState } from '@/components/features/calendar/GenerationProgressModal';
 import { Card } from '@/components/ui';
 import { createCompletedData } from '@/lib/utils';
@@ -54,7 +54,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
     const [error, setError] = useState<string | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
-    const [showChat, setShowChat] = useState(false);
+
     const [genProgress, setGenProgress] = useState<GenProgressState | null>(null);
     const genProgressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -283,7 +283,6 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
     // --- Render Logic ---
 
     const showNav = view !== 'onboarding';
-    const showBackButton = view === 'settings' || view === 'stats';
 
     if (!profile || !schedule) {
         return <div className="text-white p-10">Erreur critique : Données manquantes.</div>;
@@ -298,9 +297,6 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
                         onViewChange={handleViewChange}
                         currentView={view}
                         appName="PulsePeak"
-                        showBack={showBackButton}
-                        onBack={() => handleViewChange('dashboard')}
-                        onOpenChat={() => setShowChat(true)}
                     />
                 )}
 
@@ -396,6 +392,15 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
                             />
                         </div>
                     )}
+
+                    {view === 'chat' && (
+                        <div className="animate-in fade-in duration-200 -mx-3 sm:-mx-6 lg:-mx-8 -my-4 sm:-my-8">
+                            <ChatView
+                                profile={profile}
+                                schedule={schedule ?? undefined}
+                            />
+                        </div>
+                    )}
                 </main>
             </div>
 
@@ -407,14 +412,6 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
                     onRestore={() => setGenProgress(prev => prev ? { ...prev, minimized: false } : null)}
                 />
             )}
-
-            {/* ── Chat Coach IA (global, accessible depuis toute l'app) ── */}
-            <ChatWidget
-                isOpen={showChat}
-                onClose={() => setShowChat(false)}
-                profile={profile}
-                schedule={schedule ?? undefined}
-            />
 
         </SubscriptionProvider>
     );

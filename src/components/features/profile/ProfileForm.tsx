@@ -385,7 +385,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave })
 
             {/* ── Mobile sticky save bar ────────────────────────────────── */}
             <div className={`
-                md:hidden fixed bottom-16 left-0 right-0 z-50 transition-all duration-300
+                md:hidden fixed bottom-[80px] left-0 right-0 z-50 transition-all duration-300
                 ${isDirty ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}
             `}>
                 <div className="mx-4 mb-2 bg-slate-900 border border-slate-700 rounded-2xl p-3 shadow-2xl shadow-black/50 flex items-center gap-3">
