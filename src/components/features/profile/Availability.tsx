@@ -1,7 +1,6 @@
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { AvailabilitySlot } from "@/lib/data/type";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { SectionHeader } from "./SessionHeader";
 import { Bike, Calendar, Footprints, Waves, Clock } from "lucide-react";
 import { Profile } from "@/lib/data/DatabaseTypes";
 
@@ -148,127 +147,130 @@ export const Availability: React.FC<AvailabilityProps> = ({ formData, setFormDat
         }));
     };
 
+    const activeSportList = [
+        formData.activeSports.swimming && { key: 'swimming' as const, icon: Waves, color: 'text-cyan-400', ring: 'focus:ring-cyan-500/50 focus:text-cyan-300', accent: 'bg-cyan-500/10' },
+        formData.activeSports.cycling  && { key: 'cycling'  as const, icon: Bike,  color: 'text-orange-400', ring: 'focus:ring-orange-500/50 focus:text-orange-300', accent: 'bg-orange-500/10' },
+        formData.activeSports.running  && { key: 'running'  as const, icon: Footprints, color: 'text-emerald-400', ring: 'focus:ring-emerald-500/50 focus:text-emerald-300', accent: 'bg-emerald-500/10' },
+    ].filter(Boolean) as { key: 'swimming'|'cycling'|'running'; icon: React.ElementType; color: string; ring: string; accent: string }[];
+
     return (
         <Card className="bg-slate-900/50 border-slate-800 overflow-hidden">
-            <div className="p-6">
-                <SectionHeader
-                    icon={Calendar}
-                    title="Volume Hebdomadaire"
-                    color="text-purple-400"
-                    rightContent={
-                        <div className="flex items-center gap-2 px-3 py-1 bg-slate-900 rounded-full border border-slate-700">
-                            <Clock size={14} className="text-slate-400" />
-                            <span className="text-sm font-semibold text-slate-200">{getTotalHours()} <span className="text-slate-500 font-normal">/ sem</span></span>
+            <div className="p-5">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                            <Calendar size={14} className="text-purple-400" />
                         </div>
-                    }
-                />
+                        <h3 className="text-sm font-semibold text-white">Volume Hebdomadaire</h3>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-800 rounded-full border border-slate-700">
+                        <Clock size={12} className="text-slate-400" />
+                        <span className="text-xs font-semibold text-slate-200">{getTotalHours()}<span className="text-slate-500 font-normal ml-0.5">/sem</span></span>
+                    </div>
+                </div>
 
-                <div className="mt-4 overflow-x-auto">
+                {/* Desktop : tableau */}
+                <div className="hidden sm:block overflow-x-auto">
                     <table className="w-full text-sm border-collapse">
                         <thead>
                             <tr className="border-b border-slate-800">
                                 <th className="text-left py-3 font-medium text-slate-500 w-24 pl-2">Jour</th>
-
-                                {formData.activeSports.swimming && (
-                                    <th className="py-3 w-24 text-center"> {/* Colonne un peu plus large pour le texte */}
+                                {activeSportList.map(s => (
+                                    <th key={s.key} className="py-3 w-24 text-center">
                                         <div className="flex justify-center">
-                                            <div className="p-1.5 bg-cyan-500/10 rounded-md text-cyan-400">
-                                                <Waves size={18} />
+                                            <div className={`p-1.5 ${s.accent} rounded-md ${s.color}`}>
+                                                <s.icon size={16} />
                                             </div>
                                         </div>
                                     </th>
-                                )}
-
-                                {formData.activeSports.cycling && (
-                                    <th className="py-3 w-24 text-center">
-                                        <div className="flex justify-center">
-                                            <div className="p-1.5 bg-orange-500/10 rounded-md text-orange-400">
-                                                <Bike size={18} />
-                                            </div>
-                                        </div>
-                                    </th>
-                                )}
-
-                                {formData.activeSports.running && (
-                                    <th className="py-3 w-24 text-center">
-                                        <div className="flex justify-center">
-                                            <div className="p-1.5 bg-emerald-500/10 rounded-md text-emerald-400">
-                                                <Footprints size={18} />
-                                            </div>
-                                        </div>
-                                    </th>
-                                )}
-
-                                <th className="text-left py-3 pl-6 font-medium text-slate-500">
-                                    Notes
-                                </th>
+                                ))}
+                                <th className="text-left py-3 pl-4 font-medium text-slate-500">Notes</th>
                             </tr>
                         </thead>
-
                         <tbody className="divide-y divide-slate-800/50">
                             {Object.keys(formData.weeklyAvailability).map((day) => (
                                 <tr key={day} className="group hover:bg-slate-800/30 transition-colors">
-                                    <td className="py-3 pl-2 text-slate-300 font-medium capitalize">
-                                        {day}
-                                    </td>
-
-                                    {/* NATATION */}
-                                    {formData.activeSports.swimming && (
-                                        <td className="p-1">
+                                    <td className="py-2.5 pl-2 text-slate-300 font-medium text-sm">{day}</td>
+                                    {activeSportList.map(s => (
+                                        <td key={s.key} className="p-1">
                                             <DurationInput
-                                                value={formData.weeklyAvailability[day].swimming}
-                                                onChange={(val) => handleSportChange(day, 'swimming', val)}
+                                                value={formData.weeklyAvailability[day][s.key]}
+                                                onChange={(val) => handleSportChange(day, s.key, val)}
                                                 placeholder="-"
-                                                className="focus:text-cyan-400 focus:ring-cyan-500/50"
+                                                className={s.ring}
                                             />
                                         </td>
-                                    )}
-
-                                    {/* VÉLO */}
-                                    {formData.activeSports.cycling && (
-                                        <td className="p-1">
-                                            <DurationInput
-                                                value={formData.weeklyAvailability[day].cycling}
-                                                onChange={(val) => handleSportChange(day, 'cycling', val)}
-                                                placeholder="-"
-                                                className="focus:text-orange-400 focus:ring-orange-500/50"
-                                            />
-                                        </td>
-                                    )}
-
-                                    {/* COURSE */}
-                                    {formData.activeSports.running && (
-                                        <td className="p-1">
-                                            <DurationInput
-                                                value={formData.weeklyAvailability[day].running}
-                                                onChange={(val) => handleSportChange(day, 'running', val)}
-                                                placeholder="-"
-                                                className="focus:text-emerald-400 focus:ring-emerald-500/50"
-                                            />
-                                        </td>
-                                    )}
-
-                                    {/* COMMENTAIRE */}
-                                    <td className="p-1 pl-4">
+                                    ))}
+                                    <td className="p-1 pl-3">
                                         <input
                                             type="text"
                                             value={formData.weeklyAvailability[day].comment || ''}
                                             onChange={(e) => handleCommentChange(day, e.target.value)}
                                             placeholder="Club, récup, ..."
-                                            className="w-full h-9 bg-transparent text-sm text-slate-400 placeholder-slate-700 rounded px-2 outline-none focus:text-slate-200 focus:bg-slate-800 transition-all hover:bg-slate-800/30"
+                                            className="w-full h-9 bg-transparent text-sm text-slate-400 placeholder-slate-700 rounded px-2 outline-none focus:text-slate-200 focus:bg-slate-800 transition-all"
                                         />
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-
-                    <div className="mt-4 flex justify-end gap-x-4">
-                        <p className="text-[11px] text-slate-500 italic">
-                            Astuce: Tapez &quot;1h30&quot;, &quot;90&quot;, &quot;1:30&quot; ou &quot;1.5&quot;
-                        </p>
-                    </div>
                 </div>
+
+                {/* Mobile : cartes par jour */}
+                <div className="sm:hidden space-y-2">
+                    {Object.keys(formData.weeklyAvailability).map((day) => {
+                        const slot = formData.weeklyAvailability[day];
+                        const total = activeSportList.reduce((s, sp) => s + (slot[sp.key] || 0), 0);
+                        const isEmpty = total === 0;
+                        return (
+                            <div key={day} className={`rounded-xl border transition-all ${isEmpty ? 'border-slate-800 bg-slate-900/30' : 'border-slate-700 bg-slate-800/40'}`}>
+                                <div className="flex items-center justify-between px-4 py-3">
+                                    <span className={`text-sm font-semibold ${isEmpty ? 'text-slate-500' : 'text-white'}`}>{day}</span>
+                                    {total > 0 && (
+                                        <span className="text-xs text-slate-400 font-medium">
+                                            {Math.floor(total / 60) > 0 ? `${Math.floor(total / 60)}h` : ''}{total % 60 > 0 ? `${total % 60}m` : ''}
+                                        </span>
+                                    )}
+                                </div>
+                                {activeSportList.length > 0 && (
+                                    <div className="px-4 pb-3 grid grid-cols-3 gap-2">
+                                        {activeSportList.map(s => (
+                                            <div key={s.key} className="space-y-1">
+                                                <div className={`flex items-center gap-1 ${s.color}`}>
+                                                    <s.icon size={11} />
+                                                    <span className="text-[10px] uppercase tracking-wide font-medium opacity-70">
+                                                        {s.key === 'swimming' ? 'Natation' : s.key === 'cycling' ? 'Vélo' : 'Course'}
+                                                    </span>
+                                                </div>
+                                                <DurationInput
+                                                    value={slot[s.key]}
+                                                    onChange={(val) => handleSportChange(day, s.key, val)}
+                                                    placeholder="—"
+                                                    className={`text-sm ${s.ring} bg-slate-900/60 rounded-lg ring-1 ring-slate-700`}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                {/* Note */}
+                                <div className="px-4 pb-3">
+                                    <input
+                                        type="text"
+                                        value={slot.comment || ''}
+                                        onChange={(e) => handleCommentChange(day, e.target.value)}
+                                        placeholder="Note (club, récup...)"
+                                        className="w-full h-8 bg-transparent text-xs text-slate-400 placeholder-slate-600 rounded px-1 outline-none focus:text-slate-200 border-b border-slate-800 focus:border-slate-600 transition-all"
+                                    />
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                <p className="text-[11px] text-slate-600 italic mt-3 text-right">
+                    Format accepté : 1h30, 90, 1:30, 1.5
+                </p>
             </div>
         </Card>
     );

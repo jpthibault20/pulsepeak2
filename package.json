@@ -10,7 +10,10 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:migrate-json": "tsx scripts/migrate-json-to-db.ts",
+    "db:dedup-strava": "tsx scripts/dedup-strava-workouts.ts",
+    "db:delete-future": "tsx scripts/delete-future-workouts.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",

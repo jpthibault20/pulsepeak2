@@ -19,6 +19,7 @@ import {
 // Import des types
 import type { CompletedDataFeedback } from '@/lib/data/type';
 import type { Workout } from '@/lib/data/DatabaseTypes';
+import { SubscriptionProvider } from '@/lib/subscription/context';
 
 // Import des composants
 import { CalendarView } from '@/components/features/calendar/CalendarView';
@@ -253,6 +254,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
     }
 
     return (
+        <SubscriptionProvider subscription={{ role: profile.role }}>
         <div className="flex flex-col min-h-dvh">
             {/* Navigation */}
             {showNav && (
@@ -361,5 +363,6 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
                 )}
             </main>
         </div>
+        </SubscriptionProvider>
     );
 }
