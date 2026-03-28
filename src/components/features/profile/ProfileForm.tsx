@@ -171,6 +171,17 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
     }, [initialData]);
 
     const [formData, setFormData] = useState<Profile>(initialFormData);
+
+    // Sync formData if the initial data changes (e.g. async profile load)
+    const prevInitialRef = useRef<string>('');
+    useEffect(() => {
+        const serialized = JSON.stringify(initialFormData);
+        if (prevInitialRef.current !== serialized) {
+            prevInitialRef.current = serialized;
+            setFormData(initialFormData);
+        }
+    }, [initialFormData]);
+
     const isDirty = activeSection !== 'abonnement' && JSON.stringify(formData) !== JSON.stringify(initialFormData);
     const completion = getCompletionPercent(formData);
 
@@ -400,7 +411,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
             {/* ── Mobile sticky save bar ────────────────────────────────── */}
             <div className={`
                 md:hidden fixed bottom-[80px] left-0 right-0 z-50 transition-all duration-300
-                ${isDirty ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}
+                ${isDirty ? 'translate-y-0 opacity-100 pointer-events-auto' : 'translate-y-full opacity-0 pointer-events-none'}
             `}>
                 <div className="mx-4 mb-2 bg-slate-900 border border-slate-700 rounded-2xl p-3 shadow-2xl shadow-black/50 flex items-center gap-3">
                     <div className="flex-1">

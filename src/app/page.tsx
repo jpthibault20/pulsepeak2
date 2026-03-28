@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import AppClientWrapper from '@/components/AppClientWrapper';
 import { getObjectives, getProfile, getSchedule } from '@/lib/data/crud';
 import { createClient } from '@/lib/supabase/server';
+import { recalculateFitnessMetrics } from '@/app/actions/schedule';
 
 export default async function Home() {
   const supabase = await createClient();
@@ -11,15 +12,16 @@ export default async function Home() {
     redirect('/auth');
   }
 
-  console.log("--- ⚡ Chargement Page Home (Lecture DB Locale) ---");
+  // Mise à jour CTL/ATL avant chargement du profil :
+  // recalculateFitnessMetrics itère jour par jour jusqu'à aujourd'hui,
+  // les jours de récup (TSS=0) font naturellement décroître ATL.
+  try { await recalculateFitnessMetrics(); } catch { /* non bloquant */ }
 
   const [profile, schedule, objectives] = await Promise.all([
     getProfile(),
     getSchedule(),
     getObjectives(),
   ]);
-
-  console.log("✅ Chargement terminée.");
 
   return (
     <main className="min-h-screen bg-slate-950">
