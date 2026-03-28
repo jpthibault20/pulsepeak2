@@ -87,13 +87,11 @@ export async function CreateAdvancedPlan(
             : week
     );
 
-    // Sauvegarde
-    await Promise.all([
-        savePlan([...(Array.isArray(plan) ? plan : []), newPlan]),
-        saveBlocks([...(Array.isArray(existingBlocks) ? existingBlocks : []), ...updatedBlocks]),
-        saveWeek([...(Array.isArray(existingWeeks) ? existingWeeks : []), ...updatedWeeks]),
-        saveWorkout([...(Array.isArray(existingWorkouts) ? existingWorkouts : []), ...newWorkouts]),
-    ]);
+    // Sauvegarde : respecter l'ordre des FK (plan → blocks → weeks → workouts)
+    await savePlan([...(Array.isArray(plan) ? plan : []), newPlan]);
+    await saveBlocks([...(Array.isArray(existingBlocks) ? existingBlocks : []), ...updatedBlocks]);
+    await saveWeek([...(Array.isArray(existingWeeks) ? existingWeeks : []), ...updatedWeeks]);
+    await saveWorkout([...(Array.isArray(existingWorkouts) ? existingWorkouts : []), ...newWorkouts]);
 
     return { state: ReturnCode.RC_OK };
 }

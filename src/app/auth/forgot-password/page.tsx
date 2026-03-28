@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Zap, ArrowLeft, Loader2, AlertCircle, CheckCircle2, Mail } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, CheckCircle2, Mail } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import Image from 'next/image';
 
 export default function ForgotPasswordPage() {
     const router = useRouter();
@@ -57,7 +58,12 @@ export default function ForgotPasswordPage() {
                 {/* Branding */}
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-600 shadow-lg shadow-blue-900/40 mb-4">
-                        <Zap size={28} className="text-white" fill="currentColor" />
+                        <Image
+                            src="/logoWhite.png"
+                            alt="Logo"
+                            width={40}
+                            height={40}
+                        />
                     </div>
                     <h1 className="text-2xl font-bold text-white tracking-tight">PulsePeak</h1>
                     <p className="text-slate-400 text-sm mt-1">Réinitialisation du mot de passe</p>
