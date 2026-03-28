@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Plus, BedDouble, Layers } from 'lucide-react';
-import type { Workout } from '@/lib/data/DatabaseTypes';
+import { Plus, BedDouble, Layers, Trophy, Target } from 'lucide-react';
+import type { Workout, Objective } from '@/lib/data/DatabaseTypes';
 import { WorkoutBadge } from './WorkoutBadge';
 import { WorkoutPopover } from './WorkoutPopover';
 
 interface DayCellProps {
     date: Date;
     workouts: Workout[];
+    objectives: Objective[];
     isCurrentMonth: boolean;
     isToday: boolean;
     onOpenManualModal: (e: React.MouseEvent, date: Date) => void;
@@ -16,6 +17,7 @@ interface DayCellProps {
 export function DayCell({
     date,
     workouts,
+    objectives,
     isCurrentMonth,
     isToday,
     onOpenManualModal,
@@ -26,6 +28,8 @@ export function DayCell({
     // Calcul pour le style multi-séances
     const hasMultiple = workouts.length > 1;
     const isRestDay = workouts.length === 0;
+    const primaryObj = objectives.find(o => o.priority === 'principale');
+    const secondaryObjs = objectives.filter(o => o.priority === 'secondaire');
 
     return (
         <div
@@ -65,6 +69,24 @@ export function DayCell({
                     <Plus size={16} />
                 </button>
             </div>
+
+            {/* --- Objectifs du jour --- */}
+            {objectives.length > 0 && (
+                <div className="flex flex-col gap-0.5 mb-1">
+                    {primaryObj && (
+                        <div className="flex items-center gap-1 px-1.5 py-0.5 bg-rose-950/60 border border-rose-500/40 rounded-md">
+                            <Trophy size={9} className="text-rose-400 shrink-0" />
+                            <span className="text-rose-300 text-[10px] font-semibold truncate">{primaryObj.name}</span>
+                        </div>
+                    )}
+                    {secondaryObjs.map(o => (
+                        <div key={o.id} className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-950/40 border border-amber-500/30 rounded-md">
+                            <Target size={9} className="text-amber-400 shrink-0" />
+                            <span className="text-amber-300 text-[10px] truncate">{o.name}</span>
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {/* --- Contenu de la cellule --- */}
             <div className="flex-1 flex flex-col justify-start gap-1 relative z-10">

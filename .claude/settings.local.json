@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(ls \"C:\\\\Users\\\\tjean\\\\Documents\\\\GitHub\\\\pulsepeak2025\\\\src\\\\lib\\\\db\\\\migrations 2>/dev/null || ls C:UserstjeanDocumentsGitHubpulsepeak2025drizzle\")",
+      "Bash(find C:UserstjeanDocumentsGitHubpulsepeak2025 -name *.sql)"
     ]
   }
 }

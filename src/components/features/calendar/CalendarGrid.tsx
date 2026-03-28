@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { Workout, Profile, Schedule } from '@/lib/data/DatabaseTypes';
+import type { Workout, Profile, Schedule, Objective } from '@/lib/data/DatabaseTypes';
 import { DayCell } from './DayCell';
 import { WeekSummaryCell } from './WeekSummaryCell';
 import { formatDateKey, DAY_NAMES_SHORT, type DayName } from '@/lib/utils';
@@ -10,6 +10,7 @@ interface CalendarGridProps {
     currentYear: number;
     scheduleData: Schedule;
     profile: Profile;
+    objectives: Objective[];
     onOpenManualModal: (e: React.MouseEvent, date: Date) => void;
     onViewWorkout: (workout: Workout) => void;
     onRefresh: () => void;
@@ -21,6 +22,7 @@ export function CalendarGrid({
     currentMonth,
     scheduleData,
     profile,
+    objectives,
     onOpenManualModal,
     onViewWorkout,
     onRefresh,
@@ -135,8 +137,10 @@ export function CalendarGrid({
 
                                 const dateKey = formatDateKey(date);
                                 const workouts = scheduleData.workouts.filter(w => w.date === dateKey);
+                                const dayObjectives = objectives.filter(o => o.date === dateKey);
                                 const isCurrentMonth = date.getMonth() === currentMonth;
                                 const isToday = formatDateKey(date) === formatDateKey(new Date());
+                                const hasPrimaryObj = dayObjectives.some(o => o.priority === 'principale');
 
                                 return (
                                     <div
@@ -145,11 +149,13 @@ export function CalendarGrid({
                                             min-h-[120px] relative transition-colors duration-200
                                             ${!isCurrentMonth ? 'bg-slate-950/60 opacity-50' : 'bg-slate-900 hover:bg-slate-800'}
                                             ${isToday ? 'ring-inset ring-1 ring-blue-500/30 bg-blue-500/5' : ''}
+                                            ${hasPrimaryObj ? 'ring-inset ring-1 ring-rose-500/40' : ''}
                                         `}
                                     >
                                         <DayCell
                                             date={date}
                                             workouts={workouts}
+                                            objectives={dayObjectives}
                                             isCurrentMonth={isCurrentMonth}
                                             isToday={isToday}
                                             onOpenManualModal={onOpenManualModal}

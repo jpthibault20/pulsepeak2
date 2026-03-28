@@ -7,17 +7,6 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 const MAX_RETRIES = 2;
 
-interface RawAIWorkout {
-    date: string; // Présent uniquement dans la génération de plan complet
-    title: string;
-    type: string;
-    duration: number;
-    tss: number;
-    mode: 'Outdoor' | 'Indoor';
-    description_outdoor: string;
-    description_indoor: string;
-}
-
 // Fonction utilitaire pour le backoff exponentiel
 function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -52,12 +41,22 @@ interface RawAIWorkout {
 export async function callGeminiAPI(payload: unknown) {
     if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set.");
 
+    // Désactive le mode "thinking" de Gemini 2.5 Flash → 2-3x plus rapide
+    const p = payload as Record<string, unknown>;
+    const enhancedPayload = {
+        ...p,
+        generationConfig: {
+            ...((p.generationConfig as Record<string, unknown>) ?? {}),
+            thinkingConfig: { thinkingBudget: 0 },
+        },
+    };
+
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
         try {
             const response = await fetch(`${API_URL}?key=${GEMINI_API_KEY}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(enhancedPayload)
             });
 
             if (!response.ok) {

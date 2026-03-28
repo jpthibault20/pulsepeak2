@@ -8,6 +8,7 @@ import type { WeekStats } from '@/hooks/useWeekStats';
 import type { AvailabilitySlot } from '@/lib/data/type';
 import { getWeekContextForDate, generateWeekWorkoutsFromDate, getWeekPendingCount, type WeekContext } from '@/app/actions/schedule';
 import { formatDateKey } from '@/lib/utils';
+import { FeatureGate } from '@/components/features/billing/FeatureGate';
 
 const DAYS_FR = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'] as const;
 
@@ -184,18 +185,20 @@ export function WeekSummaryCell({
                             </div>
                         </div>
                     ) : (
-                        <button
-                            onClick={handleAIClick}
-                            className="flex flex-col items-center gap-1 group/btn"
-                        >
-                            <div className="w-10 h-10 rounded-full bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.5)] flex items-center justify-center text-white group-hover/btn:scale-110 transition-transform duration-200">
-                                <Plus size={24} strokeWidth={3} />
-                            </div>
-                            <div className="flex items-center gap-1 text-[9px] font-bold text-blue-200 bg-slate-900/80 px-2 py-0.5 rounded-full border border-blue-500/30 backdrop-blur-md">
-                                <Sparkles size={8} />
-                                <span>Générer IA</span>
-                            </div>
-                        </button>
+                        <FeatureGate feature="generate-plan" mode="modal" label="Générer un plan IA">
+                            <button
+                                onClick={handleAIClick}
+                                className="flex flex-col items-center gap-1 group/btn"
+                            >
+                                <div className="w-10 h-10 rounded-full bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.5)] flex items-center justify-center text-white group-hover/btn:scale-110 transition-transform duration-200">
+                                    <Plus size={24} strokeWidth={3} />
+                                </div>
+                                <div className="flex items-center gap-1 text-[9px] font-bold text-blue-200 bg-slate-900/80 px-2 py-0.5 rounded-full border border-blue-500/30 backdrop-blur-md">
+                                    <Sparkles size={8} />
+                                    <span>Générer IA</span>
+                                </div>
+                            </button>
+                        </FeatureGate>
                     )}
                 </div>
 
@@ -221,8 +224,8 @@ export function WeekSummaryCell({
                             <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden border border-slate-700/50">
                                 <div
                                     className={`h-full rounded-full transition-all duration-500 ease-out ${durationPercentage >= 100
-                                            ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'
-                                            : 'bg-linear-to-r from-blue-600 to-blue-400'
+                                        ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'
+                                        : 'bg-linear-to-r from-blue-600 to-blue-400'
                                         }`}
                                     style={{ width: `${durationPercentage}%` }}
                                 />

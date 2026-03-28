@@ -24,13 +24,16 @@ import type {
 // Enums
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const experienceEnum   = pgEnum('experience',    ['Débutant', 'Intermédiaire', 'Avancé']);
-export const aiPersonalityEnum = pgEnum('ai_personality', ['Strict', 'Encourageant', 'Analytique']);
-export const planStatusEnum    = pgEnum('plan_status',  ['active', 'archived']);
-export const weekTypeEnum      = pgEnum('week_type',    ['Load', 'Recovery', 'Taper']);
-export const workoutStatusEnum = pgEnum('workout_status', ['pending', 'completed', 'missed']);
-export const workoutModeEnum   = pgEnum('workout_mode', ['Outdoor', 'Indoor']);
-export const sportTypeEnum     = pgEnum('sport_type',   ['cycling', 'running', 'swimming']);
+export const experienceEnum         = pgEnum('experience',          ['Débutant', 'Intermédiaire', 'Avancé']);
+export const aiPersonalityEnum      = pgEnum('ai_personality',      ['Strict', 'Encourageant', 'Analytique']);
+export const subscriptionPlanEnum   = pgEnum('subscription_plan',   ['free', 'dev', 'pro']);
+export const planStatusEnum         = pgEnum('plan_status',         ['active', 'archived']);
+export const weekTypeEnum           = pgEnum('week_type',           ['Load', 'Recovery', 'Taper']);
+export const workoutStatusEnum      = pgEnum('workout_status',      ['pending', 'completed', 'missed']);
+export const workoutModeEnum        = pgEnum('workout_mode',        ['Outdoor', 'Indoor']);
+export const sportTypeEnum          = pgEnum('sport_type',          ['cycling', 'running', 'swimming']);
+export const objectivePriorityEnum  = pgEnum('objective_priority',  ['principale', 'secondaire']);
+export const objectiveStatusEnum    = pgEnum('objective_status',    ['upcoming', 'completed', 'missed']);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // profiles
@@ -89,6 +92,7 @@ export const profiles = pgTable('profiles', {
                   }>(),
 
     aiPersonality: aiPersonalityEnum('ai_personality').default('Analytique').notNull(),
+    plan:          subscriptionPlanEnum('plan').default('free').notNull(),
     strava:        jsonb('strava').$type<StravaConfig>(),
 
     goal:          text('goal').default('').notNull(),
@@ -110,6 +114,7 @@ export const plans = pgTable('plans', {
     goalDate:                  date('goal_date'),
     macroStrategyDescription:  text('macro_strategy_description'),
     status:                    planStatusEnum('status').default('active').notNull(),
+    objectivesIds:             jsonb('objectives_ids').$type<string[]>().default([]),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -173,14 +178,39 @@ export const workouts = pgTable('workouts', {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// objectives  (courses / événements cibles)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const objectives = pgTable('objectives', {
+    id:            uuid('id').primaryKey().defaultRandom(),
+    userId:        uuid('user_id').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
+    createdAt:     timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:     timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+
+    name:          varchar('name', { length: 255 }).notNull(),
+    date:          date('date').notNull(),
+    sport:         varchar('sport', { length: 50 }).notNull(),   // cycling | running | swimming | triathlon | duathlon
+    distanceKm:    real('distance_km'),
+    elevationGainM: real('elevation_gain_m'),
+    priority:      objectivePriorityEnum('priority').notNull().default('secondaire'),
+    status:        objectiveStatusEnum('status').notNull().default('upcoming'),
+    comment:       text('comment'),
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Relations (pour les requêtes avec .with() de Drizzle)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const profilesRelations = relations(profiles, ({ many }) => ({
-    plans:    many(plans),
-    blocks:   many(blocks),
-    weeks:    many(weeks),
-    workouts: many(workouts),
+    plans:      many(plans),
+    blocks:     many(blocks),
+    weeks:      many(weeks),
+    workouts:   many(workouts),
+    objectives: many(objectives),
+}));
+
+export const objectivesRelations = relations(objectives, ({ one }) => ({
+    profile: one(profiles, { fields: [objectives.userId], references: [profiles.id] }),
 }));
 
 export const plansRelations = relations(plans, ({ one, many }) => ({

@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
-    User, Activity, Calendar, Zap, Target, Shield,
+    User, Activity, Calendar, Zap, Target, Shield, CreditCard,
     Save, CheckCircle2, ChevronRight
 } from 'lucide-react';
 import { BasicInformation } from './BasicInformation';
@@ -11,19 +11,21 @@ import { Availability } from './Availability';
 import { CalibrationTest } from './CalibrationTest';
 import { Goals } from './Goals';
 import { AccountSettings } from './AccountSettings';
-import { Profile } from '@/lib/data/DatabaseTypes';
+import { SubscriptionTab } from '@/components/features/billing/SubscriptionTab';
+import { Objective, Profile } from '@/lib/data/DatabaseTypes';
 import { PlanBadge } from '@/components/features/billing/PlanBadge';
 import { useSubscription } from '@/lib/subscription/context';
 
 // ─── Sections ─────────────────────────────────────────────────────────────────
 
 const SECTIONS = [
-    { id: 'identity',  label: 'Identité',   icon: User,     color: 'text-blue-400',   accent: 'bg-blue-500' },
-    { id: 'sports',    label: 'Sports',     icon: Activity, color: 'text-emerald-400', accent: 'bg-emerald-500' },
-    { id: 'planning',  label: 'Planning',   icon: Calendar, color: 'text-purple-400',  accent: 'bg-purple-500' },
-    { id: 'physio',    label: 'Physiologie',icon: Zap,      color: 'text-yellow-400',  accent: 'bg-yellow-500' },
-    { id: 'objectifs', label: 'Objectifs',  icon: Target,   color: 'text-rose-400',    accent: 'bg-rose-500' },
-    { id: 'compte',    label: 'Compte',     icon: Shield,   color: 'text-slate-400',   accent: 'bg-slate-500' },
+    { id: 'identity',     label: 'Identité',      icon: User,       color: 'text-blue-400',   accent: 'bg-blue-500' },
+    { id: 'sports',       label: 'Sports',        icon: Activity,   color: 'text-emerald-400', accent: 'bg-emerald-500' },
+    { id: 'planning',     label: 'Planning',      icon: Calendar,   color: 'text-purple-400',  accent: 'bg-purple-500' },
+    { id: 'physio',       label: 'Physiologie',   icon: Zap,        color: 'text-yellow-400',  accent: 'bg-yellow-500' },
+    { id: 'objectifs',    label: 'Objectifs',     icon: Target,     color: 'text-rose-400',    accent: 'bg-rose-500' },
+    { id: 'abonnement',   label: 'Abonnement',    icon: CreditCard, color: 'text-amber-400',   accent: 'bg-amber-500' },
+    { id: 'compte',       label: 'Compte',        icon: Shield,     color: 'text-slate-400',   accent: 'bg-slate-500' },
 ] as const;
 
 type SectionId = typeof SECTIONS[number]['id'];
@@ -58,11 +60,14 @@ interface ProfileFormProps {
     onCancel: () => void;
     isSettings?: boolean;
     onSuccess?: () => void;
+    objectives?: Objective[];
+    onSaveObjective?: (obj: Objective) => Promise<void>;
+    onDeleteObjective?: (id: string) => Promise<void>;
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave }) => {
+export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, objectives = [], onSaveObjective, onDeleteObjective }) => {
     const [activeSection, setActiveSection] = useState<SectionId>('identity');
     const [isSaving, setIsSaving] = useState(false);
     const [saved, setSaved] = useState(false);
@@ -166,7 +171,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave })
     }, [initialData]);
 
     const [formData, setFormData] = useState<Profile>(initialFormData);
-    const isDirty = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+    const isDirty = activeSection !== 'abonnement' && JSON.stringify(formData) !== JSON.stringify(initialFormData);
     const completion = getCompletionPercent(formData);
 
     // Scroll active tab into view on mobile
@@ -335,7 +340,16 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave })
                             <CalibrationTest formData={formData} setFormData={setFormData} />
                         )}
                         {activeSection === 'objectifs' && (
-                            <Goals formData={formData} setFormData={setFormData} />
+                            <Goals
+                                formData={formData}
+                                setFormData={setFormData}
+                                objectives={objectives}
+                                onSaveObjective={onSaveObjective}
+                                onDeleteObjective={onDeleteObjective}
+                            />
+                        )}
+                        {activeSection === 'abonnement' && (
+                            <SubscriptionTab />
                         )}
                         {activeSection === 'compte' && (
                             <AccountSettings />
@@ -385,7 +399,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave })
 
             {/* ── Mobile sticky save bar ────────────────────────────────── */}
             <div className={`
-                md:hidden fixed bottom-16 left-0 right-0 z-50 transition-all duration-300
+                md:hidden fixed bottom-[80px] left-0 right-0 z-50 transition-all duration-300
                 ${isDirty ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}
             `}>
                 <div className="mx-4 mb-2 bg-slate-900 border border-slate-700 rounded-2xl p-3 shadow-2xl shadow-black/50 flex items-center gap-3">

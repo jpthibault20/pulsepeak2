@@ -26,6 +26,7 @@ export async function createInitialProfile(
             currentCTL:    0,
             currentATL:    0,
             aiPersonality: 'Analytique',
+            plan:          'free',
             goal:          '',
             weaknesses:    '',
         })

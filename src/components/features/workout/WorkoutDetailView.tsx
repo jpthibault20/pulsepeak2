@@ -13,6 +13,7 @@ import type { SportType, CompletedDataFeedback } from '@/lib/data/type';
 import type { Workout } from '@/lib/data/DatabaseTypes';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { FeatureGate } from '@/components/features/billing/FeatureGate';
 import { Card } from '@/components/ui/Card';
 import { formatDate } from '@/lib/utils';
 import { FeedbackForm } from './FeedbackForm';
@@ -172,7 +173,7 @@ const StatsCard: React.FC<{
                 </div>
 
                 {(rpe !== null && rpe !== undefined) && (
-                     <div className="mt-4 pt-3 border-t border-slate-700/50 flex items-center justify-between text-xs sm:text-sm">
+                    <div className="mt-4 pt-3 border-t border-slate-700/50 flex items-center justify-between text-xs sm:text-sm">
                         <div className="flex items-center text-slate-400">
                             <Heart size={16} className={`mr-1.5 ${rpeColor || 'text-red-400'}`} />
                             RPE
@@ -258,9 +259,9 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
 
     const handleRegenerateClick = async () => {
         if (!regenInstruction.trim()) {
-             // Ne pas régénérer si l'instruction est vide
-             setShowRegenInput(false);
-             return;
+            // Ne pas régénérer si l'instruction est vide
+            setShowRegenInput(false);
+            return;
         }
         setIsMutating(true);
         setIsRegenerating(true);
@@ -270,7 +271,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
             setRegenInstruction('');
         } catch (e) {
             console.error("Erreur régénération:", e);
-             // Gérer l'erreur pour l'utilisateur
+            // Gérer l'erreur pour l'utilisateur
         } finally {
             setIsMutating(false);
             setIsRegenerating(false);
@@ -281,7 +282,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
         setIsMutating(true);
         try {
             await onDelete(workout.date);
-             // Pas besoin de fermer ici, le parent s'en chargera peut-être
+            // Pas besoin de fermer ici, le parent s'en chargera peut-être
         } catch (e) {
             console.error("Erreur suppression:", e);
             // Gérer l'erreur pour l'utilisateur
@@ -304,7 +305,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
             }
         } catch (e) {
             console.error("Erreur de mise à jour:", e);
-             // Gérer l'erreur pour l'utilisateur
+            // Gérer l'erreur pour l'utilisateur
         } finally {
             setIsMutating(false);
         }
@@ -465,15 +466,17 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                                     </Button>
                                     {/* Bouton Régénérer */}
                                     {workout.status === 'pending' && (
-                                        <Button
-                                            variant="ghost"
-                                            className="whitespace-nowrap h-9 text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
-                                            onClick={() => setShowRegenInput(true)}
-                                            disabled={isMutating}
-                                        >
-                                            <RefreshCw size={14} className="mr-1.5" />
-                                            Régénérer l&apos;IA
-                                        </Button>
+                                        <FeatureGate feature="regenerate-workout" mode="modal" label="Régénérer avec l'IA">
+                                            <Button
+                                                variant="ghost"
+                                                className="whitespace-nowrap h-9 text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
+                                                onClick={() => setShowRegenInput(true)}
+                                                disabled={isMutating}
+                                            >
+                                                <RefreshCw size={14} className="mr-1.5" />
+                                                Régénérer l&apos;IA
+                                            </Button>
+                                        </FeatureGate>
                                     )}
                                 </div>
                             )}
@@ -481,16 +484,16 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
 
                         {/* Boutons secondaires pour les actions urgentes */}
                         <div className="flex gap-2 shrink-0">
-                             <Button
+                            <Button
                                 variant="ghost"
                                 className="px-3 text-slate-500 hover:text-red-400"
                                 onClick={() => setShowDeleteConfirm(true)}
                                 disabled={isMutating}
                                 aria-label="Supprimer la séance"
                                 icon={Trash2}
-                                // iconOnly // Pour n'afficher que l'icône
+                            // iconOnly // Pour n'afficher que l'icône
                             >Supprimer</Button>
-                            
+
                         </div>
                     </div>
                 )}
@@ -505,6 +508,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                         <div className="flex gap-2 items-center">
                             <input
                                 type="date"
+                                style={{ colorScheme: 'dark' }}
                                 className="bg-slate-950 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm flex-1 outline-none focus:border-blue-500"
                                 onChange={(e) => setNewMoveDate(e.target.value)}
                                 aria-label="Nouvelle date"
@@ -625,7 +629,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                         )}
                         {/* Bouton pour 'raté' si pas encore marqué et pas en cours d'édition */}
                         {workout.status !== 'missed' && workout.status !== 'completed' && !isCompleting && !isEditing && !showDeleteConfirm && (
-                             <Button
+                            <Button
                                 variant="danger"
                                 onClick={() => handleStatusUpdate('missed')}
                                 className="h-10 text-sm font-medium bg-red-950/30 border-red-900/50 text-red-400 hover:bg-red-900/50"

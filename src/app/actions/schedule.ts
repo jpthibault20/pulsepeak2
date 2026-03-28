@@ -2,20 +2,22 @@
 
 import { generatePlanFromAI, generateSingleWorkoutFromAI } from '@/lib/ai/coach-api';
 import { formatDateKey } from '@/lib/utils';
-import { getBlock, getPlan, getProfile, getSchedule, getWeek, getWorkout, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek, saveWorkout } from '@/lib/data/crud';
+import { getBlock, getObjectives, getPlan, getProfile, getSchedule, getWeek, getWorkout, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek, saveWorkout } from '@/lib/data/crud';
 import { ReturnCode } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
 import type { AvailabilitySlot, CompletedData, CompletedDataFeedback, SportType } from '@/lib/data/type';
-import { getStravaActivities, getStravaActivityById } from '@/lib/strava-service';
+import { getStravaActivities, getStravaActivitiesAllPages, getStravaActivityById } from '@/lib/strava-service';
 import { mapStravaToCompletedData } from '@/lib/strava-mapper';
-import { Block, Plan, Profile, Schedule, Week, Workout } from '@/lib/data/DatabaseTypes';
+import { Block, Objective, Plan, Profile, Schedule, Week, Workout } from '@/lib/data/DatabaseTypes';
 import { randomUUID } from 'crypto';
 import {
     differenceInWeeks,
     addWeeks,
+    addDays,
     startOfISOWeek,
     endOfISOWeek,
-    format
+    format,
+    parseISO,
 } from 'date-fns';
 import { callGeminiAPI } from '@/lib/ai/coach-api';
 import { CTL_PROGRESSION, RECOVERY_WEEK_THRESHOLD, RECOVERY_TSS_RATIO } from './constants';
@@ -88,12 +90,254 @@ export async function CreateAdvancedPlan(
     );
 
     // Sauvegarde : respecter l'ordre des FK (plan → blocks → weeks → workouts)
-    await savePlan([...(Array.isArray(plan) ? plan : []), newPlan]);
-    await saveBlocks([...(Array.isArray(existingBlocks) ? existingBlocks : []), ...updatedBlocks]);
-    await saveWeek([...(Array.isArray(existingWeeks) ? existingWeeks : []), ...updatedWeeks]);
-    await saveWorkout([...(Array.isArray(existingWorkouts) ? existingWorkouts : []), ...newWorkouts]);
+    try {
+        await savePlan([...(Array.isArray(plan) ? plan : []), newPlan]);
+        await saveBlocks([...(Array.isArray(existingBlocks) ? existingBlocks : []), ...updatedBlocks]);
+        await saveWeek([...(Array.isArray(existingWeeks) ? existingWeeks : []), ...updatedWeeks]);
+        await saveWorkout([...(Array.isArray(existingWorkouts) ? existingWorkouts : []), ...newWorkouts]);
+    } catch (err) {
+        console.error('[CreateAdvancedPlan] Erreur lors de la sauvegarde:', err);
+        return { state: ReturnCode.RC_Error, error: 'Erreur lors de la sauvegarde du plan.' };
+    }
 
     return { state: ReturnCode.RC_OK };
+}
+
+/******************************************************************************
+ * @access Public
+ * @function CreatePlanToObjective
+ * @brief Génère un plan complet depuis aujourd'hui jusqu'au premier objectif
+ *        principal à venir. Remplace intégralement le plan actif existant.
+ *        Les objectifs secondaires génèrent une semaine de taper autour d'eux.
+ * @input
+ * - userID : Identifiant de l'utilisateur
+ * @output
+ * - { state: RC_OK }               en cas de succès
+ * - { state: RC_Error, error }     en cas d'erreur
+ ******************************************************************************/
+export async function CreatePlanToObjective(userID: string, planStartDate: string) {
+    if (userID.length < 3) return { state: ReturnCode.RC_Error, error: 'ID utilisateur invalide' };
+
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+
+    const [profile, objectives] = await Promise.all([
+        getProfile(),
+        getObjectives(),
+    ]);
+
+    // Premier objectif principal à venir
+    const primaryObjective = objectives
+        .filter(o => o.priority === 'principale' && o.status === 'upcoming' && o.date >= todayStr)
+        .sort((a, b) => a.date.localeCompare(b.date))[0];
+
+    if (!primaryObjective) {
+        return { state: ReturnCode.RC_Error, error: "Aucun objectif principal à venir. Ajoutez-en un dans votre profil." };
+    }
+
+    const startDate = planStartDate >= todayStr ? planStartDate : todayStr;
+
+    const totalWeeks = differenceInWeeks(parseISO(primaryObjective.date), parseISO(startDate));
+    if (totalWeeks < 1) {
+        return { state: ReturnCode.RC_Error, error: "L'objectif est trop proche (moins d'une semaine)." };
+    }
+
+    // Objectifs secondaires compris dans la plage du plan
+    const secondaryObjectives = objectives.filter(
+        o => o.priority === 'secondaire' && o.status === 'upcoming' && o.date >= startDate && o.date <= primaryObjective.date
+    );
+
+    // Créer le plan
+    const allObjectiveIds = [primaryObjective, ...secondaryObjectives].map(o => o.id);
+    const newPlan: Plan = {
+        id: randomUUID(),
+        userID,
+        blocksID: [],
+        objectivesID: allObjectiveIds,
+        name: primaryObjective.name,
+        startDate,
+        goalDate: primaryObjective.date,
+        macroStrategyDescription: [
+            `Préparation pour ${primaryObjective.name}`,
+            primaryObjective.sport,
+            primaryObjective.distanceKm ? `${primaryObjective.distanceKm} km` : '',
+            primaryObjective.elevationGainM ? `${primaryObjective.elevationGainM} m D+` : '',
+        ].filter(Boolean).join(' · '),
+        status: 'active',
+    };
+
+    // Créer les blocs (IA, avec contexte objectifs secondaires)
+    const newBlocks = await CreateBlocksToObjective(newPlan, profile, primaryObjective, secondaryObjectives);
+    newPlan.blocksID = newBlocks.map(b => b.id);
+
+    // Créer les semaines
+    const newWeeks: Week[] = [];
+    const updatedBlocks = await Promise.all(
+        newBlocks.map(async (block) => {
+            const weeks = await CreateWeeks(newPlan, block, profile);
+            newWeeks.push(...weeks);
+            return { ...block, weeksId: weeks.map(w => w.id) };
+        })
+    );
+
+    // Appliquer mini-taper sur les semaines des objectifs secondaires
+    const finalWeeks = applySecondaryObjectiveTaper(newWeeks, updatedBlocks, secondaryObjectives);
+
+    // Générer séances pour la première semaine uniquement
+    const firstWeek = finalWeeks[0];
+    const firstBlock = updatedBlocks.find(b => b.id === firstWeek.blockID) ?? updatedBlocks[0];
+    const firstWeekWorkouts = await CreateWorkoutForWeek(profile, newPlan, firstBlock, firstWeek, null, 100, profile.weeklyAvailability);
+
+    const newWorkouts: Workout[] = [...firstWeekWorkouts];
+    const weeksWithWorkouts = finalWeeks.map(w =>
+        w.id === firstWeek.id ? { ...w, workoutsID: firstWeekWorkouts.map(wk => wk.id) } : w
+    );
+
+    // Sauvegarde — remplace tout (aucun plan/bloc/semaine existant conservé)
+    try {
+        await savePlan([newPlan]);
+        await saveBlocks([...updatedBlocks]);
+        await saveWeek([...weeksWithWorkouts]);
+        await saveWorkout([...newWorkouts]);
+    } catch (err) {
+        console.error('[CreatePlanToObjective] Erreur sauvegarde:', err);
+        return { state: ReturnCode.RC_Error, error: 'Erreur lors de la sauvegarde du plan.' };
+    }
+
+    revalidatePath('/');
+    return { state: ReturnCode.RC_OK };
+}
+
+/******************************************************************************
+ * @access Private
+ * @function CreateBlocksToObjective
+ * @brief Variante de CreateBlocks enrichie du contexte objectif principal
+ *        et des objectifs secondaires pour que l'IA structure le plan
+ *        en conséquence.
+ ******************************************************************************/
+async function CreateBlocksToObjective(
+    plan: Plan,
+    profile: Profile,
+    primaryObj: Objective,
+    secondaryObjs: Objective[]
+): Promise<Block[]> {
+    const start = startOfISOWeek(parseISO(plan.startDate));
+    const goal  = endOfISOWeek(parseISO(plan.goalDate));
+    const totalWeeks = differenceInWeeks(goal, start) + 1;
+
+    if (totalWeeks < 1) throw new Error('Le plan est trop court !');
+
+    const blockSkeletons = computeBlockSkeletons(totalWeeks);
+
+    const secondaryContext = secondaryObjs.length > 0
+        ? `\n## OBJECTIFS SECONDAIRES (courses intermédiaires)\n` +
+          secondaryObjs.map(o => `- ${o.name} le ${o.date} (${o.sport}${o.distanceKm ? ', ' + o.distanceKm + ' km' : ''})`).join('\n') +
+          `\n→ Prévoir une semaine de relâche (Taper) autour de chaque objectif secondaire.`
+        : '';
+
+    const aiPrompt = `
+Tu es un coach de ${profile.activeSports.cycling ? 'cyclisme' : ''}${profile.activeSports.running ? ', course à pied' : ''}${profile.activeSports.swimming ? ', natation' : ''} certifié avec 15 ans d'expérience.
+
+## OBJECTIF PRINCIPAL
+- Course : ${primaryObj.name}
+- Date : ${primaryObj.date}
+- Sport : ${primaryObj.sport}
+${primaryObj.distanceKm ? `- Distance : ${primaryObj.distanceKm} km` : ''}
+${primaryObj.elevationGainM ? `- Dénivelé : ${primaryObj.elevationGainM} m D+` : ''}
+${secondaryContext}
+
+## CONTEXTE ATHLÈTE
+- Niveau : ${profile.experience ?? 'Intermédiaire'}
+- CTL actuelle : ${profile.currentCTL}
+- Disciplines : ${profile.activeSports.cycling ? 'cyclisme' : ''}${profile.activeSports.running ? ', course à pied' : ''}${profile.activeSports.swimming ? ', natation' : ''}
+
+## STRUCTURE TEMPORELLE
+${blockSkeletons.length} blocs de méso-cycles :
+${blockSkeletons.map(b => `- Bloc ${b.index} : ${b.duration} semaines${b.isLast ? ' (DERNIER → semaine de course incluse)' : ''}`).join('\n')}
+
+## RÈGLES OBLIGATOIRES
+1. Le dernier bloc DOIT être de type "Taper" (affûtage pré-course).
+2. Structurer les blocs pour progresser logiquement vers l'objectif principal.
+3. Prendre en compte les objectifs secondaires pour la périodisation.
+4. Thèmes spécifiques à la discipline et à l'objectif (ex: "Endurance longue distance", "PMA triathlon").
+
+Retourner un tableau JSON. Chaque objet contient exactement :
+- "index" (number) : numéro du bloc
+- "type" (string) : l'un de ["Base", "Build", "Peak", "Taper"]
+- "theme" (string) : objectif principal en 3 à 6 mots
+
+## RÉPONSE (JSON uniquement) :
+`;
+
+    const aiResponse = await callGeminiAPI({
+        contents: [{ parts: [{ text: aiPrompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 2048, responseMimeType: 'application/json' },
+    }) as { index: number; type: string; theme: string }[];
+
+    let currentStartDate = start;
+    let previousTargetCTL = profile.currentCTL;
+
+    return blockSkeletons.map((skeleton) => {
+        const aiInfo = aiResponse.find(b => b.index === skeleton.index);
+        const progression = CTL_PROGRESSION[aiInfo?.type ?? 'Base'] ?? 5;
+
+        const startCTL     = previousTargetCTL;
+        const targetCTL    = startCTL + progression;
+        const avgWeeklyTSS = Math.round(((startCTL + targetCTL) / 2) * 7);
+
+        const block: Block = {
+            id: randomUUID(),
+            planId: plan.id,
+            userId: plan.userID,
+            orderIndex: skeleton.index,
+            type:  aiInfo?.type  ?? 'General',
+            theme: aiInfo?.theme ?? 'Préparation',
+            weekCount: skeleton.duration,
+            startDate: format(currentStartDate, 'yyyy-MM-dd'),
+            weeksId: [],
+            startCTL,
+            targetCTL,
+            avgWeeklyTSS,
+        };
+
+        previousTargetCTL = targetCTL;
+        currentStartDate  = addWeeks(currentStartDate, skeleton.duration);
+        return block;
+    });
+}
+
+/******************************************************************************
+ * @access Private
+ * @function applySecondaryObjectiveTaper
+ * @brief Pour chaque objectif secondaire, trouve la semaine correspondante
+ *        et la transforme en semaine Taper (TSS réduit de 30%).
+ ******************************************************************************/
+function applySecondaryObjectiveTaper(
+    weeks: Week[],
+    blocks: Block[],
+    secondaryObjectives: Objective[]
+): Week[] {
+    if (secondaryObjectives.length === 0) return weeks;
+
+    const blockMap = new Map(blocks.map(b => [b.id, b]));
+
+    return weeks.map(week => {
+        const block = blockMap.get(week.blockID);
+        if (!block) return week;
+
+        const weekStart = addDays(parseISO(block.startDate), (week.weekNumber - 1) * 7);
+        const weekEnd   = addDays(weekStart, 6);
+        const weekStartStr = format(weekStart, 'yyyy-MM-dd');
+        const weekEndStr   = format(weekEnd,   'yyyy-MM-dd');
+
+        const hasSec = secondaryObjectives.some(o => o.date >= weekStartStr && o.date <= weekEndStr);
+        if (!hasSec) return week;
+
+        return {
+            ...week,
+            type: 'Taper' as const,
+            targetTSS: Math.round(week.targetTSS * 0.7),
+        };
+    });
 }
 
 
@@ -127,6 +371,7 @@ function CreatePlan(
         blocksID: [],
         name: blockFocus,
         startDate,
+        objectivesID: [],
         goalDate: goalDate.toISOString().split('T')[0],
         macroStrategyDescription: customTheme ?? blockFocus,
         status: "active",
@@ -173,8 +418,23 @@ async function CreateBlocks(plan: Plan, profile: Profile): Promise<Block[]> {
                 `- Bloc ${b.index} : ${b.duration} semaines${b.isLast ? " (DERNIER → inclut la semaine de course)" : ""}`
             ).join('\n')}
 
+        ## PROFIL NIVEAU
+        ${profile.experience === 'Débutant' ? `
+        ⚠️ ATHLÈTE DÉBUTANT — Règles impératives :
+        - Commence TOUJOURS par un bloc "Base" long (fondamentaux, endurance aérobie)
+        - Progression très graduelle (<5% de charge par semaine)
+        - Priorité à la régularité et la récupération, pas à la performance` : profile.experience === 'Avancé' ? `
+        🏆 ATHLÈTE AVANCÉ — Objectif performance :
+        - Blocs Peak, Build et Taper autorisés dès le début si le plan est court
+        - Périodisation polarisée recommandée (blocs alternant volume et intensité)
+        - Peut supporter des blocs courts et intenses` : `
+        📈 ATHLÈTE INTERMÉDIAIRE :
+        - Progression équilibrée entre volume et intensité
+        - Commence par Base si plan ≥ 8 semaines, sinon Build direct
+        - Un bloc de récupération active conseillé en milieu de plan`}
+
         ## RÈGLES OBLIGATOIRES
-        1. tu dois prendre en compte le profil de l'athlète et son objectif pour définir un thème spécifique à chaque bloc 
+        1. tu dois prendre en compte le profil de l'athlète et son objectif pour définir un thème spécifique à chaque bloc
         2. tu dois prendre en compte l'historique a disposition pour s'adapter au mieux a l'athlète
         3. Dans le mesure du possible suivre une progression logique progressive et pertinente
         4. Si il n'y a qu'un seul bloc, part du principe que l'athlète a déjà une base et qu'on est dans une logique de préparation spécifique (pas de bloc de base sauf si demandé)
@@ -346,7 +606,21 @@ ${userComment        ? `- Commentaire athlète : "${userComment}"` : ""}
 ${avgCompletion < 80 ? `- ⚠️ Complétion faible : réduire l'intensité et le volume global` : ""}
 ${avgCompletion > 95 ? `- ✅ Complétion excellente : l'athlète peut absorber plus de charge` : ""}
 
-## RÈGLES
+## RÈGLES NIVEAU ATHLÈTE
+${profile.experience === 'Débutant' ? `⚠️ DÉBUTANT — Appliquer impérativement :
+- Intensité : Z1-Z3 uniquement — peu d'intervalle à haute intensité (pas de Z4-Z5)
+- Pas de double journée
+- Descriptions simples, langage accessible, sans jargon excessif
+- TSS max par séance : 60` : profile.experience === 'Avancé' ? `🏆 AVANCÉ — Autorisations spéciales :
+- Double journée autorisée si disponibilité > 3h ce jour
+- Intensité Z4-Z5 bienvenue (20% max du volume total)
+- Sorties longues pouvant aller jusqu'à la dispo max
+- Descriptions très techniques avec valeurs de zones et intervalles précis` : `📈 INTERMÉDIAIRE :
+- Max 1 double journée par semaine
+- 1-2 séances dures (Z4+) par semaine maximum
+- Descriptions techniques mais accessibles`}
+
+## RÈGLES GÉNÉRALES
 1. Placer chaque séance UNIQUEMENT aux jours disponibles.
 2. Respecter la durée max par sport et par jour.
 3. Répartir les séances UNIQUEMENT sur les disciplines actives : ${activeSports.join(", ")}.
@@ -526,14 +800,17 @@ const findWorkoutIndex1 = (workouts: Workout[], identifier: string): number => {
 };
 
 // --- Fonctions de lecture (initialisation) ---
-export async function loadInitialData(): Promise<{ profile: Profile | null, schedule: Schedule | null }> {
+export async function loadInitialData(): Promise<{ profile: Profile | null, schedule: Schedule | null, objectives: Objective[] }> {
     try {
-        const profile = await getProfile();
-        const schedule = await getSchedule();
-        return { profile, schedule };
+        const [profile, schedule, objectives] = await Promise.all([
+            getProfile(),
+            getSchedule(),
+            getObjectives(),
+        ]);
+        return { profile, schedule, objectives };
     } catch (error) {
         console.error("Erreur lors du chargement initial des données:", error);
-        return { profile: null, schedule: null };
+        return { profile: null, schedule: null, objectives: [] };
     }
 }
 
@@ -680,6 +957,98 @@ function getSurroundingWorkouts(schedule: Schedule, targetDate: string) {
 
 
 /**
+ * Extrait le TSS d'un workout complété.
+ * Priorité :
+ *   1. TSS vélo saisi / calculé via NP+FTP
+ *   2. TSS calculé Strava (calculatedTSS)
+ *   3. TSS planifié par l'IA
+ *   4. hrTSS via FC moyenne + FCmax (+ FCrepos si dispo) — Karvonen
+ *   5. Estimation sRPE : (durée_h) × (RPE/10)² × 100
+ */
+function extractTSS(workout: Workout, profile?: Profile): number {
+    const cd = workout.completedData;
+    if (!cd) return 0;
+
+    if (cd.metrics?.cycling?.tss) return cd.metrics.cycling.tss;
+    if (cd.calculatedTSS)          return cd.calculatedTSS;
+    if (workout.plannedData?.plannedTSS) return workout.plannedData.plannedTSS;
+
+    // hrTSS via FC (méthode Karvonen si FCmax disponible dans le profil)
+    const avgHR  = cd.heartRate?.avgBPM;
+    const maxHR  = profile?.heartRate?.max;
+    const duration = cd.actualDurationMinutes;
+    if (avgHR && maxHR && maxHR > 0 && duration) {
+        const restHR   = profile?.heartRate?.resting ?? 0;
+        const hrRatio  = restHR > 0
+            ? (avgHR - restHR) / (maxHR - restHR)   // Karvonen (réserve cardiaque)
+            : avgHR / maxHR;                          // Simplifié si pas de FCR
+        const ifHR = Math.min(Math.max(hrRatio, 0), 1);
+        return Math.round((duration / 60) * ifHR * ifHR * 100);
+    }
+
+    // Estimation sRPE : TSS ≈ (durée_h) × (RPE/10)² × 100
+    const rpe = cd.perceivedEffort;
+    if (rpe && duration && rpe > 0) {
+        return Math.round((duration / 60) * Math.pow(rpe / 10, 2) * 100);
+    }
+    return 0;
+}
+
+/**
+ * Recalcule currentCTL et currentATL à partir de l'historique complet
+ * des workouts complétés, puis met à jour le profil.
+ *
+ * CTL (42j) et ATL (7j) sont des EMA de TSS journalier :
+ *   CTL_j = CTL_{j-1} × e^(-1/42) + TSS_j × (1 − e^(-1/42))
+ *   ATL_j = ATL_{j-1} × e^(-1/7)  + TSS_j × (1 − e^(-1/7))
+ */
+async function recalculateFitnessMetrics(): Promise<void> {
+    const [profile, workoutList] = await Promise.all([getProfile(), getWorkout()]);
+
+    const completed = (workoutList ?? [])
+        .filter(w => w.status === 'completed' && w.completedData)
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+    if (completed.length === 0) {
+        await saveProfile({ ...profile, currentCTL: 0, currentATL: 0 });
+        return;
+    }
+
+    // TSS cumulé par date (plusieurs workouts le même jour)
+    const tssByDate = new Map<string, number>();
+    for (const w of completed) {
+        const tss = extractTSS(w, profile);
+        if (tss > 0) tssByDate.set(w.date, (tssByDate.get(w.date) ?? 0) + tss);
+    }
+
+    const CTL_DECAY = Math.exp(-1 / 42);
+    const ATL_DECAY = Math.exp(-1 / 7);
+    const CTL_GAIN  = 1 - CTL_DECAY;
+    const ATL_GAIN  = 1 - ATL_DECAY;
+
+    let ctl = 0;
+    let atl = 0;
+
+    const today   = format(new Date(), 'yyyy-MM-dd');
+    let   current = parseISO(completed[0].date);
+    const end     = parseISO(today);
+
+    while (current <= end) {
+        const dateStr = format(current, 'yyyy-MM-dd');
+        const tss     = tssByDate.get(dateStr) ?? 0;
+        ctl = ctl * CTL_DECAY + tss * CTL_GAIN;
+        atl = atl * ATL_DECAY + tss * ATL_GAIN;
+        current = addDays(current, 1);
+    }
+
+    await saveProfile({
+        ...profile,
+        currentCTL: Math.round(ctl * 10) / 10,
+        currentATL: Math.round(atl * 10) / 10,
+    });
+}
+
+/**
  * Trouve l'index d'un workout par ID ou Date
  */
 function findWorkoutIndex(workouts: Workout[], idOrDate: string): number {
@@ -784,6 +1153,10 @@ export async function updateWorkoutStatus(
 
         // Sauvegarde
         await saveSchedule(schedule);
+
+        // Recalcul CTL/ATL après tout changement de statut
+        await recalculateFitnessMetrics();
+
         revalidatePath('/');
 
     } catch (error) {
@@ -947,6 +1320,13 @@ export async function syncStravaActivities() {
 
         const workouts: Workout[] = existingWorkouts ?? [];
 
+        // ── Déterminer les droits Strava ──────────────────────────────────────
+        const FREE_STRAVA_LIMIT = 5;
+        const isFreePlan =
+            (profile?.plan ?? 'free') === 'free' &&
+            profile?.role !== 'admin' &&
+            profile?.role !== 'freeUse';
+
         // 2. Trouver la date de la dernière activité Strava importée
         let lastStravaTimestamp = 0;
         const stravaWorkouts = workouts.filter(w =>
@@ -959,14 +1339,39 @@ export async function syncStravaActivities() {
             lastStravaTimestamp = Math.floor(new Date(stravaWorkouts[0].date).getTime() / 1000);
             console.log(`📅 Dernière activité Strava connue : ${stravaWorkouts[0].date}`);
         } else {
-            console.log("⚠️ Aucune activité Strava en DB. Récupération des 30 dernières.");
+            console.log("⚠️ Aucune activité Strava en DB. Sync complète de l'année en cours.");
         }
 
-        // 3. Appeler Strava API (liste des résumés)
-        const activitiesSummary = await getStravaActivities(
-            lastStravaTimestamp > 0 ? lastStravaTimestamp : null,
-            60
-        );
+        // 3. Stratégie de sync :
+        //    - Incrémentale (rapide) : si la dernière activité connue est dans l'année en cours
+        //    - Complète avec pagination : sinon (premier lancement, ou dernière activité de l'an passé)
+        const currentYear = new Date().getFullYear();
+        const startOfYear = Math.floor(new Date(`${currentYear}-01-01T00:00:00Z`).getTime() / 1000);
+
+        // ── Détection de montée en plan (free → dev/pro) ─────────────────────
+        // Si l'utilisateur vient d'être promu ET qu'il a peu d'activités (plafond du plan free),
+        // on force une sync complète de l'année pour récupérer les activités manquées.
+        if (
+            !isFreePlan &&
+            stravaWorkouts.length > 0 &&
+            stravaWorkouts.length <= FREE_STRAVA_LIMIT &&
+            lastStravaTimestamp >= startOfYear
+        ) {
+            console.log(`🔄 Compte promu détecté (${stravaWorkouts.length} activité(s) ≤ limite free). Full resync annuelle pour récupérer les activités manquées...`);
+            lastStravaTimestamp = startOfYear - 1; // déclenche le chemin full-sync
+        }
+
+        const isIncremental = lastStravaTimestamp >= startOfYear;
+
+        let activitiesSummary: { id: number; start_date: string; [key: string]: unknown }[];
+        if (isIncremental) {
+            console.log(`⚡ Sync incrémentale (après ${stravaWorkouts[0].date})...`);
+            activitiesSummary = await getStravaActivities(lastStravaTimestamp, 30);
+        } else {
+            console.log(`📅 Sync complète ${currentYear} (pagination)...`);
+            activitiesSummary = await getStravaActivitiesAllPages(startOfYear);
+            console.log(`📊 ${activitiesSummary.length} activité(s) trouvée(s) sur Strava pour ${currentYear}`);
+        }
 
         if (!activitiesSummary || activitiesSummary.length === 0) {
             console.log("✅ Aucune nouvelle activité à synchroniser.");
@@ -986,11 +1391,25 @@ export async function syncStravaActivities() {
             return { success: true, count: 0 };
         }
 
-        console.log(`📥 ${newSummaries.length} nouvelles activités à récupérer (sur ${activitiesSummary.length}).`);
+        // ── Appliquer la limite plan free ─────────────────────────────────────
+        let summariesToProcess = newSummaries;
+        if (isFreePlan) {
+            const slotsRemaining = Math.max(0, FREE_STRAVA_LIMIT - stravaWorkouts.length);
+            if (slotsRemaining === 0) {
+                console.log(`🔒 Plan gratuit : limite de ${FREE_STRAVA_LIMIT} activités Strava atteinte. Passez à l'offre Développeur pour tout synchroniser.`);
+                return { success: true, count: 0, limitReached: true };
+            }
+            summariesToProcess = [...newSummaries]
+                .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
+                .slice(0, slotsRemaining);
+            console.log(`🔒 Plan gratuit : import limité à ${slotsRemaining} activité(s) (${stravaWorkouts.length}/${FREE_STRAVA_LIMIT} déjà importées).`);
+        }
+
+        console.log(`📥 ${summariesToProcess.length} nouvelles activités à récupérer (sur ${activitiesSummary.length}).`);
 
         // 5. Récupérer tous les détails en PARALLÈLE avec retry
         const detailResults = await Promise.allSettled(
-            newSummaries.map((summary: { id: number }) =>
+            summariesToProcess.map((summary: { id: number }) =>
                 fetchWithRetry(() => getStravaActivityById(summary.id), summary.id)
             )
         );
@@ -999,8 +1418,8 @@ export async function syncStravaActivities() {
         const updatedWeeks = existingWeeks ? [...existingWeeks] : [];
 
         // 6. Traiter chaque résultat
-        for (let i = 0; i < newSummaries.length; i++) {
-            const summary = newSummaries[i];
+        for (let i = 0; i < summariesToProcess.length; i++) {
+            const summary = summariesToProcess[i];
             const result = detailResults[i];
 
             if (result.status === 'rejected' || !result.value) {
@@ -1102,6 +1521,7 @@ export async function syncStravaActivities() {
                 await saveWeek(updatedWeeks);
             }
             console.log(`💾 ${newItemsCount} activité(s) sauvegardée(s).`);
+            await recalculateFitnessMetrics();
         }
 
         return { success: true, count: newItemsCount };

@@ -15,7 +15,7 @@ export interface Profile {
     birthDate: string;
     weight?: number;
     height?: number;
-    experience: 'Débutant' | 'Intermédiaire' | 'Avancé' | string;
+    experience: 'Débutant' | 'Intermédiaire' | 'Avancé';
     currentCTL: number;        // CTL au démarrage du plan (ex: 50)
     currentATL: number;        // fatigue court terme (7 jours)
     activeSports: {
@@ -62,6 +62,7 @@ export interface Profile {
     aiPersonality: aiPersonality;
 
     role?: 'user' | 'freeUse' | 'admin';
+    plan?: 'free' | 'dev' | 'pro';
 
     strava?: StravaConfig;
 
@@ -70,6 +71,21 @@ export interface Profile {
     weaknesses: string;
 
     workouts: Workout[]; //Not used for the moment, use in te future for relations
+}
+
+export interface Objective {
+    id: string;
+    userId: string;
+    createdAt: string;
+    updatedAt: string;
+    name: string;
+    date: string;                                          // YYYY-MM-DD
+    sport: 'cycling' | 'running' | 'swimming' | 'triathlon' | 'duathlon';
+    distanceKm?: number;
+    elevationGainM?: number;
+    priority: 'principale' | 'secondaire';
+    status: 'upcoming' | 'completed' | 'missed';
+    comment?: string;
 }
 
 export interface Schedule {
@@ -83,6 +99,7 @@ export interface Plan {
     id: string;
     userID: string;
     blocksID: string[];
+    objectivesID: string[];     // IDs des objectifs liés à ce plan
     name: string;
     goalDate: string;
     startDate: string;

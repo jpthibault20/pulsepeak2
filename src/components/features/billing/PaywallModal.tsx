@@ -2,40 +2,46 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Lock, Sparkles, X, Check } from 'lucide-react';
+import { Lock, Zap, X, Check } from 'lucide-react';
 import type { Feature } from '@/lib/subscription/context';
+import { createPortal } from 'react-dom';
 
 interface PaywallModalProps {
-    isOpen:   boolean;
-    onClose:  () => void;
-    feature:  Feature;
-    label?:   string;
+    isOpen: boolean;
+    onClose: () => void;
+    feature: Feature;
+    label?: string;
 }
 
 const FEATURE_CONTENT: Record<Feature, { title: string; desc: string; highlights: string[] }> = {
+    'generate-plan': {
+        title: 'Génération de plan IA',
+        desc: 'L\'IA analyse votre profil et construit un plan d\'entraînement sur mesure.',
+        highlights: ['Plan personnalisé selon votre niveau', 'Blocs Base / Build / Peak / Race', 'Adapté à vos objectifs'],
+    },
     'regenerate-workout': {
         title: 'Régénération IA',
-        desc:  'Demandez à l\'IA de réécrire n\'importe quelle séance selon vos instructions.',
+        desc: 'Demandez à l\'IA de réécrire n\'importe quelle séance selon vos instructions.',
         highlights: ['Instructions personnalisées', 'Adapté à votre forme du jour', 'Illimité'],
     },
     'custom-plan-theme': {
         title: 'Thème personnalisé',
-        desc:  'Décrivez librement votre objectif et l\'IA construit un plan sur mesure.',
+        desc: 'Décrivez librement votre objectif et l\'IA construit un plan sur mesure.',
         highlights: ['Description libre', 'Durée 1–8 semaines', 'Bloc 100% adapté'],
     },
     'annual-stats': {
         title: 'Stats annuelles',
-        desc:  'Visualisez votre progression sur toute la saison mois par mois.',
+        desc: 'Visualisez votre progression sur toute la saison mois par mois.',
         highlights: ['Graphique saisonnier', 'Volume planifié vs réalisé', 'Analyse annuelle'],
     },
     'advanced-stats': {
         title: 'Stats avancées',
-        desc:  'Accédez aux métriques de qualité : intensité, RPE moyen, taux de réalisation.',
+        desc: 'Accédez aux métriques de qualité : intensité, RPE moyen, taux de réalisation.',
         highlights: ['TSS/h intensité', 'RPE moyen', 'Compliance %'],
     },
     'chat-ai': {
         title: 'Coach IA',
-        desc:  'Posez toutes vos questions à votre coach IA en temps réel.',
+        desc: 'Posez toutes vos questions à votre coach IA en temps réel.',
         highlights: ['Conversation illimitée', 'Conseils personnalisés', 'Disponible 24/7'],
     },
 };
@@ -46,7 +52,7 @@ export function PaywallModal({ isOpen, onClose, feature, label }: PaywallModalPr
 
     const content = FEATURE_CONTENT[feature];
 
-    return (
+    const modal = (
         <div
             className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
             onClick={onClose}
@@ -63,14 +69,14 @@ export function PaywallModal({ isOpen, onClose, feature, label }: PaywallModalPr
                 </button>
 
                 {/* Icon */}
-                <div className="w-12 h-12 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center mb-4">
-                    <Lock size={22} className="text-blue-400" />
+                <div className="w-12 h-12 rounded-xl bg-amber-600/10 border border-amber-500/20 flex items-center justify-center mb-4">
+                    <Lock size={22} className="text-amber-400" />
                 </div>
 
                 <h3 className="text-white font-bold text-lg mb-1">{label ?? content.title}</h3>
                 <p className="text-slate-400 text-sm mb-5 leading-relaxed">{content.desc}</p>
 
-                <ul className="space-y-2 mb-6">
+                <ul className="space-y-2 mb-5">
                     {content.highlights.map(h => (
                         <li key={h} className="flex items-center gap-2 text-sm text-slate-300">
                             <Check size={13} className="text-emerald-400 shrink-0" />
@@ -79,16 +85,27 @@ export function PaywallModal({ isOpen, onClose, feature, label }: PaywallModalPr
                     ))}
                 </ul>
 
+                {/* Dev plan teaser */}
+                <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-3 mb-4">
+                    <div className="flex items-center justify-between">
+                        <span className="text-amber-300 text-sm font-semibold">Offre Développeur</span>
+                        <span className="text-amber-300 font-bold">5€<span className="text-amber-500 text-xs font-normal">/mois</span></span>
+                    </div>
+                    <p className="text-slate-500 text-xs mt-0.5">Accès complet · Phase bêta</p>
+                </div>
+
                 <button
-                    onClick={() => { onClose(); router.push('/pricing?highlight=pro'); }}
-                    className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors shadow-lg shadow-blue-900/30"
+                    onClick={() => { onClose(); router.push('/pricing'); }}
+                    className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-500 text-white font-semibold py-3 rounded-xl transition-colors shadow-lg shadow-amber-900/30"
                 >
-                    <Sparkles size={15} />
-                    Essayer Athlete — 14 jours gratuits
+                    <Zap size={15} />
+                    Voir les offres
                 </button>
 
-                <p className="text-center text-slate-600 text-xs mt-3">Annulation à tout moment</p>
+                <p className="text-center text-slate-600 text-xs mt-3">Résiliation à tout moment · Sans engagement</p>
             </div>
         </div>
     );
+
+    return createPortal(modal, document.body);
 }

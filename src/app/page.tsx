@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import AppClientWrapper from '@/components/AppClientWrapper';
-import { getProfile, getSchedule } from '@/lib/data/crud';
+import { getObjectives, getProfile, getSchedule } from '@/lib/data/crud';
 import { createClient } from '@/lib/supabase/server';
 
 export default async function Home() {
@@ -13,9 +13,10 @@ export default async function Home() {
 
   console.log("--- ⚡ Chargement Page Home (Lecture DB Locale) ---");
 
-  const [profile, schedule] = await Promise.all([
+  const [profile, schedule, objectives] = await Promise.all([
     getProfile(),
-    getSchedule()
+    getSchedule(),
+    getObjectives(),
   ]);
 
   console.log("✅ Chargement terminée.");
@@ -25,6 +26,7 @@ export default async function Home() {
       <AppClientWrapper
         initialProfile={profile}
         initialSchedule={schedule}
+        initialObjectives={objectives}
       />
     </main>
   );
