@@ -60,7 +60,7 @@ async function getValidAccessToken() {
 }
 
 /**
- * Fonction principale pour récupérer les dernières activités
+ * Récupère une seule page d'activités (sync incrémentale rapide).
  */
 export async function getStravaActivities(after: number | null = null, perPage: number = 30) {
   const accessToken = await getValidAccessToken();
@@ -73,7 +73,7 @@ export async function getStravaActivities(after: number | null = null, perPage: 
 
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
-    next: { revalidate: 0 }, // Important: pas de cache ici car on veut du frais
+    next: { revalidate: 0 },
   });
 
   if (!res.ok) {
@@ -82,6 +82,43 @@ export async function getStravaActivities(after: number | null = null, perPage: 
   }
 
   return res.json();
+}
+
+/**
+ * Récupère TOUTES les activités depuis un timestamp donné, en paginant.
+ * Utilisé pour la sync complète de l'année (jusqu'à 200 activités/page, max Strava).
+ */
+interface StravaSummary { id: number; start_date: string; [key: string]: unknown }
+
+export async function getStravaActivitiesAllPages(after: number): Promise<StravaSummary[]> {
+  const accessToken = await getValidAccessToken();
+  const PER_PAGE = 200;
+  const all: StravaSummary[] = [];
+  let page = 1;
+
+  while (true) {
+    const url = `https://www.strava.com/api/v3/athlete/activities?per_page=${PER_PAGE}&after=${after}&page=${page}`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      next: { revalidate: 0 },
+    });
+
+    if (!res.ok) {
+      console.error(`Erreur fetch page ${page}:`, res.statusText);
+      break;
+    }
+
+    const batch: StravaSummary[] = await res.json();
+    if (!batch.length) break;
+
+    all.push(...batch);
+    console.log(`   📄 Page ${page} : ${batch.length} activités`);
+
+    if (batch.length < PER_PAGE) break; // Dernière page
+    page++;
+  }
+
+  return all;
 }
 
 export async function getStravaActivityById(id: number) {

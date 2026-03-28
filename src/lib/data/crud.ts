@@ -9,10 +9,11 @@ import {
     blocks as blocksTable,
     weeks as weeksTable,
     workouts as workoutsTable,
+    objectives as objectivesTable,
 } from '@/lib/db/schema';
-import { eq, and, notInArray } from 'drizzle-orm';
+import { eq, and, notInArray, gte } from 'drizzle-orm';
 import { createClient } from '@/lib/supabase/server';
-import { Block, Plan, Profile, Schedule, Week, Workout } from './DatabaseTypes';
+import { Block, Objective, Plan, Profile, Schedule, Week, Workout } from './DatabaseTypes';
 import type { PlannedData, CompletedData } from './type';
 
 // ─── Auth helper ──────────────────────────────────────────────────────────────
@@ -67,6 +68,7 @@ function toProfile(row: any): Profile {
         running:            row.running      ?? undefined,
         swimming:           row.swimming     ?? undefined,
         aiPersonality:      row.aiPersonality,
+        plan:               (row.plan ?? 'free') as 'free' | 'dev' | 'pro',
         strava:             row.strava       ?? undefined,
         goal:               row.goal,
         objectiveDate:      row.objectiveDate ?? '',
@@ -81,6 +83,7 @@ function toPlan(row: any, blockIds: string[]): Plan {
         id:                       row.id,
         userID:                   row.userId,
         blocksID:                 blockIds,
+        objectivesID:             (row.objectivesIds as string[]) ?? [],
         name:                     row.name,
         goalDate:                 row.goalDate ?? '',
         startDate:                row.startDate,
@@ -253,6 +256,7 @@ export async function saveProfile(profile: Profile): Promise<void> {
             running:            profile.running            ?? null,
             swimming:           profile.swimming           ?? null,
             aiPersonality:      profile.aiPersonality      ?? 'Analytique',
+            plan:               profile.plan               ?? 'free',
             strava:             profile.strava             ?? null,
             goal:               profile.goal               ?? '',
             objectiveDate:      profile.objectiveDate || null,
@@ -305,6 +309,7 @@ export async function savePlan(plans: Plan[]): Promise<void> {
                     goalDate:                 p.goalDate || null,
                     macroStrategyDescription: p.macroStrategyDescription ?? null,
                     status:                   (p.status as 'active' | 'archived') ?? 'active',
+                    objectivesIds:            p.objectivesID ?? [],
                 })
                 .onConflictDoUpdate({
                     target: plansTable.id,
@@ -314,6 +319,7 @@ export async function savePlan(plans: Plan[]): Promise<void> {
                         goalDate:                 p.goalDate || null,
                         macroStrategyDescription: p.macroStrategyDescription ?? null,
                         status:                   (p.status as 'active' | 'archived') ?? 'active',
+                        objectivesIds:            p.objectivesID ?? [],
                     },
                 });
         }
@@ -442,16 +448,83 @@ export async function saveWorkout(workoutList: Workout[]): Promise<void> {
         }
 
         const ids = workoutList.map((w) => w.ID || w.id);
+        const todayStr = new Date().toISOString().split('T')[0];
         if (ids.length > 0) {
-            await tx.delete(workoutsTable).where(and(eq(workoutsTable.userId, userId), notInArray(workoutsTable.id, ids)));
+            await tx.delete(workoutsTable).where(
+                and(
+                    eq(workoutsTable.userId, userId),
+                    notInArray(workoutsTable.id, ids),
+                    gte(workoutsTable.date, todayStr),
+                )
+            );
         }
     });
 }
 
-// Compat : ancien readJsonFile / writeJsonFile — plus utilisés, conservés pour éviter les erreurs d'import restants
-export async function readJsonFile<T>(_filename: string): Promise<T> {
-    throw new Error('readJsonFile is deprecated — use DB functions instead');
+// ─── Objectives ───────────────────────────────────────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toObjective(row: any): Objective {
+    return {
+        id:             row.id,
+        userId:         row.userId,
+        createdAt:      row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt,
+        updatedAt:      row.updatedAt instanceof Date ? row.updatedAt.toISOString() : row.updatedAt,
+        name:           row.name,
+        date:           row.date,
+        sport:          row.sport,
+        distanceKm:     row.distanceKm     ?? undefined,
+        elevationGainM: row.elevationGainM ?? undefined,
+        priority:       row.priority,
+        status:         row.status,
+        comment:        row.comment        ?? undefined,
+    };
 }
-export async function writeJsonFile<T>(_filename: string, _data: T): Promise<void> {
-    throw new Error('writeJsonFile is deprecated — use DB functions instead');
+
+export async function getObjectives(): Promise<Objective[]> {
+    const userId = await getCurrentUserId();
+    const rows = await db.query.objectives.findMany({
+        where: eq(objectivesTable.userId, userId),
+        orderBy: (o, { asc }) => [asc(o.date)],
+    });
+    return rows.map(toObjective);
+}
+
+export async function saveObjective(obj: Objective): Promise<void> {
+    const userId = await getCurrentUserId();
+    await db
+        .insert(objectivesTable)
+        .values({
+            id:             obj.id,
+            userId,
+            name:           obj.name,
+            date:           obj.date,
+            sport:          obj.sport,
+            distanceKm:     obj.distanceKm     ?? null,
+            elevationGainM: obj.elevationGainM ?? null,
+            priority:       obj.priority,
+            status:         obj.status,
+            comment:        obj.comment        ?? null,
+        })
+        .onConflictDoUpdate({
+            target: objectivesTable.id,
+            set: {
+                updatedAt:      new Date(),
+                name:           obj.name,
+                date:           obj.date,
+                sport:          obj.sport,
+                distanceKm:     obj.distanceKm     ?? null,
+                elevationGainM: obj.elevationGainM ?? null,
+                priority:       obj.priority,
+                status:         obj.status,
+                comment:        obj.comment        ?? null,
+            },
+        });
+}
+
+export async function deleteObjective(id: string): Promise<void> {
+    const userId = await getCurrentUserId();
+    await db.delete(objectivesTable).where(
+        and(eq(objectivesTable.id, id), eq(objectivesTable.userId, userId))
+    );
 }

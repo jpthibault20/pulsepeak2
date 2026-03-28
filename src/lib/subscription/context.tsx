@@ -4,7 +4,7 @@ import React, { createContext, useContext } from 'react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type Plan     = 'free' | 'pro' | 'elite';
+export type Plan     = 'free' | 'dev' | 'pro';
 export type Status   = 'active' | 'trial' | 'past_due' | 'cancelled';
 export type UserRole = 'user' | 'freeUse' | 'admin';
 
@@ -20,28 +20,47 @@ export interface Subscription {
 // ─── Feature map ──────────────────────────────────────────────────────────────
 
 export type Feature =
+    | 'generate-plan'
     | 'regenerate-workout'
     | 'custom-plan-theme'
     | 'annual-stats'
     | 'advanced-stats'
     | 'chat-ai';
 
+// Pour l'avenir : quand le plan 'pro' sera actif, toutes les features y seront incluses
 const FEATURE_PLANS: Record<Feature, Plan[]> = {
-    'regenerate-workout': ['pro', 'elite'],
-    'custom-plan-theme':  ['pro', 'elite'],
-    'annual-stats':       ['pro', 'elite'],
-    'advanced-stats':     ['pro', 'elite'],
-    'chat-ai':            ['elite'],
+    'generate-plan':      ['pro'],
+    'regenerate-workout': ['pro'],
+    'custom-plan-theme':  ['pro'],
+    'annual-stats':       ['pro'],
+    'advanced-stats':     ['pro'],
+    'chat-ai':            ['pro'],
 };
 
-/** admin et freeUse ont accès illimité à toutes les features */
-export function hasFullAccess(role: UserRole): boolean {
-    return role === 'admin' || role === 'freeUse';
+/**
+ * admin, freeUse et le plan 'dev' ont accès illimité à toutes les features.
+ * Le plan 'dev' = accès complet pendant la phase bêta (offre 5€/mois).
+ */
+export function hasFullAccess(role: UserRole, plan: Plan = 'free'): boolean {
+    return role === 'admin' || role === 'freeUse' || plan === 'dev';
 }
 
+/**
+ * Détermine si un utilisateur peut accéder à une feature donnée.
+ * - free  → aucun accès (redirection vers upgrade)
+ * - dev   → accès complet (phase bêta)
+ * - pro   → accès selon FEATURE_PLANS (futur)
+ * - admin/freeUse → accès complet
+ */
 export function canAccess(feature: Feature, plan: Plan, role: UserRole = 'user'): boolean {
-    if (hasFullAccess(role)) return true;
+    if (hasFullAccess(role, plan)) return true;
+    if (plan === 'free') return false;
     return FEATURE_PLANS[feature].includes(plan);
+}
+
+/** Retourne true si l'utilisateur est sur le plan gratuit (sans abonnement actif). */
+export function isFreePlan(plan: Plan, role: UserRole = 'user'): boolean {
+    return plan === 'free' && role !== 'admin' && role !== 'freeUse';
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────

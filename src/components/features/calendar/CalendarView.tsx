@@ -1,24 +1,31 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Info, X, Target, Home } from 'lucide-react';
-import type { Workout, Profile } from '@/lib/data/DatabaseTypes';
+import { ChevronLeft, ChevronRight, Plus, Info, X, Target, Home, Dumbbell, Trophy, Zap } from 'lucide-react';
+import type { Workout, Profile, Objective } from '@/lib/data/DatabaseTypes';
 import { Button } from '@/components/ui/Button';
 import { ManualWorkoutModal } from '../workout/ManualWorkoutModal';
 import { GenerationModal } from './GenerationModal';
+import { ObjectiveModal } from './ObjectiveModal';
 import { CalendarGrid } from '@/components/features/calendar/CalendarGrid';
 import { MobileCalendarStrip } from '@/components/features/calendar/MobileCalendarStrip';
 import { useCalendarDays } from '@/hooks/useCalendarDays';
 import { MONTH_NAMES } from '@/lib/utils';
 import { Schedule } from '@/lib/data/DatabaseTypes';
+import { useSubscription } from '@/lib/subscription/context';
+import { FeatureGate } from '@/components/features/billing/FeatureGate';
+import { useRouter } from 'next/navigation';
 
 interface CalendarViewProps {
     scheduleData: Schedule;
     profile: Profile;
     userID: string;
+    objectives: Objective[];
     onViewWorkout: (workout: Workout) => void;
     onGenerate: (blockFocus: string, customTheme: string | null, startDate: string, numWeeks: number) => void;
+    onGenerateToObjective: (planStartDate: string) => Promise<void>;
     onAddManualWorkout: (workout: Workout) => void;
+    onSaveObjective: (obj: Objective) => Promise<void>;
     onRefresh: () => void;
     onSyncStrava?: () => void;
     isSyncing?: boolean;
@@ -28,9 +35,12 @@ export function CalendarView({
     scheduleData,
     profile,
     userID,
+    objectives,
     onViewWorkout,
     onGenerate,
+    onGenerateToObjective,
     onAddManualWorkout,
+    onSaveObjective,
     onRefresh,
     onSyncStrava,
     isSyncing = false
@@ -39,11 +49,17 @@ export function CalendarView({
     const [selectedMobileDay, setSelectedMobileDay] = useState(new Date());
     const [showGenModal, setShowGenModal] = useState(false);
     const [showManualModal, setShowManualModal] = useState(false);
-    const [showSummaryModal, setShowSummaryModal] = useState(false); // État pour la popup de résumé
-    const [dateForManual, setDateForManual] = useState<Date | null>(null);
+    const [showObjectiveModal, setShowObjectiveModal] = useState(false);
+    const [showDayActionModal, setShowDayActionModal] = useState(false);
+    const [showSummaryModal, setShowSummaryModal] = useState(false);
+    const [dateForAction, setDateForAction] = useState<Date | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isSavingObjective, setIsSavingObjective] = useState(false);
+    const [showRecalcPrompt, setShowRecalcPrompt] = useState(false);
 
     const { year, month, weekRows } = useCalendarDays(selectedDate);
+    const { plan } = useSubscription();
+    const router = useRouter();
 
     // --- Handlers ---
     const handleGeneratePlan = async (
@@ -60,15 +76,37 @@ export function CalendarView({
         }
     };
 
-    const handleOpenManualModal = (e: React.MouseEvent, date: Date) => {
+    // Intercept "+" click → show action choice modal
+    const handleOpenDayAction = (e: React.MouseEvent, date: Date) => {
         e.stopPropagation();
-        setDateForManual(date);
+        setDateForAction(date);
+        setShowDayActionModal(true);
+    };
+
+    const handlePickWorkout = () => {
+        setShowDayActionModal(false);
         setShowManualModal(true);
+    };
+
+    const handlePickObjective = () => {
+        setShowDayActionModal(false);
+        setShowObjectiveModal(true);
     };
 
     const handleSaveManual = async (workout: Workout) => {
         await onAddManualWorkout(workout);
         setShowManualModal(false);
+    };
+
+    const handleSaveObjective = async (obj: Objective) => {
+        setIsSavingObjective(true);
+        try {
+            await onSaveObjective(obj);
+            setShowObjectiveModal(false);
+            setShowRecalcPrompt(true);
+        } finally {
+            setIsSavingObjective(false);
+        }
     };
 
     const goToMonthDay = (newYear: number, newMonth: number) => {
@@ -122,7 +160,6 @@ export function CalendarView({
                             </button>
                         </div>
 
-                        {/* Bouton Info Stratégie (Mobile) - Si un résumé existe */}
                         {onSyncStrava && (
                             <button
                                 onClick={onSyncStrava}
@@ -134,7 +171,6 @@ export function CalendarView({
             `}
                                 title="Synchroniser avec Strava"
                             >
-                                {/* Icône de Sync / Refresh */}
                                 <svg
                                     className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`}
                                     fill="none"
@@ -143,7 +179,6 @@ export function CalendarView({
                                 >
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                 </svg>
-
                                 <span className="hidden sm:inline">
                                     {isSyncing ? 'Synchro...' : 'Strava'}
                                 </span>
@@ -161,20 +196,45 @@ export function CalendarView({
                         </button>
                     )}
 
-                    {/* Mobile Action Buttons (Plus) */}
+                    {/* Mobile Action Buttons */}
                     <div className="flex xl:hidden gap-2 ml-auto pl-2">
-                        <button
-                            onClick={() => setShowGenModal(true)}
-                            className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-lg shadow-blue-900/20"
-                        >
-                            <Plus size={20} className="text-white" />
-                        </button>
+                        <FeatureGate feature="generate-plan" mode="modal" label="Générer un plan IA">
+                            <button
+                                onClick={() => setShowGenModal(true)}
+                                className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-lg shadow-blue-900/20"
+                            >
+                                <Plus size={20} className="text-white" />
+                            </button>
+                        </FeatureGate>
                     </div>
                 </div>
 
-                {/* Desktop Buttons & Info */}
+                {/* Desktop Buttons */}
                 <div className="hidden xl:flex items-center gap-3">
-                    {/* Bouton Stratégie (Desktop) */}
+                    {/* Badge plan */}
+                    {plan === 'dev' && (
+                        <button
+                            onClick={() => router.push('/pricing')}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 transition-colors"
+                            title="Gérer mon abonnement"
+                        >
+                            <Zap size={11} className="text-amber-400" />
+                            <span className="text-amber-300 text-xs font-bold tracking-wider">DEV BÊTA</span>
+                        </button>
+                    )}
+                    {plan === 'pro' && (
+                        <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-green-500/30 bg-green-500/5">
+                            <Zap size={11} className="text-green-400" />
+                            <span className="text-green-300 text-xs font-bold tracking-wider">PRO</span>
+                        </span>
+                    )}
+                    {plan === 'free' && (
+                        <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-blue-500/30 bg-blue-500/5">
+                            <Zap size={11} className="text-blue-400" />
+                            <span className="text-blue-300 text-xs font-bold tracking-wider">GRATUIT</span>
+                        </span>
+                    )}
+
                     {scheduleData.summary && (
                         <button
                             onClick={() => setShowSummaryModal(true)}
@@ -184,18 +244,30 @@ export function CalendarView({
                             <span>Stratégie du bloc</span>
                         </button>
                     )}
-
                     <div className="h-6 w-px bg-slate-800 mx-1" />
-                    <Button
-                        variant="primary"
-                        icon={Plus}
-                        onClick={() => setShowGenModal(true)}
-                        disabled={isGenerating}
-                    >
-                        Calculer un nouveau plan
-                    </Button>
+                    <FeatureGate feature="generate-plan" mode="modal" label="Générer un plan IA">
+                        <Button
+                            variant="primary"
+                            icon={Plus}
+                            onClick={() => setShowGenModal(true)}
+                            disabled={isGenerating}
+                        >
+                            Calculer un nouveau plan
+                        </Button>
+                    </FeatureGate>
                 </div>
             </div>
+
+            {/* Badge plan mobile */}
+            {plan === 'dev' && (
+                <button
+                    onClick={() => router.push('/pricing')}
+                    className="xl:hidden flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-amber-500/25 bg-amber-500/5 w-fit text-xs"
+                >
+                    <Zap size={10} className="text-amber-400" />
+                    <span className="text-amber-300 font-semibold">Plan DEV BÊTA · 5€/mois</span>
+                </button>
+            )}
 
             {/* Loading Indicator */}
             {isGenerating && (
@@ -213,7 +285,8 @@ export function CalendarView({
                     currentYear={year}
                     scheduleData={scheduleData}
                     profile={profile}
-                    onOpenManualModal={handleOpenManualModal}
+                    objectives={objectives}
+                    onOpenManualModal={handleOpenDayAction}
                     onViewWorkout={onViewWorkout}
                     onRefresh={onRefresh}
                     onOpenGenModal={() => setShowGenModal(true)}
@@ -228,21 +301,20 @@ export function CalendarView({
                     scheduleData={scheduleData}
                     selectedDay={selectedMobileDay}
                     onSelectDay={setSelectedMobileDay}
-                    onOpenManualModal={handleOpenManualModal}
+                    onOpenManualModal={handleOpenDayAction}
                     onViewWorkout={onViewWorkout}
                 />
             </div>
 
             {/* --- MODALS --- */}
 
-            {/* Popup Résumé Stratégie (Nouveau) */}
+            {/* Popup Résumé Stratégie */}
             {showSummaryModal && scheduleData.summary && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
                     <div
                         className="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* Header Popup */}
                         <div className="bg-linear-to-r from-blue-900/20 to-slate-900 p-4 border-b border-slate-800 flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 <div className="bg-blue-500/20 p-2 rounded-lg">
@@ -250,30 +322,109 @@ export function CalendarView({
                                 </div>
                                 <h3 className="text-white font-bold text-lg">Stratégie du Bloc</h3>
                             </div>
-                            <button
-                                onClick={() => setShowSummaryModal(false)}
-                                className="text-slate-400 hover:text-white hover:bg-slate-800 rounded-full p-2 transition-colors"
-                            >
+                            <button onClick={() => setShowSummaryModal(false)} className="text-slate-400 hover:text-white hover:bg-slate-800 rounded-full p-2 transition-colors">
                                 <X size={20} />
                             </button>
                         </div>
-
-                        {/* Content Popup */}
                         <div className="p-6">
                             <p className="text-slate-300 text-base leading-relaxed italic border-l-4 border-blue-500/50 pl-4 py-1">
                                 &quot;{scheduleData.summary}&quot;
                             </p>
                         </div>
-
-                        {/* Footer Popup */}
                         <div className="p-4 bg-slate-950/50 border-t border-slate-800 flex justify-end">
                             <Button variant="outline" onClick={() => setShowSummaryModal(false)} className="text-sm">
                                 Fermer
                             </Button>
                         </div>
                     </div>
-                    {/* Click outside to close */}
                     <div className="absolute inset-0 -z-10" onClick={() => setShowSummaryModal(false)} />
+                </div>
+            )}
+
+            {/* Choix action du jour (séance ou objectif) */}
+            {showDayActionModal && dateForAction && (
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div
+                        className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+                            <p className="text-white font-semibold text-sm">
+                                {dateForAction.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                            </p>
+                            <button onClick={() => setShowDayActionModal(false)} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors">
+                                <X size={16} />
+                            </button>
+                        </div>
+                        <div className="p-3 space-y-2">
+                            <button
+                                onClick={handlePickWorkout}
+                                className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 transition-all text-left"
+                            >
+                                <div className="w-9 h-9 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center shrink-0">
+                                    <Dumbbell size={16} className="text-blue-400" />
+                                </div>
+                                <div>
+                                    <p className="text-white text-sm font-medium">Ajouter une séance</p>
+                                    <p className="text-slate-500 text-xs">Vélo, course, natation...</p>
+                                </div>
+                            </button>
+                            <button
+                                onClick={handlePickObjective}
+                                className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 transition-all text-left"
+                            >
+                                <div className="w-9 h-9 rounded-lg bg-rose-600/20 border border-rose-500/30 flex items-center justify-center shrink-0">
+                                    <Trophy size={16} className="text-rose-400" />
+                                </div>
+                                <div>
+                                    <p className="text-white text-sm font-medium">Ajouter un objectif</p>
+                                    <p className="text-slate-500 text-xs">Course, triathlon, cyclosportive...</p>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                    <div className="absolute inset-0 -z-10" onClick={() => setShowDayActionModal(false)} />
+                </div>
+            )}
+
+            {/* Modal recalcul plan après ajout objectif */}
+            {showRecalcPrompt && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div
+                        className="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full shadow-2xl p-5 animate-in zoom-in-95 duration-200"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 rounded-xl bg-rose-600/20 border border-rose-500/30 flex items-center justify-center shrink-0">
+                                <Trophy size={18} className="text-rose-400" />
+                            </div>
+                            <div>
+                                <p className="text-white font-semibold text-sm">Objectif ajouté !</p>
+                                <p className="text-slate-400 text-xs">Voulez-vous recalculer le plan ?</p>
+                            </div>
+                        </div>
+                        <p className="text-slate-400 text-xs mb-4 leading-relaxed">
+                            Recalculer le plan va remplacer votre plan actif et générer un nouveau programme adapté à votre objectif.
+                        </p>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setShowRecalcPrompt(false)}
+                                className="flex-1 py-2 px-3 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-sm hover:bg-slate-700 transition-colors"
+                            >
+                                Non, garder le plan
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    setShowRecalcPrompt(false);
+                                    setShowGenModal(true);
+                                }}
+                                className="flex-1 py-2 px-3 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-sm font-medium transition-colors"
+                            >
+                                Recalculer
+                            </button>
+                        </div>
+                    </div>
+                    <div className="absolute inset-0 -z-10" onClick={() => setShowRecalcPrompt(false)} />
                 </div>
             )}
 
@@ -282,16 +433,28 @@ export function CalendarView({
                     isOpen={showGenModal}
                     onClose={() => setShowGenModal(false)}
                     onGenerate={handleGeneratePlan}
+                    onGenerateToObjective={onGenerateToObjective}
                     isGenerating={isGenerating}
+                    objectives={objectives}
                 />
             )}
 
-            {showManualModal && dateForManual && (
+            {showManualModal && dateForAction && (
                 <ManualWorkoutModal
-                    date={dateForManual}
+                    date={dateForAction}
                     userID={userID}
                     onClose={() => setShowManualModal(false)}
                     onSave={handleSaveManual}
+                />
+            )}
+
+            {showObjectiveModal && (
+                <ObjectiveModal
+                    isOpen={showObjectiveModal}
+                    onClose={() => setShowObjectiveModal(false)}
+                    onSave={handleSaveObjective}
+                    initialDate={dateForAction ? dateForAction.toISOString().split('T')[0] : undefined}
+                    isSaving={isSavingObjective}
                 />
             )}
         </div>
