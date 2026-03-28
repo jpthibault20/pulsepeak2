@@ -51,8 +51,7 @@ export async function GET(request: NextRequest) {
     const data = (await tokenResponse.json()) as StravaTokenResponse;
 
     if (!tokenResponse.ok) {
-        // Si Strava renvoie une erreur JSON, on l'attrape ici
-        throw new Error(JSON.stringify(data));
+        throw new Error('Strava authorization failed');
     }
 
     // 2. Préparer les données à sauvegarder (Mapping vers notre format Clean)

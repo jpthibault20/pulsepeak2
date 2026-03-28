@@ -321,8 +321,6 @@ export async function savePlan(plans: Plan[]): Promise<void> {
         const ids = plans.map((p) => p.id);
         if (ids.length > 0) {
             await tx.delete(plansTable).where(and(eq(plansTable.userId, userId), notInArray(plansTable.id, ids)));
-        } else {
-            await tx.delete(plansTable).where(eq(plansTable.userId, userId));
         }
     });
 }
@@ -365,8 +363,6 @@ export async function saveBlocks(blocks: Block[]): Promise<void> {
         const ids = blocks.map((b) => b.id);
         if (ids.length > 0) {
             await tx.delete(blocksTable).where(and(eq(blocksTable.userId, userId), notInArray(blocksTable.id, ids)));
-        } else {
-            await tx.delete(blocksTable).where(eq(blocksTable.userId, userId));
         }
     });
 }
@@ -403,8 +399,6 @@ export async function saveWeek(weeks: Week[]): Promise<void> {
         const ids = weeks.map((w) => w.id);
         if (ids.length > 0) {
             await tx.delete(weeksTable).where(and(eq(weeksTable.userId, userId), notInArray(weeksTable.id, ids)));
-        } else {
-            await tx.delete(weeksTable).where(eq(weeksTable.userId, userId));
         }
     });
 }
@@ -450,8 +444,6 @@ export async function saveWorkout(workoutList: Workout[]): Promise<void> {
         const ids = workoutList.map((w) => w.ID || w.id);
         if (ids.length > 0) {
             await tx.delete(workoutsTable).where(and(eq(workoutsTable.userId, userId), notInArray(workoutsTable.id, ids)));
-        } else {
-            await tx.delete(workoutsTable).where(eq(workoutsTable.userId, userId));
         }
     });
 }

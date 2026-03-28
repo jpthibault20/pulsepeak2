@@ -13,9 +13,9 @@ interface Message {
 }
 
 interface ChatWidgetProps {
-    isOpen:    boolean;
-    onClose:   () => void;
-    profile?:  Profile;
+    isOpen: boolean;
+    onClose: () => void;
+    profile?: Profile;
     schedule?: Schedule;
 }
 
@@ -26,21 +26,21 @@ function buildContext(profile?: Profile, schedule?: Schedule) {
         .sort((a, b) => b.date.localeCompare(a.date))
         .slice(0, 10)
         .map(w => ({
-            date:      w.date,
+            date: w.date,
             sportType: w.sportType,
-            title:     w.title,
-            duration:  w.plannedData?.durationMinutes ?? 0,
-            tss:       w.plannedData?.plannedTSS ?? 0,
-            status:    w.status,
+            title: w.title,
+            duration: w.plannedData?.durationMinutes ?? 0,
+            tss: w.plannedData?.plannedTSS ?? 0,
+            status: w.status,
         }));
 
     return {
-        firstName:     profile?.firstName    ?? 'Athlète',
-        lastName:      profile?.lastName     ?? '',
-        experience:    profile?.experience   ?? 'Inconnu',
-        currentCTL:    profile?.currentCTL   ?? 0,
-        activeSports:  profile?.activeSports ?? { cycling: false, running: false, swimming: false },
-        goal:          profile?.goal         ?? 'Non défini',
+        firstName: profile?.firstName ?? 'Athlète',
+        lastName: profile?.lastName ?? '',
+        experience: profile?.experience ?? 'Inconnu',
+        currentCTL: profile?.currentCTL ?? 0,
+        activeSports: profile?.activeSports ?? { cycling: false, running: false, swimming: false },
+        goal: profile?.goal ?? 'Non défini',
         objectiveDate: profile?.objectiveDate ?? 'Non définie',
         recentWorkouts,
     };
@@ -55,10 +55,10 @@ export const ChatWidget = ({ isOpen, onClose, profile, schedule }: ChatWidgetPro
             text: `Bonjour ${profile?.firstName ?? ''}\u00a0! Je suis votre Coach IA PulsePeak. Posez-moi vos questions sur l'entraînement, la récupération ou votre plan.`,
         },
     ]);
-    const [input, setInput]     = useState('');
+    const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
-    const scrollRef             = useRef<HTMLDivElement>(null);
-    const inputRef              = useRef<HTMLInputElement>(null);
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     // Mise à jour du message de bienvenue si le profil charge après
     useEffect(() => {
@@ -105,11 +105,11 @@ export const ChatWidget = ({ isOpen, onClose, profile, schedule }: ChatWidgetPro
 
         try {
             const response = await fetch('/api/chat', {
-                method:  'POST',
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({
+                body: JSON.stringify({
                     messages: newMessages,
-                    context:  buildContext(profile, schedule),
+                    context: buildContext(profile, schedule),
                 }),
             });
 
@@ -118,7 +118,7 @@ export const ChatWidget = ({ isOpen, onClose, profile, schedule }: ChatWidgetPro
                 throw new Error(errText || `Erreur ${response.status}`);
             }
 
-            const reader  = response.body.getReader();
+            const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let aiText = '';
 
@@ -160,7 +160,7 @@ export const ChatWidget = ({ isOpen, onClose, profile, schedule }: ChatWidgetPro
     if (!isOpen) return null;
 
     return (
-        <div className="fixed bottom-20 right-3 md:bottom-6 md:right-6 w-[calc(100vw-24px)] max-w-sm h-[480px] md:h-[520px] bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl shadow-black/40 z-[60] flex flex-col animate-in slide-in-from-bottom-4 fade-in duration-200">
+        <div className="fixed bottom-20 right-3 md:bottom-6 md:right-6 w-[calc(100vw-24px)] max-w-sm h-[480px] md:h-[520px] bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl shadow-black/40 z-60 flex flex-col animate-in slide-in-from-bottom-4 fade-in duration-200">
 
             {/* ── Header ── */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900 rounded-t-2xl">
@@ -225,7 +225,7 @@ export const ChatWidget = ({ isOpen, onClose, profile, schedule }: ChatWidgetPro
                 <button
                     onClick={handleSend}
                     disabled={loading || !input.trim()}
-                    className="w-10 h-10 flex items-center justify-center bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-white transition-colors flex-shrink-0"
+                    className="w-10 h-10 flex items-center justify-center bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-white transition-colors shrink-0"
                 >
                     {loading
                         ? <Loader2 size={16} className="animate-spin" />

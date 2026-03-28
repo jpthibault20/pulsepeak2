@@ -15,7 +15,7 @@ export interface Profile {
     birthDate: string;
     weight?: number;
     height?: number;
-    experience: 'Débutant' | 'Intermédiaire' | 'Avancé' | string;
+    experience: 'Débutant' | 'Intermédiaire' | 'Avancé';
     currentCTL: number;        // CTL au démarrage du plan (ex: 50)
     currentATL: number;        // fatigue court terme (7 jours)
     activeSports: {

@@ -1,5 +1,7 @@
 export const runtime = 'nodejs';
 
+import { createClient } from '@/lib/supabase/server';
+
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const STREAM_URL =
     'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse';
@@ -102,6 +104,12 @@ function toGeminiContents(messages: ChatMessage[]) {
 
 export async function POST(req: Request) {
     try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            return new Response('Non authentifié.', { status: 401 });
+        }
+
         const { messages, context }: { messages: ChatMessage[]; context: ChatContext } =
             await req.json();
 

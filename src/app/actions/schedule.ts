@@ -88,10 +88,15 @@ export async function CreateAdvancedPlan(
     );
 
     // Sauvegarde : respecter l'ordre des FK (plan → blocks → weeks → workouts)
-    await savePlan([...(Array.isArray(plan) ? plan : []), newPlan]);
-    await saveBlocks([...(Array.isArray(existingBlocks) ? existingBlocks : []), ...updatedBlocks]);
-    await saveWeek([...(Array.isArray(existingWeeks) ? existingWeeks : []), ...updatedWeeks]);
-    await saveWorkout([...(Array.isArray(existingWorkouts) ? existingWorkouts : []), ...newWorkouts]);
+    try {
+        await savePlan([...(Array.isArray(plan) ? plan : []), newPlan]);
+        await saveBlocks([...(Array.isArray(existingBlocks) ? existingBlocks : []), ...updatedBlocks]);
+        await saveWeek([...(Array.isArray(existingWeeks) ? existingWeeks : []), ...updatedWeeks]);
+        await saveWorkout([...(Array.isArray(existingWorkouts) ? existingWorkouts : []), ...newWorkouts]);
+    } catch (err) {
+        console.error('[CreateAdvancedPlan] Erreur lors de la sauvegarde:', err);
+        return { state: ReturnCode.RC_Error, error: 'Erreur lors de la sauvegarde du plan.' };
+    }
 
     return { state: ReturnCode.RC_OK };
 }

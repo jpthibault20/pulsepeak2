@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 
 // Import des Server Actions
 import {
@@ -56,6 +56,13 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
     const [isSyncing, setIsSyncing] = useState(false);
     const [showChat, setShowChat] = useState(false);
     const [genProgress, setGenProgress] = useState<GenProgressState | null>(null);
+    const genProgressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (genProgressTimerRef.current) clearTimeout(genProgressTimerRef.current);
+        };
+    }, []);
 
     // --- Re-Fetch des données (Utile après une action de l'utilisateur) ---
     const refreshData = useCallback(async () => {
@@ -152,9 +159,10 @@ export default function AppClientWrapper({ initialProfile, initialSchedule }: Ap
             setIsRefreshing(true);
             await CreateAdvancedPlan(blockFocus, customTheme, startDate, numWeeks, profile.id);
             await refreshData();
-            // Marque comme terminé, ferme après 2.5s
+            // Marque comme terminé, ferme après 1.5s
             setGenProgress(prev => prev ? { ...prev, done: true, minimized: false } : null);
-            setTimeout(() => setGenProgress(null), 1500);
+            if (genProgressTimerRef.current) clearTimeout(genProgressTimerRef.current);
+            genProgressTimerRef.current = setTimeout(() => setGenProgress(null), 1500);
         } catch (e) {
             console.error('Erreur génération plan:', e);
             setGenProgress(null);

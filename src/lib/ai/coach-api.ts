@@ -7,17 +7,6 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 const MAX_RETRIES = 2;
 
-interface RawAIWorkout {
-    date: string; // Présent uniquement dans la génération de plan complet
-    title: string;
-    type: string;
-    duration: number;
-    tss: number;
-    mode: 'Outdoor' | 'Indoor';
-    description_outdoor: string;
-    description_indoor: string;
-}
-
 // Fonction utilitaire pour le backoff exponentiel
 function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
