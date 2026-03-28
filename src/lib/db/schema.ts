@@ -98,6 +98,9 @@ export const profiles = pgTable('profiles', {
     goal:          text('goal').default('').notNull(),
     objectiveDate: date('objective_date'),
     weaknesses:    text('weaknesses').default('').notNull(),
+
+    aiCallsCount:     integer('ai_calls_count').default(0).notNull(),
+    aiCallsResetDate: date('ai_calls_reset_date'),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
