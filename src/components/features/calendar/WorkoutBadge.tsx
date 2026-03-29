@@ -74,8 +74,7 @@ export function WorkoutBadge({ workout, onClick, isCompact = false }: WorkoutBad
                     </span>
                 </div>
 
-                {/* --- BADGE INDOOR / OUTDOOR --- */}
-                {/* C'est ici que l'UI fait la différence : une petite pilule visuelle */}
+                {/* --- BADGE INDOOR / OUTDOOR ---
                 <div
                     title={isIndoor ? "Indoor / Home Trainer" : "Extérieur"}
                     className={`
@@ -92,7 +91,7 @@ export function WorkoutBadge({ workout, onClick, isCompact = false }: WorkoutBad
                     ) : (
                         <Sun size={10} className="mr-0.5" />
                     )}
-                </div>
+                </div> */}
             </div>
 
             {/* --- LIGNE DE DÉTAILS (Temps, TSS, Statut) --- */}
