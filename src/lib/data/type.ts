@@ -13,19 +13,6 @@ export interface AvailabilitySlot {
   running: number;
   comment: string;
 }
-export interface Workoutold {
-  id: string;
-  date: string; // "YYYY-MM-DD"
-  sportType: SportType;
-  title: string;
-  workoutType: string;
-  mode: 'Outdoor' | 'Indoor';
-  status: 'pending' | 'completed' | 'missed';
-
-  plannedData: PlannedData;
-  completedData: CompletedData | null;
-}
-
 export interface PlannedData {
   durationMinutes: number;
   targetPowerWatts: number | null;

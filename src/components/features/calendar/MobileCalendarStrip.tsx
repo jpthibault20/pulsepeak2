@@ -2,26 +2,19 @@
 
 import React, { useMemo, useRef, useEffect } from 'react';
 import { Plus, BedDouble, Trophy, Target, Calendar, MapPin, Mountain } from 'lucide-react';
-import type { Workout, Objective, Profile } from '@/lib/data/DatabaseTypes';
+import type { Workout } from '@/lib/data/DatabaseTypes';
 import { WorkoutBadge } from './WorkoutBadge';
 import { MobileWeekBar } from './MobileWeekBar';
+import { useCalendarContext } from './CalendarContext';
 import { formatDateKey, DAY_NAMES_SHORT, MONTH_NAMES } from '@/lib/utils';
-import { Schedule } from '@/lib/data/DatabaseTypes';
 import type { WeekStats } from '@/hooks/useWeekStats';
 
 interface MobileCalendarStripProps {
     weekRows: (Date | null)[][];
     currentMonth: number;
-    scheduleData: Schedule;
-    objectives: Objective[];
     selectedDay: Date;
     onSelectDay: (date: Date) => void;
     onOpenManualModal: (e: React.MouseEvent, date: Date) => void;
-    onViewWorkout: (workout: Workout) => void;
-    onEditObjective: (obj: Objective) => void;
-    profile: Profile;
-    onRefresh: () => void;
-    onOpenGenModal: () => void;
 }
 
 // DAY_NAMES_SHORT = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'] (Mon=0)
@@ -55,17 +48,11 @@ const SPORT_LABELS: Record<string, string> = {
 export function MobileCalendarStrip({
     weekRows,
     currentMonth,
-    scheduleData,
-    objectives,
     selectedDay,
     onSelectDay,
     onOpenManualModal,
-    onViewWorkout,
-    onEditObjective,
-    profile,
-    onRefresh,
-    onOpenGenModal,
 }: MobileCalendarStripProps) {
+    const { scheduleData, profile, objectives, onViewWorkout, onEditObjective, onRefresh, onOpenGenModal } = useCalendarContext();
     const scrollRef  = useRef<HTMLDivElement>(null);
     const todayKey   = useMemo(() => formatDateKey(new Date()), []);
     const selectedKey = formatDateKey(selectedDay);

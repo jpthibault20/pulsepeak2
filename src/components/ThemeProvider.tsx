@@ -2,17 +2,20 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Sun, Moon } from 'lucide-react';
+import { saveThemePreference } from '@/app/actions/schedule';
 
 type Theme = 'dark' | 'light';
 
 interface ThemeContextValue {
     theme: Theme;
     toggleTheme: () => void;
+    setThemeFromProfile: (theme: Theme) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
     theme: 'dark',
     toggleTheme: () => {},
+    setThemeFromProfile: () => {},
 });
 
 export function useTheme() {
@@ -29,17 +32,24 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         document.documentElement.setAttribute('data-theme', initial);
     }, []);
 
+    const applyTheme = (next: Theme) => {
+        setTheme(next);
+        localStorage.setItem('theme', next);
+        document.documentElement.setAttribute('data-theme', next);
+    };
+
     const toggleTheme = () => {
-        setTheme(prev => {
-            const next: Theme = prev === 'dark' ? 'light' : 'dark';
-            localStorage.setItem('theme', next);
-            document.documentElement.setAttribute('data-theme', next);
-            return next;
-        });
+        const next: Theme = theme === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
+        saveThemePreference(next).catch(console.error);
+    };
+
+    const setThemeFromProfile = (profileTheme: Theme) => {
+        applyTheme(profileTheme);
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme }}>
+        <ThemeContext.Provider value={{ theme, toggleTheme, setThemeFromProfile }}>
             {children}
         </ThemeContext.Provider>
     );

@@ -1,7 +1,7 @@
 'use server';
 
 import { generateSingleWorkoutFromAI } from '@/lib/ai/coach-api';
-import { getBlock, getObjectives, getPlan, getProfile, getSchedule, getWeek, getWorkout, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek, saveWorkout, deleteWorkoutById } from '@/lib/data/crud';
+import { getBlock, getObjectives, getPlan, getProfile, getSchedule, getWeek, getWorkout, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek, saveWorkout, deleteWorkoutById, atomicIncrementAICallCount, updateWorkoutById, saveTheme } from '@/lib/data/crud';
 import { ReturnCode } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
 import type { AvailabilitySlot, CompletedData, CompletedDataFeedback, SportType } from '@/lib/data/type';
@@ -29,19 +29,8 @@ import { computeBlockSkeletons, computeWeeklyTSS, formatAvailability, getActiveS
 const AI_DAILY_LIMITS = { plan: 3, workout: 10 } as const;
 
 async function checkAndIncrementAICallLimit(type: 'plan' | 'workout'): Promise<void> {
-    const profile = await getProfile();
-    const today   = format(new Date(), 'yyyy-MM-dd');
-
-    const countKey = type === 'plan' ? 'aiPlanCallsCount' : 'aiWorkoutCallsCount';
-    const dateKey  = type === 'plan' ? 'aiPlanCallsResetDate' : 'aiWorkoutCallsResetDate';
-
-    const count = profile[dateKey] === today ? (profile[countKey] ?? 0) : 0;
-    if (count >= AI_DAILY_LIMITS[type]) {
-        throw new Error(
-            `Limite journalière atteinte (${AI_DAILY_LIMITS[type]} ${type === 'plan' ? 'plans' : 'régénérations'}/jour). Réessaie demain.`
-        );
-    }
-    await saveProfile({ ...profile, [countKey]: count + 1, [dateKey]: today });
+    const today = format(new Date(), 'yyyy-MM-dd');
+    await atomicIncrementAICallCount(type, today, AI_DAILY_LIMITS[type]);
 }
 
 /******************************************************************************
@@ -86,7 +75,7 @@ export async function CreateAdvancedPlan(
 
     // Création des blocs
     const newBlocks = await CreateBlocks(newPlan, profile);
-    newPlan.blocksID = newBlocks.map(b => b.id);
+    newPlan.blocksId = newBlocks.map(b => b.id);
 
     // Création des semaines + injection des IDs dans les blocs
     const newWeeks: Week[] = [];
@@ -101,13 +90,13 @@ export async function CreateAdvancedPlan(
     // On génère les séances uniquement pour la première semaine.
     // Les semaines suivantes seront générées le dimanche précédant chaque semaine.
     const firstWeek = newWeeks[0];
-    const firstBlock = updatedBlocks.find(b => b.id === firstWeek.blockID) ?? updatedBlocks[0];
+    const firstBlock = updatedBlocks.find(b => b.id === firstWeek.blockId) ?? updatedBlocks[0];
     const firstWeekWorkouts = await CreateWorkoutForWeek(profile, newPlan, firstBlock, firstWeek, null, 100, profile.weeklyAvailability);
 
     const newWorkouts: Workout[] = [...firstWeekWorkouts];
     const updatedWeeks = newWeeks.map((week) =>
         week.id === firstWeek.id
-            ? { ...week, workoutsID: firstWeekWorkouts.map(w => w.id) }
+            ? { ...week, workoutsId: firstWeekWorkouts.map(w => w.id) }
             : week
     );
 
@@ -175,9 +164,9 @@ export async function CreatePlanToObjective(userID: string, planStartDate: strin
     const allObjectiveIds = [primaryObjective, ...secondaryObjectives].map(o => o.id);
     const newPlan: Plan = {
         id: randomUUID(),
-        userID,
-        blocksID: [],
-        objectivesID: allObjectiveIds,
+        userId: userID,
+        blocksId: [],
+        objectivesId: allObjectiveIds,
         name: primaryObjective.name,
         startDate,
         goalDate: primaryObjective.date,
@@ -192,7 +181,7 @@ export async function CreatePlanToObjective(userID: string, planStartDate: strin
 
     // Créer les blocs (IA, avec contexte objectifs secondaires)
     const newBlocks = await CreateBlocksToObjective(newPlan, profile, primaryObjective, secondaryObjectives);
-    newPlan.blocksID = newBlocks.map(b => b.id);
+    newPlan.blocksId = newBlocks.map(b => b.id);
 
     // Créer les semaines
     const newWeeks: Week[] = [];
@@ -209,7 +198,7 @@ export async function CreatePlanToObjective(userID: string, planStartDate: strin
 
     // Générer séances pour la première semaine uniquement
     const firstWeek = finalWeeks[0];
-    const firstBlock = updatedBlocks.find(b => b.id === firstWeek.blockID) ?? updatedBlocks[0];
+    const firstBlock = updatedBlocks.find(b => b.id === firstWeek.blockId) ?? updatedBlocks[0];
 
     // Trouver les objectifs de cette semaine et la suivante
     const firstWeekStart = parseISO(firstBlock.startDate);
@@ -223,7 +212,7 @@ export async function CreatePlanToObjective(userID: string, planStartDate: strin
 
     const newWorkouts: Workout[] = [...firstWeekWorkouts];
     const weeksWithWorkouts = finalWeeks.map(w =>
-        w.id === firstWeek.id ? { ...w, workoutsID: firstWeekWorkouts.map(wk => wk.id) } : w
+        w.id === firstWeek.id ? { ...w, workoutsId: firstWeekWorkouts.map(wk => wk.id) } : w
     );
 
     // Sauvegarde — remplace tout (aucun plan/bloc/semaine existant conservé)
@@ -312,10 +301,12 @@ Retourner un tableau JSON. Chaque objet contient exactement :
 ## RÉPONSE (JSON uniquement) :
 `;
 
-    const aiResponse = await callGeminiAPI({
+    const rawBlocks = await callGeminiAPI({
         contents: [{ parts: [{ text: aiPrompt }] }],
         generationConfig: { temperature: 0.7, maxOutputTokens: 2048, responseMimeType: 'application/json' },
-    }) as { index: number; type: string; theme: string }[];
+    });
+    if (!Array.isArray(rawBlocks)) throw new Error('Réponse IA invalide : tableau attendu.');
+    const aiResponse = rawBlocks as { index: number; type: string; theme: string }[];
 
     let currentStartDate = start;
     let previousTargetCTL = profile.currentCTL;
@@ -331,7 +322,7 @@ Retourner un tableau JSON. Chaque objet contient exactement :
         const block: Block = {
             id: randomUUID(),
             planId: plan.id,
-            userId: plan.userID,
+            userId: plan.userId,
             orderIndex: skeleton.index,
             type:  aiInfo?.type  ?? 'General',
             theme: aiInfo?.theme ?? 'Préparation',
@@ -366,7 +357,7 @@ function applySecondaryObjectiveTaper(
 
     // Calculer les plages de chaque semaine
     const weekRanges = weeks.map(week => {
-        const block = blockMap.get(week.blockID);
+        const block = blockMap.get(week.blockId);
         if (!block) return { week, start: '', end: '' };
         const weekStart = addDays(parseISO(block.startDate), (week.weekNumber - 1) * 7);
         const weekEnd   = addDays(weekStart, 6);
@@ -426,12 +417,12 @@ function CreatePlan(
 
     return {
         id: randomUUID(),
-        userID,
-        blocksID: [],
+        userId: userID,
+        blocksId: [],
         name: blockFocus,
         startDate,
-        objectivesID: [],
-        goalDate: goalDate.toISOString().split('T')[0],
+        objectivesId: [],
+        goalDate: format(goalDate, 'yyyy-MM-dd'),
         macroStrategyDescription: customTheme ?? blockFocus,
         status: "active",
     };
@@ -514,14 +505,19 @@ ${historySummary}
         ## RÉPONSE (JSON uniquement) :
         `;
 
-    const aiResponse = await callGeminiAPI({
+    const rawAiResponse = await callGeminiAPI({
         contents: [{ parts: [{ text: aiPrompt }] }],
         generationConfig: {
             temperature: 0.7,
             maxOutputTokens: 2048,
             responseMimeType: "application/json",
         },
-    }) as { index: number; type: string; theme: string }[];
+    });
+
+    if (!Array.isArray(rawAiResponse)) {
+        throw new Error('Réponse IA invalide : tableau attendu.');
+    }
+    const aiResponse = rawAiResponse as { index: number; type: string; theme: string }[];
 
     // Construction des blocs
     let currentStartDate = start;
@@ -538,7 +534,7 @@ ${historySummary}
         const block: Block = {
             id: randomUUID(),
             planId: plan.id,
-            userId: plan.userID,
+            userId: plan.userId,
             orderIndex: skeleton.index,
             type:  aiInfo?.type  ?? "General",
             theme: aiInfo?.theme ?? "Préparation",
@@ -570,7 +566,7 @@ ${historySummary}
  * - profile : Profil athlète (ID utilisateur, niveau...)
  * @output
  * - Week[]  : tableau de semaines ordonnées avec TSS cible, type (Load /
- *             Recovery) et thème hérité du bloc (workoutsID vide)
+ *             Recovery) et thème hérité du bloc (workoutsId vide)
  ******************************************************************************/
 async function CreateWeeks(plan: Plan, block: Block, profile: Profile): Promise<Week[]> {
     const hasRecoveryWeek  = block.weekCount > RECOVERY_WEEK_THRESHOLD;
@@ -591,9 +587,9 @@ async function CreateWeeks(plan: Plan, block: Block, profile: Profile): Promise<
 
         return {
             id: randomUUID(),
-            userID: profile.id,
-            workoutsID: [],
-            blockID: block.id,
+            userId: profile.id,
+            workoutsId: [],
+            blockId: block.id,
             weekNumber,
             type: isRecoveryWeek ? 'Recovery' : 'Load',
             targetTSS,
@@ -810,7 +806,7 @@ Chaque objet contient exactement :
         },
     };
 
-    const aiResponse = await callGeminiAPI({
+    const rawWorkouts = await callGeminiAPI({
         contents: [{ parts: [{ text: aiPrompt }] }],
         generationConfig: {
             temperature: 0.7,
@@ -818,16 +814,18 @@ Chaque objet contient exactement :
             responseMimeType: "application/json",
             responseSchema,
         },
-    }) as AIWorkout[];
+    });
+    if (!Array.isArray(rawWorkouts)) throw new Error('Réponse IA invalide : tableau attendu.');
+    const aiResponse = rawWorkouts as AIWorkout[];
 
     return aiResponse.map((w) => {
     const workoutDate = addDays(weekStartDate, w.dayOffset);
 
+    const wId = randomUUID();
     return {
-        ID:          randomUUID(),
-        id:          randomUUID(),
-        userID:      profile.id,
-        weekID:      week.id,
+        id:          wId,
+        userId:      profile.id,
+        weekId:      week.id,
         date:        format(workoutDate, 'yyyy-MM-dd'),
         sportType:   w.sportType as SportType,
         title:       w.title,
@@ -889,7 +887,7 @@ function getTrainingHistorySummary(workouts: Workout[]): string {
         const d = new Date(w.date);
         const weekStart = new Date(d);
         weekStart.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-        const key = weekStart.toISOString().split('T')[0];
+        const key = format(weekStart, 'yyyy-MM-dd');
         if (!weekMap.has(key)) weekMap.set(key, []);
         weekMap.get(key)!.push(w);
     }
@@ -1003,6 +1001,10 @@ export async function saveAthleteProfile(data: Profile) {
     await saveProfile(data);
 }
 
+export async function saveThemePreference(theme: 'dark' | 'light') {
+    await saveTheme(theme);
+}
+
 
 // Régénération d'une séance unique
 export async function regenerateWorkout(workoutIdOrDate: string, instruction?: string) {
@@ -1039,10 +1041,9 @@ export async function regenerateWorkout(workoutIdOrDate: string, instruction?: s
         // Remplacement dans le tableau en préservant les clés relationnelles
         existingSchedule.workouts[targetIndex] = {
             ...newWorkoutData,
-            ID: oldWorkout.ID,
             id: oldWorkout.id,
-            userID: oldWorkout.userID,
-            weekID: oldWorkout.weekID,
+            userId: oldWorkout.userId,
+            weekId: oldWorkout.weekId,
             date: dateKey,
             status: 'pending',
             completedData: null,
@@ -1069,7 +1070,7 @@ function getSurroundingWorkouts(schedule: Schedule, targetDate: string) {
         if (i === 0) continue;
         const d = new Date(target);
         d.setDate(d.getDate() + i);
-        surroundingDates.add(d.toISOString().split('T')[0]);
+        surroundingDates.add(format(d, 'yyyy-MM-dd'));
     }
 
     schedule.workouts.forEach(w => {
@@ -1104,7 +1105,7 @@ function extractTSS(workout: Workout, profile?: Profile): number {
     const avgHR  = cd.heartRate?.avgBPM;
     const maxHR  = profile?.heartRate?.max;
     const duration = cd.actualDurationMinutes;
-    if (avgHR && maxHR && maxHR > 0 && duration) {
+    if (avgHR != null && avgHR > 0 && maxHR != null && maxHR > 0 && duration) {
         const restHR   = profile?.heartRate?.resting ?? 0;
         const hrRatio  = restHR > 0
             ? (avgHR - restHR) / (maxHR - restHR)   // Karvonen (réserve cardiaque)
@@ -1264,38 +1265,25 @@ export async function updateWorkoutStatus(
     status: 'pending' | 'completed' | 'missed',
     feedback?: CompletedDataFeedback
 ): Promise<void> {
-    try {
-        const schedule = await getSchedule();
-        const index = findWorkoutIndex(schedule.workouts, workoutIdOrDate);
+    const schedule = await getSchedule();
+    const index = findWorkoutIndex(schedule.workouts, workoutIdOrDate);
 
-        if (index === -1) {
-            throw new Error(`Workout non trouvé: ${workoutIdOrDate}`);
-        }
-
-        // Mise à jour du statut
-        schedule.workouts[index].status = status;
-
-        // Gestion des données complétées
-        if (status === 'completed' && feedback) {
-            // Transformation type-safe
-            schedule.workouts[index].completedData = transformFeedbackToCompletedData(feedback);
-        } else {
-            // Effacement si retour en pending/missed
-            schedule.workouts[index].completedData = null;
-        }
-
-        // Sauvegarde
-        await saveSchedule(schedule);
-
-        // Recalcul CTL/ATL après tout changement de statut
-        await recalculateFitnessMetrics();
-
-        revalidatePath('/');
-
-    } catch (error) {
-        console.error('Erreur updateWorkoutStatus:', error);
-        throw error;
+    if (index === -1) {
+        throw new Error(`Workout non trouvé: ${workoutIdOrDate}`);
     }
+
+    const workout = schedule.workouts[index];
+    const completedData = (status === 'completed' && feedback)
+        ? transformFeedbackToCompletedData(feedback)
+        : null;
+
+    // Atomic per-row update — pas de read-modify-write sur tout le schedule
+    await updateWorkoutById(workout.id, { status, completedData });
+
+    // Recalcul CTL/ATL après tout changement de statut
+    await recalculateFitnessMetrics();
+
+    revalidatePath('/');
 }
 
 /**
@@ -1345,46 +1333,30 @@ export async function moveWorkout(originalDateOrId: string, newDateStr: string) 
     const sourceWorkout = schedule.workouts[sourceIndex];
 
     // 2. Vérifier s'il y a déjà une séance sur la date cible
-    const targetIndex = schedule.workouts.findIndex(w => w.date === newDateStr);
+    const targetWorkout = schedule.workouts.find(w => w.date === newDateStr);
 
-    if (targetIndex !== -1) {
-        // --- CAS 1 : ÉCHANGE (SWAP) ---
-        const targetWorkout = schedule.workouts[targetIndex];
-
-        // On échange les dates
-        // Note: On reset à pending car changer de jour change le contexte
-        schedule.workouts[sourceIndex] = {
-            ...targetWorkout,
-            date: sourceWorkout.date, // Prend l'ancienne date de la source
-            status: 'pending',
-            completedData: null
-        };
-
-        schedule.workouts[targetIndex] = {
-            ...sourceWorkout,
-            date: newDateStr, // Prend la nouvelle date
-            status: 'pending',
-            completedData: null
-        };
+    if (targetWorkout) {
+        // --- CAS 1 : ÉCHANGE (SWAP) — atomic per-row updates ---
+        await Promise.all([
+            updateWorkoutById(sourceWorkout.id, { date: newDateStr, status: 'pending', completedData: null }),
+            updateWorkoutById(targetWorkout.id, { date: sourceWorkout.date, status: 'pending', completedData: null }),
+        ]);
     } else {
         // --- CAS 2 : DÉPLACEMENT SIMPLE ---
-        // On modifie juste la date de la source
-        schedule.workouts[sourceIndex] = {
-            ...sourceWorkout,
-            date: newDateStr,
-            status: 'pending',
-            completedData: null
-        };
+        await updateWorkoutById(sourceWorkout.id, { date: newDateStr, status: 'pending', completedData: null });
     }
 
-    await saveSchedule(schedule);
     revalidatePath('/');
 }
 
 export async function addManualWorkout(workout: Workout) {
+    const profile = await getProfile();
     const schedule = await getSchedule();
 
-    // ✅ Validation : vérifier que l'ID est unique (sécurité)
+    // ✅ Sécurité : forcer le userID au user authentifié
+    workout.userId = profile.id;
+
+    // ✅ Validation : vérifier que l'ID est unique
     const existingWorkout = schedule.workouts.find(w => w.id === workout.id);
 
     if (existingWorkout) {
@@ -1392,7 +1364,8 @@ export async function addManualWorkout(workout: Workout) {
     }
 
     // ✅ Validation : vérifier le format de date
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(workout.date)) {
+    const parsed = parseISO(workout.date);
+    if (isNaN(parsed.getTime())) {
         throw new Error(`Format de date invalide: ${workout.date}. Attendu: YYYY-MM-DD`);
     }
 
@@ -1597,10 +1570,10 @@ export async function syncStravaActivities() {
                             const weekIdx = updatedWeeks.findIndex(w => w.id === activeWeek.id);
                             if (weekIdx !== -1) {
                                 const newId = `strava_${summary.id}`;
-                                if (!updatedWeeks[weekIdx].workoutsID.includes(newId)) {
+                                if (!updatedWeeks[weekIdx].workoutsId.includes(newId)) {
                                     updatedWeeks[weekIdx] = {
                                         ...updatedWeeks[weekIdx],
-                                        workoutsID: [...updatedWeeks[weekIdx].workoutsID, newId],
+                                        workoutsId: [...updatedWeeks[weekIdx].workoutsId, newId],
                                     };
                                 }
                             }
@@ -1609,10 +1582,9 @@ export async function syncStravaActivities() {
                 }
 
                 workouts.push({
-                    ID: randomUUID(),
                     id: `strava_${summary.id}`,
-                    userID: profile?.id ?? '',
-                    weekID: activeWeekID,
+                    userId: profile?.id ?? '',
+                    weekId: activeWeekID,
                     date: activityDate,
                     sportType,
                     title: detail.name,
@@ -1724,7 +1696,7 @@ export async function getWeekPendingCount(weekStartDate: string): Promise<number
     const result = findBlockAndWeekForDate(blocks, weeks, parseISO(weekStartDate));
     if (!result) return 0;
 
-    return workouts.filter(w => w.weekID === result.week.id && w.status === 'pending').length;
+    return workouts.filter(w => w.weekId === result.week.id && w.status === 'pending').length;
 }
 
 /**
@@ -1780,13 +1752,13 @@ export async function generateWeekWorkoutsFromDate(
 
     // Supprimer les séances pending de cette semaine uniquement si la génération a réussi
     const keptWorkouts = (existingWorkouts ?? []).filter(
-        w => !(w.weekID === week.id && w.status === 'pending')
+        w => !(w.weekId === week.id && w.status === 'pending')
     );
 
-    // Mettre à jour workoutsID de la semaine
+    // Mettre à jour workoutsId de la semaine
     const updatedWeeks = weeks.map(w =>
         w.id === week.id
-            ? { ...w, workoutsID: newWorkouts.map(wo => wo.id) }
+            ? { ...w, workoutsId: newWorkouts.map(wo => wo.id) }
             : w
     );
 

@@ -78,8 +78,7 @@ export function ChatView({ profile, schedule }: ChatViewProps) {
                 return prev;
             });
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [profile?.firstName]);
+    }, [profile?.firstName, welcomeText]);
 
     // Auto-scroll to bottom on new messages
     useEffect(() => {

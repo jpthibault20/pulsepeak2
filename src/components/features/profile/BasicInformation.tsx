@@ -132,7 +132,7 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({ formData, se
                             type="date"
                             className={inputCls}
                             style={{ colorScheme: 'dark' }}
-                            value={formData.birthDate}
+                            value={formData.birthDate ?? ''}
                             onChange={e => setFormData({ ...formData, birthDate: e.target.value })}
                         />
                         {age !== null && (

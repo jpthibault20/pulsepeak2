@@ -104,7 +104,7 @@ export async function generatePlanFromAI(
     customTheme: string | null,
     startDateInput: string | null,
     numWeeks?: number
-): Promise<{ synthesis: string, workouts: Omit<Workout, 'ID' | 'userID' | 'weekID'>[] }> {
+): Promise<{ synthesis: string, workouts: Omit<Workout, 'userId' | 'weekId'>[] }> {
     if (!GEMINI_API_KEY) {
         console.error("ERREUR CRITIQUE: GEMINI_API_KEY est NULL.");
         throw new Error("GEMINI_API_KEY is not set.");
@@ -285,7 +285,7 @@ FORMAT DE RÉPONSE :
 
     // --- 4. Transformation et Nettoyage des données ---
     
-    const structuredWorkouts: Omit<Workout, 'ID' | 'userID' | 'weekID'>[] = rawResponse.workouts
+    const structuredWorkouts: Omit<Workout, 'userId' | 'weekId'>[] = rawResponse.workouts
         // Sécurité 1: On filtre les objets invalides ou les jours de repos explicites si l'IA s'est trompée
         .filter(w => w.duration > 0 && w.title.toLowerCase() !== "repos")
         .map((w) => {
@@ -340,7 +340,7 @@ export async function generateSingleWorkoutFromAI(
     oldWorkout?: Workout,
     currentBlockFocus: string = "General Fitness",
     userInstruction?: string
-): Promise<Omit<Workout, 'ID' | 'userID' | 'weekID'>> {
+): Promise<Omit<Workout, 'userId' | 'weekId'>> {
 
     // Le type de sport est forcé à vélo pour l'instant
     const currentSport: SportType = 'cycling'; // TODO: Passer le sport en paramètre si on supporte la course à pied plus tard

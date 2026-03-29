@@ -11,7 +11,7 @@ import {
     workouts as workoutsTable,
     objectives as objectivesTable,
 } from '@/lib/db/schema';
-import { eq, and, notInArray, gte } from 'drizzle-orm';
+import { eq, and, notInArray, gte, sql } from 'drizzle-orm';
 import { createClient } from '@/lib/supabase/server';
 import { Block, Objective, Plan, Profile, Schedule, Week, Workout } from './DatabaseTypes';
 import type { PlannedData, CompletedData } from './type';
@@ -27,13 +27,11 @@ async function getCurrentUserId(): Promise<string> {
 
 // ─── Mappers DB → TypeScript ──────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function toWorkout(row: any): Workout {
+function toWorkout(row: typeof workoutsTable.$inferSelect): Workout {
     return {
-        ID:            row.id,
         id:            row.id,
-        userID:        row.userId,
-        weekID:        row.weekId ?? '',
+        userId:        row.userId,
+        weekId:        row.weekId ?? '',
         date:          row.date,
         sportType:     row.sportType,
         title:         row.title,
@@ -45,8 +43,7 @@ function toWorkout(row: any): Workout {
     };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function toProfile(row: any): Profile {
+function toProfile(row: typeof profiles.$inferSelect): Profile {
     return {
         id:                 row.id,
         createdAt:          row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt,
@@ -55,10 +52,10 @@ function toProfile(row: any): Profile {
         firstName:          row.firstName,
         lastName:           row.lastName,
         email:              row.email,
-        birthDate:          row.birthDate  ?? '',
+        birthDate:          row.birthDate  ?? null,
         weight:             row.weight     ?? undefined,
         height:             row.height     ?? undefined,
-        experience:         row.experience ?? 'Débutant',
+        experience:         row.experience ?? null,
         currentCTL:         row.currentCTL ?? 0,
         currentATL:         row.currentATL ?? 0,
         activeSports:       row.activeSports       ?? { swimming: false, cycling: false, running: false },
@@ -71,23 +68,23 @@ function toProfile(row: any): Profile {
         plan:               (row.plan ?? 'free') as 'free' | 'dev' | 'pro',
         strava:             row.strava       ?? undefined,
         goal:               row.goal,
-        objectiveDate:      row.objectiveDate ?? '',
+        objectiveDate:      row.objectiveDate ?? null,
         weaknesses:         row.weaknesses,
         aiPlanCallsCount:       row.aiPlanCallsCount  ?? 0,
         aiPlanCallsResetDate:   row.aiPlanCallsResetDate ?? undefined,
         aiWorkoutCallsCount:    row.aiWorkoutCallsCount  ?? 0,
         aiWorkoutCallsResetDate:row.aiWorkoutCallsResetDate ?? undefined,
+        theme:              (row.theme as 'dark' | 'light') ?? 'dark',
         workouts:           [],
     };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function toPlan(row: any, blockIds: string[]): Plan {
+function toPlan(row: typeof plansTable.$inferSelect, blockIds: string[]): Plan {
     return {
         id:                       row.id,
-        userID:                   row.userId,
-        blocksID:                 blockIds,
-        objectivesID:             (row.objectivesIds as string[]) ?? [],
+        userId:                   row.userId,
+        blocksId:                 blockIds,
+        objectivesId:             (row.objectivesIds as string[]) ?? [],
         name:                     row.name,
         goalDate:                 row.goalDate ?? '',
         startDate:                row.startDate,
@@ -96,8 +93,7 @@ function toPlan(row: any, blockIds: string[]): Plan {
     };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function toBlock(row: any, weekIds: string[]): Block {
+function toBlock(row: typeof blocksTable.$inferSelect, weekIds: string[]): Block {
     return {
         id:           row.id,
         planId:       row.planId,
@@ -114,13 +110,12 @@ function toBlock(row: any, weekIds: string[]): Block {
     };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function toWeek(row: any, workoutIds: string[]): Week {
+function toWeek(row: typeof weeksTable.$inferSelect, workoutIds: string[]): Week {
     return {
         id:           row.id,
-        userID:       row.userId,
-        blockID:      row.blockId,
-        workoutsID:   workoutIds,
+        userId:       row.userId,
+        blockId:      row.blockId,
+        workoutsId:   workoutIds,
         weekNumber:   row.weekNumber,
         type:         row.type,
         targetTSS:    row.targetTSS ?? 0,
@@ -148,16 +143,17 @@ export async function getProfile(): Promise<Profile> {
             firstName:          '',
             lastName:           '',
             email:              '',
-            birthDate:          '',
-            experience:         'Débutant',
+            birthDate:          null,
+            experience:         null,
             currentCTL:         0,
             currentATL:         0,
             activeSports:       { swimming: false, cycling: false, running: false },
             weeklyAvailability: {},
             aiPersonality:      'Analytique',
             goal:               '',
-            objectiveDate:      '',
+            objectiveDate:      null,
             weaknesses:         '',
+            theme:              'dark',
             workouts:           [],
         };
     }
@@ -269,6 +265,7 @@ export async function saveProfile(profile: Profile): Promise<void> {
             aiPlanCallsResetDate:   profile.aiPlanCallsResetDate   ?? null,
             aiWorkoutCallsCount:    profile.aiWorkoutCallsCount    ?? 0,
             aiWorkoutCallsResetDate:profile.aiWorkoutCallsResetDate ?? null,
+            theme:                  profile.theme ?? 'dark',
         })
         .onConflictDoUpdate({
             target: profiles.id,
@@ -298,6 +295,7 @@ export async function saveProfile(profile: Profile): Promise<void> {
                 aiPlanCallsResetDate:   profile.aiPlanCallsResetDate   ?? null,
                 aiWorkoutCallsCount:    profile.aiWorkoutCallsCount    ?? 0,
                 aiWorkoutCallsResetDate:profile.aiWorkoutCallsResetDate ?? null,
+                theme:                  profile.theme ?? 'dark',
             },
         });
 }
@@ -321,7 +319,7 @@ export async function savePlan(plans: Plan[]): Promise<void> {
                     goalDate:                 p.goalDate || null,
                     macroStrategyDescription: p.macroStrategyDescription ?? null,
                     status:                   (p.status as 'active' | 'archived') ?? 'active',
-                    objectivesIds:            p.objectivesID ?? [],
+                    objectivesIds:            p.objectivesId ?? [],
                 })
                 .onConflictDoUpdate({
                     target: plansTable.id,
@@ -331,7 +329,7 @@ export async function savePlan(plans: Plan[]): Promise<void> {
                         goalDate:                 p.goalDate || null,
                         macroStrategyDescription: p.macroStrategyDescription ?? null,
                         status:                   (p.status as 'active' | 'archived') ?? 'active',
-                        objectivesIds:            p.objectivesID ?? [],
+                        objectivesIds:            p.objectivesId ?? [],
                     },
                 });
         }
@@ -394,7 +392,7 @@ export async function saveWeek(weeks: Week[]): Promise<void> {
                 .insert(weeksTable)
                 .values({
                     id:           w.id,
-                    blockId:      w.blockID,
+                    blockId:      w.blockId,
                     userId,
                     weekNumber:   w.weekNumber,
                     type:         w.type,
@@ -426,13 +424,12 @@ export async function saveWorkout(workoutList: Workout[]): Promise<void> {
 
     await db.transaction(async (tx) => {
         for (const w of workoutList) {
-            const dbId = w.ID || w.id; // w.ID est toujours un UUID; w.id peut être strava_xxx
             await tx
                 .insert(workoutsTable)
                 .values({
-                    id:            dbId,
+                    id:            w.id,
                     userId,
-                    weekId:        w.weekID || null,
+                    weekId:        w.weekId || null,
                     date:          w.date,
                     sportType:     w.sportType,
                     title:         w.title         ?? '',
@@ -446,7 +443,7 @@ export async function saveWorkout(workoutList: Workout[]): Promise<void> {
                     target: workoutsTable.id,
                     set: {
                         updatedAt:     new Date(),
-                        weekId:        w.weekID || null,
+                        weekId:        w.weekId || null,
                         date:          w.date,
                         sportType:     w.sportType,
                         title:         w.title         ?? '',
@@ -459,8 +456,9 @@ export async function saveWorkout(workoutList: Workout[]): Promise<void> {
                 });
         }
 
-        const ids = workoutList.map((w) => w.ID || w.id);
-        const todayStr = new Date().toISOString().split('T')[0];
+        const ids = workoutList.map((w) => w.id);
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         if (ids.length > 0) {
             await tx.delete(workoutsTable).where(
                 and(
@@ -483,10 +481,58 @@ export async function deleteWorkoutById(workoutId: string): Promise<void> {
     );
 }
 
+// ─── Atomic operations ───────────────────────────────────────────────────────
+
+export async function atomicIncrementAICallCount(
+    type: 'plan' | 'workout',
+    today: string,
+    limit: number,
+): Promise<void> {
+    const userId = await getCurrentUserId();
+    const countCol  = type === 'plan' ? profiles.aiPlanCallsCount       : profiles.aiWorkoutCallsCount;
+    const dateCol   = type === 'plan' ? profiles.aiPlanCallsResetDate   : profiles.aiWorkoutCallsResetDate;
+
+    // Reset if new day, then check limit, then increment — all in one atomic UPDATE
+    const result = await db
+        .update(profiles)
+        .set({
+            [countCol.name]:  sql`CASE WHEN ${dateCol} = ${today} THEN ${countCol} + 1 ELSE 1 END`,
+            [dateCol.name]:   today,
+        })
+        .where(and(
+            eq(profiles.id, userId),
+            // Only update if count is under the limit (or it's a new day)
+            sql`(${dateCol} != ${today} OR ${countCol} < ${limit})`,
+        ))
+        .returning({ id: profiles.id });
+
+    if (result.length === 0) {
+        throw new Error(
+            `Limite journalière atteinte (${limit} ${type === 'plan' ? 'plans' : 'régénérations'}/jour). Réessaie demain.`
+        );
+    }
+}
+
+export async function updateWorkoutById(
+    workoutId: string,
+    data: Partial<Pick<Workout, 'date' | 'status' | 'completedData' | 'title' | 'sportType' | 'weekId' | 'plannedData' | 'workoutType' | 'mode'>>,
+): Promise<void> {
+    const userId = await getCurrentUserId();
+    await db
+        .update(workoutsTable)
+        .set({
+            ...data,
+            updatedAt: new Date(),
+        })
+        .where(and(
+            eq(workoutsTable.id, workoutId),
+            eq(workoutsTable.userId, userId),
+        ));
+}
+
 // ─── Objectives ───────────────────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function toObjective(row: any): Objective {
+function toObjective(row: typeof objectivesTable.$inferSelect): Objective {
     return {
         id:             row.id,
         userId:         row.userId,
@@ -494,7 +540,7 @@ function toObjective(row: any): Objective {
         updatedAt:      row.updatedAt instanceof Date ? row.updatedAt.toISOString() : row.updatedAt,
         name:           row.name,
         date:           row.date,
-        sport:          row.sport,
+        sport:          row.sport as Objective['sport'],
         distanceKm:     row.distanceKm     ?? undefined,
         elevationGainM: row.elevationGainM ?? undefined,
         priority:       row.priority,
@@ -549,4 +595,14 @@ export async function deleteObjective(id: string): Promise<void> {
     await db.delete(objectivesTable).where(
         and(eq(objectivesTable.id, id), eq(objectivesTable.userId, userId))
     );
+}
+
+// ─── Theme ───────────────────────────────────────────────────────────────────
+
+export async function saveTheme(theme: 'dark' | 'light'): Promise<void> {
+    const userId = await getCurrentUserId();
+    await db
+        .update(profiles)
+        .set({ theme, updatedAt: new Date() })
+        .where(eq(profiles.id, userId));
 }

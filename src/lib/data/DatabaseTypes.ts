@@ -12,10 +12,10 @@ export interface Profile {
     lastName: string;
     firstName: string;
     email: string;
-    birthDate: string;
+    birthDate: string | null;
     weight?: number;
     height?: number;
-    experience: 'Débutant' | 'Intermédiaire' | 'Avancé';
+    experience: 'Débutant' | 'Intermédiaire' | 'Avancé' | null;
     currentCTL: number;        // CTL au démarrage du plan (ex: 50)
     currentATL: number;        // fatigue court terme (7 jours)
     activeSports: {
@@ -67,13 +67,15 @@ export interface Profile {
     strava?: StravaConfig;
 
     goal: string;
-    objectiveDate: string;
+    objectiveDate: string | null;
     weaknesses: string;
 
     aiPlanCallsCount?: number;
     aiPlanCallsResetDate?: string;
     aiWorkoutCallsCount?: number;
     aiWorkoutCallsResetDate?: string;
+
+    theme?: 'dark' | 'light';
 
     workouts: Workout[]; //Not used for the moment, use in te future for relations
 }
@@ -102,9 +104,9 @@ export interface Schedule {
 
 export interface Plan {
     id: string;
-    userID: string;
-    blocksID: string[];
-    objectivesID: string[];     // IDs des objectifs liés à ce plan
+    userId: string;
+    blocksId: string[];
+    objectivesId: string[];     // IDs des objectifs liés à ce plan
     name: string;
     goalDate: string;
     startDate: string;
@@ -129,9 +131,9 @@ export interface Block {
 
 export interface Week {
     id: string;
-    userID: string;
-    workoutsID: string[];
-    blockID: string;
+    userId: string;
+    workoutsId: string[];
+    blockId: string;
     weekNumber: number;
     type: 'Load' | 'Recovery' | 'Taper'; // Charge ou Assimilation
     targetTSS: number; // ex: 500
@@ -141,10 +143,9 @@ export interface Week {
 }
 
 export interface Workout {
-    ID: string;
-    userID: string;
-    weekID: string;
     id: string;
+    userId: string;
+    weekId: string;
     date: string; // "YYYY-MM-DD"
     sportType: SportType;
     title: string;

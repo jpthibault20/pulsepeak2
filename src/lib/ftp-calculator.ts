@@ -24,14 +24,6 @@ interface DataPoint {
   p: number;  // Puissance moyenne (watts)
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const FTP_RATIOS = {
-  p5min: 0.82,   // FTP = 82% de CP5
-  p8min: 0.90,   // FTP = 90% de CP8
-  p15min: 0.93,  // FTP = 93% de CP15
-  p20min: 0.95,  // FTP = 95% de CP20
-} as const;
-
 /**
  * Coefficients des zones d'entraînement (selon Coggan)
  */

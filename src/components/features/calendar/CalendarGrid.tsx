@@ -1,35 +1,22 @@
 import React, { useMemo } from 'react';
-import type { Workout, Profile, Schedule, Objective } from '@/lib/data/DatabaseTypes';
 import { DayCell } from './DayCell';
 import { WeekSummaryCell } from './WeekSummaryCell';
 import { formatDateKey, DAY_NAMES_SHORT, type DayName } from '@/lib/utils';
+import { useCalendarContext } from './CalendarContext';
 
 interface CalendarGridProps {
     weekRows: (Date | null)[][];
     currentMonth: number;
     currentYear: number;
-    scheduleData: Schedule;
-    profile: Profile;
-    objectives: Objective[];
     onOpenManualModal: (e: React.MouseEvent, date: Date) => void;
-    onViewWorkout: (workout: Workout) => void;
-    onEditObjective: (obj: Objective) => void;
-    onRefresh: () => void;
-    onOpenGenModal: () => void;
 }
 
 export function CalendarGrid({
     weekRows,
     currentMonth,
-    scheduleData,
-    profile,
-    objectives,
     onOpenManualModal,
-    onViewWorkout,
-    onEditObjective,
-    onRefresh,
-    onOpenGenModal,
 }: CalendarGridProps) {
+    const { scheduleData, profile, objectives, onViewWorkout, onEditObjective, onRefresh, onOpenGenModal } = useCalendarContext();
 
     const allWeekStats = useMemo(() => {
         return weekRows.map(week => {

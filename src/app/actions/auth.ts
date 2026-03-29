@@ -2,11 +2,12 @@
 
 import { db } from '@/lib/db';
 import { profiles } from '@/lib/db/schema';
+import { createClient } from '@/lib/supabase/server';
 
 /**
  * Crée le profil initial d'un nouvel utilisateur.
  * Utilise onConflictDoNothing pour ne jamais écraser un profil existant.
- * Peut être appelé avant que la session soit active (ex: après signUp avec confirmation email).
+ * Vérifie que le userId fourni correspond à l'utilisateur authentifié.
  */
 export async function createInitialProfile(
     userId:    string,
@@ -14,10 +15,16 @@ export async function createInitialProfile(
     lastName:  string,
     email:     string,
 ): Promise<void> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || user.id !== userId) {
+        throw new Error('Non autorisé');
+    }
+
     await db
         .insert(profiles)
         .values({
-            id:            userId,
+            id:            user.id,
             createdAt:     new Date(),
             updatedAt:     new Date(),
             firstName,

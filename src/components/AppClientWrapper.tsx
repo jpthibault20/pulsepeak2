@@ -38,6 +38,7 @@ import { GenerationProgressModal, type GenProgressState } from '@/components/fea
 import { Card } from '@/components/ui';
 import { createCompletedData } from '@/lib/utils';
 import { Profile, Schedule } from '@/lib/data/DatabaseTypes';
+import { useTheme } from '@/components/ThemeProvider';
 
 // Definition des Props reçues du Server Component
 interface AppClientWrapperProps {
@@ -48,6 +49,16 @@ interface AppClientWrapperProps {
 
 // --- Composant Principal ---
 export default function AppClientWrapper({ initialProfile, initialSchedule, initialObjectives }: AppClientWrapperProps) {
+
+    // --- Sync theme from DB profile ---
+    const { setThemeFromProfile } = useTheme();
+    const themeAppliedRef = useRef(false);
+    useEffect(() => {
+        if (!themeAppliedRef.current && initialProfile.theme) {
+            setThemeFromProfile(initialProfile.theme);
+            themeAppliedRef.current = true;
+        }
+    }, [initialProfile.theme, setThemeFromProfile]);
 
     // --- State Management ---
     const startView: View = initialProfile.firstName ? 'dashboard' : 'onboarding';
@@ -113,9 +124,12 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
     }, [refreshData]);
 
     React.useEffect(() => {
-        if (initialProfile?.firstName) {
-            handleSyncStrava();
-        }
+        if (!initialProfile?.firstName) return;
+        let cancelled = false;
+        handleSyncStrava().finally(() => {
+            if (cancelled) return; // component unmounted
+        });
+        return () => { cancelled = true; };
     }, [handleSyncStrava, initialProfile?.firstName]);
 
     // --- Navigation Handler ---
