@@ -489,15 +489,18 @@ export async function atomicIncrementAICallCount(
     limit: number,
 ): Promise<void> {
     const userId = await getCurrentUserId();
+
     const countCol  = type === 'plan' ? profiles.aiPlanCallsCount       : profiles.aiWorkoutCallsCount;
     const dateCol   = type === 'plan' ? profiles.aiPlanCallsResetDate   : profiles.aiWorkoutCallsResetDate;
+    const countKey  = type === 'plan' ? 'aiPlanCallsCount'              : 'aiWorkoutCallsCount';
+    const dateKey   = type === 'plan' ? 'aiPlanCallsResetDate'          : 'aiWorkoutCallsResetDate';
 
     // Reset if new day, then check limit, then increment — all in one atomic UPDATE
     const result = await db
         .update(profiles)
         .set({
-            [countCol.name]:  sql`CASE WHEN ${dateCol} = ${today} THEN ${countCol} + 1 ELSE 1 END`,
-            [dateCol.name]:   today,
+            [countKey]: sql`CASE WHEN ${dateCol} = ${today} THEN ${countCol} + 1 ELSE 1 END`,
+            [dateKey]:  today,
         })
         .where(and(
             eq(profiles.id, userId),
