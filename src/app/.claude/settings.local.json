@@ -3,7 +3,9 @@
     "allow": [
       "Bash(ls -la /c/Users/tjean/Documents/GitHub/pulsepeak2025/tailwind*)",
       "Bash(npx tsc:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(pushd \"C:/Users/tjean/Documents/GitHub/pulsepeak2025\")",
+      "Bash(npx --prefix \"C:/Users/tjean/Documents/GitHub/pulsepeak2025\" tsc --noEmit --project \"C:/Users/tjean/Documents/GitHub/pulsepeak2025/tsconfig.json\")"
     ]
   }
 }

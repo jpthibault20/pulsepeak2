@@ -11,7 +11,7 @@ import {
     workouts as workoutsTable,
     objectives as objectivesTable,
 } from '@/lib/db/schema';
-import { eq, and, notInArray, gte, sql } from 'drizzle-orm';
+import { eq, and, ne, notInArray, gte, sql } from 'drizzle-orm';
 import { createClient } from '@/lib/supabase/server';
 import { Block, Objective, Plan, Profile, Schedule, Week, Workout } from './DatabaseTypes';
 import type { PlannedData, CompletedData } from './type';
@@ -419,7 +419,7 @@ export async function saveWeek(weeks: Week[]): Promise<void> {
     });
 }
 
-export async function saveWorkout(workoutList: Workout[]): Promise<void> {
+export async function saveWorkout(workoutList: Workout[], planStartDate?: string): Promise<void> {
     const userId = await getCurrentUserId();
 
     await db.transaction(async (tx) => {
@@ -459,12 +459,15 @@ export async function saveWorkout(workoutList: Workout[]): Promise<void> {
         const ids = workoutList.map((w) => w.id);
         const now = new Date();
         const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        // Utiliser la date de début du plan si fournie, sinon aujourd'hui
+        const deleteFromDate = planStartDate ?? todayStr;
         if (ids.length > 0) {
             await tx.delete(workoutsTable).where(
                 and(
                     eq(workoutsTable.userId, userId),
                     notInArray(workoutsTable.id, ids),
-                    gte(workoutsTable.date, todayStr),
+                    gte(workoutsTable.date, deleteFromDate),
+                    ne(workoutsTable.status, 'completed'),
                 )
             );
         }

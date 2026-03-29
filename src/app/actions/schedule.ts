@@ -105,7 +105,7 @@ export async function CreateAdvancedPlan(
         await savePlan([...(Array.isArray(plan) ? plan : []), newPlan]);
         await saveBlocks([...(Array.isArray(existingBlocks) ? existingBlocks : []), ...updatedBlocks]);
         await saveWeek([...(Array.isArray(existingWeeks) ? existingWeeks : []), ...updatedWeeks]);
-        await saveWorkout([...(Array.isArray(existingWorkouts) ? existingWorkouts : []), ...newWorkouts]);
+        await saveWorkout([...(Array.isArray(existingWorkouts) ? existingWorkouts : []), ...newWorkouts], startDate);
     } catch (err) {
         console.error('[CreateAdvancedPlan] Erreur lors de la sauvegarde:', err);
         return { state: ReturnCode.RC_Error, error: 'Erreur lors de la sauvegarde du plan.' };
@@ -220,7 +220,7 @@ export async function CreatePlanToObjective(userID: string, planStartDate: strin
         await savePlan([newPlan]);
         await saveBlocks([...updatedBlocks]);
         await saveWeek([...weeksWithWorkouts]);
-        await saveWorkout([...newWorkouts]);
+        await saveWorkout([...newWorkouts], startDate);
     } catch (err) {
         console.error('[CreatePlanToObjective] Erreur sauvegarde:', err);
         return { state: ReturnCode.RC_Error, error: 'Erreur lors de la sauvegarde du plan.' };
