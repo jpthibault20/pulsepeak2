@@ -656,6 +656,7 @@ ${zonesContext}
 
 ## DISPONIBILITÉS DE LA SEMAINE
 ${formattedAvailability || "Non spécifiées"}
+Les commentaires entre parenthèses décrivent le contexte de la journée (ex: sortie club, chill, compétition). Adapte le type et l'intensité de la séance en conséquence.
 
 ## CONTEXTE DE LA SEMAINE
 - Thème du bloc : ${block.theme}
