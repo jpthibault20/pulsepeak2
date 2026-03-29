@@ -160,7 +160,7 @@ export interface Zone {
   max: number;
 }
 
-export type SportType = 'cycling' | 'running' | 'swimming';
+export type SportType = 'cycling' | 'running' | 'swimming' | 'other';
 
 export interface StravaConfig {
   athleteId: number;

@@ -31,7 +31,7 @@ export const planStatusEnum         = pgEnum('plan_status',         ['active', '
 export const weekTypeEnum           = pgEnum('week_type',           ['Load', 'Recovery', 'Taper']);
 export const workoutStatusEnum      = pgEnum('workout_status',      ['pending', 'completed', 'missed']);
 export const workoutModeEnum        = pgEnum('workout_mode',        ['Outdoor', 'Indoor']);
-export const sportTypeEnum          = pgEnum('sport_type',          ['cycling', 'running', 'swimming']);
+export const sportTypeEnum          = pgEnum('sport_type',          ['cycling', 'running', 'swimming', 'other']);
 export const objectivePriorityEnum  = pgEnum('objective_priority',  ['principale', 'secondaire']);
 export const objectiveStatusEnum    = pgEnum('objective_status',    ['upcoming', 'completed', 'missed']);
 

@@ -67,12 +67,12 @@ export const SportsAndAppLink: React.FC<SportsAndLinkAppProps> = ({ formData, se
 
                 <div className="grid grid-cols-1 gap-3">
                     {SPORTS.map((sport) => {
-                        const active = formData.activeSports[sport.key as SportType];
+                        const active = formData.activeSports[sport.key as keyof typeof formData.activeSports];
                         const Icon = sport.icon;
                         return (
                             <button
                                 key={sport.key}
-                                onClick={() => toggleSport(sport.key as SportType)}
+                                onClick={() => toggleSport(sport.key as keyof typeof formData.activeSports)}
                                 className={`
                                     flex items-center gap-4 p-4 rounded-xl border transition-all text-left
                                     ${active

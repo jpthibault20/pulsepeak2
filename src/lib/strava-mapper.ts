@@ -45,12 +45,16 @@ interface StravaActivityInput {
 // Fonction utilitaire pour mapper le sport Strava -> Notre Sport
 function mapStravaSport(stravaType: string): SportType {
   switch (stravaType) {
-    case 'Run': return 'running';
+    case 'Run':
+    case 'TrailRun':
+    case 'VirtualRun': return 'running';
     case 'Swim': return 'swimming';
     case 'Ride':
     case 'VirtualRide':
-    case 'GravelRide': return 'cycling';
-    default: return 'cycling';
+    case 'GravelRide':
+    case 'MountainBikeRide':
+    case 'EBikeRide': return 'cycling';
+    default: return 'other';
   }
 }
 

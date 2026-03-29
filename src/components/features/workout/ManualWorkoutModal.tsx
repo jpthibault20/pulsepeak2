@@ -3,7 +3,7 @@ import type { SportType, CompletedData } from "@/lib/data/type";
 import type { Workout } from "@/lib/data/DatabaseTypes";
 import {
     Plus, Calendar, Activity, Timer, TrendingUp,
-    AlignLeft, Bike, Waves, User
+    AlignLeft, Bike, Waves, User, Mountain
 } from "lucide-react";
 import { useState } from "react";
 
@@ -112,7 +112,7 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                 id: `manual-${Date.now()}`,
                 userID,
                 weekID: '',
-                title: title || 'Sortie Libre',
+                title: title || (sportType === 'other' ? 'Activité' : 'Sortie Libre'),
                 date: dateStr,
                 sportType,
                 workoutType,
@@ -143,12 +143,21 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
         cycling: <Bike size={16} />,
         running: <User size={16} />,
         swimming: <Waves size={16} />,
+        other: <Mountain size={16} />,
+    };
+
+    const sportLabels: Record<SportType, string> = {
+        cycling: 'Vélo',
+        running: 'Course',
+        swimming: 'Natation',
+        other: 'Autre',
     };
 
     const workoutTypes: Record<SportType, string[]> = {
         cycling: ['Endurance', 'Tempo', 'Threshold', 'VO2max', 'Sprint', 'Recovery', 'Force'],
         running: ['Endurance', 'Tempo', 'Threshold', 'Intervals', 'Recovery', 'Long Run'],
         swimming: ['Endurance', 'Technique', 'Intervals', 'Recovery', 'Sprints'],
+        other: ['Endurance', 'Loisir', 'Intensif', 'Recovery'],
     };
 
     return (
@@ -179,26 +188,27 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                         <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-2">
                             Type de sport
                         </label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {(['cycling', 'running', 'swimming'] as SportType[]).map(sport => (
+                        <div className="grid grid-cols-4 gap-2">
+                            {(['cycling', 'running', 'swimming', 'other'] as SportType[]).map(sport => (
                                 <button
                                     key={sport}
                                     type="button"
                                     onClick={() => {
                                         setSportType(sport);
                                         setWorkoutType(workoutTypes[sport][0]);
+                                        if (sport === 'other') setTitle('');
                                     }}
                                     className={`
-                                        h-11 flex items-center justify-center gap-2 rounded-lg border-2
-                                        transition-all font-medium text-sm capitalize
+                                        h-11 flex items-center justify-center gap-1.5 rounded-lg border-2
+                                        transition-all font-medium text-sm
                                         ${sportType === sport
-                                            ? 'bg-blue-100 dark:bg-blue-500/20 border-blue-500 text-blue-600 dark:text-blue-400'
+                                            ? 'bg-blue-50 dark:bg-blue-500/20 border-blue-500 text-blue-600 dark:text-blue-400'
                                             : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-600'
                                         }
                                     `}
                                 >
                                     {sportIcons[sport]}
-                                    <span className="hidden sm:inline">{sport}</span>
+                                    <span className="hidden sm:inline text-xs">{sportLabels[sport]}</span>
                                 </button>
                             ))}
                         </div>
@@ -208,14 +218,14 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                     <div>
                         <label className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">
                             <Activity size={14} className="text-slate-500" />
-                            Titre de la séance
+                            {sportType === 'other' ? 'Nom de l\'activité' : 'Titre de la séance'}
                         </label>
                         <input
                             type="text"
                             value={title}
                             onChange={e => setTitle(e.target.value)}
                             className="w-full h-11 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-slate-500 dark:placeholder-slate-600"
-                            placeholder="Ex: Sortie longue dimanche"
+                            placeholder={sportType === 'other' ? 'Ex: Randonnée, Escalade, Ski...' : 'Ex: Sortie longue dimanche'}
                         />
                     </div>
 

@@ -59,6 +59,12 @@ const SPORT_CONFIG: Record<SportType, {
         color: 'text-cyan-600 dark:text-cyan-400',
         label: 'Natation',
         unit: 'min/100m'
+    },
+    other: {
+        icon: Mountain,
+        color: 'text-emerald-600 dark:text-emerald-400',
+        label: 'Autre',
+        unit: ''
     }
 };
 

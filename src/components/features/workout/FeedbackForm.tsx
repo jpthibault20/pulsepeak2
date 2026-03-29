@@ -32,6 +32,7 @@ const SPORT_CONFIG: Record<SportType, {
     cycling: { icon: Bike, label: 'Vélo', color: 'text-blue-600 dark:text-blue-400' },
     running: { icon: Running, label: 'Course', color: 'text-orange-600 dark:text-orange-400' },
     swimming: { icon: Waves, label: 'Natation', color: 'text-cyan-600 dark:text-cyan-400' },
+    other: { icon: Mountain, label: 'Autre', color: 'text-emerald-600 dark:text-emerald-400' },
 };
 
 // --- Helper Type-Safe ---
