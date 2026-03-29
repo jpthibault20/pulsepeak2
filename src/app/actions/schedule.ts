@@ -630,12 +630,14 @@ export async function CreateWorkoutForWeek(
     const activeSports = getActiveSports(profile.activeSports);
     const formattedAvailability = formatAvailability(weeklyAvailability);
 
-    // Zones context pour des descriptions précises en watts
+    // Zones context pour des descriptions précises
     let zonesContext = "";
+
+    // Zones de puissance vélo
     if (profile.cycling?.Test?.zones) {
         const z = profile.cycling.Test.zones;
-        zonesContext = `
-## ZONES DE PUISSANCE CYCLISME (à utiliser dans les descriptions)
+        zonesContext += `
+## ZONES DE PUISSANCE CYCLISME (priorité n°1 pour les descriptions vélo)
 - Z1 (Récupération) : < ${z.z1.max} W
 - Z2 (Endurance) : ${z.z2.min}–${z.z2.max} W
 - Z3 (Tempo) : ${z.z3.min}–${z.z3.max} W
@@ -643,6 +645,46 @@ export async function CreateWorkoutForWeek(
 - Z5 (VO2 Max) : ${z.z5.min}–${z.z5.max} W
 - Z6 (Anaérobie) : ${z.z6?.min}–${z.z6?.max} W
 - Z7 (Neuromusculaire) : > ${z.z7?.min} W`;
+    }
+
+    // Zones cardio (fallback vélo si pas de puissance, et pour la natation)
+    if (profile.heartRate?.zones) {
+        const z = profile.heartRate.zones;
+        zonesContext += `
+## ZONES DE FRÉQUENCE CARDIAQUE (pour natation en priorité, fallback vélo/course si pas de watts/allures)
+${profile.heartRate.max ? `- FC Max : ${profile.heartRate.max} bpm` : ''}
+${profile.heartRate.resting ? `- FC Repos : ${profile.heartRate.resting} bpm` : ''}
+- Z1 (Récupération) : < ${z.z1.max} bpm
+- Z2 (Endurance) : ${z.z2.min}–${z.z2.max} bpm
+- Z3 (Tempo) : ${z.z3.min}–${z.z3.max} bpm
+- Z4 (Seuil) : ${z.z4.min}–${z.z4.max} bpm
+- Z5 (VO2 Max) : ${z.z5.min}–${z.z5.max} bpm`;
+    } else if (profile.heartRate?.max) {
+        zonesContext += `
+## FRÉQUENCE CARDIAQUE (pour natation en priorité, fallback vélo/course)
+- FC Max : ${profile.heartRate.max} bpm${profile.heartRate.resting ? `\n- FC Repos : ${profile.heartRate.resting} bpm` : ''}`;
+    }
+
+    // Zones d'allure course à pied (stockées en sec/km, affichées en M:SS/km)
+    const fmtPace = (sec: number) => {
+        const m = Math.floor(sec / 60);
+        const s = Math.round(sec % 60);
+        return `${m}:${String(s).padStart(2, '0')}`;
+    };
+
+    if (profile.running?.Test?.zones) {
+        const z = profile.running.Test.zones;
+        zonesContext += `
+## ZONES D'ALLURE COURSE À PIED (priorité n°1 pour les descriptions course)
+- Z1 (Récupération) : ${fmtPace(z.z1.min)}–${fmtPace(z.z1.max)} /km
+- Z2 (Endurance) : ${fmtPace(z.z2.min)}–${fmtPace(z.z2.max)} /km
+- Z3 (Tempo) : ${fmtPace(z.z3.min)}–${fmtPace(z.z3.max)} /km
+- Z4 (Seuil) : ${fmtPace(z.z4.min)}–${fmtPace(z.z4.max)} /km
+- Z5 (VO2 Max) : ${fmtPace(z.z5.min)}–${fmtPace(z.z5.max)} /km`;
+    } else if (profile.running?.Test?.vma) {
+        zonesContext += `
+## DONNÉES COURSE À PIED (priorité n°1 pour les descriptions course)
+- VMA : ${profile.running.Test.vma} km/h`;
     }
 
    const aiPrompt = `
@@ -762,8 +804,15 @@ ${profile.experience === 'Débutant' ? `⚠️ DÉBUTANT — Appliquer impérati
 6. Ne pas placer 2 séances dures (Interval, Tempo) consécutives.
 7. En semaine Recovery : séances courtes, faible intensité uniquement.
 8. Le dayOffset doit correspondre exactement au jour disponible (0=Lundi ... 6=Dimanche).
-9. La "description" doit être précise, technique et inclure les valeurs de watts/allure réelles de l'athlète.
-   Exemple de format attendu : "Échauffement: 20 min Z1-Z2. Corps de séance: 3x10 min Over/Under. Chaque 10 min = 2x(1 min @ 260-270W (Z5) / 4 min @ 230-240W (Z4)). Récupération 8 min Z1/Z2 entre les 10 min. Retour au calme: 16 min Z1."
+9. Exactement UNE séance par créneau disponible (pas plus, pas moins), sauf en semaine de course où certains jours peuvent être laissés vides (repos).
+10. La "description" doit être précise, technique, structurée (échauffement, corps de séance, retour au calme).
+   Utilise la métrique PRIORITAIRE par sport :
+   - VÉLO : en priorité les WATTS/zones de puissance. Si le profil n'a pas de FTP/zones, utilise le cardio (FC). En dernier recours, les sensations (RPE).
+     Exemple vélo : "Échauffement: 20 min Z1-Z2. Corps: 3x10 min @ 230-240W (Z4). Récup 5 min Z1. Retour au calme: 15 min Z1."
+   - COURSE À PIED : en priorité les ALLURES (min/km). Si pas d'allures connues, utilise le cardio (FC). En dernier recours, les sensations (RPE).
+     Exemple course : "Échauffement: 15 min allure libre. Corps: 5x1000m @ 4:30/km, récup 2 min trot. Retour au calme: 10 min footing souple."
+   - NATATION : en priorité le CARDIO (FC/zones). Si pas de données cardio, utilise les sensations (RPE/effort perçu).
+     Exemple natation : "Échauffement: 400m crawl souple. Corps: 10x100m @ effort soutenu (Z3-Z4), repos 20s. Retour au calme: 200m nage au choix."
 
 ## FORMAT DE RÉPONSE
 Réponds UNIQUEMENT avec un tableau JSON valide — sans markdown, sans explication.
