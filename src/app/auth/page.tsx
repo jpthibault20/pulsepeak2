@@ -144,7 +144,7 @@ export default function AuthPage() {
             router.refresh();
             return;
         }
-        setSuccess('Compte créé ! Vérifiez votre boîte mail pour confirmer votre adresse.');
+        setSuccess('Compte créé ! Vérifiez votre boîte mail pour confirmer votre adresse (pensez à vérifier vos spams).');
         setIsLoading(false);
     };
 
