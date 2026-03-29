@@ -18,11 +18,11 @@ interface GenerationModalProps {
 }
 
 const SPORT_LABELS: Record<string, string> = {
-    cycling:   'Vélo',
-    running:   'Course',
-    swimming:  'Natation',
+    cycling: 'Vélo',
+    running: 'Course',
+    swimming: 'Natation',
     triathlon: 'Triathlon',
-    duathlon:  'Duathlon',
+    duathlon: 'Duathlon',
 };
 
 export const GenerationModal: React.FC<GenerationModalProps> = ({
@@ -33,7 +33,7 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
     isGenerating,
     objectives,
 }) => {
-    const [mode, setMode] = useState<Mode>('block');
+    const [mode, setMode] = useState<Mode>('objective');
     const [blockFocus, setBlockFocus] = useState('Endurance');
     const [customTheme, setCustomTheme] = useState('');
     const [numWeeks, setNumWeeks] = useState(4);
@@ -58,19 +58,19 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
     const secondaryInRange = upcomingPrimary
         ? objectives.filter(
             o => o.priority === 'secondaire' && o.status === 'upcoming'
-              && o.date >= today && o.date <= upcomingPrimary.date
-          )
+                && o.date >= today && o.date <= upcomingPrimary.date
+        )
         : [];
 
     const handleGenerateBlock = async () => {
         const durationToSend = blockFocus === 'Personnalisé' ? numWeeks : 4;
-        await onGenerate(blockFocus, blockFocus === 'Personnalisé' ? customTheme : null, startDate, durationToSend);
         onClose();
+        await onGenerate(blockFocus, blockFocus === 'Personnalisé' ? customTheme : null, startDate, durationToSend);
     };
 
     const handleGenerateObjective = async () => {
-        await onGenerateToObjective(planStartDate);
         onClose();
+        await onGenerateToObjective(planStartDate);
     };
 
     return (
@@ -80,26 +80,24 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
                 {/* ── Mode selector ── */}
                 <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl">
                     <button
-                        onClick={() => setMode('block')}
-                        className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
-                            mode === 'block'
-                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 dark:shadow-blue-900/30'
-                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
-                        }`}
-                    >
-                        <Sliders size={14} />
-                        Bloc d&apos;entraînement
-                    </button>
-                    <button
                         onClick={() => setMode('objective')}
-                        className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
-                            mode === 'objective'
+                        className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${mode === 'objective'
                                 ? 'bg-rose-600 text-white shadow-lg shadow-rose-500/30 dark:shadow-rose-900/30'
                                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
-                        }`}
+                            }`}
                     >
                         <Trophy size={14} />
                         Vers un objectif
+                    </button>
+                    <button
+                        onClick={() => setMode('block')}
+                        className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${mode === 'block'
+                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 dark:shadow-blue-900/30'
+                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                            }`}
+                    >
+                        <Sliders size={14} />
+                        Bloc d&apos;entraînement
                     </button>
                 </div>
 
@@ -137,11 +135,10 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
                                     <button
                                         key={focus}
                                         onClick={() => setBlockFocus(focus)}
-                                        className={`p-3 rounded-lg text-xs sm:text-sm text-left transition-all border whitespace-normal h-full min-h-[50px] flex items-center ${
-                                            blockFocus === focus
+                                        className={`p-3 rounded-lg text-xs sm:text-sm text-left transition-all border whitespace-normal h-full min-h-[50px] flex items-center ${blockFocus === focus
                                                 ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)]'
                                                 : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-750 hover:border-slate-400 dark:hover:border-slate-600'
-                                        }`}
+                                            }`}
                                     >
                                         {focus === 'Semaine de Tests (FTP, VO2max)' ? 'Semaine de Tests' : focus}
                                     </button>

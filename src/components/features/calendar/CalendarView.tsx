@@ -56,6 +56,7 @@ export function CalendarView({
     const [isGenerating, setIsGenerating] = useState(false);
     const [isSavingObjective, setIsSavingObjective] = useState(false);
     const [showRecalcPrompt, setShowRecalcPrompt] = useState(false);
+    const [editingObjective, setEditingObjective] = useState<Objective | null>(null);
 
     const { year, month, weekRows } = useCalendarDays(selectedDate);
     const { plan } = useSubscription();
@@ -90,6 +91,12 @@ export function CalendarView({
 
     const handlePickObjective = () => {
         setShowDayActionModal(false);
+        setEditingObjective(null);
+        setShowObjectiveModal(true);
+    };
+
+    const handleEditObjective = (obj: Objective) => {
+        setEditingObjective(obj);
         setShowObjectiveModal(true);
     };
 
@@ -288,6 +295,7 @@ export function CalendarView({
                     objectives={objectives}
                     onOpenManualModal={handleOpenDayAction}
                     onViewWorkout={onViewWorkout}
+                    onEditObjective={handleEditObjective}
                     onRefresh={onRefresh}
                     onOpenGenModal={() => setShowGenModal(true)}
                 />
@@ -300,6 +308,7 @@ export function CalendarView({
                     currentMonth={month}
                     scheduleData={scheduleData}
                     objectives={objectives}
+                    onEditObjective={handleEditObjective}
                     selectedDay={selectedMobileDay}
                     onSelectDay={setSelectedMobileDay}
                     onOpenManualModal={handleOpenDayAction}
@@ -452,9 +461,10 @@ export function CalendarView({
             {showObjectiveModal && (
                 <ObjectiveModal
                     isOpen={showObjectiveModal}
-                    onClose={() => setShowObjectiveModal(false)}
+                    onClose={() => { setShowObjectiveModal(false); setEditingObjective(null); }}
                     onSave={handleSaveObjective}
-                    initialDate={dateForAction ? `${dateForAction.getFullYear()}-${String(dateForAction.getMonth() + 1).padStart(2, '0')}-${String(dateForAction.getDate()).padStart(2, '0')}` : undefined}
+                    initial={editingObjective}
+                    initialDate={editingObjective ? undefined : (dateForAction ? `${dateForAction.getFullYear()}-${String(dateForAction.getMonth() + 1).padStart(2, '0')}-${String(dateForAction.getDate()).padStart(2, '0')}` : undefined)}
                     isSaving={isSavingObjective}
                 />
             )}

@@ -13,6 +13,7 @@ interface CalendarGridProps {
     objectives: Objective[];
     onOpenManualModal: (e: React.MouseEvent, date: Date) => void;
     onViewWorkout: (workout: Workout) => void;
+    onEditObjective: (obj: Objective) => void;
     onRefresh: () => void;
     onOpenGenModal: () => void;
 }
@@ -25,6 +26,7 @@ export function CalendarGrid({
     objectives,
     onOpenManualModal,
     onViewWorkout,
+    onEditObjective,
     onRefresh,
     onOpenGenModal,
 }: CalendarGridProps) {
@@ -160,6 +162,7 @@ export function CalendarGrid({
                                             isToday={isToday}
                                             onOpenManualModal={onOpenManualModal}
                                             onViewWorkout={onViewWorkout}
+                                            onEditObjective={onEditObjective}
                                         />
                                     </div>
                                 );

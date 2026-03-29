@@ -12,6 +12,7 @@ interface DayCellProps {
     isToday: boolean;
     onOpenManualModal: (e: React.MouseEvent, date: Date) => void;
     onViewWorkout: (workout: Workout) => void;
+    onEditObjective: (obj: Objective) => void;
 }
 
 export function DayCell({
@@ -21,7 +22,8 @@ export function DayCell({
     isCurrentMonth,
     isToday,
     onOpenManualModal,
-    onViewWorkout
+    onViewWorkout,
+    onEditObjective,
 }: DayCellProps) {
     const [showPopover, setShowPopover] = useState(false);
 
@@ -74,16 +76,16 @@ export function DayCell({
             {objectives.length > 0 && (
                 <div className="flex flex-col gap-0.5 mb-1">
                     {primaryObj && (
-                        <div className="flex items-center gap-1 px-1.5 py-0.5 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-500/40 rounded-md">
+                        <button onClick={() => onEditObjective(primaryObj)} className="flex items-center gap-1 px-1.5 py-0.5 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-500/40 rounded-md hover:bg-rose-100 dark:hover:bg-rose-950/80 transition-colors cursor-pointer text-left w-full">
                             <Trophy size={9} className="text-rose-600 dark:text-rose-400 shrink-0" />
                             <span className="text-rose-600 dark:text-rose-300 text-[10px] font-semibold truncate">{primaryObj.name}</span>
-                        </div>
+                        </button>
                     )}
                     {secondaryObjs.map(o => (
-                        <div key={o.id} className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-500/30 rounded-md">
+                        <button key={o.id} onClick={() => onEditObjective(o)} className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-500/30 rounded-md hover:bg-amber-100 dark:hover:bg-amber-950/60 transition-colors cursor-pointer text-left w-full">
                             <Target size={9} className="text-amber-600 dark:text-amber-400 shrink-0" />
                             <span className="text-amber-600 dark:text-amber-300 text-[10px] truncate">{o.name}</span>
-                        </div>
+                        </button>
                     ))}
                 </div>
             )}

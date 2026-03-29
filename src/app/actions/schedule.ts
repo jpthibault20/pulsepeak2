@@ -207,7 +207,16 @@ export async function CreatePlanToObjective(userID: string, planStartDate: strin
     // Générer séances pour la première semaine uniquement
     const firstWeek = finalWeeks[0];
     const firstBlock = updatedBlocks.find(b => b.id === firstWeek.blockID) ?? updatedBlocks[0];
-    const firstWeekWorkouts = await CreateWorkoutForWeek(profile, newPlan, firstBlock, firstWeek, null, 100, profile.weeklyAvailability);
+
+    // Trouver les objectifs de cette semaine et la suivante
+    const firstWeekStart = parseISO(firstBlock.startDate);
+    const firstWeekEnd = addDays(firstWeekStart, 13); // cette semaine + semaine suivante
+    const relevantObjectives = [...secondaryObjectives, primaryObjective].filter(o => {
+        const objDate = parseISO(o.date);
+        return objDate >= firstWeekStart && objDate <= firstWeekEnd;
+    });
+
+    const firstWeekWorkouts = await CreateWorkoutForWeek(profile, newPlan, firstBlock, firstWeek, null, 100, profile.weeklyAvailability, relevantObjectives);
 
     const newWorkouts: Workout[] = [...firstWeekWorkouts];
     const weeksWithWorkouts = finalWeeks.map(w =>
@@ -250,6 +259,10 @@ async function CreateBlocksToObjective(
 
     const blockSkeletons = computeBlockSkeletons(totalWeeks);
 
+    // Récupérer l'historique des séances pour informer l'IA
+    const existingWorkouts = await getWorkout();
+    const historySummary = getTrainingHistorySummary(existingWorkouts ?? []);
+
     const secondaryContext = secondaryObjs.length > 0
         ? `\n## OBJECTIFS SECONDAIRES (courses intermédiaires)\n` +
           secondaryObjs.map(o => `- ${o.name} le ${o.date} (${o.sport}${o.distanceKm ? ', ' + o.distanceKm + ' km' : ''})`).join('\n') +
@@ -270,7 +283,12 @@ ${secondaryContext}
 ## CONTEXTE ATHLÈTE
 - Niveau : ${profile.experience ?? 'Intermédiaire'}
 - CTL actuelle : ${profile.currentCTL}
+- ATL actuelle : ${profile.currentATL}
 - Disciplines : ${profile.activeSports.cycling ? 'cyclisme' : ''}${profile.activeSports.running ? ', course à pied' : ''}${profile.activeSports.swimming ? ', natation' : ''}
+
+## HISTORIQUE D'ENTRAÎNEMENT RÉCENT
+${historySummary}
+→ UTILISE CET HISTORIQUE pour adapter les blocs : si l'athlète a déjà fait du travail de base (endurance longue, volume élevé), ne repropose PAS un bloc Base. Enchaîne directement sur Build/Peak selon la progression logique.
 
 ## STRUCTURE TEMPORELLE
 ${blockSkeletons.length} blocs de méso-cycles :
@@ -280,7 +298,8 @@ ${blockSkeletons.map(b => `- Bloc ${b.index} : ${b.duration} semaines${b.isLast 
 1. Le dernier bloc DOIT être de type "Taper" (affûtage pré-course).
 2. Structurer les blocs pour progresser logiquement vers l'objectif principal.
 3. Prendre en compte les objectifs secondaires pour la périodisation.
-4. Thèmes spécifiques à la discipline et à l'objectif (ex: "Endurance longue distance", "PMA triathlon").
+4. Prendre en compte l'historique récent pour ne pas répéter une phase déjà accomplie.
+5. Thèmes spécifiques à la discipline et à l'objectif (ex: "Endurance longue distance", "PMA triathlon").
 
 Retourner un tableau JSON. Chaque objet contient exactement :
 - "index" (number) : numéro du bloc
@@ -415,24 +434,31 @@ function CreatePlan(
  *             (weeksId vide, sera rempli par CreateWeeks)
  ******************************************************************************/
 async function CreateBlocks(plan: Plan, profile: Profile): Promise<Block[]> {
-    const start = startOfISOWeek(new Date(plan.startDate));
-    const goal  = endOfISOWeek(new Date(plan.goalDate));
+    const start = startOfISOWeek(parseISO(plan.startDate));
+    const goal  = endOfISOWeek(parseISO(plan.goalDate));
     const totalWeeks = differenceInWeeks(goal, start) + 1;
 
     if (totalWeeks < 1) throw new Error("Le plan est trop court !");
 
     const blockSkeletons = computeBlockSkeletons(totalWeeks);
 
-// @TODO: remplacer les spécification au cyclisme en adaptatif au triathlon 
+    // Récupérer l'historique des séances pour informer l'IA
+    const existingWorkouts = await getWorkout();
+    const historySummary = getTrainingHistorySummary(existingWorkouts ?? []);
+
     const aiPrompt = `
         Tu es un coach de ${profile.activeSports.cycling ? 'cyclisme' : ''}${profile.activeSports.running ? ', course à pied' : ''}${profile.activeSports.swimming ? ', natation' : ''} certifié et avec 15 ans d'experience dans le monde du sport.
 
         ## CONTEXTE ATHLÈTE
         - Objectif : ${plan.macroStrategyDescription}
         - Date de course : ${plan.goalDate}
-        - Niveau : ${profile.experience ?? "Intermédiaire"} 
-        - Volume hebdo actuel : ${"Non spécifié"}h
-        - Discipline faible : ${"Non spécifié"}
+        - Niveau : ${profile.experience ?? "Intermédiaire"}
+        - CTL actuelle : ${profile.currentCTL}
+        - ATL actuelle : ${profile.currentATL}
+
+        ## HISTORIQUE D'ENTRAÎNEMENT RÉCENT
+${historySummary}
+→ UTILISE CET HISTORIQUE pour adapter les blocs : si l'athlète a déjà fait du travail de base (endurance longue, volume élevé), ne repropose PAS un bloc Base. Enchaîne directement sur Build/Peak selon la progression logique.
 
         ## STRUCTURE TEMPORELLE
         ${blockSkeletons.length} blocs de méso-cycles :
@@ -582,11 +608,11 @@ export async function CreateWorkoutForWeek(
     week: Week,
     userComment: string | null,
     avgCompletion: number,
-    weeklyAvailability: { [key: string]: AvailabilitySlot }, 
+    weeklyAvailability: { [key: string]: AvailabilitySlot },
+    weekObjectives?: Objective[],
 ): Promise<Workout[]>
 {
-    const weekStartDate = new Date(block.startDate);
-    weekStartDate.setDate(weekStartDate.getDate() + (week.weekNumber - 1) * 7);
+    const weekStartDate = addDays(parseISO(block.startDate), (week.weekNumber - 1) * 7);
     const activeSports = getActiveSports(profile.activeSports);
     const formattedAvailability = formatAvailability(weeklyAvailability);
 
@@ -627,6 +653,10 @@ ${userComment        ? `- Commentaire athlète : "${userComment}"` : ""}
 - Complétion des 4 dernières semaines : ${avgCompletion}%
 ${avgCompletion < 80 ? `- ⚠️ Complétion faible : réduire l'intensité et le volume global` : ""}
 ${avgCompletion > 95 ? `- ✅ Complétion excellente : l'athlète peut absorber plus de charge` : ""}
+${weekObjectives && weekObjectives.length > 0 ? `
+## OBJECTIFS / COURSES CETTE SEMAINE OU LA SEMAINE SUIVANTE
+${weekObjectives.map(o => `- 🏁 ${o.name} le ${o.date} (${o.sport}${o.distanceKm ? ', ' + o.distanceKm + ' km' : ''}${o.elevationGainM ? ', D+ ' + o.elevationGainM + ' m' : ''}) — Priorité : ${o.priority}
+  → Adapter la semaine : pré-fatigue minimale avant la course, placer des séances légères les jours précédents, ne PAS planifier de séance dure le jour de la course (la course EST la séance).`).join('\n')}` : ""}
 
 ## RÈGLES NIVEAU ATHLÈTE
 ${profile.experience === 'Débutant' ? `⚠️ DÉBUTANT — Appliquer impérativement :
@@ -707,15 +737,14 @@ Chaque objet contient exactement :
     }) as AIWorkout[];
 
     return aiResponse.map((w) => {
-    const workoutDate = new Date(weekStartDate);
-    workoutDate.setDate(workoutDate.getDate() + w.dayOffset);
+    const workoutDate = addDays(weekStartDate, w.dayOffset);
 
     return {
         ID:          randomUUID(),
         id:          randomUUID(),
         userID:      profile.id,
         weekID:      week.id,
-        date:        formatDateKey(workoutDate),
+        date:        format(workoutDate, 'yyyy-MM-dd'),
         sportType:   w.sportType as SportType,
         title:       w.title,
         workoutType: w.workoutType,
@@ -758,6 +787,54 @@ Chaque objet contient exactement :
 
 
 // --- Helpers ---
+
+/**
+ * Résumé compact de l'historique récent pour informer la génération des blocs.
+ * Retourne les 4 dernières semaines : volume, sports, types d'entraînement.
+ */
+function getTrainingHistorySummary(workouts: Workout[]): string {
+    const completed = workouts
+        .filter(w => w.status === 'completed' && w.completedData)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    if (completed.length === 0) return "Aucun historique d'entraînement disponible — l'athlète débute ou n'a pas de données.";
+
+    // Regrouper par semaine (4 dernières)
+    const weekMap = new Map<string, Workout[]>();
+    for (const w of completed) {
+        const d = new Date(w.date);
+        const weekStart = new Date(d);
+        weekStart.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+        const key = weekStart.toISOString().split('T')[0];
+        if (!weekMap.has(key)) weekMap.set(key, []);
+        weekMap.get(key)!.push(w);
+    }
+
+    const recentWeeks = [...weekMap.entries()].slice(0, 4);
+    if (recentWeeks.length === 0) return "Aucun historique récent.";
+
+    const lines = recentWeeks.map(([weekOf, wks]) => {
+        const sportCount: Record<string, number> = {};
+        const typeCount: Record<string, number> = {};
+        let totalDuration = 0;
+        let totalTSS = 0;
+
+        for (const w of wks) {
+            sportCount[w.sportType] = (sportCount[w.sportType] || 0) + 1;
+            typeCount[w.workoutType || 'Autre'] = (typeCount[w.workoutType || 'Autre'] || 0) + 1;
+            totalDuration += w.completedData?.actualDurationMinutes || 0;
+            totalTSS += w.completedData?.metrics?.cycling?.tss || 0;
+        }
+
+        const sports = Object.entries(sportCount).map(([s, n]) => `${s}(${n})`).join(', ');
+        const types = Object.entries(typeCount).map(([t, n]) => `${t}(${n})`).join(', ');
+        const hours = (totalDuration / 60).toFixed(1);
+
+        return `- Semaine du ${weekOf} : ${wks.length} séances | ${hours}h | TSS ${totalTSS} | Sports: ${sports} | Types: ${types}`;
+    });
+
+    return lines.join('\n');
+}
 
 const getRecentPerformanceHistory = (schedule: Schedule): string => {
     // Sécurité: vérifier que schedule.workouts est un tableau
@@ -1415,22 +1492,19 @@ export async function syncStravaActivities() {
                 // Trouver la semaine du bloc actif correspondant à cette date
                 let activeWeekID = '';
                 if (existingBlocks && existingWeeks) {
-                    const activityDateObj = new Date(activityDate);
+                    const activityDateObj = parseISO(activityDate);
                     const activeBlock = existingBlocks.find(block => {
-                        const blockStart = new Date(block.startDate);
-                        const blockEnd = new Date(blockStart);
-                        blockEnd.setDate(blockEnd.getDate() + block.weekCount * 7);
+                        const blockStart = parseISO(block.startDate);
+                        const blockEnd = addDays(blockStart, block.weekCount * 7);
                         return activityDateObj >= blockStart && activityDateObj < blockEnd;
                     });
 
                     if (activeBlock) {
-                        const blockStart = new Date(activeBlock.startDate);
+                        const blockStart = parseISO(activeBlock.startDate);
                         const blockWeeks = existingWeeks.filter(w => activeBlock.weeksId?.includes(w.id));
                         const activeWeek = blockWeeks.find(week => {
-                            const weekStart = new Date(blockStart);
-                            weekStart.setDate(weekStart.getDate() + (week.weekNumber - 1) * 7);
-                            const weekEnd = new Date(weekStart);
-                            weekEnd.setDate(weekEnd.getDate() + 6);
+                            const weekStart = addDays(blockStart, (week.weekNumber - 1) * 7);
+                            const weekEnd = addDays(weekStart, 6);
                             return activityDateObj >= weekStart && activityDateObj <= weekEnd;
                         });
 
@@ -1506,20 +1580,17 @@ function findBlockAndWeekForDate(
     targetDate: Date
 ): { block: Block; week: Week } | null {
     const block = blocks.find(b => {
-        const start = new Date(b.startDate);
-        const end = new Date(start);
-        end.setDate(end.getDate() + b.weekCount * 7);
+        const start = parseISO(b.startDate);
+        const end = addDays(start, b.weekCount * 7);
         return targetDate >= start && targetDate < end;
     });
     if (!block) return null;
 
-    const blockStart = new Date(block.startDate);
+    const blockStart = parseISO(block.startDate);
     const blockWeeks = weeks.filter(w => block.weeksId?.includes(w.id));
     const week = blockWeeks.find(w => {
-        const wStart = new Date(blockStart);
-        wStart.setDate(wStart.getDate() + (w.weekNumber - 1) * 7);
-        const wEnd = new Date(wStart);
-        wEnd.setDate(wEnd.getDate() + 6);
+        const wStart = addDays(blockStart, (w.weekNumber - 1) * 7);
+        const wEnd = addDays(wStart, 6);
         return targetDate >= wStart && targetDate <= wEnd;
     });
 
@@ -1545,7 +1616,7 @@ export async function getWeekContextForDate(weekStartDate: string): Promise<Week
     const [blocks, weeks] = await Promise.all([getBlock(), getWeek()]);
     if (!blocks || !weeks) return null;
 
-    const result = findBlockAndWeekForDate(blocks, weeks, new Date(weekStartDate));
+    const result = findBlockAndWeekForDate(blocks, weeks, parseISO(weekStartDate));
     if (!result) return null;
 
     return {
@@ -1566,7 +1637,7 @@ export async function getWeekPendingCount(weekStartDate: string): Promise<number
     const [blocks, weeks, workouts] = await Promise.all([getBlock(), getWeek(), getWorkout()]);
     if (!blocks || !weeks || !workouts) return 0;
 
-    const result = findBlockAndWeekForDate(blocks, weeks, new Date(weekStartDate));
+    const result = findBlockAndWeekForDate(blocks, weeks, parseISO(weekStartDate));
     if (!result) return 0;
 
     return workouts.filter(w => w.weekID === result.week.id && w.status === 'pending').length;
@@ -1591,12 +1662,22 @@ export async function generateWeekWorkoutsFromDate(
 
     if (!blocks || !weeks) throw new Error("Aucun plan trouvé.");
 
-    const result = findBlockAndWeekForDate(blocks, weeks, new Date(weekStartDate));
+    const result = findBlockAndWeekForDate(blocks, weeks, parseISO(weekStartDate));
     if (!result) throw new Error("Aucun bloc actif pour cette semaine.");
 
     const { block, week } = result;
     const plan = plans?.find(p => p.id === block.planId);
     if (!plan) throw new Error("Plan introuvable.");
+
+    // Trouver les objectifs pertinents (cette semaine + semaine suivante)
+    const objectives = await getObjectives();
+    const weekStart = parseISO(weekStartDate);
+    const weekEndPlusOne = addDays(weekStart, 13);
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const weekObjectives = objectives.filter(o =>
+        o.status === 'upcoming' && o.date >= todayStr
+        && parseISO(o.date) >= weekStart && parseISO(o.date) <= weekEndPlusOne
+    );
 
     const newWorkouts = await CreateWorkoutForWeek(
         profile,
@@ -1605,7 +1686,8 @@ export async function generateWeekWorkoutsFromDate(
         week,
         comment,
         100,
-        weeklyAvailability
+        weeklyAvailability,
+        weekObjectives,
     );
 
     if (!newWorkouts || newWorkouts.length === 0) {

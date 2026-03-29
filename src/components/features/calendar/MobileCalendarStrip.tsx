@@ -16,6 +16,7 @@ interface MobileCalendarStripProps {
     onSelectDay: (date: Date) => void;
     onOpenManualModal: (e: React.MouseEvent, date: Date) => void;
     onViewWorkout: (workout: Workout) => void;
+    onEditObjective: (obj: Objective) => void;
 }
 
 // DAY_NAMES_SHORT = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'] (Mon=0)
@@ -55,6 +56,7 @@ export function MobileCalendarStrip({
     onSelectDay,
     onOpenManualModal,
     onViewWorkout,
+    onEditObjective,
 }: MobileCalendarStripProps) {
     const scrollRef  = useRef<HTMLDivElement>(null);
     const todayKey   = useMemo(() => formatDateKey(new Date()), []);
@@ -193,7 +195,8 @@ export function MobileCalendarStrip({
                         return (
                             <div
                                 key={obj.id}
-                                className={`flex items-start gap-2.5 p-3 rounded-xl border ${
+                                onClick={() => onEditObjective(obj)}
+                                className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition-colors ${
                                     isPrimary
                                         ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-500/40'
                                         : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-500/30'
