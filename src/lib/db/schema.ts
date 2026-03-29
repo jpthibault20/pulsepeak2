@@ -9,6 +9,7 @@ import {
     integer,
     jsonb,
     pgEnum,
+    index,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import type {
@@ -103,6 +104,8 @@ export const profiles = pgTable('profiles', {
     aiPlanCallsResetDate:   date('ai_plan_calls_reset_date'),
     aiWorkoutCallsCount:    integer('ai_workout_calls_count').default(0).notNull(),
     aiWorkoutCallsResetDate:date('ai_workout_calls_reset_date'),
+
+    theme:          varchar('theme', { length: 10 }).default('dark').notNull(),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -120,7 +123,9 @@ export const plans = pgTable('plans', {
     macroStrategyDescription:  text('macro_strategy_description'),
     status:                    planStatusEnum('status').default('active').notNull(),
     objectivesIds:             jsonb('objectives_ids').$type<string[]>().default([]),
-});
+}, (t) => [
+    index('plans_user_id_idx').on(t.userId),
+]);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // blocks  (méso-cycles)
@@ -141,7 +146,9 @@ export const blocks = pgTable('blocks', {
     startCTL:     real('start_ctl'),
     targetCTL:    real('target_ctl'),
     avgWeeklyTSS: real('avg_weekly_tss'),
-});
+}, (t) => [
+    index('blocks_user_id_idx').on(t.userId),
+]);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // weeks
@@ -158,7 +165,9 @@ export const weeks = pgTable('weeks', {
     targetTSS:    real('target_tss'),
     actualTSS:    real('actual_tss').default(0).notNull(),
     userFeedback: text('user_feedback'),
-});
+}, (t) => [
+    index('weeks_user_id_idx').on(t.userId),
+]);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // workouts
@@ -180,7 +189,10 @@ export const workouts = pgTable('workouts', {
 
     plannedData:   jsonb('planned_data').$type<PlannedData>(),
     completedData: jsonb('completed_data').$type<CompletedData>(),
-});
+}, (t) => [
+    index('workouts_user_id_idx').on(t.userId),
+    index('workouts_date_idx').on(t.date),
+]);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // objectives  (courses / événements cibles)
@@ -200,7 +212,9 @@ export const objectives = pgTable('objectives', {
     priority:      objectivePriorityEnum('priority').notNull().default('secondaire'),
     status:        objectiveStatusEnum('status').notNull().default('upcoming'),
     comment:       text('comment'),
-});
+}, (t) => [
+    index('objectives_user_id_idx').on(t.userId),
+]);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Relations (pour les requêtes avec .with() de Drizzle)

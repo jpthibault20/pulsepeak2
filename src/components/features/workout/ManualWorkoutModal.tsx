@@ -108,10 +108,9 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
             };
 
             const newWorkout: Workout = {
-                ID: generateUUID(),
-                id: `manual-${Date.now()}`,
-                userID,
-                weekID: '',
+                id: generateUUID(),
+                userId: userID,
+                weekId: '',
                 title: title || (sportType === 'other' ? 'Activité' : 'Sortie Libre'),
                 date: dateStr,
                 sportType,

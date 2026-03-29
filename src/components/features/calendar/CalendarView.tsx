@@ -15,6 +15,7 @@ import { Schedule } from '@/lib/data/DatabaseTypes';
 import { useSubscription } from '@/lib/subscription/context';
 import { FeatureGate } from '@/components/features/billing/FeatureGate';
 import { useRouter } from 'next/navigation';
+import { CalendarProvider } from './CalendarContext';
 
 interface CalendarViewProps {
     scheduleData: Schedule;
@@ -292,40 +293,36 @@ export function CalendarView({
                 </div>
             )}
 
-            {/* Desktop Calendar Grid */}
-            <div className="hidden md:block">
-                <CalendarGrid
-                    weekRows={weekRows}
-                    currentMonth={month}
-                    currentYear={year}
-                    scheduleData={scheduleData}
-                    profile={profile}
-                    objectives={objectives}
-                    onOpenManualModal={handleOpenDayAction}
-                    onViewWorkout={onViewWorkout}
-                    onEditObjective={handleEditObjective}
-                    onRefresh={onRefresh}
-                    onOpenGenModal={() => setShowGenModal(true)}
-                />
-            </div>
+            <CalendarProvider value={{
+                scheduleData,
+                profile,
+                objectives,
+                onViewWorkout,
+                onEditObjective: handleEditObjective,
+                onRefresh,
+                onOpenGenModal: () => setShowGenModal(true),
+            }}>
+                {/* Desktop Calendar Grid */}
+                <div className="hidden md:block">
+                    <CalendarGrid
+                        weekRows={weekRows}
+                        currentMonth={month}
+                        currentYear={year}
+                        onOpenManualModal={handleOpenDayAction}
+                    />
+                </div>
 
-            {/* Mobile Strip */}
-            <div className="md:hidden">
-                <MobileCalendarStrip
-                    weekRows={weekRows}
-                    currentMonth={month}
-                    scheduleData={scheduleData}
-                    objectives={objectives}
-                    onEditObjective={handleEditObjective}
-                    selectedDay={selectedMobileDay}
-                    onSelectDay={setSelectedMobileDay}
-                    onOpenManualModal={handleOpenDayAction}
-                    onViewWorkout={onViewWorkout}
-                    profile={profile}
-                    onRefresh={onRefresh}
-                    onOpenGenModal={() => setShowGenModal(true)}
-                />
-            </div>
+                {/* Mobile Strip */}
+                <div className="md:hidden">
+                    <MobileCalendarStrip
+                        weekRows={weekRows}
+                        currentMonth={month}
+                        selectedDay={selectedMobileDay}
+                        onSelectDay={setSelectedMobileDay}
+                        onOpenManualModal={handleOpenDayAction}
+                    />
+                </div>
+            </CalendarProvider>
 
             {/* --- MODALS --- */}
 

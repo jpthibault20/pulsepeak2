@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la /c/Users/tjean/Documents/GitHub/pulsepeak2025/tailwind*)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}

@@ -12,7 +12,7 @@ export interface GenProgressState {
     startedAt: number;    // Date.now()
     profileInfo: {
         firstName:  string;
-        experience: string;
+        experience: string | null;
         currentCTL: number;
         sports:     string;
     };
@@ -99,7 +99,7 @@ export function GenerationProgressModal({
         : STAGES.findLastIndex(s => progress >= s.progressAt);
     const activeIdx  = Math.max(0, stageIndex);
 
-    const levelStyle = LEVEL_COLORS[state.profileInfo.experience] ?? 'text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-400/10';
+    const levelStyle = (state.profileInfo.experience ? LEVEL_COLORS[state.profileInfo.experience] : null) ?? 'text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-400/10';
 
     // ── Mini banner ──────────────────────────────────────────────────────────
     if (state.minimized && state.active) {
