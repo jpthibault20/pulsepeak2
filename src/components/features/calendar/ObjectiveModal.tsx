@@ -86,16 +86,16 @@ export function ObjectiveModal({ isOpen, onClose, onSave, initialDate, initial, 
             <div className="space-y-5">
                 {/* Priorité */}
                 <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Priorité</label>
+                    <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">Priorité</label>
                     <div className="grid grid-cols-2 gap-2">
-                        {([['principale', 'Principal', 'text-rose-400', 'bg-rose-600', 'border-rose-500'], ['secondaire', 'Secondaire', 'text-amber-400', 'bg-amber-600', 'border-amber-500']] as const).map(([val, label, textColor, bgColor, borderColor]) => (
+                        {([['principale', 'Principal', 'text-rose-600 dark:text-rose-400', 'bg-rose-600', 'border-rose-500'], ['secondaire', 'Secondaire', 'text-amber-600 dark:text-amber-400', 'bg-amber-600', 'border-amber-500']] as const).map(([val, label, textColor, bgColor, borderColor]) => (
                             <button
                                 key={val}
                                 onClick={() => setPriority(val)}
                                 className={`py-2.5 px-3 rounded-lg text-sm font-medium border transition-all ${
                                     priority === val
                                         ? `${bgColor} ${borderColor} text-white shadow-lg`
-                                        : `bg-slate-800 border-slate-700 ${textColor}`
+                                        : `bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 ${textColor}`
                                 }`}
                             >
                                 {priority === val ? label : <span className={textColor}>{label}</span>}
@@ -106,22 +106,22 @@ export function ObjectiveModal({ isOpen, onClose, onSave, initialDate, initial, 
 
                 {/* Nom */}
                 <div>
-                    <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
-                        <Trophy size={13} className="text-slate-400" />
+                    <label className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 mb-1.5">
+                        <Trophy size={13} className="text-slate-500 dark:text-slate-400" />
                         Nom de la course / événement
                     </label>
                     <input
                         value={name}
                         onChange={e => setName(e.target.value)}
                         placeholder="Ex: Ironman 70.3 Nice, Granfondo Alpes..."
-                        className="w-full h-11 bg-slate-950 border border-slate-700 text-white rounded-lg px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        className="w-full h-11 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                     />
                 </div>
 
                 {/* Date de l'événement */}
                 <div>
-                    <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
-                        <Calendar size={13} className="text-slate-400" />
+                    <label className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 mb-1.5">
+                        <Calendar size={13} className="text-slate-500 dark:text-slate-400" />
                         Date de l&apos;événement
                     </label>
                     <input
@@ -129,13 +129,13 @@ export function ObjectiveModal({ isOpen, onClose, onSave, initialDate, initial, 
                         style={{ colorScheme: 'dark' }}
                         value={date}
                         onChange={e => setDate(e.target.value)}
-                        className="w-full h-11 bg-slate-950 border border-slate-700 text-white rounded-lg px-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        className="w-full h-11 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg px-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                     />
                 </div>
 
                 {/* Sport */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Discipline</label>
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1.5">Discipline</label>
                     <div className="grid grid-cols-2 gap-2">
                         {SPORT_OPTIONS.map(s => (
                             <button
@@ -144,7 +144,7 @@ export function ObjectiveModal({ isOpen, onClose, onSave, initialDate, initial, 
                                 className={`py-2 px-3 rounded-lg text-xs font-medium border transition-all text-left ${
                                     sport === s.value
                                         ? 'bg-blue-600 border-blue-500 text-white'
-                                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'
+                                        : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-600'
                                 }`}
                             >
                                 {s.label}
@@ -156,8 +156,8 @@ export function ObjectiveModal({ isOpen, onClose, onSave, initialDate, initial, 
                 {/* Distance + Dénivelé */}
                 <div className="grid grid-cols-2 gap-3">
                     <div>
-                        <label className="flex items-center gap-1.5 text-sm font-medium text-slate-300 mb-1.5">
-                            <MapPin size={13} className="text-slate-400" />
+                        <label className="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 mb-1.5">
+                            <MapPin size={13} className="text-slate-500 dark:text-slate-400" />
                             Distance (km)
                         </label>
                         <input
@@ -167,12 +167,12 @@ export function ObjectiveModal({ isOpen, onClose, onSave, initialDate, initial, 
                             value={distanceKm}
                             onChange={e => setDistanceKm(e.target.value)}
                             placeholder="Optionnel"
-                            className="w-full h-11 bg-slate-950 border border-slate-700 text-white rounded-lg px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            className="w-full h-11 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                         />
                     </div>
                     <div>
-                        <label className="flex items-center gap-1.5 text-sm font-medium text-slate-300 mb-1.5">
-                            <Mountain size={13} className="text-slate-400" />
+                        <label className="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 mb-1.5">
+                            <Mountain size={13} className="text-slate-500 dark:text-slate-400" />
                             Dénivelé (m)
                         </label>
                         <input
@@ -182,28 +182,28 @@ export function ObjectiveModal({ isOpen, onClose, onSave, initialDate, initial, 
                             value={elevationGainM}
                             onChange={e => setElevationGainM(e.target.value)}
                             placeholder="Optionnel"
-                            className="w-full h-11 bg-slate-950 border border-slate-700 text-white rounded-lg px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            className="w-full h-11 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                         />
                     </div>
                 </div>
 
                 {/* Commentaire */}
                 <div>
-                    <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
-                        <FileText size={13} className="text-slate-400" />
-                        Notes / commentaire <span className="text-slate-600 font-normal">(optionnel)</span>
+                    <label className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 mb-1.5">
+                        <FileText size={13} className="text-slate-500 dark:text-slate-400" />
+                        Notes / commentaire <span className="text-slate-500 dark:text-slate-600 font-normal">(optionnel)</span>
                     </label>
                     <textarea
                         value={comment}
                         onChange={e => setComment(e.target.value)}
                         placeholder="Ex: Parcours vallonné, première participation..."
                         rows={2}
-                        className="w-full bg-slate-950 border border-slate-700 text-white rounded-lg px-3 py-2.5 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg px-3 py-2.5 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                     />
                 </div>
 
                 {/* Footer */}
-                <div className="flex gap-3 pt-2 border-t border-slate-800">
+                <div className="flex gap-3 pt-2 border-t border-slate-200 dark:border-slate-800">
                     <Button variant="outline" className="flex-1 h-11" onClick={onClose} disabled={isSaving}>
                         Annuler
                     </Button>

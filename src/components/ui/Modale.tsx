@@ -43,7 +43,7 @@ export const Modal: React.FC<ModalProps> = ({
     // (backdrop-blur, transform, etc.) ne peut plus piéger le positionnement fixed.
     return createPortal(
         <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm"
             onClick={onClose}
         >
             <div
@@ -51,16 +51,16 @@ export const Modal: React.FC<ModalProps> = ({
                 onClick={e => e.stopPropagation()}
             >
                 {/* Fond explicitement opaque — pas de /60 ni backdrop-blur interne */}
-                <div className="flex flex-col h-full overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/50">
+                <div className="flex flex-col h-full overflow-hidden rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl shadow-black/10 dark:shadow-black/50">
 
                     {/* En-tête fixe */}
-                    <div className="flex justify-between items-center px-5 py-4 border-b border-slate-800 shrink-0">
+                    <div className="flex justify-between items-center px-5 py-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
                         {title && (
-                            <h2 className="text-lg font-bold text-white truncate pr-4">{title}</h2>
+                            <h2 className="text-lg font-bold text-slate-900 dark:text-white truncate pr-4">{title}</h2>
                         )}
                         <button
                             onClick={onClose}
-                            className="ml-auto text-slate-400 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-slate-800 shrink-0"
+                            className="ml-auto text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 shrink-0"
                             aria-label="Fermer"
                         >
                             <X size={20} />
@@ -68,7 +68,7 @@ export const Modal: React.FC<ModalProps> = ({
                     </div>
 
                     {/* Corps défilant */}
-                    <div className="px-5 py-5 overflow-y-auto flex-1 text-slate-300">
+                    <div className="px-5 py-5 overflow-y-auto flex-1 text-slate-600 dark:text-slate-300">
                         {children}
                     </div>
                 </div>

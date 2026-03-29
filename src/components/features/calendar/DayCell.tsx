@@ -12,6 +12,7 @@ interface DayCellProps {
     isToday: boolean;
     onOpenManualModal: (e: React.MouseEvent, date: Date) => void;
     onViewWorkout: (workout: Workout) => void;
+    onEditObjective: (obj: Objective) => void;
 }
 
 export function DayCell({
@@ -21,7 +22,8 @@ export function DayCell({
     isCurrentMonth,
     isToday,
     onOpenManualModal,
-    onViewWorkout
+    onViewWorkout,
+    onEditObjective,
 }: DayCellProps) {
     const [showPopover, setShowPopover] = useState(false);
 
@@ -36,11 +38,11 @@ export function DayCell({
             className={`
         relative group flex flex-col
         min-h-[140px] p-2
-        border-b border-r border-slate-800/60
+        border-b border-r border-slate-200/80 dark:border-slate-800/60
         transition-all duration-200
-        ${!isCurrentMonth ? 'bg-slate-950/30' : 'bg-slate-900/20'}
-        ${isToday ? 'bg-blue-900/5' : ''}
-        hover:bg-slate-800/40
+        ${!isCurrentMonth ? 'bg-slate-50/50 dark:bg-slate-950/30' : ''}
+        ${isToday ? 'bg-blue-50/80 dark:bg-blue-900/5' : ''}
+        hover:bg-slate-50 dark:hover:bg-slate-800/40
       `}
         >
             {/* --- En-tête de la cellule (Date + Bouton Ajout) --- */}
@@ -48,8 +50,8 @@ export function DayCell({
                 <div className={`
           flex items-center justify-center w-7 h-7 rounded-full text-sm transition-colors
           ${isToday
-                        ? 'bg-blue-600 text-white font-bold shadow-md shadow-blue-900/20'
-                        : isCurrentMonth ? 'text-slate-300' : 'text-slate-600'
+                        ? 'bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20 dark:shadow-blue-900/20'
+                        : isCurrentMonth ? 'text-slate-600 dark:text-slate-300' : 'text-slate-400 dark:text-slate-600'
                     }
         `}>
                     {date.getDate()}
@@ -60,7 +62,7 @@ export function DayCell({
                     onClick={(e) => onOpenManualModal(e, date)}
                     className={`
             w-7 h-7 flex items-center justify-center rounded-lg
-            text-slate-500 hover:text-white hover:bg-slate-700
+            text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700
             transition-all duration-200
             ${isRestDay ? 'opacity-0 group-hover:opacity-100' : 'opacity-0 group-hover:opacity-100'}
           `}
@@ -74,16 +76,16 @@ export function DayCell({
             {objectives.length > 0 && (
                 <div className="flex flex-col gap-0.5 mb-1">
                     {primaryObj && (
-                        <div className="flex items-center gap-1 px-1.5 py-0.5 bg-rose-950/60 border border-rose-500/40 rounded-md">
-                            <Trophy size={9} className="text-rose-400 shrink-0" />
-                            <span className="text-rose-300 text-[10px] font-semibold truncate">{primaryObj.name}</span>
-                        </div>
+                        <button onClick={() => onEditObjective(primaryObj)} className="flex items-center gap-1 px-1.5 py-0.5 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-500/40 rounded-md hover:bg-rose-100 dark:hover:bg-rose-950/80 transition-colors cursor-pointer text-left w-full">
+                            <Trophy size={9} className="text-rose-600 dark:text-rose-400 shrink-0" />
+                            <span className="text-rose-600 dark:text-rose-300 text-[10px] font-semibold truncate">{primaryObj.name}</span>
+                        </button>
                     )}
                     {secondaryObjs.map(o => (
-                        <div key={o.id} className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-950/40 border border-amber-500/30 rounded-md">
-                            <Target size={9} className="text-amber-400 shrink-0" />
-                            <span className="text-amber-300 text-[10px] truncate">{o.name}</span>
-                        </div>
+                        <button key={o.id} onClick={() => onEditObjective(o)} className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-500/30 rounded-md hover:bg-amber-100 dark:hover:bg-amber-950/60 transition-colors cursor-pointer text-left w-full">
+                            <Target size={9} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                            <span className="text-amber-600 dark:text-amber-300 text-[10px] truncate">{o.name}</span>
+                        </button>
                     ))}
                 </div>
             )}
@@ -94,7 +96,7 @@ export function DayCell({
                 {/* CAS 1: Jour de Repos */}
                 {isRestDay && (
                     <div className="flex-1 flex flex-col items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity duration-300 cursor-default select-none">
-                        <div className="flex flex-col items-center gap-1 text-slate-700">
+                        <div className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-700">
                             <BedDouble size={18} strokeWidth={1.5} />
                             <span className="text-[10px] uppercase tracking-wider font-medium">Repos</span>
                         </div>
@@ -118,17 +120,17 @@ export function DayCell({
                         <button
                             onClick={() => setShowPopover(!showPopover)}
                             className={`
-                                w-full bg-slate-800/80 hover:bg-slate-700/90
-                                border border-slate-700/50 hover:border-slate-600
+                                w-full bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/90
+                                border border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600
                                 rounded-md p-2 text-left transition-all group/stack
                                 shadow-sm
                             `}
                         >
                             <div className="flex items-center gap-2 mb-2">
-                                <div className="p-1 bg-indigo-500/20 rounded text-indigo-400">
+                                <div className="p-1 bg-indigo-100 dark:bg-indigo-500/20 rounded text-indigo-600 dark:text-indigo-400">
                                     <Layers size={14} />
                                 </div>
-                                <span className="text-xs font-semibold text-slate-200">
+                                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
                                     {workouts.length} Séances
                                 </span>
                             </div>

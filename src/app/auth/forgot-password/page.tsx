@@ -46,7 +46,7 @@ export default function ForgotPasswordPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center p-4">
 
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl" />
@@ -63,22 +63,23 @@ export default function ForgotPasswordPage() {
                             alt="Logo"
                             width={40}
                             height={40}
+                            className="invert dark:invert-0"
                         />
                     </div>
-                    <h1 className="text-2xl font-bold text-white tracking-tight">PulsePeak</h1>
-                    <p className="text-slate-400 text-sm mt-1">Réinitialisation du mot de passe</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">PulsePeak</h1>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Réinitialisation du mot de passe</p>
                 </div>
 
-                <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-2xl shadow-2xl p-6">
+                <div className="bg-white/90 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6">
 
                     {!sent ? (
                         <>
-                            <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+                            <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 leading-relaxed">
                                 Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
                             </p>
 
                             {error && (
-                                <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 mb-5 text-red-400 text-sm">
+                                <div className="flex items-start gap-2 bg-red-100 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl px-4 py-3 mb-5 text-red-600 dark:text-red-400 text-sm">
                                     <AlertCircle size={15} className="shrink-0 mt-0.5" />
                                     {error}
                                 </div>
@@ -86,7 +87,7 @@ export default function ForgotPasswordPage() {
 
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                                    <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
                                         Adresse email
                                     </label>
                                     <div className="relative">
@@ -97,7 +98,7 @@ export default function ForgotPasswordPage() {
                                             onChange={e => setEmail(e.target.value)}
                                             placeholder="nom@exemple.com"
                                             autoFocus
-                                            className="w-full bg-slate-800/80 border border-slate-700 rounded-xl pl-9 pr-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30 transition-colors"
+                                            className="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl pl-9 pr-4 py-3 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30 transition-colors"
                                         />
                                     </div>
                                 </div>
@@ -117,12 +118,12 @@ export default function ForgotPasswordPage() {
                         </>
                     ) : (
                         <div className="text-center py-4">
-                            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-4">
-                                <CheckCircle2 size={28} className="text-emerald-400" />
+                            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 mb-4">
+                                <CheckCircle2 size={28} className="text-emerald-600 dark:text-emerald-400" />
                             </div>
-                            <h2 className="text-white font-semibold text-lg mb-2">Email envoyé !</h2>
-                            <p className="text-slate-400 text-sm leading-relaxed">
-                                Un lien de réinitialisation a été envoyé à <span className="text-slate-200 font-medium">{email}</span>.
+                            <h2 className="text-slate-900 dark:text-white font-semibold text-lg mb-2">Email envoyé !</h2>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+                                Un lien de réinitialisation a été envoyé à <span className="text-slate-700 dark:text-slate-200 font-medium">{email}</span>.
                                 Pensez à vérifier vos spams.
                             </p>
                         </div>
@@ -131,14 +132,14 @@ export default function ForgotPasswordPage() {
                     <button
                         type="button"
                         onClick={() => router.push('/auth')}
-                        className="mt-6 w-full flex items-center justify-center gap-2 text-slate-400 hover:text-white text-sm transition-colors py-2"
+                        className="mt-6 w-full flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-sm transition-colors py-2"
                     >
                         <ArrowLeft size={15} />
                         Retour à la connexion
                     </button>
                 </div>
 
-                <p className="text-center text-xs text-slate-600 mt-6">
+                <p className="text-center text-xs text-slate-500 dark:text-slate-600 mt-6">
                     PulsePeak · Triathlon Training Intelligence
                 </p>
             </div>

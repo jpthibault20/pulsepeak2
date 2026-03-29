@@ -73,8 +73,10 @@ function toProfile(row: any): Profile {
         goal:               row.goal,
         objectiveDate:      row.objectiveDate ?? '',
         weaknesses:         row.weaknesses,
-        aiCallsCount:       row.aiCallsCount  ?? 0,
-        aiCallsResetDate:   row.aiCallsResetDate ?? undefined,
+        aiPlanCallsCount:       row.aiPlanCallsCount  ?? 0,
+        aiPlanCallsResetDate:   row.aiPlanCallsResetDate ?? undefined,
+        aiWorkoutCallsCount:    row.aiWorkoutCallsCount  ?? 0,
+        aiWorkoutCallsResetDate:row.aiWorkoutCallsResetDate ?? undefined,
         workouts:           [],
     };
 }
@@ -263,6 +265,10 @@ export async function saveProfile(profile: Profile): Promise<void> {
             goal:               profile.goal               ?? '',
             objectiveDate:      profile.objectiveDate || null,
             weaknesses:         profile.weaknesses         ?? '',
+            aiPlanCallsCount:       profile.aiPlanCallsCount       ?? 0,
+            aiPlanCallsResetDate:   profile.aiPlanCallsResetDate   ?? null,
+            aiWorkoutCallsCount:    profile.aiWorkoutCallsCount    ?? 0,
+            aiWorkoutCallsResetDate:profile.aiWorkoutCallsResetDate ?? null,
         })
         .onConflictDoUpdate({
             target: profiles.id,
@@ -288,6 +294,10 @@ export async function saveProfile(profile: Profile): Promise<void> {
                 goal:               profile.goal               ?? '',
                 objectiveDate:      profile.objectiveDate || null,
                 weaknesses:         profile.weaknesses         ?? '',
+                aiPlanCallsCount:       profile.aiPlanCallsCount       ?? 0,
+                aiPlanCallsResetDate:   profile.aiPlanCallsResetDate   ?? null,
+                aiWorkoutCallsCount:    profile.aiWorkoutCallsCount    ?? 0,
+                aiWorkoutCallsResetDate:profile.aiWorkoutCallsResetDate ?? null,
             },
         });
 }
@@ -461,6 +471,16 @@ export async function saveWorkout(workoutList: Workout[]): Promise<void> {
             );
         }
     });
+}
+
+export async function deleteWorkoutById(workoutId: string): Promise<void> {
+    const userId = await getCurrentUserId();
+    await db.delete(workoutsTable).where(
+        and(
+            eq(workoutsTable.userId, userId),
+            eq(workoutsTable.id, workoutId)
+        )
+    );
 }
 
 // ─── Objectives ───────────────────────────────────────────────────────────────

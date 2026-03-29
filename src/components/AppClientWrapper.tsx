@@ -58,6 +58,10 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
     const [objectives, setObjectives] = useState<Objective[]>(initialObjectives);
     const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
 
+    // Calendrier — persist le mois sélectionné entre les changements de vue
+    const [calendarDate, setCalendarDate] = useState(new Date());
+    const [calendarMobileDay, setCalendarMobileDay] = useState(new Date());
+
     // Etats UI
     const [error, setError] = useState<string | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -351,7 +355,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
     const showNav = view !== 'onboarding';
 
     if (!profile || !schedule) {
-        return <div className="text-white p-10">Erreur critique : Données manquantes.</div>;
+        return <div className="text-slate-900 dark:text-white p-10">Erreur critique : Données manquantes.</div>;
     }
 
     return (
@@ -368,17 +372,17 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
                 <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 pb-20 sm:pb-8">
 
                     {error && (
-                        <Card className="bg-red-900/50 border-red-500/50 mb-6 animate-in slide-in-from-top-2">
+                        <Card className="bg-red-50 dark:bg-red-900/50 border-red-200 dark:border-red-500/50 mb-6 animate-in slide-in-from-top-2">
                             <div className="p-4">
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="flex-1">
-                                        <p className="text-red-300 font-bold flex items-center gap-2">
+                                        <p className="text-red-600 dark:text-red-300 font-bold flex items-center gap-2">
                                             <span className="text-lg">⚠️</span>
                                             Erreur
                                         </p>
-                                        <p className="text-red-400 text-sm mt-1">{error}</p>
+                                        <p className="text-red-600 dark:text-red-400 text-sm mt-1">{error}</p>
                                     </div>
-                                    <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300 transition-colors">✕</button>
+                                    <button onClick={() => setError(null)} className="text-red-600 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors">✕</button>
                                 </div>
                             </div>
                         </Card>
@@ -435,6 +439,10 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
                                 onRefresh={refreshData}
                                 onSyncStrava={handleSyncStrava}
                                 isSyncing={isSyncing}
+                                calendarDate={calendarDate}
+                                onCalendarDateChange={setCalendarDate}
+                                calendarMobileDay={calendarMobileDay}
+                                onCalendarMobileDayChange={setCalendarMobileDay}
                             />
                         </div>
                     )}

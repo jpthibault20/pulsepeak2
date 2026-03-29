@@ -19,9 +19,9 @@ function Field({
 }: { label: string; hint?: string; cls?: string; children: React.ReactNode }) {
     return (
         <div className={`space-y-1.5 ${cls ?? ''}`}>
-            <label className="block text-xs font-medium text-slate-400 uppercase tracking-wide">
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                 {label}
-                {hint && <span className="normal-case ml-1 font-normal text-slate-600">({hint})</span>}
+                {hint && <span className="normal-case ml-1 font-normal text-slate-500 dark:text-slate-600">({hint})</span>}
             </label>
             {children}
         </div>
@@ -29,10 +29,10 @@ function Field({
 }
 
 const inputCls = `
-    w-full h-11 bg-slate-800/60 border border-slate-700 rounded-xl px-3.5
-    text-slate-100 placeholder-slate-600 text-sm
+    w-full h-11 bg-slate-100 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5
+    text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-600 text-sm
     focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20
-    hover:border-slate-600 transition-colors
+    hover:border-slate-400 dark:hover:border-slate-600 transition-colors
 `.trim();
 
 export const BasicInformation: React.FC<BasicInformationProps> = ({ formData, setFormData }) => {
@@ -47,12 +47,12 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({ formData, se
         <div className="space-y-4">
 
             {/* Identité */}
-            <Card className="p-5 bg-slate-900/50 border-slate-800">
+            <Card className="p-5 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800">
                 <div className="flex items-center gap-2 mb-5">
-                    <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                        <User size={14} className="text-blue-400" />
+                    <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-500/10 flex items-center justify-center">
+                        <User size={14} className="text-blue-600 dark:text-blue-400" />
                     </div>
-                    <h3 className="text-sm font-semibold text-white">Informations personnelles</h3>
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Informations personnelles</h3>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -86,12 +86,12 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({ formData, se
             </Card>
 
             {/* Données physiques */}
-            <Card className="p-5 bg-slate-900/50 border-slate-800">
+            <Card className="p-5 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800">
                 <div className="flex items-center gap-2 mb-5">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                        <Ruler size={14} className="text-emerald-400" />
+                    <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-500/10 flex items-center justify-center">
+                        <Ruler size={14} className="text-emerald-600 dark:text-emerald-400" />
                     </div>
-                    <h3 className="text-sm font-semibold text-white">Données physiques</h3>
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Données physiques</h3>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -107,7 +107,7 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({ formData, se
                                     height: e.target.value === '' ? undefined : parseInt(e.target.value) || 0
                                 }))}
                             />
-                            <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs pointer-events-none">cm</span>
+                            <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-500 text-xs pointer-events-none">cm</span>
                         </div>
                     </Field>
 
@@ -123,7 +123,7 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({ formData, se
                                     weight: e.target.value === '' ? undefined : parseInt(e.target.value) || 0
                                 }))}
                             />
-                            <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs pointer-events-none">kg</span>
+                            <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-500 text-xs pointer-events-none">kg</span>
                         </div>
                     </Field>
 
@@ -136,19 +136,19 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({ formData, se
                             onChange={e => setFormData({ ...formData, birthDate: e.target.value })}
                         />
                         {age !== null && (
-                            <p className="text-xs text-slate-500 mt-1 ml-0.5">{age} ans</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-500 mt-1 ml-0.5">{age} ans</p>
                         )}
                     </Field>
                 </div>
             </Card>
 
             {/* Expérience */}
-            <Card className="p-5 bg-slate-900/50 border-slate-800">
+            <Card className="p-5 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800">
                 <div className="flex items-center gap-2 mb-5">
-                    <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                        <GraduationCap size={14} className="text-purple-400" />
+                    <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-500/10 flex items-center justify-center">
+                        <GraduationCap size={14} className="text-purple-600 dark:text-purple-400" />
                     </div>
-                    <h3 className="text-sm font-semibold text-white">Niveau d&apos;expérience</h3>
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Niveau d&apos;expérience</h3>
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
@@ -162,14 +162,14 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({ formData, se
                                     p-3 rounded-xl border text-left transition-all
                                     ${active
                                         ? 'bg-purple-600/15 border-purple-500/50 shadow-sm shadow-purple-900/20'
-                                        : 'bg-slate-800/40 border-slate-700 hover:border-slate-600'
+                                        : 'bg-slate-100/80 dark:bg-slate-800/40 border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600'
                                     }
                                 `}
                             >
-                                <p className={`text-sm font-semibold ${active ? 'text-white' : 'text-slate-300'}`}>
+                                <p className={`text-sm font-semibold ${active ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
                                     {lvl.label}
                                 </p>
-                                <p className="text-xs text-slate-500 mt-0.5">{lvl.desc}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5">{lvl.desc}</p>
                                 {active && (
                                     <div className="mt-2 w-4 h-0.5 rounded-full bg-purple-500" />
                                 )}

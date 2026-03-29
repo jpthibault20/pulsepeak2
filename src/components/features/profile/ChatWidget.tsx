@@ -160,17 +160,17 @@ export const ChatWidget = ({ isOpen, onClose, profile, schedule }: ChatWidgetPro
     if (!isOpen) return null;
 
     return (
-        <div className="fixed bottom-20 right-3 md:bottom-6 md:right-6 w-[calc(100vw-24px)] max-w-sm h-[480px] md:h-[520px] bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl shadow-black/40 z-60 flex flex-col animate-in slide-in-from-bottom-4 fade-in duration-200">
+        <div className="fixed bottom-20 right-3 md:bottom-6 md:right-6 w-[calc(100vw-24px)] max-w-sm h-[480px] md:h-[520px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700/80 rounded-2xl shadow-2xl shadow-black/40 z-60 flex flex-col animate-in slide-in-from-bottom-4 fade-in duration-200">
 
             {/* ── Header ── */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900 rounded-t-2xl">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-t-2xl">
                 <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-blue-600/20 flex items-center justify-center">
-                        <Bot size={16} className="text-blue-400" />
+                    <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-600/20 flex items-center justify-center">
+                        <Bot size={16} className="text-blue-600 dark:text-blue-400" />
                     </div>
                     <div>
-                        <p className="text-sm font-semibold text-white leading-none">Coach IA</p>
-                        <p className="text-[10px] text-emerald-400 mt-0.5 flex items-center gap-1">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white leading-none">Coach IA</p>
+                        <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-0.5 flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
                             En ligne
                         </p>
@@ -178,7 +178,7 @@ export const ChatWidget = ({ isOpen, onClose, profile, schedule }: ChatWidgetPro
                 </div>
                 <button
                     onClick={onClose}
-                    className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                    className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                 >
                     <X size={18} />
                 </button>
@@ -195,7 +195,7 @@ export const ChatWidget = ({ isOpen, onClose, profile, schedule }: ChatWidgetPro
                             max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed
                             ${msg.role === 'user'
                                 ? 'bg-blue-600 text-white rounded-br-sm'
-                                : 'bg-slate-800 text-slate-200 rounded-bl-sm border border-slate-700/60'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-bl-sm border border-slate-200 dark:border-slate-700/60'
                             }
                         `}>
                             {msg.text}
@@ -212,7 +212,7 @@ export const ChatWidget = ({ isOpen, onClose, profile, schedule }: ChatWidgetPro
             </div>
 
             {/* ── Input ── */}
-            <div className="px-3 pb-3 pt-2 border-t border-slate-800 bg-slate-900 rounded-b-2xl flex gap-2 items-center">
+            <div className="px-3 pb-3 pt-2 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-b-2xl flex gap-2 items-center">
                 <input
                     ref={inputRef}
                     value={input}
@@ -220,7 +220,7 @@ export const ChatWidget = ({ isOpen, onClose, profile, schedule }: ChatWidgetPro
                     onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
                     placeholder="Posez votre question..."
                     disabled={loading}
-                    className="flex-1 h-10 bg-slate-800 border border-slate-700 rounded-xl px-3.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 disabled:opacity-60 transition-colors"
+                    className="flex-1 h-10 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 text-sm text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 disabled:opacity-60 transition-colors"
                 />
                 <button
                     onClick={handleSend}

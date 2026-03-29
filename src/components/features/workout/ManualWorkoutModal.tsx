@@ -3,7 +3,7 @@ import type { SportType, CompletedData } from "@/lib/data/type";
 import type { Workout } from "@/lib/data/DatabaseTypes";
 import {
     Plus, Calendar, Activity, Timer, TrendingUp,
-    AlignLeft, Bike, Waves, User
+    AlignLeft, Bike, Waves, User, Mountain
 } from "lucide-react";
 import { useState } from "react";
 
@@ -112,7 +112,7 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                 id: `manual-${Date.now()}`,
                 userID,
                 weekID: '',
-                title: title || 'Sortie Libre',
+                title: title || (sportType === 'other' ? 'Activité' : 'Sortie Libre'),
                 date: dateStr,
                 sportType,
                 workoutType,
@@ -143,25 +143,34 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
         cycling: <Bike size={16} />,
         running: <User size={16} />,
         swimming: <Waves size={16} />,
+        other: <Mountain size={16} />,
+    };
+
+    const sportLabels: Record<SportType, string> = {
+        cycling: 'Vélo',
+        running: 'Course',
+        swimming: 'Natation',
+        other: 'Autre',
     };
 
     const workoutTypes: Record<SportType, string[]> = {
         cycling: ['Endurance', 'Tempo', 'Threshold', 'VO2max', 'Sprint', 'Recovery', 'Force'],
         running: ['Endurance', 'Tempo', 'Threshold', 'Intervals', 'Recovery', 'Long Run'],
         swimming: ['Endurance', 'Technique', 'Intervals', 'Recovery', 'Sprints'],
+        other: ['Endurance', 'Loisir', 'Intensif', 'Recovery'],
     };
 
     return (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <Card className="w-full max-w-lg animate-in zoom-in-95 duration-200 border-slate-800 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <Card className="w-full max-w-lg animate-in zoom-in-95 duration-200 border-slate-200 dark:border-slate-800 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
 
                 {/* Header */}
-                <div className="mb-6 border-b border-slate-800 pb-4">
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <div className="mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <Plus className="text-blue-500" size={24} />
                         Ajouter une activité
                     </h2>
-                    <p className="text-slate-400 text-sm mt-1 flex items-center gap-2">
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1 flex items-center gap-2">
                         <Calendar size={14} />
                         {date.toLocaleDateString('fr-FR', {
                             weekday: 'long',
@@ -176,29 +185,30 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
 
                     {/* Sport Type */}
                     <div>
-                        <label className="block text-xs font-medium text-slate-300 mb-2">
+                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-2">
                             Type de sport
                         </label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {(['cycling', 'running', 'swimming'] as SportType[]).map(sport => (
+                        <div className="grid grid-cols-4 gap-2">
+                            {(['cycling', 'running', 'swimming', 'other'] as SportType[]).map(sport => (
                                 <button
                                     key={sport}
                                     type="button"
                                     onClick={() => {
                                         setSportType(sport);
                                         setWorkoutType(workoutTypes[sport][0]);
+                                        if (sport === 'other') setTitle('');
                                     }}
                                     className={`
-                                        h-11 flex items-center justify-center gap-2 rounded-lg border-2 
-                                        transition-all font-medium text-sm capitalize
+                                        h-11 flex items-center justify-center gap-1.5 rounded-lg border-2
+                                        transition-all font-medium text-sm
                                         ${sportType === sport
-                                            ? 'bg-blue-500/20 border-blue-500 text-blue-400'
-                                            : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
+                                            ? 'bg-blue-50 dark:bg-blue-500/20 border-blue-500 text-blue-600 dark:text-blue-400'
+                                            : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-600'
                                         }
                                     `}
                                 >
                                     {sportIcons[sport]}
-                                    <span className="hidden sm:inline">{sport}</span>
+                                    <span className="hidden sm:inline text-xs">{sportLabels[sport]}</span>
                                 </button>
                             ))}
                         </div>
@@ -206,30 +216,30 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
 
                     {/* Titre */}
                     <div>
-                        <label className="flex items-center gap-2 text-xs font-medium text-slate-300 mb-1.5">
+                        <label className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">
                             <Activity size={14} className="text-slate-500" />
-                            Titre de la séance
+                            {sportType === 'other' ? 'Nom de l\'activité' : 'Titre de la séance'}
                         </label>
                         <input
                             type="text"
                             value={title}
                             onChange={e => setTitle(e.target.value)}
-                            className="w-full h-11 bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-slate-600"
-                            placeholder="Ex: Sortie longue dimanche"
+                            className="w-full h-11 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-slate-500 dark:placeholder-slate-600"
+                            placeholder={sportType === 'other' ? 'Ex: Randonnée, Escalade, Ski...' : 'Ex: Sortie longue dimanche'}
                         />
                     </div>
 
                     {/* Grid Type & Mode */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">
                                 Type d&apos;effort
                             </label>
                             <div className="relative">
                                 <select
                                     value={workoutType}
                                     onChange={e => setWorkoutType(e.target.value)}
-                                    className="w-full h-11 appearance-none bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                    className="w-full h-11 appearance-none bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                                 >
                                     {workoutTypes[sportType].map(t => (
                                         <option key={t} value={t}>{t}</option>
@@ -243,14 +253,14 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                             </div>
                         </div>
                         <div>
-                            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">
                                 Environnement
                             </label>
                             <div className="relative">
                                 <select
                                     value={mode}
                                     onChange={e => setMode(e.target.value as 'Outdoor' | 'Indoor')}
-                                    className="w-full h-11 appearance-none bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                    className="w-full h-11 appearance-none bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                                 >
                                     <option value="Outdoor">Extérieur</option>
                                     <option value="Indoor">Intérieur</option>
@@ -267,18 +277,18 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                     {/* Grid Durée & Distance */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="flex items-center gap-2 text-xs font-medium text-slate-300 mb-1.5">
+                            <label className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">
                                 <Timer size={14} className="text-slate-500" /> Durée (min)
                             </label>
                             <input
                                 type="number"
                                 value={duration}
                                 onChange={e => setDuration(parseInt(e.target.value) || 0)}
-                                className="w-full h-11 bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-lg"
+                                className="w-full h-11 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-lg"
                             />
                         </div>
                         <div>
-                            <label className="flex items-center gap-2 text-xs font-medium text-slate-300 mb-1.5">
+                            <label className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">
                                 <TrendingUp size={14} className="text-slate-500" /> Distance (km)
                             </label>
                             <input
@@ -286,7 +296,7 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                                 step="0.1"
                                 value={distance}
                                 onChange={e => setDistance(parseFloat(e.target.value) || 0)}
-                                className="w-full h-11 bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-lg"
+                                className="w-full h-11 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-lg"
                             />
                         </div>
                     </div>
@@ -295,7 +305,7 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                     {sportType === 'cycling' && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">
                                     Puissance Moy. (W)
                                 </label>
                                 <input
@@ -303,18 +313,18 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                                     value={avgPower || ''}
                                     onChange={e => setAvgPower(parseInt(e.target.value) || undefined)}
                                     placeholder="Optionnel"
-                                    className="w-full h-11 bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-lg"
+                                    className="w-full h-11 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-lg"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">
                                     TSS Estimé
                                 </label>
                                 <input
                                     type="number"
                                     value={tss}
                                     onChange={e => setTss(parseInt(e.target.value) || 0)}
-                                    className="w-full h-11 bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-lg"
+                                    className="w-full h-11 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-lg"
                                 />
                             </div>
                         </div>
@@ -323,7 +333,7 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                     {/* RPE & FC Moyenne */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">
                                 RPE (1-10)
                             </label>
                             <input
@@ -332,11 +342,11 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                                 max="10"
                                 value={rpe}
                                 onChange={e => setRpe(parseInt(e.target.value) || 5)}
-                                className="w-full h-11 bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-lg"
+                                className="w-full h-11 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-lg"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">
                                 FC Moy. (bpm)
                             </label>
                             <input
@@ -344,30 +354,30 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                                 value={avgHeartRate || ''}
                                 onChange={e => setAvgHeartRate(parseInt(e.target.value) || undefined)}
                                 placeholder="Optionnel"
-                                className="w-full h-11 bg-slate-900 border border-slate-700 rounded-lg px-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-lg"
+                                className="w-full h-11 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-lg"
                             />
                         </div>
                     </div>
 
                     {/* Description */}
                     <div>
-                        <label className="flex items-center gap-2 text-xs font-medium text-slate-300 mb-1.5">
+                        <label className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">
                             <AlignLeft size={14} className="text-slate-500" /> Description / Notes
                         </label>
                         <textarea
                             value={description}
                             onChange={e => setDescription(e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-sm h-24 resize-none focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-slate-900 dark:text-white text-sm h-24 resize-none focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                             placeholder="Détails de la sortie, météo, sensations..."
                         />
                     </div>
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="flex flex-col-reverse sm:flex-row gap-3 mt-8 pt-4 border-t border-slate-800">
+                <div className="flex flex-col-reverse sm:flex-row gap-3 mt-8 pt-4 border-t border-slate-200 dark:border-slate-800">
                     <Button
                         variant="ghost"
-                        className="flex-1 h-12 sm:h-10 text-slate-400 hover:text-white"
+                        className="flex-1 h-12 sm:h-10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                         onClick={onClose}
                         disabled={isSaving}
                     >

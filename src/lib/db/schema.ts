@@ -31,7 +31,7 @@ export const planStatusEnum         = pgEnum('plan_status',         ['active', '
 export const weekTypeEnum           = pgEnum('week_type',           ['Load', 'Recovery', 'Taper']);
 export const workoutStatusEnum      = pgEnum('workout_status',      ['pending', 'completed', 'missed']);
 export const workoutModeEnum        = pgEnum('workout_mode',        ['Outdoor', 'Indoor']);
-export const sportTypeEnum          = pgEnum('sport_type',          ['cycling', 'running', 'swimming']);
+export const sportTypeEnum          = pgEnum('sport_type',          ['cycling', 'running', 'swimming', 'other']);
 export const objectivePriorityEnum  = pgEnum('objective_priority',  ['principale', 'secondaire']);
 export const objectiveStatusEnum    = pgEnum('objective_status',    ['upcoming', 'completed', 'missed']);
 
@@ -99,8 +99,10 @@ export const profiles = pgTable('profiles', {
     objectiveDate: date('objective_date'),
     weaknesses:    text('weaknesses').default('').notNull(),
 
-    aiCallsCount:     integer('ai_calls_count').default(0).notNull(),
-    aiCallsResetDate: date('ai_calls_reset_date'),
+    aiPlanCallsCount:       integer('ai_plan_calls_count').default(0).notNull(),
+    aiPlanCallsResetDate:   date('ai_plan_calls_reset_date'),
+    aiWorkoutCallsCount:    integer('ai_workout_calls_count').default(0).notNull(),
+    aiWorkoutCallsResetDate:date('ai_workout_calls_reset_date'),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

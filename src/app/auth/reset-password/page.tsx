@@ -61,14 +61,14 @@ export default function ResetPasswordPage() {
 
     if (isVerifying) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+            <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center">
                 <Loader2 size={32} className="text-blue-500 animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center p-4">
 
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl" />
@@ -85,37 +85,38 @@ export default function ResetPasswordPage() {
                             alt="Logo"
                             width={40}
                             height={40}
+                            className="invert dark:invert-0"
                         />
                     </div>
-                    <h1 className="text-2xl font-bold text-white tracking-tight">PulsePeak</h1>
-                    <p className="text-slate-400 text-sm mt-1">Nouveau mot de passe</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">PulsePeak</h1>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Nouveau mot de passe</p>
                 </div>
 
-                <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-2xl shadow-2xl p-6">
+                <div className="bg-white/90 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6">
 
                     {success ? (
                         <div className="text-center py-4">
-                            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-4">
-                                <CheckCircle2 size={28} className="text-emerald-400" />
+                            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 mb-4">
+                                <CheckCircle2 size={28} className="text-emerald-600 dark:text-emerald-400" />
                             </div>
-                            <h2 className="text-white font-semibold text-lg mb-2">Mot de passe mis à jour !</h2>
-                            <p className="text-slate-400 text-sm">
+                            <h2 className="text-slate-900 dark:text-white font-semibold text-lg mb-2">Mot de passe mis à jour !</h2>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm">
                                 Redirection en cours...
                             </p>
                         </div>
                     ) : (
                         <>
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-500/10 border border-blue-500/20 shrink-0">
-                                    <ShieldCheck size={18} className="text-blue-400" />
+                                <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 shrink-0">
+                                    <ShieldCheck size={18} className="text-blue-600 dark:text-blue-400" />
                                 </div>
-                                <p className="text-slate-400 text-sm leading-relaxed">
+                                <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
                                     Choisissez un nouveau mot de passe sécurisé pour votre compte.
                                 </p>
                             </div>
 
                             {error && (
-                                <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 mb-5 text-red-400 text-sm">
+                                <div className="flex items-start gap-2 bg-red-100 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl px-4 py-3 mb-5 text-red-600 dark:text-red-400 text-sm">
                                     <AlertCircle size={15} className="shrink-0 mt-0.5" />
                                     {error}
                                 </div>
@@ -124,7 +125,7 @@ export default function ResetPasswordPage() {
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 {/* Nouveau mot de passe */}
                                 <div>
-                                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                                    <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
                                         Nouveau mot de passe
                                     </label>
                                     <div className="relative">
@@ -134,12 +135,12 @@ export default function ResetPasswordPage() {
                                             onChange={e => setPassword(e.target.value)}
                                             placeholder="6 caractères minimum"
                                             autoFocus
-                                            className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30 transition-colors pr-10"
+                                            className="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30 transition-colors pr-10"
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(s => !s)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                                         >
                                             {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                                         </button>
@@ -161,7 +162,7 @@ export default function ResetPasswordPage() {
                                                                     : strength === 3 ? 'bg-blue-500'
                                                                         : strength === 2 ? 'bg-yellow-500'
                                                                             : 'bg-red-500'
-                                                                : 'bg-slate-700'
+                                                                : 'bg-slate-200 dark:bg-slate-700'
                                                             }`}
                                                     />
                                                 );
@@ -172,7 +173,7 @@ export default function ResetPasswordPage() {
 
                                 {/* Confirmation */}
                                 <div>
-                                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                                    <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
                                         Confirmer le mot de passe
                                     </label>
                                     <div className="relative">
@@ -181,12 +182,12 @@ export default function ResetPasswordPage() {
                                             value={confirmPassword}
                                             onChange={e => setConfirmPassword(e.target.value)}
                                             placeholder="••••••••"
-                                            className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30 transition-colors pr-10"
+                                            className="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30 transition-colors pr-10"
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowConfirm(s => !s)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                                         >
                                             {showConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
                                         </button>
@@ -194,7 +195,7 @@ export default function ResetPasswordPage() {
 
                                     {/* Indicateur de correspondance */}
                                     {confirmPassword.length > 0 && (
-                                        <p className={`text-xs mt-1.5 ${password === confirmPassword ? 'text-emerald-400' : 'text-red-400'}`}>
+                                        <p className={`text-xs mt-1.5 ${password === confirmPassword ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                                             {password === confirmPassword ? '✓ Les mots de passe correspondent' : '✗ Les mots de passe ne correspondent pas'}
                                         </p>
                                     )}
@@ -216,7 +217,7 @@ export default function ResetPasswordPage() {
                     )}
                 </div>
 
-                <p className="text-center text-xs text-slate-600 mt-6">
+                <p className="text-center text-xs text-slate-500 dark:text-slate-600 mt-6">
                     PulsePeak · Triathlon Training Intelligence
                 </p>
             </div>

@@ -23,7 +23,7 @@ function InputField({ label, type, placeholder, value, onChange, isPassword }: F
     const [show, setShow] = useState(false);
     return (
         <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5">{label}</label>
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">{label}</label>
             <div className="relative">
                 <input
                     type={isPassword ? (show ? 'text' : 'password') : type}
@@ -31,13 +31,13 @@ function InputField({ label, type, placeholder, value, onChange, isPassword }: F
                     onChange={e => onChange(e.target.value)}
                     placeholder={placeholder}
                     autoComplete={isPassword ? 'current-password' : undefined}
-                    className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30 transition-colors pr-10"
+                    className="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30 transition-colors pr-10"
                 />
                 {isPassword && (
                     <button
                         type="button"
                         onClick={() => setShow(s => !s)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                     >
                         {show ? <EyeOff size={15} /> : <Eye size={15} />}
                     </button>
@@ -144,12 +144,12 @@ export default function AuthPage() {
             router.refresh();
             return;
         }
-        setSuccess('Compte créé ! Vérifiez votre boîte mail pour confirmer votre adresse.');
+        setSuccess('Compte créé ! Vérifiez votre boîte mail pour confirmer votre adresse (pensez à vérifier vos spams).');
         setIsLoading(false);
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center p-4">
 
             {/* Fond décoratif */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -167,25 +167,26 @@ export default function AuthPage() {
                             alt="Logo"
                             width={40}
                             height={40}
+                            className="invert dark:invert-0"
                         />
                     </div>
 
-                    <h1 className="text-2xl font-bold text-white tracking-tight">PulsePeak</h1>
-                    <p className="text-slate-400 text-sm mt-1">Votre coach triathlon intelligent</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">PulsePeak</h1>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Votre coach triathlon intelligent</p>
                 </div>
 
                 {/* Card */}
-                <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
+                <div className="bg-white/90 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
 
                     {/* Onglets */}
-                    <div className="flex border-b border-slate-800">
+                    <div className="flex border-b border-slate-200 dark:border-slate-800">
                         {(['login', 'register'] as Tab[]).map(t => (
                             <button
                                 key={t}
                                 onClick={() => { setTab(t); resetMessages(); }}
                                 className={`flex-1 py-3.5 text-sm font-semibold transition-colors ${tab === t
-                                    ? 'text-white border-b-2 border-blue-500 bg-blue-600/5'
-                                    : 'text-slate-400 hover:text-slate-200'
+                                    ? 'text-slate-900 dark:text-white border-b-2 border-blue-500 bg-blue-600/5'
+                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                                     }`}
                             >
                                 {t === 'login' ? 'Connexion' : 'Créer un compte'}
@@ -197,7 +198,7 @@ export default function AuthPage() {
 
                         {/* Message d'erreur */}
                         {error && (
-                            <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 mb-5 text-red-400 text-sm">
+                            <div className="flex items-start gap-2 bg-red-100 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl px-4 py-3 mb-5 text-red-600 dark:text-red-400 text-sm">
                                 <AlertCircle size={15} className="shrink-0 mt-0.5" />
                                 {error}
                             </div>
@@ -205,7 +206,7 @@ export default function AuthPage() {
 
                         {/* Message de succès */}
                         {success && (
-                            <div className="flex items-start gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3 mb-5 text-emerald-400 text-sm">
+                            <div className="flex items-start gap-2 bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-4 py-3 mb-5 text-emerald-600 dark:text-emerald-400 text-sm">
                                 <CheckCircle2 size={15} className="shrink-0 mt-0.5" />
                                 {success}
                             </div>
@@ -233,7 +234,7 @@ export default function AuthPage() {
                                 <div className="flex justify-end">
                                     <button
                                         type="button"
-                                        className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                                        className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors"
                                         onClick={() => router.push('/auth/forgot-password')}
                                     >
                                         Mot de passe oublié ?
@@ -309,7 +310,7 @@ export default function AuthPage() {
                                     )}
                                 </button>
 
-                                <p className="text-[11px] text-slate-500 text-center leading-relaxed">
+                                <p className="text-[11px] text-slate-500 dark:text-slate-500 text-center leading-relaxed">
                                     En créant un compte, vous acceptez nos conditions d&apos;utilisation.
                                 </p>
                             </form>
@@ -318,7 +319,7 @@ export default function AuthPage() {
                 </div>
 
                 {/* Footer */}
-                <p className="text-center text-xs text-slate-600 mt-6">
+                <p className="text-center text-xs text-slate-500 dark:text-slate-600 mt-6">
                     PulsePeak · Triathlon Training Intelligence
                 </p>
             </div>

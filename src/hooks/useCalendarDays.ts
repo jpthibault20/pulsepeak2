@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 
-export function useCalendarDays(selectedDate: Date) {
-    const year = selectedDate.getFullYear();
-    const month = selectedDate.getMonth();
+export function useCalendarDays(selectedDate: Date | undefined | null) {
+    const safeDate = selectedDate instanceof Date ? selectedDate : new Date();
+    const year = safeDate.getFullYear();
+    const month = safeDate.getMonth();
 
     const weekRows = useMemo(() => {
         const firstDay = new Date(year, month, 1);

@@ -1,8 +1,7 @@
 'use server';
 
-import { generatePlanFromAI, generateSingleWorkoutFromAI } from '@/lib/ai/coach-api';
-import { formatDateKey } from '@/lib/utils';
-import { getBlock, getObjectives, getPlan, getProfile, getSchedule, getWeek, getWorkout, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek, saveWorkout } from '@/lib/data/crud';
+import { generateSingleWorkoutFromAI } from '@/lib/ai/coach-api';
+import { getBlock, getObjectives, getPlan, getProfile, getSchedule, getWeek, getWorkout, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek, saveWorkout, deleteWorkoutById } from '@/lib/data/crud';
 import { ReturnCode } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
 import type { AvailabilitySlot, CompletedData, CompletedDataFeedback, SportType } from '@/lib/data/type';
@@ -32,13 +31,17 @@ const AI_DAILY_LIMITS = { plan: 3, workout: 10 } as const;
 async function checkAndIncrementAICallLimit(type: 'plan' | 'workout'): Promise<void> {
     const profile = await getProfile();
     const today   = format(new Date(), 'yyyy-MM-dd');
-    const count   = profile.aiCallsResetDate === today ? (profile.aiCallsCount ?? 0) : 0;
+
+    const countKey = type === 'plan' ? 'aiPlanCallsCount' : 'aiWorkoutCallsCount';
+    const dateKey  = type === 'plan' ? 'aiPlanCallsResetDate' : 'aiWorkoutCallsResetDate';
+
+    const count = profile[dateKey] === today ? (profile[countKey] ?? 0) : 0;
     if (count >= AI_DAILY_LIMITS[type]) {
         throw new Error(
             `Limite journalière atteinte (${AI_DAILY_LIMITS[type]} ${type === 'plan' ? 'plans' : 'régénérations'}/jour). Réessaie demain.`
         );
     }
-    await saveProfile({ ...profile, aiCallsCount: count + 1, aiCallsResetDate: today });
+    await saveProfile({ ...profile, [countKey]: count + 1, [dateKey]: today });
 }
 
 /******************************************************************************
@@ -207,7 +210,16 @@ export async function CreatePlanToObjective(userID: string, planStartDate: strin
     // Générer séances pour la première semaine uniquement
     const firstWeek = finalWeeks[0];
     const firstBlock = updatedBlocks.find(b => b.id === firstWeek.blockID) ?? updatedBlocks[0];
-    const firstWeekWorkouts = await CreateWorkoutForWeek(profile, newPlan, firstBlock, firstWeek, null, 100, profile.weeklyAvailability);
+
+    // Trouver les objectifs de cette semaine et la suivante
+    const firstWeekStart = parseISO(firstBlock.startDate);
+    const firstWeekEnd = addDays(firstWeekStart, 13); // cette semaine + semaine suivante
+    const relevantObjectives = [...secondaryObjectives, primaryObjective].filter(o => {
+        const objDate = parseISO(o.date);
+        return objDate >= firstWeekStart && objDate <= firstWeekEnd;
+    });
+
+    const firstWeekWorkouts = await CreateWorkoutForWeek(profile, newPlan, firstBlock, firstWeek, null, 100, profile.weeklyAvailability, relevantObjectives);
 
     const newWorkouts: Workout[] = [...firstWeekWorkouts];
     const weeksWithWorkouts = finalWeeks.map(w =>
@@ -250,6 +262,10 @@ async function CreateBlocksToObjective(
 
     const blockSkeletons = computeBlockSkeletons(totalWeeks);
 
+    // Récupérer l'historique des séances pour informer l'IA
+    const existingWorkouts = await getWorkout();
+    const historySummary = getTrainingHistorySummary(existingWorkouts ?? []);
+
     const secondaryContext = secondaryObjs.length > 0
         ? `\n## OBJECTIFS SECONDAIRES (courses intermédiaires)\n` +
           secondaryObjs.map(o => `- ${o.name} le ${o.date} (${o.sport}${o.distanceKm ? ', ' + o.distanceKm + ' km' : ''})`).join('\n') +
@@ -270,7 +286,12 @@ ${secondaryContext}
 ## CONTEXTE ATHLÈTE
 - Niveau : ${profile.experience ?? 'Intermédiaire'}
 - CTL actuelle : ${profile.currentCTL}
+- ATL actuelle : ${profile.currentATL}
 - Disciplines : ${profile.activeSports.cycling ? 'cyclisme' : ''}${profile.activeSports.running ? ', course à pied' : ''}${profile.activeSports.swimming ? ', natation' : ''}
+
+## HISTORIQUE D'ENTRAÎNEMENT RÉCENT
+${historySummary}
+→ UTILISE CET HISTORIQUE pour adapter les blocs : si l'athlète a déjà fait du travail de base (endurance longue, volume élevé), ne repropose PAS un bloc Base. Enchaîne directement sur Build/Peak selon la progression logique.
 
 ## STRUCTURE TEMPORELLE
 ${blockSkeletons.length} blocs de méso-cycles :
@@ -280,7 +301,8 @@ ${blockSkeletons.map(b => `- Bloc ${b.index} : ${b.duration} semaines${b.isLast 
 1. Le dernier bloc DOIT être de type "Taper" (affûtage pré-course).
 2. Structurer les blocs pour progresser logiquement vers l'objectif principal.
 3. Prendre en compte les objectifs secondaires pour la périodisation.
-4. Thèmes spécifiques à la discipline et à l'objectif (ex: "Endurance longue distance", "PMA triathlon").
+4. Prendre en compte l'historique récent pour ne pas répéter une phase déjà accomplie.
+5. Thèmes spécifiques à la discipline et à l'objectif (ex: "Endurance longue distance", "PMA triathlon").
 
 Retourner un tableau JSON. Chaque objet contient exactement :
 - "index" (number) : numéro du bloc
@@ -342,18 +364,33 @@ function applySecondaryObjectiveTaper(
 
     const blockMap = new Map(blocks.map(b => [b.id, b]));
 
-    return weeks.map(week => {
+    // Calculer les plages de chaque semaine
+    const weekRanges = weeks.map(week => {
         const block = blockMap.get(week.blockID);
-        if (!block) return week;
-
+        if (!block) return { week, start: '', end: '' };
         const weekStart = addDays(parseISO(block.startDate), (week.weekNumber - 1) * 7);
         const weekEnd   = addDays(weekStart, 6);
-        const weekStartStr = format(weekStart, 'yyyy-MM-dd');
-        const weekEndStr   = format(weekEnd,   'yyyy-MM-dd');
+        return { week, start: format(weekStart, 'yyyy-MM-dd'), end: format(weekEnd, 'yyyy-MM-dd') };
+    });
 
-        const hasSec = secondaryObjectives.some(o => o.date >= weekStartStr && o.date <= weekEndStr);
-        if (!hasSec) return week;
+    // Identifier les semaines qui contiennent un objectif OU qui précèdent une semaine avec objectif
+    const taperWeekIds = new Set<string>();
 
+    for (let i = 0; i < weekRanges.length; i++) {
+        const { week, start, end } = weekRanges[i];
+        if (!start) continue;
+
+        const hasObj = secondaryObjectives.some(o => o.date >= start && o.date <= end);
+        if (hasObj) {
+            // La semaine de la course → Taper
+            taperWeekIds.add(week.id);
+            // La semaine précédente → aussi Taper (pré-course)
+            if (i > 0) taperWeekIds.add(weekRanges[i - 1].week.id);
+        }
+    }
+
+    return weeks.map(week => {
+        if (!taperWeekIds.has(week.id)) return week;
         return {
             ...week,
             type: 'Taper' as const,
@@ -415,24 +452,31 @@ function CreatePlan(
  *             (weeksId vide, sera rempli par CreateWeeks)
  ******************************************************************************/
 async function CreateBlocks(plan: Plan, profile: Profile): Promise<Block[]> {
-    const start = startOfISOWeek(new Date(plan.startDate));
-    const goal  = endOfISOWeek(new Date(plan.goalDate));
+    const start = startOfISOWeek(parseISO(plan.startDate));
+    const goal  = endOfISOWeek(parseISO(plan.goalDate));
     const totalWeeks = differenceInWeeks(goal, start) + 1;
 
     if (totalWeeks < 1) throw new Error("Le plan est trop court !");
 
     const blockSkeletons = computeBlockSkeletons(totalWeeks);
 
-// @TODO: remplacer les spécification au cyclisme en adaptatif au triathlon 
+    // Récupérer l'historique des séances pour informer l'IA
+    const existingWorkouts = await getWorkout();
+    const historySummary = getTrainingHistorySummary(existingWorkouts ?? []);
+
     const aiPrompt = `
         Tu es un coach de ${profile.activeSports.cycling ? 'cyclisme' : ''}${profile.activeSports.running ? ', course à pied' : ''}${profile.activeSports.swimming ? ', natation' : ''} certifié et avec 15 ans d'experience dans le monde du sport.
 
         ## CONTEXTE ATHLÈTE
         - Objectif : ${plan.macroStrategyDescription}
         - Date de course : ${plan.goalDate}
-        - Niveau : ${profile.experience ?? "Intermédiaire"} 
-        - Volume hebdo actuel : ${"Non spécifié"}h
-        - Discipline faible : ${"Non spécifié"}
+        - Niveau : ${profile.experience ?? "Intermédiaire"}
+        - CTL actuelle : ${profile.currentCTL}
+        - ATL actuelle : ${profile.currentATL}
+
+        ## HISTORIQUE D'ENTRAÎNEMENT RÉCENT
+${historySummary}
+→ UTILISE CET HISTORIQUE pour adapter les blocs : si l'athlète a déjà fait du travail de base (endurance longue, volume élevé), ne repropose PAS un bloc Base. Enchaîne directement sur Build/Peak selon la progression logique.
 
         ## STRUCTURE TEMPORELLE
         ${blockSkeletons.length} blocs de méso-cycles :
@@ -582,11 +626,11 @@ export async function CreateWorkoutForWeek(
     week: Week,
     userComment: string | null,
     avgCompletion: number,
-    weeklyAvailability: { [key: string]: AvailabilitySlot }, 
+    weeklyAvailability: { [key: string]: AvailabilitySlot },
+    weekObjectives?: Objective[],
 ): Promise<Workout[]>
 {
-    const weekStartDate = new Date(block.startDate);
-    weekStartDate.setDate(weekStartDate.getDate() + (week.weekNumber - 1) * 7);
+    const weekStartDate = addDays(parseISO(block.startDate), (week.weekNumber - 1) * 7);
     const activeSports = getActiveSports(profile.activeSports);
     const formattedAvailability = formatAvailability(weeklyAvailability);
 
@@ -627,6 +671,76 @@ ${userComment        ? `- Commentaire athlète : "${userComment}"` : ""}
 - Complétion des 4 dernières semaines : ${avgCompletion}%
 ${avgCompletion < 80 ? `- ⚠️ Complétion faible : réduire l'intensité et le volume global` : ""}
 ${avgCompletion > 95 ? `- ✅ Complétion excellente : l'athlète peut absorber plus de charge` : ""}
+${(() => {
+    if (!weekObjectives || weekObjectives.length === 0) return '';
+
+    // Calculer les dates de la semaine (lundi=0 ... dimanche=6)
+    const weekStartStr = format(weekStartDate, 'yyyy-MM-dd');
+    const weekEndStr = format(addDays(weekStartDate, 6), 'yyyy-MM-dd');
+    const nextMondayStr = format(addDays(weekStartDate, 7), 'yyyy-MM-dd');
+
+    // Classer les objectifs
+    const objThisWeek = weekObjectives.filter(o => o.date >= weekStartStr && o.date <= weekEndStr);
+    const objNextMonday = weekObjectives.filter(o => o.date === nextMondayStr);
+
+    const lines: string[] = [];
+    lines.push('## ⚠️ COURSES / OBJECTIFS À PROXIMITÉ — PRIORITÉ ABSOLUE');
+    lines.push(weekObjectives.map(o =>
+        `- 🏁 ${o.name} le ${o.date} (${o.sport}${o.distanceKm ? ', ' + o.distanceKm + ' km' : ''}${o.elevationGainM ? ', D+ ' + o.elevationGainM + ' m' : ''}) — Priorité : ${o.priority}`
+    ).join('\n'));
+    lines.push('');
+
+    if (objThisWeek.length > 0) {
+        // Cas 1 : course CETTE semaine
+        const raceDays = objThisWeek.map(o => {
+            const d = parseISO(o.date);
+            const dayIdx = Math.round((d.getTime() - weekStartDate.getTime()) / (1000*60*60*24));
+            return { ...o, dayIdx };
+        });
+        const earliestRaceDay = Math.min(...raceDays.map(r => r.dayIdx));
+
+        lines.push('RÈGLES IMPÉRATIVES — COURSE CETTE SEMAINE :');
+        lines.push(`- Le jour de la course (dayOffset=${earliestRaceDay}) : NE PAS planifier de séance. La course EST l'entraînement.`);
+
+        if (earliestRaceDay === 0) {
+            // Course le LUNDI → toute la semaine est post-course
+            lines.push('- La course est LUNDI (premier jour). Le déblocage a déjà eu lieu la semaine précédente.');
+            lines.push('- MARDI (dayOffset=1) : repos complet ou Recovery très léger (20-30 min Z1 max).');
+            lines.push('- Le reste de la semaine : reprise progressive. Séances modérées, pas de haute intensité avant mercredi/jeudi.');
+            lines.push('- Volume normal ou légèrement réduit selon la fatigue post-course.');
+        } else if (earliestRaceDay === 1) {
+            // Course le MARDI
+            lines.push('- LUNDI (dayOffset=0) : séance de DÉBLOCAGE courte (20-30 min) avec quelques accélérations brèves.');
+            lines.push('- Après la course : Recovery mercredi, reprise progressive jeudi+.');
+            lines.push('- Volume global réduit de 30%.');
+        } else {
+            // Course mercredi ou après → jours avant = pré-course
+            lines.push(`- Les jours AVANT la course (dayOffset 0 à ${earliestRaceDay - 1}) : séances courtes (30-45 min max), Recovery ou Endurance très basse (Z1-Z2). C'est du DÉBLOCAGE.`);
+            lines.push(`- La VEILLE de la course (dayOffset=${earliestRaceDay - 1}) : séance de déblocage/openers courte (20-30 min) avec quelques accélérations brèves pour activer les jambes.`);
+            lines.push('- Aucune séance longue ni haute intensité AVANT la course.');
+        }
+
+        if (earliestRaceDay < 6) {
+            lines.push(`- Après la course : séance Recovery très légère le lendemain (30 min max Z1).`);
+        }
+        lines.push('- Volume global de la semaine réduit de 30-50%.');
+    } else if (objNextMonday.length > 0) {
+        // Cas 2 : course le LUNDI suivant → déblocage dimanche
+        lines.push('RÈGLES IMPÉRATIVES — COURSE LE LUNDI SUIVANT :');
+        lines.push('- La semaine doit être ALLÉGÉE (pré-course). Volume réduit de 30-40%.');
+        lines.push('- Pas de séance longue (max 60-75 min).');
+        lines.push('- Pas de haute intensité après mercredi (dayOffset=2).');
+        lines.push('- DIMANCHE (dayOffset=6) : planifier une séance de DÉBLOCAGE (openers) courte (20-30 min) avec quelques accélérations brèves (3-4x 30s) pour activer les jambes avant la course du lendemain. C\'est la séance la plus importante de la semaine.');
+        lines.push('- Vendredi-Samedi : repos ou Recovery très léger uniquement.');
+    } else {
+        // Cas 3 : course dans les 2 semaines mais pas immédiate
+        lines.push('RÈGLES — COURSE À PROXIMITÉ :');
+        lines.push('- Semaine de transition : réduire progressivement le volume.');
+        lines.push('- Pas de séance très longue. Garder des séances courtes et dynamiques.');
+    }
+
+    return lines.join('\n');
+})()}
 
 ## RÈGLES NIVEAU ATHLÈTE
 ${profile.experience === 'Débutant' ? `⚠️ DÉBUTANT — Appliquer impérativement :
@@ -707,15 +821,14 @@ Chaque objet contient exactement :
     }) as AIWorkout[];
 
     return aiResponse.map((w) => {
-    const workoutDate = new Date(weekStartDate);
-    workoutDate.setDate(workoutDate.getDate() + w.dayOffset);
+    const workoutDate = addDays(weekStartDate, w.dayOffset);
 
     return {
         ID:          randomUUID(),
         id:          randomUUID(),
         userID:      profile.id,
         weekID:      week.id,
-        date:        formatDateKey(workoutDate),
+        date:        format(workoutDate, 'yyyy-MM-dd'),
         sportType:   w.sportType as SportType,
         title:       w.title,
         workoutType: w.workoutType,
@@ -758,6 +871,54 @@ Chaque objet contient exactement :
 
 
 // --- Helpers ---
+
+/**
+ * Résumé compact de l'historique récent pour informer la génération des blocs.
+ * Retourne les 4 dernières semaines : volume, sports, types d'entraînement.
+ */
+function getTrainingHistorySummary(workouts: Workout[]): string {
+    const completed = workouts
+        .filter(w => w.status === 'completed' && w.completedData)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    if (completed.length === 0) return "Aucun historique d'entraînement disponible — l'athlète débute ou n'a pas de données.";
+
+    // Regrouper par semaine (4 dernières)
+    const weekMap = new Map<string, Workout[]>();
+    for (const w of completed) {
+        const d = new Date(w.date);
+        const weekStart = new Date(d);
+        weekStart.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+        const key = weekStart.toISOString().split('T')[0];
+        if (!weekMap.has(key)) weekMap.set(key, []);
+        weekMap.get(key)!.push(w);
+    }
+
+    const recentWeeks = [...weekMap.entries()].slice(0, 4);
+    if (recentWeeks.length === 0) return "Aucun historique récent.";
+
+    const lines = recentWeeks.map(([weekOf, wks]) => {
+        const sportCount: Record<string, number> = {};
+        const typeCount: Record<string, number> = {};
+        let totalDuration = 0;
+        let totalTSS = 0;
+
+        for (const w of wks) {
+            sportCount[w.sportType] = (sportCount[w.sportType] || 0) + 1;
+            typeCount[w.workoutType || 'Autre'] = (typeCount[w.workoutType || 'Autre'] || 0) + 1;
+            totalDuration += w.completedData?.actualDurationMinutes || 0;
+            totalTSS += w.completedData?.metrics?.cycling?.tss || 0;
+        }
+
+        const sports = Object.entries(sportCount).map(([s, n]) => `${s}(${n})`).join(', ');
+        const types = Object.entries(typeCount).map(([t, n]) => `${t}(${n})`).join(', ');
+        const hours = (totalDuration / 60).toFixed(1);
+
+        return `- Semaine du ${weekOf} : ${wks.length} séances | ${hours}h | TSS ${totalTSS} | Sports: ${sports} | Types: ${types}`;
+    });
+
+    return lines.join('\n');
+}
 
 const getRecentPerformanceHistory = (schedule: Schedule): string => {
     // Sécurité: vérifier que schedule.workouts est un tableau
@@ -1244,16 +1405,8 @@ export async function addManualWorkout(workout: Workout) {
 
 
 export async function deleteWorkout(workoutIdOrDate: string) {
-    const schedule = await getSchedule();
-
-    // Filtrer pour exclure la séance ciblée
-    const initialLength = schedule.workouts.length;
-    schedule.workouts = schedule.workouts.filter(w => w.id !== workoutIdOrDate && w.date !== workoutIdOrDate);
-
-    if (schedule.workouts.length !== initialLength) {
-        await saveSchedule(schedule);
-        revalidatePath('/');
-    }
+    await deleteWorkoutById(workoutIdOrDate);
+    revalidatePath('/');
 }
 
 export async function syncStravaActivities() {
@@ -1423,22 +1576,19 @@ export async function syncStravaActivities() {
                 // Trouver la semaine du bloc actif correspondant à cette date
                 let activeWeekID = '';
                 if (existingBlocks && existingWeeks) {
-                    const activityDateObj = new Date(activityDate);
+                    const activityDateObj = parseISO(activityDate);
                     const activeBlock = existingBlocks.find(block => {
-                        const blockStart = new Date(block.startDate);
-                        const blockEnd = new Date(blockStart);
-                        blockEnd.setDate(blockEnd.getDate() + block.weekCount * 7);
+                        const blockStart = parseISO(block.startDate);
+                        const blockEnd = addDays(blockStart, block.weekCount * 7);
                         return activityDateObj >= blockStart && activityDateObj < blockEnd;
                     });
 
                     if (activeBlock) {
-                        const blockStart = new Date(activeBlock.startDate);
+                        const blockStart = parseISO(activeBlock.startDate);
                         const blockWeeks = existingWeeks.filter(w => activeBlock.weeksId?.includes(w.id));
                         const activeWeek = blockWeeks.find(week => {
-                            const weekStart = new Date(blockStart);
-                            weekStart.setDate(weekStart.getDate() + (week.weekNumber - 1) * 7);
-                            const weekEnd = new Date(weekStart);
-                            weekEnd.setDate(weekEnd.getDate() + 6);
+                            const weekStart = addDays(blockStart, (week.weekNumber - 1) * 7);
+                            const weekEnd = addDays(weekStart, 6);
                             return activityDateObj >= weekStart && activityDateObj <= weekEnd;
                         });
 
@@ -1514,20 +1664,17 @@ function findBlockAndWeekForDate(
     targetDate: Date
 ): { block: Block; week: Week } | null {
     const block = blocks.find(b => {
-        const start = new Date(b.startDate);
-        const end = new Date(start);
-        end.setDate(end.getDate() + b.weekCount * 7);
+        const start = parseISO(b.startDate);
+        const end = addDays(start, b.weekCount * 7);
         return targetDate >= start && targetDate < end;
     });
     if (!block) return null;
 
-    const blockStart = new Date(block.startDate);
+    const blockStart = parseISO(block.startDate);
     const blockWeeks = weeks.filter(w => block.weeksId?.includes(w.id));
     const week = blockWeeks.find(w => {
-        const wStart = new Date(blockStart);
-        wStart.setDate(wStart.getDate() + (w.weekNumber - 1) * 7);
-        const wEnd = new Date(wStart);
-        wEnd.setDate(wEnd.getDate() + 6);
+        const wStart = addDays(blockStart, (w.weekNumber - 1) * 7);
+        const wEnd = addDays(wStart, 6);
         return targetDate >= wStart && targetDate <= wEnd;
     });
 
@@ -1553,7 +1700,7 @@ export async function getWeekContextForDate(weekStartDate: string): Promise<Week
     const [blocks, weeks] = await Promise.all([getBlock(), getWeek()]);
     if (!blocks || !weeks) return null;
 
-    const result = findBlockAndWeekForDate(blocks, weeks, new Date(weekStartDate));
+    const result = findBlockAndWeekForDate(blocks, weeks, parseISO(weekStartDate));
     if (!result) return null;
 
     return {
@@ -1574,7 +1721,7 @@ export async function getWeekPendingCount(weekStartDate: string): Promise<number
     const [blocks, weeks, workouts] = await Promise.all([getBlock(), getWeek(), getWorkout()]);
     if (!blocks || !weeks || !workouts) return 0;
 
-    const result = findBlockAndWeekForDate(blocks, weeks, new Date(weekStartDate));
+    const result = findBlockAndWeekForDate(blocks, weeks, parseISO(weekStartDate));
     if (!result) return 0;
 
     return workouts.filter(w => w.weekID === result.week.id && w.status === 'pending').length;
@@ -1599,12 +1746,22 @@ export async function generateWeekWorkoutsFromDate(
 
     if (!blocks || !weeks) throw new Error("Aucun plan trouvé.");
 
-    const result = findBlockAndWeekForDate(blocks, weeks, new Date(weekStartDate));
+    const result = findBlockAndWeekForDate(blocks, weeks, parseISO(weekStartDate));
     if (!result) throw new Error("Aucun bloc actif pour cette semaine.");
 
     const { block, week } = result;
     const plan = plans?.find(p => p.id === block.planId);
     if (!plan) throw new Error("Plan introuvable.");
+
+    // Trouver les objectifs pertinents (cette semaine + semaine suivante)
+    const objectives = await getObjectives();
+    const weekStart = parseISO(weekStartDate);
+    const weekEndPlusOne = addDays(weekStart, 13);
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const weekObjectives = objectives.filter(o =>
+        o.status === 'upcoming' && o.date >= todayStr
+        && parseISO(o.date) >= weekStart && parseISO(o.date) <= weekEndPlusOne
+    );
 
     const newWorkouts = await CreateWorkoutForWeek(
         profile,
@@ -1613,7 +1770,8 @@ export async function generateWeekWorkoutsFromDate(
         week,
         comment,
         100,
-        weeklyAvailability
+        weeklyAvailability,
+        weekObjectives,
     );
 
     if (!newWorkouts || newWorkouts.length === 0) {

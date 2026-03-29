@@ -18,11 +18,11 @@ interface GenerationModalProps {
 }
 
 const SPORT_LABELS: Record<string, string> = {
-    cycling:   'Vélo',
-    running:   'Course',
-    swimming:  'Natation',
+    cycling: 'Vélo',
+    running: 'Course',
+    swimming: 'Natation',
     triathlon: 'Triathlon',
-    duathlon:  'Duathlon',
+    duathlon: 'Duathlon',
 };
 
 export const GenerationModal: React.FC<GenerationModalProps> = ({
@@ -33,7 +33,7 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
     isGenerating,
     objectives,
 }) => {
-    const [mode, setMode] = useState<Mode>('block');
+    const [mode, setMode] = useState<Mode>('objective');
     const [blockFocus, setBlockFocus] = useState('Endurance');
     const [customTheme, setCustomTheme] = useState('');
     const [numWeeks, setNumWeeks] = useState(4);
@@ -58,19 +58,19 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
     const secondaryInRange = upcomingPrimary
         ? objectives.filter(
             o => o.priority === 'secondaire' && o.status === 'upcoming'
-              && o.date >= today && o.date <= upcomingPrimary.date
-          )
+                && o.date >= today && o.date <= upcomingPrimary.date
+        )
         : [];
 
     const handleGenerateBlock = async () => {
         const durationToSend = blockFocus === 'Personnalisé' ? numWeeks : 4;
-        await onGenerate(blockFocus, blockFocus === 'Personnalisé' ? customTheme : null, startDate, durationToSend);
         onClose();
+        await onGenerate(blockFocus, blockFocus === 'Personnalisé' ? customTheme : null, startDate, durationToSend);
     };
 
     const handleGenerateObjective = async () => {
-        await onGenerateToObjective(planStartDate);
         onClose();
+        await onGenerateToObjective(planStartDate);
     };
 
     return (
@@ -78,44 +78,42 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
             <div className="space-y-5 sm:space-y-6">
 
                 {/* ── Mode selector ── */}
-                <div className="grid grid-cols-2 gap-2 p-1 bg-slate-900 rounded-xl">
-                    <button
-                        onClick={() => setMode('block')}
-                        className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
-                            mode === 'block'
-                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30'
-                                : 'text-slate-400 hover:text-slate-300'
-                        }`}
-                    >
-                        <Sliders size={14} />
-                        Bloc d&apos;entraînement
-                    </button>
+                <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl">
                     <button
                         onClick={() => setMode('objective')}
-                        className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
-                            mode === 'objective'
-                                ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/30'
-                                : 'text-slate-400 hover:text-slate-300'
-                        }`}
+                        className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${mode === 'objective'
+                                ? 'bg-rose-600 text-white shadow-lg shadow-rose-500/30 dark:shadow-rose-900/30'
+                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                            }`}
                     >
                         <Trophy size={14} />
                         Vers un objectif
+                    </button>
+                    <button
+                        onClick={() => setMode('block')}
+                        className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${mode === 'block'
+                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 dark:shadow-blue-900/30'
+                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                            }`}
+                    >
+                        <Sliders size={14} />
+                        Bloc d&apos;entraînement
                     </button>
                 </div>
 
                 {/* ── BLOCK MODE ── */}
                 {mode === 'block' && (
                     <div className="space-y-5">
-                        <div className="bg-blue-900/10 border border-blue-500/20 p-3 rounded-lg flex gap-3 items-start">
-                            <BrainCircuit className="text-blue-400 shrink-0 mt-0.5" size={18} />
-                            <p className="text-blue-200/80 text-xs sm:text-sm leading-relaxed">
+                        <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-500/20 p-3 rounded-lg flex gap-3 items-start">
+                            <BrainCircuit className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" size={18} />
+                            <p className="text-blue-700 dark:text-blue-200/80 text-xs sm:text-sm leading-relaxed">
                                 L&apos;IA va analyser votre historique récent pour calibrer l&apos;intensité et le volume de ce bloc.
                             </p>
                         </div>
 
                         <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-2">
-                                <Calendar size={14} className="text-slate-400" />
+                            <label className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                                <Calendar size={14} className="text-slate-500 dark:text-slate-400" />
                                 Date de début
                             </label>
                             <input
@@ -123,13 +121,13 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
                                 style={{ colorScheme: 'dark' }}
                                 value={startDate}
                                 onChange={e => setStartDate(e.target.value)}
-                                className="w-full h-11 bg-slate-950 border border-slate-700 text-white rounded-lg px-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                className="w-full h-11 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg px-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                             />
                         </div>
 
                         <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-2">
-                                <Sliders size={14} className="text-slate-400" />
+                            <label className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                                <Sliders size={14} className="text-slate-500 dark:text-slate-400" />
                                 Thème / Focus
                             </label>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
@@ -137,11 +135,10 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
                                     <button
                                         key={focus}
                                         onClick={() => setBlockFocus(focus)}
-                                        className={`p-3 rounded-lg text-xs sm:text-sm text-left transition-all border whitespace-normal h-full min-h-[50px] flex items-center ${
-                                            blockFocus === focus
+                                        className={`p-3 rounded-lg text-xs sm:text-sm text-left transition-all border whitespace-normal h-full min-h-[50px] flex items-center ${blockFocus === focus
                                                 ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)]'
-                                                : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-750 hover:border-slate-600'
-                                        }`}
+                                                : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-750 hover:border-slate-400 dark:hover:border-slate-600'
+                                            }`}
                                     >
                                         {focus === 'Semaine de Tests (FTP, VO2max)' ? 'Semaine de Tests' : focus}
                                     </button>
@@ -150,31 +147,31 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
                         </div>
 
                         {blockFocus === 'Personnalisé' && (
-                            <div className="animate-in fade-in slide-in-from-top-2 space-y-4 border-t border-slate-700/50 pt-4">
+                            <div className="animate-in fade-in slide-in-from-top-2 space-y-4 border-t border-slate-300/50 dark:border-slate-700/50 pt-4">
                                 <div>
-                                    <label className="block text-xs font-semibold text-blue-400 mb-1.5 uppercase tracking-wide">Description précise</label>
+                                    <label className="block text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1.5 uppercase tracking-wide">Description précise</label>
                                     <textarea
                                         value={customTheme}
                                         onChange={e => setCustomTheme(e.target.value)}
                                         placeholder="Ex: Prépa Montagne, beaucoup de D+, intensité seuil..."
-                                        className="w-full bg-slate-900 border border-blue-500/50 rounded-lg p-3 text-white text-sm h-20 resize-none focus:ring-2 focus:ring-blue-500 outline-none"
+                                        className="w-full bg-white dark:bg-slate-900 border border-blue-300 dark:border-blue-500/50 rounded-lg p-3 text-slate-900 dark:text-white text-sm h-20 resize-none focus:ring-2 focus:ring-blue-500 outline-none"
                                         autoFocus
                                     />
                                 </div>
                                 <div>
                                     <div className="flex justify-between items-center mb-2">
-                                        <label className="text-xs font-semibold text-blue-400 uppercase tracking-wide">Durée du bloc</label>
+                                        <label className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide">Durée du bloc</label>
                                         <span className="text-xs font-mono text-white bg-blue-600 px-2 py-0.5 rounded-full">
                                             {numWeeks} semaine{numWeeks > 1 ? 's' : ''}
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-4 bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+                                    <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
                                         <span className="text-xs text-slate-500 font-mono">1</span>
                                         <input
                                             type="range" min="1" max="8" step="1"
                                             value={numWeeks}
                                             onChange={e => setNumWeeks(parseInt(e.target.value))}
-                                            className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                            className="flex-1 h-2 bg-slate-300 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
                                         />
                                         <span className="text-xs text-slate-500 font-mono">8</span>
                                     </div>
@@ -182,13 +179,13 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
                             </div>
                         )}
 
-                        <div className="flex gap-3 pt-2 sm:pt-4 border-t border-slate-800">
+                        <div className="flex gap-3 pt-2 sm:pt-4 border-t border-slate-200 dark:border-slate-800">
                             <Button variant="outline" className="flex-1 h-11" onClick={onClose} disabled={isGenerating}>
                                 Annuler
                             </Button>
                             <Button
                                 variant="primary"
-                                className="flex-1 h-11 font-semibold shadow-lg shadow-blue-900/20"
+                                className="flex-1 h-11 font-semibold shadow-lg shadow-blue-500/20 dark:shadow-blue-900/20"
                                 icon={isGenerating ? undefined : BrainCircuit}
                                 onClick={handleGenerateBlock}
                                 disabled={isGenerating || (blockFocus === 'Personnalisé' && customTheme.length < 3)}
@@ -207,17 +204,17 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
                 {/* ── OBJECTIVE MODE ── */}
                 {mode === 'objective' && (
                     <div className="space-y-5">
-                        <div className="bg-rose-900/10 border border-rose-500/20 p-3 rounded-lg flex gap-3 items-start">
-                            <Trophy className="text-rose-400 shrink-0 mt-0.5" size={18} />
-                            <p className="text-rose-200/80 text-xs sm:text-sm leading-relaxed">
+                        <div className="bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-500/20 p-3 rounded-lg flex gap-3 items-start">
+                            <Trophy className="text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" size={18} />
+                            <p className="text-rose-700 dark:text-rose-200/80 text-xs sm:text-sm leading-relaxed">
                                 L&apos;IA va créer un plan complet de plusieurs blocs, de aujourd&apos;hui jusqu&apos;à votre objectif principal, en intégrant les objectifs secondaires.
                             </p>
                         </div>
 
                         {/* Date de début du plan */}
                         <div>
-                            <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-2">
-                                <Calendar size={14} className="text-slate-400" />
+                            <label className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                                <Calendar size={14} className="text-slate-500 dark:text-slate-400" />
                                 Date de début du plan
                             </label>
                             <input
@@ -226,7 +223,7 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
                                 value={planStartDate}
                                 min={today}
                                 onChange={e => setPlanStartDate(e.target.value)}
-                                className="w-full h-11 bg-slate-950 border border-slate-700 text-white rounded-lg px-3 focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all"
+                                className="w-full h-11 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg px-3 focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all"
                             />
                         </div>
 
@@ -234,27 +231,27 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
                             <div className="space-y-3">
                                 {/* Objectif principal */}
                                 <div>
-                                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Objectif principal</p>
-                                    <div className="bg-rose-950/40 border border-rose-500/30 rounded-xl p-4 flex items-start gap-3">
-                                        <div className="w-9 h-9 rounded-lg bg-rose-600/20 border border-rose-500/30 flex items-center justify-center shrink-0">
-                                            <Trophy size={16} className="text-rose-400" />
+                                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">Objectif principal</p>
+                                    <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-500/30 rounded-xl p-4 flex items-start gap-3">
+                                        <div className="w-9 h-9 rounded-lg bg-rose-100 dark:bg-rose-600/20 border border-rose-200 dark:border-rose-500/30 flex items-center justify-center shrink-0">
+                                            <Trophy size={16} className="text-rose-600 dark:text-rose-400" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-white font-semibold text-sm truncate">{upcomingPrimary.name}</p>
-                                            <p className="text-rose-300/70 text-xs mt-0.5">{SPORT_LABELS[upcomingPrimary.sport] ?? upcomingPrimary.sport}</p>
+                                            <p className="text-slate-900 dark:text-white font-semibold text-sm truncate">{upcomingPrimary.name}</p>
+                                            <p className="text-rose-600 dark:text-rose-300/70 text-xs mt-0.5">{SPORT_LABELS[upcomingPrimary.sport] ?? upcomingPrimary.sport}</p>
                                             <div className="flex flex-wrap gap-3 mt-2">
-                                                <span className="flex items-center gap-1 text-xs text-slate-400">
+                                                <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                                                     <Calendar size={11} />
                                                     {new Date(upcomingPrimary.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                                                 </span>
                                                 {upcomingPrimary.distanceKm && (
-                                                    <span className="flex items-center gap-1 text-xs text-slate-400">
+                                                    <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                                                         <MapPin size={11} />
                                                         {upcomingPrimary.distanceKm} km
                                                     </span>
                                                 )}
                                                 {upcomingPrimary.elevationGainM && (
-                                                    <span className="flex items-center gap-1 text-xs text-slate-400">
+                                                    <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                                                         <Mountain size={11} />
                                                         {upcomingPrimary.elevationGainM} m D+
                                                     </span>
@@ -268,43 +265,43 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
                                 {/* Objectifs secondaires */}
                                 {secondaryInRange.length > 0 && (
                                     <div>
-                                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
+                                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
                                             {secondaryInRange.length} objectif{secondaryInRange.length > 1 ? 's' : ''} secondaire{secondaryInRange.length > 1 ? 's' : ''} intégré{secondaryInRange.length > 1 ? 's' : ''}
                                         </p>
                                         <div className="space-y-2">
                                             {secondaryInRange.map(o => (
-                                                <div key={o.id} className="bg-slate-800/60 border border-slate-700/50 rounded-lg px-3 py-2 flex items-center gap-2">
-                                                    <Target size={13} className="text-amber-400 shrink-0" />
-                                                    <span className="text-sm text-slate-300 flex-1 truncate">{o.name}</span>
+                                                <div key={o.id} className="bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 rounded-lg px-3 py-2 flex items-center gap-2">
+                                                    <Target size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                                                    <span className="text-sm text-slate-600 dark:text-slate-300 flex-1 truncate">{o.name}</span>
                                                     <span className="text-xs text-slate-500 shrink-0">
                                                         {new Date(o.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                                                     </span>
                                                 </div>
                                             ))}
                                         </div>
-                                        <p className="text-xs text-amber-400/70 mt-1.5">→ Une semaine de taper sera prévue autour de chaque objectif secondaire.</p>
+                                        <p className="text-xs text-amber-600 dark:text-amber-400/70 mt-1.5">→ Une semaine de taper sera prévue autour de chaque objectif secondaire.</p>
                                     </div>
                                 )}
 
-                                <div className="bg-slate-800/40 rounded-lg p-3 text-xs text-slate-400 border border-slate-700/40">
-                                    ⚠️ Cette génération <span className="text-white font-medium">remplace</span> votre plan actif.
+                                <div className="bg-slate-100/40 dark:bg-slate-800/40 rounded-lg p-3 text-xs text-slate-500 dark:text-slate-400 border border-slate-200/40 dark:border-slate-700/40">
+                                    ⚠️ Cette génération <span className="text-slate-900 dark:text-white font-medium">remplace</span> votre plan actif.
                                 </div>
                             </div>
                         ) : (
                             <div className="text-center py-8 px-4">
-                                <Trophy size={32} className="text-slate-700 mx-auto mb-3" />
-                                <p className="text-slate-400 text-sm font-medium">Aucun objectif principal à venir</p>
+                                <Trophy size={32} className="text-slate-300 dark:text-slate-700 mx-auto mb-3" />
+                                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Aucun objectif principal à venir</p>
                                 <p className="text-slate-500 text-xs mt-1">Ajoutez un objectif principal dans votre profil pour utiliser cette fonctionnalité.</p>
                             </div>
                         )}
 
-                        <div className="flex gap-3 pt-2 sm:pt-4 border-t border-slate-800">
+                        <div className="flex gap-3 pt-2 sm:pt-4 border-t border-slate-200 dark:border-slate-800">
                             <Button variant="outline" className="flex-1 h-11" onClick={onClose} disabled={isGenerating}>
                                 Annuler
                             </Button>
                             <Button
                                 variant="primary"
-                                className="flex-1 h-11 font-semibold shadow-lg shadow-rose-900/20 bg-rose-600 hover:bg-rose-500 border-rose-500"
+                                className="flex-1 h-11 font-semibold shadow-lg shadow-rose-500/20 dark:shadow-rose-900/20 bg-rose-600 hover:bg-rose-500 border-rose-500"
                                 icon={isGenerating ? undefined : Trophy}
                                 onClick={handleGenerateObjective}
                                 disabled={isGenerating || !upcomingPrimary}

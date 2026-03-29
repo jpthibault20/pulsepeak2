@@ -1,6 +1,7 @@
 import './globals.css';
-import type { Metadata, Viewport } from 'next';
+import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { ThemeProvider } from '@/components/ThemeProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -25,17 +26,13 @@ export const metadata: Metadata = {
     manifest: '/manifest.json',
     appleWebApp: {
         capable: true,
-        statusBarStyle: 'black-translucent',
+        statusBarStyle: 'default',
         title: 'PulsePeak',
     },
-};
-
-export const viewport: Viewport = {
-    themeColor: '#020617',
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
+    themeColor: [
+        { media: '(prefers-color-scheme: light)', color: '#f8fafc' },
+        { media: '(prefers-color-scheme: dark)',  color: '#020617' },
+    ],
 };
 
 export default function RootLayout({
@@ -44,11 +41,21 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="fr">
+        <html lang="fr" suppressHydrationWarning>
+            <head>
+                {/* Prévient le flash de mauvais thème (FOUC) */}
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: `(function(){var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();`,
+                    }}
+                />
+            </head>
             <body className={inter.className}>
-                <div className="min-h-screen">
-                    {children}
-                </div>
+                <ThemeProvider>
+                    <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
+                        {children}
+                    </div>
+                </ThemeProvider>
             </body>
         </html>
     );

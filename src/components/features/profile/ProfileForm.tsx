@@ -19,13 +19,13 @@ import { useSubscription } from '@/lib/subscription/context';
 // ─── Sections ─────────────────────────────────────────────────────────────────
 
 const SECTIONS = [
-    { id: 'identity',     label: 'Identité',      icon: User,       color: 'text-blue-400',   accent: 'bg-blue-500' },
-    { id: 'sports',       label: 'Sports',        icon: Activity,   color: 'text-emerald-400', accent: 'bg-emerald-500' },
-    { id: 'planning',     label: 'Planning',      icon: Calendar,   color: 'text-purple-400',  accent: 'bg-purple-500' },
+    { id: 'identity',     label: 'Identité',      icon: User,       color: 'text-blue-400 dark:text-blue-400',   accent: 'bg-blue-500' },
+    { id: 'sports',       label: 'Sports',        icon: Activity,   color: 'text-emerald-600 dark:text-emerald-400', accent: 'bg-emerald-500' },
+    { id: 'planning',     label: 'Planning',      icon: Calendar,   color: 'text-purple-600 dark:text-purple-400',  accent: 'bg-purple-500' },
     { id: 'physio',       label: 'Physiologie',   icon: Zap,        color: 'text-yellow-400',  accent: 'bg-yellow-500' },
-    { id: 'objectifs',    label: 'Objectifs',     icon: Target,     color: 'text-rose-400',    accent: 'bg-rose-500' },
-    { id: 'abonnement',   label: 'Abonnement',    icon: CreditCard, color: 'text-amber-400',   accent: 'bg-amber-500' },
-    { id: 'compte',       label: 'Compte',        icon: Shield,     color: 'text-slate-400',   accent: 'bg-slate-500' },
+    { id: 'objectifs',    label: 'Objectifs',     icon: Target,     color: 'text-rose-600 dark:text-rose-400',    accent: 'bg-rose-500' },
+    { id: 'abonnement',   label: 'Abonnement',    icon: CreditCard, color: 'text-amber-600 dark:text-amber-400',   accent: 'bg-amber-500' },
+    { id: 'compte',       label: 'Compte',        icon: Shield,     color: 'text-slate-500 dark:text-slate-400',   accent: 'bg-slate-500' },
 ] as const;
 
 type SectionId = typeof SECTIONS[number]['id'];
@@ -217,11 +217,11 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
                 {/* Avatar */}
                 <div className="relative shrink-0">
                     <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center shadow-lg shadow-blue-900/30">
-                        <span className="text-white font-bold text-xl md:text-2xl">{initials}</span>
+                        <span className="text-slate-900 dark:text-white font-bold text-xl md:text-2xl">{initials}</span>
                     </div>
                     {/* Completion ring */}
-                    <svg className="absolute -inset-1.5 w-[calc(100%+12px)] h-[calc(100%+12px)]" viewBox="0 0 68 68">
-                        <circle cx="34" cy="34" r="30" fill="none" stroke="#1e293b" strokeWidth="3" />
+                    <svg className="absolute -inset-1.5 w-[calc(100%+12px)] h-[calc(100%+12px)] text-slate-200 dark:text-slate-800" viewBox="0 0 68 68">
+                        <circle cx="34" cy="34" r="30" fill="none" stroke="currentColor" strokeWidth="3" />
                         <circle
                             cx="34" cy="34" r="30" fill="none"
                             stroke={completion >= 80 ? '#22c55e' : completion >= 50 ? '#3b82f6' : '#f59e0b'}
@@ -237,13 +237,13 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                        <h1 className="text-xl md:text-2xl font-bold text-white truncate">{displayName}</h1>
+                        <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white truncate">{displayName}</h1>
                         <PlanBadge plan={plan} status={status} size="sm" />
                     </div>
-                    <p className="text-slate-500 text-sm truncate mt-0.5">{formData.email || 'Email non renseigné'}</p>
+                    <p className="text-slate-500 dark:text-slate-500 text-sm truncate mt-0.5">{formData.email || 'Email non renseigné'}</p>
                     {/* Completion bar */}
                     <div className="flex items-center gap-2 mt-2">
-                        <div className="flex-1 h-1 bg-slate-800 rounded-full overflow-hidden max-w-[140px]">
+                        <div className="flex-1 h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden max-w-[140px]">
                             <div
                                 className={`h-full rounded-full transition-all duration-700 ${
                                     completion >= 80 ? 'bg-emerald-500' : completion >= 50 ? 'bg-blue-500' : 'bg-amber-500'
@@ -251,7 +251,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
                                 style={{ width: `${completion}%` }}
                             />
                         </div>
-                        <span className="text-xs text-slate-500">{completion}% complet</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-500">{completion}% complet</span>
                     </div>
                 </div>
 
@@ -263,10 +263,10 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
                         className={`
                             flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all
                             ${saved
-                                ? 'bg-emerald-600/20 border border-emerald-500/30 text-emerald-400'
+                                ? 'bg-emerald-600/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
                                 : isDirty
                                     ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/30'
-                                    : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-500 cursor-not-allowed border border-slate-300 dark:border-slate-700'
                             }
                         `}
                     >
@@ -291,14 +291,14 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
                                 className={`
                                     flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left
                                     ${active
-                                        ? 'bg-slate-800 text-white shadow-sm'
-                                        : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-slate-800/50'
                                     }
                                 `}
                             >
                                 <Icon size={16} className={active ? s.color : ''} />
                                 <span>{s.label}</span>
-                                {active && <ChevronRight size={14} className="ml-auto text-slate-600" />}
+                                {active && <ChevronRight size={14} className="ml-auto text-slate-500 dark:text-slate-600" />}
                             </button>
                         );
                     })}
@@ -324,8 +324,8 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
                                     className={`
                                         flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all shrink-0
                                         ${active
-                                            ? 'bg-slate-800 text-white border border-slate-700'
-                                            : 'text-slate-500 hover:text-white bg-slate-900'
+                                            ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700'
+                                            : 'text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-900'
                                         }
                                     `}
                                 >
@@ -368,14 +368,14 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
                     </div>
 
                     {/* Section navigation footer */}
-                    <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-800">
+                    <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
                         <button
                             onClick={() => {
                                 const idx = SECTIONS.findIndex(s => s.id === activeSection);
                                 if (idx > 0) setActiveSection(SECTIONS[idx - 1].id);
                             }}
                             disabled={activeSection === SECTIONS[0].id}
-                            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-white disabled:opacity-0 transition-all"
+                            className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white disabled:opacity-0 transition-all"
                         >
                             <ChevronRight size={14} className="rotate-180" />
                             {SECTIONS[Math.max(0, SECTIONS.findIndex(s => s.id === activeSection) - 1)].label}
@@ -387,7 +387,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
                                     key={s.id}
                                     onClick={() => setActiveSection(s.id)}
                                     className={`w-1.5 h-1.5 rounded-full transition-all ${
-                                        s.id === activeSection ? 'bg-blue-400 w-4' : 'bg-slate-700 hover:bg-slate-500'
+                                        s.id === activeSection ? 'bg-blue-600 dark:text-blue-400 w-4' : 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-500'
                                     }`}
                                 />
                             ))}
@@ -399,7 +399,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
                                 if (idx < SECTIONS.length - 1) setActiveSection(SECTIONS[idx + 1].id);
                             }}
                             disabled={activeSection === SECTIONS[SECTIONS.length - 1].id}
-                            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-white disabled:opacity-0 transition-all"
+                            className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white disabled:opacity-0 transition-all"
                         >
                             {SECTIONS[Math.min(SECTIONS.length - 1, SECTIONS.findIndex(s => s.id === activeSection) + 1)].label}
                             <ChevronRight size={14} />
@@ -413,10 +413,10 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
                 md:hidden fixed bottom-[80px] left-0 right-0 z-50 transition-all duration-300
                 ${isDirty ? 'translate-y-0 opacity-100 pointer-events-auto' : 'translate-y-full opacity-0 pointer-events-none'}
             `}>
-                <div className="mx-4 mb-2 bg-slate-900 border border-slate-700 rounded-2xl p-3 shadow-2xl shadow-black/50 flex items-center gap-3">
+                <div className="mx-4 mb-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl p-3 shadow-2xl shadow-black/10 dark:shadow-black/50 flex items-center gap-3">
                     <div className="flex-1">
-                        <p className="text-white text-sm font-semibold">Modifications non sauvegardées</p>
-                        <p className="text-slate-500 text-xs">Appuyez pour enregistrer votre profil</p>
+                        <p className="text-slate-900 dark:text-white text-sm font-semibold">Modifications non sauvegardées</p>
+                        <p className="text-slate-500 dark:text-slate-500 text-xs">Appuyez pour enregistrer votre profil</p>
                     </div>
                     <button
                         onClick={handleSave}

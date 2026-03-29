@@ -13,6 +13,7 @@ interface CalendarGridProps {
     objectives: Objective[];
     onOpenManualModal: (e: React.MouseEvent, date: Date) => void;
     onViewWorkout: (workout: Workout) => void;
+    onEditObjective: (obj: Objective) => void;
     onRefresh: () => void;
     onOpenGenModal: () => void;
 }
@@ -25,6 +26,7 @@ export function CalendarGrid({
     objectives,
     onOpenManualModal,
     onViewWorkout,
+    onEditObjective,
     onRefresh,
     onOpenGenModal,
 }: CalendarGridProps) {
@@ -98,26 +100,26 @@ export function CalendarGrid({
 
 
     return (
-        <div className="flex flex-col rounded-xl overflow-hidden shadow-2xl bg-slate-950 border border-slate-800">
+        <div className="flex flex-col rounded-xl overflow-hidden shadow-lg shadow-slate-900/8 dark:shadow-2xl dark:shadow-black/30 bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800">
 
             {/* Header des jours */}
-            <div className="grid grid-cols-8 bg-slate-900 border-b border-slate-800">
+            <div className="grid grid-cols-8 bg-slate-50 dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800">
                 {(DAY_NAMES_SHORT as readonly DayName[]).map((day) => (
                     <div
                         key={day}
-                        className="py-3 text-center text-[11px] font-bold text-slate-400 uppercase tracking-widest"
+                        className="py-3 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest"
                     >
                         {day}
                     </div>
                 ))}
                 {/* Colonne Bilan distincte */}
-                <div className="py-3 text-center text-[11px] font-bold text-blue-400/80 bg-slate-900/50 uppercase tracking-widest border-l border-slate-800">
+                <div className="py-3 text-center text-[11px] font-bold text-blue-600 dark:text-blue-400/80 bg-slate-50 dark:bg-slate-900/50 uppercase tracking-widest border-l border-slate-200/80 dark:border-slate-800">
                     Bilan
                 </div>
             </div>
 
             {/* Corps du calendrier : Technique du gap-px pour des bordures fines */}
-            <div className="bg-slate-800 gap-px grid border-b border-slate-800 last:border-0">
+            <div className="bg-slate-200 dark:bg-slate-800 gap-px grid border-b border-slate-200 dark:border-slate-800 last:border-0">
                 {weekRows.map((week, weekIndex) => {
                     const stats = allWeekStats[weekIndex];
 
@@ -130,7 +132,7 @@ export function CalendarGrid({
                                     return (
                                         <div
                                             key={`empty-${weekIndex}-${dayIndex}`}
-                                            className="bg-slate-950/80 min-h-[120px]"
+                                            className="bg-slate-900/60 dark:bg-slate-950/80 min-h-[120px]"
                                         />
                                     );
                                 }
@@ -147,8 +149,8 @@ export function CalendarGrid({
                                         key={dateKey}
                                         className={`
                                             min-h-[120px] relative transition-colors duration-200
-                                            ${!isCurrentMonth ? 'bg-slate-950/60 opacity-50' : 'bg-slate-900 hover:bg-slate-800'}
-                                            ${isToday ? 'ring-inset ring-1 ring-blue-500/30 bg-blue-500/5' : ''}
+                                            ${!isCurrentMonth ? 'bg-slate-50/80 dark:bg-slate-950/60 opacity-50' : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800'}
+                                            ${isToday ? 'ring-inset ring-1 ring-blue-500/30 bg-blue-50 dark:bg-blue-500/5' : ''}
                                             ${hasPrimaryObj ? 'ring-inset ring-1 ring-rose-500/40' : ''}
                                         `}
                                     >
@@ -160,13 +162,14 @@ export function CalendarGrid({
                                             isToday={isToday}
                                             onOpenManualModal={onOpenManualModal}
                                             onViewWorkout={onViewWorkout}
+                                            onEditObjective={onEditObjective}
                                         />
                                     </div>
                                 );
                             })}
 
                             {/* La cellule de résumé de la semaine (8ème colonne) */}
-                            <div className="bg-slate-900/40 min-h-[120px] relative border-l border-slate-800/50 hover:bg-slate-900/80 transition-colors">
+                            <div className="bg-slate-50 dark:bg-slate-900/40 min-h-[120px] relative border-l border-slate-200/50 dark:border-slate-800/50 hover:bg-white/90 dark:hover:bg-slate-900/80 transition-colors">
                                 <WeekSummaryCell
                                     stats={stats}
                                     weekDates={week}

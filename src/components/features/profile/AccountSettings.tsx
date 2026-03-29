@@ -51,24 +51,24 @@ export function AccountSettings() {
     };
 
     return (
-        <div className="bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-xl p-4 md:p-6 space-y-6">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Lock size={18} className="text-slate-400" />
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-xl p-4 md:p-6 space-y-6">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Lock size={18} className="text-slate-500 dark:text-slate-400" />
                 Compte &amp; Sécurité
             </h2>
 
             {/* ── Changement de mot de passe ── */}
             <form onSubmit={handleChangePassword} className="space-y-4">
-                <h3 className="text-sm font-semibold text-slate-300">Changer le mot de passe</h3>
+                <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300">Changer le mot de passe</h3>
 
                 {error && (
-                    <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2.5 text-red-400 text-sm">
+                    <div className="flex items-center gap-2 bg-red-100 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg px-3 py-2.5 text-red-600 dark:text-red-400 text-sm">
                         <AlertCircle size={13} className="shrink-0" />
                         {error}
                     </div>
                 )}
                 {success && (
-                    <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2.5 text-emerald-400 text-sm">
+                    <div className="flex items-center gap-2 bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-lg px-3 py-2.5 text-emerald-600 dark:text-emerald-400 text-sm">
                         <CheckCircle2 size={13} className="shrink-0" />
                         {success}
                     </div>
@@ -76,7 +76,7 @@ export function AccountSettings() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                        <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
                             Nouveau mot de passe
                         </label>
                         <div className="relative">
@@ -85,12 +85,12 @@ export function AccountSettings() {
                                 value={newPassword}
                                 onChange={e => setNewPassword(e.target.value)}
                                 placeholder="6 caractères minimum"
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30 transition-colors pr-9"
+                                className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30 transition-colors pr-9"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowNew(s => !s)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                             >
                                 {showNew ? <EyeOff size={14} /> : <Eye size={14} />}
                             </button>
@@ -98,7 +98,7 @@ export function AccountSettings() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                        <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
                             Confirmer le mot de passe
                         </label>
                         <div className="relative">
@@ -107,12 +107,12 @@ export function AccountSettings() {
                                 value={confirmPassword}
                                 onChange={e => setConfirmPassword(e.target.value)}
                                 placeholder="••••••••"
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30 transition-colors pr-9"
+                                className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30 transition-colors pr-9"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowConfirm(s => !s)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                             >
                                 {showConfirm ? <EyeOff size={14} /> : <Eye size={14} />}
                             </button>
@@ -133,18 +133,18 @@ export function AccountSettings() {
                 </button>
             </form>
 
-            <div className="border-t border-slate-800" />
+            <div className="border-t border-slate-200 dark:border-slate-800" />
 
             {/* ── Déconnexion ── */}
             <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-sm font-semibold text-slate-300">Se déconnecter</p>
+                    <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Se déconnecter</p>
                     <p className="text-xs text-slate-500 mt-0.5">Terminer la session en cours</p>
                 </div>
                 <button
                     onClick={handleLogout}
                     disabled={isLoggingOut}
-                    className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 disabled:opacity-50 text-red-400 text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+                    className="flex items-center gap-2 bg-red-100 dark:bg-red-500/10 hover:bg-red-200 dark:hover:bg-red-500/20 border border-red-200 dark:border-red-500/20 disabled:opacity-50 text-red-600 dark:text-red-400 text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
                 >
                     {isLoggingOut ? (
                         <Loader2 size={14} className="animate-spin" />

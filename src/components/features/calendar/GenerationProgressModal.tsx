@@ -35,9 +35,9 @@ const STAGES = [
 ];
 
 const LEVEL_COLORS: Record<string, string> = {
-    'Débutant':      'text-emerald-400 bg-emerald-400/10',
-    'Intermédiaire': 'text-blue-400 bg-blue-400/10',
-    'Avancé':        'text-purple-400 bg-purple-400/10',
+    'Débutant':      'text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-400/10',
+    'Intermédiaire': 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-400/10',
+    'Avancé':        'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-400/10',
 };
 
 // ─── Progress animation hook ──────────────────────────────────────────────────
@@ -99,22 +99,22 @@ export function GenerationProgressModal({
         : STAGES.findLastIndex(s => progress >= s.progressAt);
     const activeIdx  = Math.max(0, stageIndex);
 
-    const levelStyle = LEVEL_COLORS[state.profileInfo.experience] ?? 'text-slate-400 bg-slate-400/10';
+    const levelStyle = LEVEL_COLORS[state.profileInfo.experience] ?? 'text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-400/10';
 
     // ── Mini banner ──────────────────────────────────────────────────────────
     if (state.minimized && state.active) {
         return (
             <button
                 onClick={onRestore}
-                className="fixed top-20 right-3 z-50 flex items-center gap-2.5 px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-full shadow-lg text-sm font-medium text-white animate-in slide-in-from-top-2 hover:bg-slate-800 transition-colors"
+                className="fixed top-20 right-3 z-50 flex items-center gap-2.5 px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-full shadow-lg text-sm font-medium text-slate-900 dark:text-white animate-in slide-in-from-top-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
                 {state.done ? (
-                    <Check size={14} className="text-emerald-400" />
+                    <Check size={14} className="text-emerald-600 dark:text-emerald-400" />
                 ) : (
-                    <Loader2 size={14} className="animate-spin text-blue-400" />
+                    <Loader2 size={14} className="animate-spin text-blue-600 dark:text-blue-400" />
                 )}
                 <span>{state.done ? 'Plan créé !' : 'Génération…'}</span>
-                <span className="text-blue-400 font-bold tabular-nums">
+                <span className="text-blue-600 dark:text-blue-400 font-bold tabular-nums">
                     {Math.round(progress)}%
                 </span>
                 <ChevronUp size={14} className="text-slate-500" />
@@ -127,21 +127,21 @@ export function GenerationProgressModal({
     return (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div
-                className="w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200"
+                className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700/80 rounded-2xl shadow-2xl shadow-slate-300/50 dark:shadow-black/50 overflow-hidden animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200"
                 onClick={e => e.stopPropagation()}
             >
                 {/* ── Header ── */}
-                <div className="relative px-5 pt-5 pb-4 bg-gradient-to-br from-blue-950/60 to-slate-900 border-b border-slate-800">
+                <div className="relative px-5 pt-5 pb-4 bg-gradient-to-br from-blue-50 dark:from-blue-950/60 to-white dark:to-slate-900 border-b border-slate-200 dark:border-slate-800">
                     <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
-                                <Zap size={18} className="text-blue-400" />
+                            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center flex-shrink-0">
+                                <Zap size={18} className="text-blue-600 dark:text-blue-400" />
                             </div>
                             <div>
-                                <h3 className="text-base font-bold text-white leading-tight">
+                                <h3 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
                                     {state.done ? 'Plan créé avec succès !' : 'Génération en cours…'}
                                 </h3>
-                                <p className="text-xs text-slate-400 mt-0.5">
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                                     {state.done
                                         ? 'Votre plan est prêt'
                                         : 'Veuillez patienter ~15 secondes'}
@@ -152,7 +152,7 @@ export function GenerationProgressModal({
                             <button
                                 onClick={onMinimize}
                                 title="Réduire"
-                                className="p-1.5 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg transition-colors flex-shrink-0"
+                                className="p-1.5 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors flex-shrink-0"
                             >
                                 <Minus size={16} />
                             </button>
@@ -161,30 +161,30 @@ export function GenerationProgressModal({
 
                     {/* Athlete pill */}
                     <div className="flex items-center gap-2 mt-4 flex-wrap">
-                        <span className="text-sm font-medium text-white">
+                        <span className="text-sm font-medium text-slate-900 dark:text-white">
                             {state.profileInfo.firstName}
                         </span>
                         <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${levelStyle}`}>
                             {state.profileInfo.experience}
                         </span>
                         <span className="text-xs text-slate-500">·</span>
-                        <span className="text-xs text-slate-400">CTL {state.profileInfo.currentCTL}</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">CTL {state.profileInfo.currentCTL}</span>
                         <span className="text-xs text-slate-500">·</span>
-                        <span className="text-xs text-slate-400">{state.profileInfo.sports}</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">{state.profileInfo.sports}</span>
                     </div>
                 </div>
 
                 {/* ── Progress bar ── */}
                 <div className="px-5 pt-5 pb-2">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
                             {state.done ? 'Terminé' : STAGES[activeIdx]?.label ?? '…'}
                         </span>
-                        <span className="text-sm font-bold text-white tabular-nums">
+                        <span className="text-sm font-bold text-slate-900 dark:text-white tabular-nums">
                             {Math.round(progress)}%
                         </span>
                     </div>
-                    <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div
                             className={`h-full rounded-full ${
                                 state.done
@@ -207,17 +207,17 @@ export function GenerationProgressModal({
                             <div key={i} className="flex items-center gap-3">
                                 <div className={`
                                     w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0
-                                    ${isDone    ? 'bg-emerald-500/20 border border-emerald-500/40' : ''}
-                                    ${isActive  ? 'bg-blue-500/20 border border-blue-500/40' : ''}
-                                    ${isPending ? 'bg-slate-800 border border-slate-700' : ''}
+                                    ${isDone    ? 'bg-emerald-50 dark:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/40' : ''}
+                                    ${isActive  ? 'bg-blue-50 dark:bg-blue-500/20 border border-blue-200 dark:border-blue-500/40' : ''}
+                                    ${isPending ? 'bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700' : ''}
                                 `}>
-                                    {isDone && <Check size={11} className="text-emerald-400" />}
-                                    {isActive && <Loader2 size={11} className="text-blue-400 animate-spin" />}
+                                    {isDone && <Check size={11} className="text-emerald-600 dark:text-emerald-400" />}
+                                    {isActive && <Loader2 size={11} className="text-blue-600 dark:text-blue-400 animate-spin" />}
                                 </div>
                                 <span className={`text-sm ${
-                                    isDone    ? 'text-slate-400 line-through decoration-slate-600' :
-                                    isActive  ? 'text-white font-medium' :
-                                    'text-slate-600'
+                                    isDone    ? 'text-slate-500 dark:text-slate-400 line-through decoration-slate-400 dark:decoration-slate-600' :
+                                    isActive  ? 'text-slate-900 dark:text-white font-medium' :
+                                    'text-slate-500 dark:text-slate-600'
                                 }`}>
                                     {stage.label}
                                 </span>
