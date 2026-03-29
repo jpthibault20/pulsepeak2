@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { Sparkles, Zap, ChevronDown, ChevronUp, Bike, Waves, Footprints, Bot, Loader2, AlertCircle, Plus, Target, Calendar, X } from 'lucide-react';
+import { Sparkles, Zap, ChevronDown, ChevronUp, Bike, Waves, Footprints, Bot, Loader2, AlertCircle, Plus, Target, Calendar, X, MessageSquare } from 'lucide-react';
 import type { WeekStats } from '@/hooks/useWeekStats';
 import type { AvailabilitySlot } from '@/lib/data/type';
 import { getWeekContextForDate, generateWeekWorkoutsFromDate, getWeekPendingCount, type WeekContext } from '@/app/actions/schedule';
@@ -119,6 +119,13 @@ export function MobileWeekBar({
         setAvailability(prev => ({
             ...prev,
             [day]: { ...prev[day], [sport]: Math.max(0, value) },
+        }));
+    };
+
+    const updateDayComment = (day: string, value: string) => {
+        setAvailability(prev => ({
+            ...prev,
+            [day]: { ...prev[day], comment: value },
         }));
     };
 
@@ -391,6 +398,13 @@ export function MobileWeekBar({
                                                     </div>
                                                 </th>
                                             )}
+                                            <th className="py-1.5 text-center">
+                                                <div className="flex justify-center">
+                                                    <div className="p-1 bg-slate-50 dark:bg-slate-500/10 rounded text-slate-500 dark:text-slate-400">
+                                                        <MessageSquare size={14} />
+                                                    </div>
+                                                </div>
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
@@ -431,6 +445,15 @@ export function MobileWeekBar({
                                                             />
                                                         </td>
                                                     )}
+                                                    <td className="p-0.5">
+                                                        <input
+                                                            type="text"
+                                                            value={slot.comment || ''}
+                                                            onChange={e => updateDayComment(day, e.target.value)}
+                                                            placeholder="note..."
+                                                            className="w-full min-w-[70px] bg-transparent border border-slate-200 dark:border-slate-700 rounded px-1.5 py-0.5 text-[11px] text-slate-600 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-slate-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-slate-400/30 transition-colors"
+                                                        />
+                                                    </td>
                                                 </tr>
                                             );
                                         })}

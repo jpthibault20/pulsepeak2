@@ -11,7 +11,7 @@ import {
     workouts as workoutsTable,
     objectives as objectivesTable,
 } from '@/lib/db/schema';
-import { eq, and, notInArray, gte, sql } from 'drizzle-orm';
+import { eq, and, ne, notInArray, gte, lte, sql } from 'drizzle-orm';
 import { createClient } from '@/lib/supabase/server';
 import { Block, Objective, Plan, Profile, Schedule, Week, Workout } from './DatabaseTypes';
 import type { PlannedData, CompletedData } from './type';
@@ -74,6 +74,8 @@ function toProfile(row: typeof profiles.$inferSelect): Profile {
         aiPlanCallsResetDate:   row.aiPlanCallsResetDate ?? undefined,
         aiWorkoutCallsCount:    row.aiWorkoutCallsCount  ?? 0,
         aiWorkoutCallsResetDate:row.aiWorkoutCallsResetDate ?? undefined,
+        tokenPerMonth:          row.tokenPerMonth ?? 0,
+        tokenPerMonthResetDate: row.tokenPerMonthResetDate ?? undefined,
         theme:              (row.theme as 'dark' | 'light') ?? 'dark',
         workouts:           [],
     };
@@ -419,7 +421,7 @@ export async function saveWeek(weeks: Week[]): Promise<void> {
     });
 }
 
-export async function saveWorkout(workoutList: Workout[]): Promise<void> {
+export async function saveWorkout(workoutList: Workout[], planStartDate?: string): Promise<void> {
     const userId = await getCurrentUserId();
 
     await db.transaction(async (tx) => {
@@ -459,12 +461,15 @@ export async function saveWorkout(workoutList: Workout[]): Promise<void> {
         const ids = workoutList.map((w) => w.id);
         const now = new Date();
         const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        // Utiliser la date de début du plan si fournie, sinon aujourd'hui
+        const deleteFromDate = planStartDate ?? todayStr;
         if (ids.length > 0) {
             await tx.delete(workoutsTable).where(
                 and(
                     eq(workoutsTable.userId, userId),
                     notInArray(workoutsTable.id, ids),
-                    gte(workoutsTable.date, todayStr),
+                    gte(workoutsTable.date, deleteFromDate),
+                    ne(workoutsTable.status, 'completed'),
                 )
             );
         }
@@ -516,6 +521,21 @@ export async function atomicIncrementAICallCount(
     }
 }
 
+export async function atomicIncrementTokenCount(tokens: number): Promise<void> {
+    if (tokens <= 0) return;
+    const userId = await getCurrentUserId();
+    const now = new Date();
+    const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+
+    await db
+        .update(profiles)
+        .set({
+            tokenPerMonth: sql`CASE WHEN ${profiles.tokenPerMonthResetDate} = ${monthStr} THEN ${profiles.tokenPerMonth} + ${tokens} ELSE ${tokens} END`,
+            tokenPerMonthResetDate: monthStr,
+        })
+        .where(eq(profiles.id, userId));
+}
+
 export async function updateWorkoutById(
     workoutId: string,
     data: Partial<Pick<Workout, 'date' | 'status' | 'completedData' | 'title' | 'sportType' | 'weekId' | 'plannedData' | 'workoutType' | 'mode'>>,
@@ -554,6 +574,20 @@ function toObjective(row: typeof objectivesTable.$inferSelect): Objective {
 
 export async function getObjectives(): Promise<Objective[]> {
     const userId = await getCurrentUserId();
+
+    // Marquer automatiquement les objectifs passés (date <= aujourd'hui) comme 'passed'
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    await db.update(objectivesTable)
+        .set({ status: 'passed', updatedAt: now })
+        .where(
+            and(
+                eq(objectivesTable.userId, userId),
+                eq(objectivesTable.status, 'upcoming'),
+                lte(objectivesTable.date, todayStr),
+            )
+        );
+
     const rows = await db.query.objectives.findMany({
         where: eq(objectivesTable.userId, userId),
         orderBy: (o, { asc }) => [asc(o.date)],

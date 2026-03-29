@@ -34,7 +34,7 @@ export const workoutStatusEnum      = pgEnum('workout_status',      ['pending', 
 export const workoutModeEnum        = pgEnum('workout_mode',        ['Outdoor', 'Indoor']);
 export const sportTypeEnum          = pgEnum('sport_type',          ['cycling', 'running', 'swimming', 'other']);
 export const objectivePriorityEnum  = pgEnum('objective_priority',  ['principale', 'secondaire']);
-export const objectiveStatusEnum    = pgEnum('objective_status',    ['upcoming', 'completed', 'missed']);
+export const objectiveStatusEnum    = pgEnum('objective_status',    ['upcoming', 'completed', 'missed', 'passed']);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // profiles
@@ -104,6 +104,9 @@ export const profiles = pgTable('profiles', {
     aiPlanCallsResetDate:   date('ai_plan_calls_reset_date'),
     aiWorkoutCallsCount:    integer('ai_workout_calls_count').default(0).notNull(),
     aiWorkoutCallsResetDate:date('ai_workout_calls_reset_date'),
+
+    tokenPerMonth:          integer('token_per_month').default(0).notNull(),
+    tokenPerMonthResetDate: date('token_per_month_reset_date'),
 
     theme:          varchar('theme', { length: 10 }).default('dark').notNull(),
 });

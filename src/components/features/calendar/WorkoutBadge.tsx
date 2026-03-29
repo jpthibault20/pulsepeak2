@@ -1,8 +1,7 @@
 import React from 'react';
 import {
     Clock, Zap, Check, X,
-    Bike, Footprints, Waves, Dumbbell, Activity,
-    Home, Sun
+    Bike, Footprints, Waves, Dumbbell, Activity
 } from 'lucide-react';
 import type { Workout } from '@/lib/data/DatabaseTypes';
 
@@ -27,7 +26,6 @@ export function WorkoutBadge({ workout, onClick, isCompact = false }: WorkoutBad
     const config = SPORT_CONFIG[sportKey] || SPORT_CONFIG.default;
     const SportIcon = config.icon;
 
-    const isIndoor = workout.mode?.toLowerCase() === 'indoor';
     const isCompleted = workout.status === 'completed';
     const isMissed = workout.status === 'missed';
 

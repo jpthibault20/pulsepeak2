@@ -126,9 +126,10 @@ export const formatAvailability = (availability: { [key: string]: AvailabilitySl
                 slot.running   > 0 ? `course ${slot.running}h`   : null,
             ].filter(Boolean).join(", ");
 
-            if (!sports) return null;
+            if (!sports && !slot.comment) return null;
 
-            return `- ${days[day] ?? day} : ${sports}${slot.comment ? ` (${slot.comment})` : ""}`;
+            const parts = [sports, slot.comment ? `(${slot.comment})` : null].filter(Boolean).join(" ");
+            return `- ${days[day] ?? day} : ${parts}`;
         })
         .filter(Boolean)
         .join("\n");

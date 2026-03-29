@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { BarChart3, Bot, Plus, Sparkles, Zap, X, Loader2, AlertCircle, Target, Calendar, Bike, Waves, Footprints } from 'lucide-react';
+import { BarChart3, Bot, Plus, Sparkles, Zap, X, Loader2, AlertCircle, Target, Calendar, Bike, Waves, Footprints, MessageSquare } from 'lucide-react';
 import { DurationInput } from '@/components/features/profile/Availability';
 import { WeekStatsPopover } from './WeekStatsPopover';
 import type { WeekStats } from '@/hooks/useWeekStats';
@@ -136,6 +136,13 @@ export function WeekSummaryCell({
         setAvailability(prev => ({
             ...prev,
             [day]: { ...prev[day], [sport]: Math.max(0, value) },
+        }));
+    };
+
+    const updateDayComment = (day: string, value: string) => {
+        setAvailability(prev => ({
+            ...prev,
+            [day]: { ...prev[day], comment: value },
         }));
     };
 
@@ -409,6 +416,13 @@ export function WeekSummaryCell({
                                                         </div>
                                                     </th>
                                                 )}
+                                                <th className="py-2 text-center">
+                                                    <div className="flex justify-center">
+                                                        <div className="p-1.5 bg-slate-100 dark:bg-slate-500/10 rounded-md text-slate-500 dark:text-slate-400">
+                                                            <MessageSquare size={16} />
+                                                        </div>
+                                                    </div>
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-200/50 dark:divide-slate-800/50">
@@ -449,6 +463,15 @@ export function WeekSummaryCell({
                                                                 />
                                                             </td>
                                                         )}
+                                                        <td className="p-1">
+                                                            <input
+                                                                type="text"
+                                                                value={slot.comment || ''}
+                                                                onChange={e => updateDayComment(day, e.target.value)}
+                                                                placeholder="ex: club, chill..."
+                                                                className="w-full min-w-[100px] bg-transparent border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 text-xs text-slate-600 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-slate-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-slate-400/30 transition-colors"
+                                                            />
+                                                        </td>
                                                     </tr>
                                                 );
                                             })}

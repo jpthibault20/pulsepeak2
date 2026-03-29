@@ -37,8 +37,14 @@ interface RawAIWorkout {
     description_indoor: string;
 }
 
+// Résultat d'un appel Gemini avec les tokens consommés
+export interface GeminiResult<T = unknown> {
+    data: T;
+    tokensUsed: number;
+}
+
 // Fonction générique pour appeler l'API
-export async function callGeminiAPI(payload: unknown) {
+export async function callGeminiAPI(payload: unknown): Promise<GeminiResult> {
     if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set.");
 
     // Désactive le mode "thinking" de Gemini 2.5 Flash → 2-3x plus rapide
@@ -66,6 +72,7 @@ export async function callGeminiAPI(payload: unknown) {
 
             const data = await response.json();
             const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            const tokensUsed: number = data.usageMetadata?.totalTokenCount ?? 0;
 
             if (!rawText) throw new Error("AI response empty.");
 
@@ -77,7 +84,7 @@ export async function callGeminiAPI(payload: unknown) {
                 .replace(/\s*```$/i, '');
 
             try {
-                return JSON.parse(cleanText);
+                return { data: JSON.parse(cleanText), tokensUsed };
             } catch (parseError) {
                 console.error("JSON invalide reçu de Gemini :", cleanText);
                 throw new Error(`JSON parsing failed: ${parseError}`);
@@ -92,6 +99,7 @@ export async function callGeminiAPI(payload: unknown) {
             }
         }
     }
+    throw new Error("callGeminiAPI: all retries exhausted");
 }
 
 /**
@@ -281,11 +289,12 @@ FORMAT DE RÉPONSE :
     };
 
     // Appel API
-    const rawResponse = await callGeminiAPI(payload) as { synthesis: string, workouts: RawAIWorkout[] };
+    const { data: rawResponse } = await callGeminiAPI(payload);
+    const typedResponse = rawResponse as { synthesis: string, workouts: RawAIWorkout[] };
 
     // --- 4. Transformation et Nettoyage des données ---
-    
-    const structuredWorkouts: Omit<Workout, 'userId' | 'weekId'>[] = rawResponse.workouts
+
+    const structuredWorkouts: Omit<Workout, 'userId' | 'weekId'>[] = typedResponse.workouts
         // Sécurité 1: On filtre les objets invalides ou les jours de repos explicites si l'IA s'est trompée
         .filter(w => w.duration > 0 && w.title.toLowerCase() !== "repos")
         .map((w) => {
@@ -323,7 +332,7 @@ FORMAT DE RÉPONSE :
         });
 
     return {
-        synthesis: rawResponse.synthesis,
+        synthesis: typedResponse.synthesis,
         workouts: structuredWorkouts
     };
 }
@@ -411,8 +420,8 @@ export async function generateSingleWorkoutFromAI(
         generationConfig: { responseMimeType: "application/json", responseSchema: responseSchema, temperature: 0.7 },
     };
 
-    const result = await callGeminiAPI(payload) as { workout: Omit<RawAIWorkout, 'date'> };
-    const w = result.workout;
+    const { data: resultData } = await callGeminiAPI(payload);
+    const w = (resultData as { workout: Omit<RawAIWorkout, 'date'> }).workout;
 
     // Transformation vers la nouvelle structure
     return {

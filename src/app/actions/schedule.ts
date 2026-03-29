@@ -1,11 +1,11 @@
 'use server';
 
 import { generateSingleWorkoutFromAI } from '@/lib/ai/coach-api';
-import { getBlock, getObjectives, getPlan, getProfile, getSchedule, getWeek, getWorkout, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek, saveWorkout, deleteWorkoutById, atomicIncrementAICallCount, updateWorkoutById, saveTheme } from '@/lib/data/crud';
+import { getBlock, getObjectives, getPlan, getProfile, getSchedule, getWeek, getWorkout, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek, saveWorkout, deleteWorkoutById, atomicIncrementAICallCount, atomicIncrementTokenCount, updateWorkoutById, saveTheme } from '@/lib/data/crud';
 import { ReturnCode } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
 import type { AvailabilitySlot, CompletedData, CompletedDataFeedback, SportType } from '@/lib/data/type';
-import { getStravaActivities, getStravaActivitiesAllPages, getStravaActivityById } from '@/lib/strava-service';
+import { getStravaActivitiesAllPages, getStravaActivityById } from '@/lib/strava-service';
 import { mapStravaToCompletedData } from '@/lib/strava-mapper';
 import { Block, Objective, Plan, Profile, Schedule, Week, Workout } from '@/lib/data/DatabaseTypes';
 import { randomUUID } from 'crypto';
@@ -105,7 +105,7 @@ export async function CreateAdvancedPlan(
         await savePlan([...(Array.isArray(plan) ? plan : []), newPlan]);
         await saveBlocks([...(Array.isArray(existingBlocks) ? existingBlocks : []), ...updatedBlocks]);
         await saveWeek([...(Array.isArray(existingWeeks) ? existingWeeks : []), ...updatedWeeks]);
-        await saveWorkout([...(Array.isArray(existingWorkouts) ? existingWorkouts : []), ...newWorkouts]);
+        await saveWorkout([...(Array.isArray(existingWorkouts) ? existingWorkouts : []), ...newWorkouts], startDate);
     } catch (err) {
         console.error('[CreateAdvancedPlan] Erreur lors de la sauvegarde:', err);
         return { state: ReturnCode.RC_Error, error: 'Erreur lors de la sauvegarde du plan.' };
@@ -220,7 +220,7 @@ export async function CreatePlanToObjective(userID: string, planStartDate: strin
         await savePlan([newPlan]);
         await saveBlocks([...updatedBlocks]);
         await saveWeek([...weeksWithWorkouts]);
-        await saveWorkout([...newWorkouts]);
+        await saveWorkout([...newWorkouts], startDate);
     } catch (err) {
         console.error('[CreatePlanToObjective] Erreur sauvegarde:', err);
         return { state: ReturnCode.RC_Error, error: 'Erreur lors de la sauvegarde du plan.' };
@@ -301,10 +301,11 @@ Retourner un tableau JSON. Chaque objet contient exactement :
 ## RÉPONSE (JSON uniquement) :
 `;
 
-    const rawBlocks = await callGeminiAPI({
+    const { data: rawBlocks, tokensUsed: tokensBlocks } = await callGeminiAPI({
         contents: [{ parts: [{ text: aiPrompt }] }],
         generationConfig: { temperature: 0.7, maxOutputTokens: 2048, responseMimeType: 'application/json' },
     });
+    await atomicIncrementTokenCount(tokensBlocks);
     if (!Array.isArray(rawBlocks)) throw new Error('Réponse IA invalide : tableau attendu.');
     const aiResponse = rawBlocks as { index: number; type: string; theme: string }[];
 
@@ -505,7 +506,7 @@ ${historySummary}
         ## RÉPONSE (JSON uniquement) :
         `;
 
-    const rawAiResponse = await callGeminiAPI({
+    const { data: rawAiResponse, tokensUsed: tokensWeeks } = await callGeminiAPI({
         contents: [{ parts: [{ text: aiPrompt }] }],
         generationConfig: {
             temperature: 0.7,
@@ -513,6 +514,7 @@ ${historySummary}
             responseMimeType: "application/json",
         },
     });
+    await atomicIncrementTokenCount(tokensWeeks);
 
     if (!Array.isArray(rawAiResponse)) {
         throw new Error('Réponse IA invalide : tableau attendu.');
@@ -630,12 +632,14 @@ export async function CreateWorkoutForWeek(
     const activeSports = getActiveSports(profile.activeSports);
     const formattedAvailability = formatAvailability(weeklyAvailability);
 
-    // Zones context pour des descriptions précises en watts
+    // Zones context pour des descriptions précises
     let zonesContext = "";
+
+    // Zones de puissance vélo
     if (profile.cycling?.Test?.zones) {
         const z = profile.cycling.Test.zones;
-        zonesContext = `
-## ZONES DE PUISSANCE CYCLISME (à utiliser dans les descriptions)
+        zonesContext += `
+## ZONES DE PUISSANCE CYCLISME (priorité n°1 pour les descriptions vélo)
 - Z1 (Récupération) : < ${z.z1.max} W
 - Z2 (Endurance) : ${z.z2.min}–${z.z2.max} W
 - Z3 (Tempo) : ${z.z3.min}–${z.z3.max} W
@@ -643,6 +647,46 @@ export async function CreateWorkoutForWeek(
 - Z5 (VO2 Max) : ${z.z5.min}–${z.z5.max} W
 - Z6 (Anaérobie) : ${z.z6?.min}–${z.z6?.max} W
 - Z7 (Neuromusculaire) : > ${z.z7?.min} W`;
+    }
+
+    // Zones cardio (fallback vélo si pas de puissance, et pour la natation)
+    if (profile.heartRate?.zones) {
+        const z = profile.heartRate.zones;
+        zonesContext += `
+## ZONES DE FRÉQUENCE CARDIAQUE (pour natation en priorité, fallback vélo/course si pas de watts/allures)
+${profile.heartRate.max ? `- FC Max : ${profile.heartRate.max} bpm` : ''}
+${profile.heartRate.resting ? `- FC Repos : ${profile.heartRate.resting} bpm` : ''}
+- Z1 (Récupération) : < ${z.z1.max} bpm
+- Z2 (Endurance) : ${z.z2.min}–${z.z2.max} bpm
+- Z3 (Tempo) : ${z.z3.min}–${z.z3.max} bpm
+- Z4 (Seuil) : ${z.z4.min}–${z.z4.max} bpm
+- Z5 (VO2 Max) : ${z.z5.min}–${z.z5.max} bpm`;
+    } else if (profile.heartRate?.max) {
+        zonesContext += `
+## FRÉQUENCE CARDIAQUE (pour natation en priorité, fallback vélo/course)
+- FC Max : ${profile.heartRate.max} bpm${profile.heartRate.resting ? `\n- FC Repos : ${profile.heartRate.resting} bpm` : ''}`;
+    }
+
+    // Zones d'allure course à pied (stockées en sec/km, affichées en M:SS/km)
+    const fmtPace = (sec: number) => {
+        const m = Math.floor(sec / 60);
+        const s = Math.round(sec % 60);
+        return `${m}:${String(s).padStart(2, '0')}`;
+    };
+
+    if (profile.running?.Test?.zones) {
+        const z = profile.running.Test.zones;
+        zonesContext += `
+## ZONES D'ALLURE COURSE À PIED (priorité n°1 pour les descriptions course)
+- Z1 (Récupération) : ${fmtPace(z.z1.min)}–${fmtPace(z.z1.max)} /km
+- Z2 (Endurance) : ${fmtPace(z.z2.min)}–${fmtPace(z.z2.max)} /km
+- Z3 (Tempo) : ${fmtPace(z.z3.min)}–${fmtPace(z.z3.max)} /km
+- Z4 (Seuil) : ${fmtPace(z.z4.min)}–${fmtPace(z.z4.max)} /km
+- Z5 (VO2 Max) : ${fmtPace(z.z5.min)}–${fmtPace(z.z5.max)} /km`;
+    } else if (profile.running?.Test?.vma) {
+        zonesContext += `
+## DONNÉES COURSE À PIED (priorité n°1 pour les descriptions course)
+- VMA : ${profile.running.Test.vma} km/h`;
     }
 
    const aiPrompt = `
@@ -656,6 +700,7 @@ ${zonesContext}
 
 ## DISPONIBILITÉS DE LA SEMAINE
 ${formattedAvailability || "Non spécifiées"}
+Les commentaires entre parenthèses décrivent le contexte de la journée (ex: sortie club, chill, compétition). Adapte le type et l'intensité de la séance en conséquence.
 
 ## CONTEXTE DE LA SEMAINE
 - Thème du bloc : ${block.theme}
@@ -761,8 +806,15 @@ ${profile.experience === 'Débutant' ? `⚠️ DÉBUTANT — Appliquer impérati
 6. Ne pas placer 2 séances dures (Interval, Tempo) consécutives.
 7. En semaine Recovery : séances courtes, faible intensité uniquement.
 8. Le dayOffset doit correspondre exactement au jour disponible (0=Lundi ... 6=Dimanche).
-9. La "description" doit être précise, technique et inclure les valeurs de watts/allure réelles de l'athlète.
-   Exemple de format attendu : "Échauffement: 20 min Z1-Z2. Corps de séance: 3x10 min Over/Under. Chaque 10 min = 2x(1 min @ 260-270W (Z5) / 4 min @ 230-240W (Z4)). Récupération 8 min Z1/Z2 entre les 10 min. Retour au calme: 16 min Z1."
+9. Exactement UNE séance par créneau disponible (pas plus, pas moins), sauf en semaine de course où certains jours peuvent être laissés vides (repos).
+10. La "description" doit être précise, technique, structurée (échauffement, corps de séance, retour au calme).
+   Utilise la métrique PRIORITAIRE par sport :
+   - VÉLO : en priorité les WATTS/zones de puissance. Si le profil n'a pas de FTP/zones, utilise le cardio (FC). En dernier recours, les sensations (RPE).
+     Exemple vélo : "Échauffement: 20 min Z1-Z2. Corps: 3x10 min @ 230-240W (Z4). Récup 5 min Z1. Retour au calme: 15 min Z1."
+   - COURSE À PIED : en priorité les ALLURES (min/km). Si pas d'allures connues, utilise le cardio (FC). En dernier recours, les sensations (RPE).
+     Exemple course : "Échauffement: 15 min allure libre. Corps: 5x1000m @ 4:30/km, récup 2 min trot. Retour au calme: 10 min footing souple."
+   - NATATION : en priorité le CARDIO (FC/zones). Si pas de données cardio, utilise les sensations (RPE/effort perçu).
+     Exemple natation : "Échauffement: 400m crawl souple. Corps: 10x100m @ effort soutenu (Z3-Z4), repos 20s. Retour au calme: 200m nage au choix."
 
 ## FORMAT DE RÉPONSE
 Réponds UNIQUEMENT avec un tableau JSON valide — sans markdown, sans explication.
@@ -806,7 +858,7 @@ Chaque objet contient exactement :
         },
     };
 
-    const rawWorkouts = await callGeminiAPI({
+    const { data: rawWorkouts, tokensUsed: tokensWorkouts } = await callGeminiAPI({
         contents: [{ parts: [{ text: aiPrompt }] }],
         generationConfig: {
             temperature: 0.7,
@@ -815,6 +867,7 @@ Chaque objet contient exactement :
             responseSchema,
         },
     });
+    await atomicIncrementTokenCount(tokensWorkouts);
     if (!Array.isArray(rawWorkouts)) throw new Error('Réponse IA invalide : tableau attendu.');
     const aiResponse = rawWorkouts as AIWorkout[];
 
@@ -1425,51 +1478,23 @@ export async function syncStravaActivities() {
             profile?.role !== 'admin' &&
             profile?.role !== 'freeUse';
 
-        // 2. Trouver la date de la dernière activité Strava importée
-        let lastStravaTimestamp = 0;
+        // 2. Compter les activités Strava existantes (pour la limite free)
         const stravaWorkouts = workouts.filter(w =>
             w.status === 'completed' &&
             w.completedData?.source?.type === 'strava'
         );
 
-        if (stravaWorkouts.length > 0) {
-            stravaWorkouts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-            lastStravaTimestamp = Math.floor(new Date(stravaWorkouts[0].date).getTime() / 1000);
-            console.log(`📅 Dernière activité Strava connue : ${stravaWorkouts[0].date}`);
-        } else {
-            console.log("⚠️ Aucune activité Strava en DB. Sync complète de l'année en cours.");
-        }
-
-        // 3. Stratégie de sync :
-        //    - Incrémentale (rapide) : si la dernière activité connue est dans l'année en cours
-        //    - Complète avec pagination : sinon (premier lancement, ou dernière activité de l'an passé)
+        // 3. Sync complète de l'année en cours (pagination).
+        //    On récupère toujours toutes les summaries (1-2 appels légers per_page=200),
+        //    le dedup en étape 4 évite de re-fetcher les détails des activités déjà connues.
+        //    Cela garantit qu'aucune activité n'est ratée, même si la première sync était incomplète.
         const currentYear = new Date().getFullYear();
         const startOfYear = Math.floor(new Date(`${currentYear}-01-01T00:00:00Z`).getTime() / 1000);
 
-        // ── Détection de montée en plan (free → dev/pro) ─────────────────────
-        // Si l'utilisateur vient d'être promu ET qu'il a peu d'activités (plafond du plan free),
-        // on force une sync complète de l'année pour récupérer les activités manquées.
-        if (
-            !isFreePlan &&
-            stravaWorkouts.length > 0 &&
-            stravaWorkouts.length <= FREE_STRAVA_LIMIT &&
-            lastStravaTimestamp >= startOfYear
-        ) {
-            console.log(`🔄 Compte promu détecté (${stravaWorkouts.length} activité(s) ≤ limite free). Full resync annuelle pour récupérer les activités manquées...`);
-            lastStravaTimestamp = startOfYear - 1; // déclenche le chemin full-sync
-        }
-
-        const isIncremental = lastStravaTimestamp >= startOfYear;
-
-        let activitiesSummary: { id: number; start_date: string; [key: string]: unknown }[];
-        if (isIncremental) {
-            console.log(`⚡ Sync incrémentale (après ${stravaWorkouts[0].date})...`);
-            activitiesSummary = await getStravaActivities(lastStravaTimestamp, 30);
-        } else {
-            console.log(`📅 Sync complète ${currentYear} (pagination)...`);
-            activitiesSummary = await getStravaActivitiesAllPages(startOfYear);
-            console.log(`📊 ${activitiesSummary.length} activité(s) trouvée(s) sur Strava pour ${currentYear}`);
-        }
+        console.log(`📅 Sync complète ${currentYear} (pagination)...`);
+        const activitiesSummary: { id: number; start_date: string; [key: string]: unknown }[] =
+            await getStravaActivitiesAllPages(startOfYear);
+        console.log(`📊 ${activitiesSummary.length} activité(s) trouvée(s) sur Strava pour ${currentYear}`);
 
         if (!activitiesSummary || activitiesSummary.length === 0) {
             console.log("✅ Aucune nouvelle activité à synchroniser.");
@@ -1548,8 +1573,10 @@ export async function syncStravaActivities() {
 
                 // Trouver la semaine du bloc actif correspondant à cette date
                 let activeWeekID = '';
+                const newWorkoutId = randomUUID();
                 if (existingBlocks && existingWeeks) {
                     const activityDateObj = parseISO(activityDate);
+
                     const activeBlock = existingBlocks.find(block => {
                         const blockStart = parseISO(block.startDate);
                         const blockEnd = addDays(blockStart, block.weekCount * 7);
@@ -1569,11 +1596,10 @@ export async function syncStravaActivities() {
                             activeWeekID = activeWeek.id;
                             const weekIdx = updatedWeeks.findIndex(w => w.id === activeWeek.id);
                             if (weekIdx !== -1) {
-                                const newId = `strava_${summary.id}`;
-                                if (!updatedWeeks[weekIdx].workoutsId.includes(newId)) {
+                                if (!updatedWeeks[weekIdx].workoutsId.includes(newWorkoutId)) {
                                     updatedWeeks[weekIdx] = {
                                         ...updatedWeeks[weekIdx],
-                                        workoutsId: [...updatedWeeks[weekIdx].workoutsId, newId],
+                                        workoutsId: [...updatedWeeks[weekIdx].workoutsId, newWorkoutId],
                                     };
                                 }
                             }
@@ -1582,7 +1608,7 @@ export async function syncStravaActivities() {
                 }
 
                 workouts.push({
-                    id: `strava_${summary.id}`,
+                    id: newWorkoutId,
                     userId: profile?.id ?? '',
                     weekId: activeWeekID,
                     date: activityDate,

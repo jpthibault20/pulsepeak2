@@ -188,30 +188,36 @@ function generatePowerZones(ftp: number, maxP5?: number): Zones {
 export function calculateFtp(tests: CyclingTest): FtpCalculationResult {
   const { points: dataPoints, names: testsUsed } = buildDataPoints(tests);
 
-  if (dataPoints.length === 0) {
-    throw new Error('Aucun test de puissance valide fourni');
-  }
-
   let ftp: number;
   let wPrime = 0;
   let method: SeasonData['method'];
   let source: string;
 
-  // Modèle Puissance Critique (≥2 tests)
+  // Modèle Puissance Critique (≥2 tests) — le plus précis
   if (dataPoints.length >= 2) {
     const { cp, wPrime: w } = calculateCriticalPower(dataPoints);
     ftp = cp;
     wPrime = w;
     method = 'Critical Power Regression';
     source = `Modèle Puissance Critique (${testsUsed.join('+')})`;
-  } 
-  // Fallback : estimation depuis un seul test
-  else {
+  }
+  // 1 seul test de durée → estimation par coefficient
+  else if (dataPoints.length === 1) {
     const { ftp: singleFtp, source: singleSource, testUsed } = calculateSingleTestFtp(tests);
     ftp = singleFtp;
     method = 'Single Test Estimation';
     source = singleSource;
-    testsUsed[0] = testUsed; // ✅ Déjà typé TestName
+    testsUsed[0] = testUsed;
+  }
+  // FTP renseignée directement (aucun test de durée)
+  else if (tests.ftp && tests.ftp > 0) {
+    ftp = tests.ftp;
+    method = 'Single Test Estimation';
+    source = 'FTP saisie manuellement';
+  }
+  // Rien du tout
+  else {
+    throw new Error('Aucun test de puissance valide fourni');
   }
 
   const zones = generatePowerZones(ftp, tests.p5min != null ? tests.p5min : undefined);
@@ -221,7 +227,7 @@ export function calculateFtp(tests: CyclingTest): FtpCalculationResult {
     wPrime,
     criticalPower: ftp,
     method,
-    sourceTests: testsUsed, // ✅ Type TestName[] garanti
+    sourceTests: testsUsed.length > 0 ? testsUsed : ['ftp'],
   };
 
   console.log(`✅ Zones calculées via ${source}. FTP: ${ftp}W, W': ${wPrime}J`);
@@ -231,7 +237,21 @@ export function calculateFtp(tests: CyclingTest): FtpCalculationResult {
 
 /**
  * Valide les données de tests (utilitaire)
+ * Vérifie qu'au moins un test de puissance est renseigné.
  */
 export function validatePowerTests(tests: CyclingTest): boolean {
-  return Object.values(tests).some(val => val > 0);
+  return [tests.p5min, tests.p8min, tests.p15min, tests.p20min, tests.ftp]
+    .some(v => typeof v === 'number' && v > 0);
+}
+
+/**
+ * Compte le nombre de tests renseignés et retourne le niveau de précision.
+ */
+export function getTestPrecision(tests: CyclingTest): { count: number; level: 'low' | 'medium' | 'high' } {
+  const count = [tests.p5min, tests.p8min, tests.p15min, tests.p20min]
+    .filter(v => typeof v === 'number' && v > 0).length;
+  return {
+    count,
+    level: count >= 3 ? 'high' : count === 2 ? 'medium' : 'low',
+  };
 }
