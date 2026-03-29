@@ -1,7 +1,6 @@
 'use server';
 
-import { generatePlanFromAI, generateSingleWorkoutFromAI } from '@/lib/ai/coach-api';
-import { formatDateKey } from '@/lib/utils';
+import { generateSingleWorkoutFromAI } from '@/lib/ai/coach-api';
 import { getBlock, getObjectives, getPlan, getProfile, getSchedule, getWeek, getWorkout, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek, saveWorkout, deleteWorkoutById } from '@/lib/data/crud';
 import { ReturnCode } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
@@ -32,13 +31,17 @@ const AI_DAILY_LIMITS = { plan: 3, workout: 10 } as const;
 async function checkAndIncrementAICallLimit(type: 'plan' | 'workout'): Promise<void> {
     const profile = await getProfile();
     const today   = format(new Date(), 'yyyy-MM-dd');
-    const count   = profile.aiCallsResetDate === today ? (profile.aiCallsCount ?? 0) : 0;
+
+    const countKey = type === 'plan' ? 'aiPlanCallsCount' : 'aiWorkoutCallsCount';
+    const dateKey  = type === 'plan' ? 'aiPlanCallsResetDate' : 'aiWorkoutCallsResetDate';
+
+    const count = profile[dateKey] === today ? (profile[countKey] ?? 0) : 0;
     if (count >= AI_DAILY_LIMITS[type]) {
         throw new Error(
             `Limite journalière atteinte (${AI_DAILY_LIMITS[type]} ${type === 'plan' ? 'plans' : 'régénérations'}/jour). Réessaie demain.`
         );
     }
-    await saveProfile({ ...profile, aiCallsCount: count + 1, aiCallsResetDate: today });
+    await saveProfile({ ...profile, [countKey]: count + 1, [dateKey]: today });
 }
 
 /******************************************************************************

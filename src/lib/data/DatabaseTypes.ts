@@ -70,8 +70,10 @@ export interface Profile {
     objectiveDate: string;
     weaknesses: string;
 
-    aiCallsCount?: number;
-    aiCallsResetDate?: string;
+    aiPlanCallsCount?: number;
+    aiPlanCallsResetDate?: string;
+    aiWorkoutCallsCount?: number;
+    aiWorkoutCallsResetDate?: string;
 
     workouts: Workout[]; //Not used for the moment, use in te future for relations
 }
