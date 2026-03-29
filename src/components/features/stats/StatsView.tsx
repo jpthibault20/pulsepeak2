@@ -562,17 +562,17 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
         };
     }, [filteredWorkouts]);
 
-    // ── PMC data (always 90 days) ────────────────────────────────────────────
+    // ── PMC data (always 90 days) — recalcul complet depuis 0 ─────────────
     const pmcData = useMemo(() => {
-        const raw = computePMC(scheduleData.workouts, profile.currentCTL, profile.currentATL, 90);
+        const raw = computePMC(scheduleData.workouts, 0, 0, 90);
         // Reduce ticks for mobile readability
         return raw.filter((_, i) => i % 3 === 0 || i === raw.length - 1);
-    }, [scheduleData.workouts, profile.currentCTL, profile.currentATL]);
+    }, [scheduleData.workouts]);
 
-    // Current CTL/ATL from PMC
+    // Current CTL/ATL from PMC (recalculé, pas depuis le profil)
     const currentPMC = pmcData[pmcData.length - 1];
-    const currentCTL = currentPMC?.ctl ?? profile.currentCTL;
-    const currentATL = currentPMC?.atl ?? profile.currentATL;
+    const currentCTL = currentPMC?.ctl ?? 0;
+    const currentATL = currentPMC?.atl ?? 0;
 
     // ── Weekly TSS (12 weeks) ────────────────────────────────────────────────
     const weeklyData = useMemo(() => computeWeeklyTSS(scheduleData.workouts, 12), [scheduleData.workouts]);
