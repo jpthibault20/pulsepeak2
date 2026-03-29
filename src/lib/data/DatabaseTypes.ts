@@ -75,6 +75,9 @@ export interface Profile {
     aiWorkoutCallsCount?: number;
     aiWorkoutCallsResetDate?: string;
 
+    tokenPerMonth?: number;
+    tokenPerMonthResetDate?: string;
+
     theme?: 'dark' | 'light';
 
     workouts: Workout[]; //Not used for the moment, use in te future for relations

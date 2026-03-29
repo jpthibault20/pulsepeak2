@@ -74,6 +74,8 @@ function toProfile(row: typeof profiles.$inferSelect): Profile {
         aiPlanCallsResetDate:   row.aiPlanCallsResetDate ?? undefined,
         aiWorkoutCallsCount:    row.aiWorkoutCallsCount  ?? 0,
         aiWorkoutCallsResetDate:row.aiWorkoutCallsResetDate ?? undefined,
+        tokenPerMonth:          row.tokenPerMonth ?? 0,
+        tokenPerMonthResetDate: row.tokenPerMonthResetDate ?? undefined,
         theme:              (row.theme as 'dark' | 'light') ?? 'dark',
         workouts:           [],
     };
@@ -517,6 +519,21 @@ export async function atomicIncrementAICallCount(
             `Limite journalière atteinte (${limit} ${type === 'plan' ? 'plans' : 'régénérations'}/jour). Réessaie demain.`
         );
     }
+}
+
+export async function atomicIncrementTokenCount(tokens: number): Promise<void> {
+    if (tokens <= 0) return;
+    const userId = await getCurrentUserId();
+    const now = new Date();
+    const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+
+    await db
+        .update(profiles)
+        .set({
+            tokenPerMonth: sql`CASE WHEN ${profiles.tokenPerMonthResetDate} = ${monthStr} THEN ${profiles.tokenPerMonth} + ${tokens} ELSE ${tokens} END`,
+            tokenPerMonthResetDate: monthStr,
+        })
+        .where(eq(profiles.id, userId));
 }
 
 export async function updateWorkoutById(

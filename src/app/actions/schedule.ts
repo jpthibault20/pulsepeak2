@@ -1,7 +1,7 @@
 'use server';
 
 import { generateSingleWorkoutFromAI } from '@/lib/ai/coach-api';
-import { getBlock, getObjectives, getPlan, getProfile, getSchedule, getWeek, getWorkout, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek, saveWorkout, deleteWorkoutById, atomicIncrementAICallCount, updateWorkoutById, saveTheme } from '@/lib/data/crud';
+import { getBlock, getObjectives, getPlan, getProfile, getSchedule, getWeek, getWorkout, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek, saveWorkout, deleteWorkoutById, atomicIncrementAICallCount, atomicIncrementTokenCount, updateWorkoutById, saveTheme } from '@/lib/data/crud';
 import { ReturnCode } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
 import type { AvailabilitySlot, CompletedData, CompletedDataFeedback, SportType } from '@/lib/data/type';
@@ -301,10 +301,11 @@ Retourner un tableau JSON. Chaque objet contient exactement :
 ## RÉPONSE (JSON uniquement) :
 `;
 
-    const rawBlocks = await callGeminiAPI({
+    const { data: rawBlocks, tokensUsed: tokensBlocks } = await callGeminiAPI({
         contents: [{ parts: [{ text: aiPrompt }] }],
         generationConfig: { temperature: 0.7, maxOutputTokens: 2048, responseMimeType: 'application/json' },
     });
+    await atomicIncrementTokenCount(tokensBlocks);
     if (!Array.isArray(rawBlocks)) throw new Error('Réponse IA invalide : tableau attendu.');
     const aiResponse = rawBlocks as { index: number; type: string; theme: string }[];
 
@@ -505,7 +506,7 @@ ${historySummary}
         ## RÉPONSE (JSON uniquement) :
         `;
 
-    const rawAiResponse = await callGeminiAPI({
+    const { data: rawAiResponse, tokensUsed: tokensWeeks } = await callGeminiAPI({
         contents: [{ parts: [{ text: aiPrompt }] }],
         generationConfig: {
             temperature: 0.7,
@@ -513,6 +514,7 @@ ${historySummary}
             responseMimeType: "application/json",
         },
     });
+    await atomicIncrementTokenCount(tokensWeeks);
 
     if (!Array.isArray(rawAiResponse)) {
         throw new Error('Réponse IA invalide : tableau attendu.');
@@ -856,7 +858,7 @@ Chaque objet contient exactement :
         },
     };
 
-    const rawWorkouts = await callGeminiAPI({
+    const { data: rawWorkouts, tokensUsed: tokensWorkouts } = await callGeminiAPI({
         contents: [{ parts: [{ text: aiPrompt }] }],
         generationConfig: {
             temperature: 0.7,
@@ -865,6 +867,7 @@ Chaque objet contient exactement :
             responseSchema,
         },
     });
+    await atomicIncrementTokenCount(tokensWorkouts);
     if (!Array.isArray(rawWorkouts)) throw new Error('Réponse IA invalide : tableau attendu.');
     const aiResponse = rawWorkouts as AIWorkout[];
 

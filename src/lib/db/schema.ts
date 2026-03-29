@@ -105,6 +105,9 @@ export const profiles = pgTable('profiles', {
     aiWorkoutCallsCount:    integer('ai_workout_calls_count').default(0).notNull(),
     aiWorkoutCallsResetDate:date('ai_workout_calls_reset_date'),
 
+    tokenPerMonth:          integer('token_per_month').default(0).notNull(),
+    tokenPerMonthResetDate: date('token_per_month_reset_date'),
+
     theme:          varchar('theme', { length: 10 }).default('dark').notNull(),
 });
 
