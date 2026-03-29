@@ -31,6 +31,7 @@ const STATUS_LABELS: Record<Objective['status'], { label: string; color: string 
     upcoming:  { label: 'À venir',   color: 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30' },
     completed: { label: 'Terminé',   color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30' },
     missed:    { label: 'Manqué',    color: 'text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-700/50 border-slate-300 dark:border-slate-600/30' },
+    passed:    { label: 'Passé',     color: 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30' },
 };
 
 export const Goals: React.FC<GoalsProps> = ({ formData: _formData, setFormData: _setFormData, objectives, onSaveObjective, onDeleteObjective }) => {
@@ -41,8 +42,9 @@ export const Goals: React.FC<GoalsProps> = ({ formData: _formData, setFormData: 
     const [showPast, setShowPast] = useState(false);
 
     const today = new Date().toISOString().split('T')[0];
-    const upcomingObjs = objectives.filter(o => o.date >= today).sort((a, b) => a.date.localeCompare(b.date));
-    const pastObjs = objectives.filter(o => o.date < today).sort((a, b) => b.date.localeCompare(a.date));
+    const visibleObjectives = objectives.filter(o => o.status !== 'passed');
+    const upcomingObjs = visibleObjectives.filter(o => o.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+    const pastObjs = visibleObjectives.filter(o => o.date < today).sort((a, b) => b.date.localeCompare(a.date));
 
     const handleOpenAdd = () => {
         setEditingObjective(null);

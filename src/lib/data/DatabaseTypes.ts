@@ -91,7 +91,7 @@ export interface Objective {
     distanceKm?: number;
     elevationGainM?: number;
     priority: 'principale' | 'secondaire';
-    status: 'upcoming' | 'completed' | 'missed';
+    status: 'upcoming' | 'completed' | 'missed' | 'passed';
     comment?: string;
 }
 

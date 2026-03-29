@@ -34,7 +34,7 @@ export const workoutStatusEnum      = pgEnum('workout_status',      ['pending', 
 export const workoutModeEnum        = pgEnum('workout_mode',        ['Outdoor', 'Indoor']);
 export const sportTypeEnum          = pgEnum('sport_type',          ['cycling', 'running', 'swimming', 'other']);
 export const objectivePriorityEnum  = pgEnum('objective_priority',  ['principale', 'secondaire']);
-export const objectiveStatusEnum    = pgEnum('objective_status',    ['upcoming', 'completed', 'missed']);
+export const objectiveStatusEnum    = pgEnum('objective_status',    ['upcoming', 'completed', 'missed', 'passed']);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // profiles

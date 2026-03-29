@@ -11,7 +11,7 @@ import {
     workouts as workoutsTable,
     objectives as objectivesTable,
 } from '@/lib/db/schema';
-import { eq, and, ne, notInArray, gte, sql } from 'drizzle-orm';
+import { eq, and, ne, notInArray, gte, lte, sql } from 'drizzle-orm';
 import { createClient } from '@/lib/supabase/server';
 import { Block, Objective, Plan, Profile, Schedule, Week, Workout } from './DatabaseTypes';
 import type { PlannedData, CompletedData } from './type';
@@ -557,6 +557,20 @@ function toObjective(row: typeof objectivesTable.$inferSelect): Objective {
 
 export async function getObjectives(): Promise<Objective[]> {
     const userId = await getCurrentUserId();
+
+    // Marquer automatiquement les objectifs passés (date <= aujourd'hui) comme 'passed'
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    await db.update(objectivesTable)
+        .set({ status: 'passed', updatedAt: now })
+        .where(
+            and(
+                eq(objectivesTable.userId, userId),
+                eq(objectivesTable.status, 'upcoming'),
+                lte(objectivesTable.date, todayStr),
+            )
+        );
+
     const rows = await db.query.objectives.findMany({
         where: eq(objectivesTable.userId, userId),
         orderBy: (o, { asc }) => [asc(o.date)],
