@@ -454,7 +454,7 @@ export function CalendarView({
                     isOpen={showObjectiveModal}
                     onClose={() => setShowObjectiveModal(false)}
                     onSave={handleSaveObjective}
-                    initialDate={dateForAction ? dateForAction.toISOString().split('T')[0] : undefined}
+                    initialDate={dateForAction ? `${dateForAction.getFullYear()}-${String(dateForAction.getMonth() + 1).padStart(2, '0')}-${String(dateForAction.getDate()).padStart(2, '0')}` : undefined}
                     isSaving={isSavingObjective}
                 />
             )}
