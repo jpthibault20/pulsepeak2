@@ -299,6 +299,7 @@ export function CalendarView({
                     weekRows={weekRows}
                     currentMonth={month}
                     scheduleData={scheduleData}
+                    objectives={objectives}
                     selectedDay={selectedMobileDay}
                     onSelectDay={setSelectedMobileDay}
                     onOpenManualModal={handleOpenDayAction}

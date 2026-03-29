@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useMemo, useRef, useEffect } from 'react';
-import { Plus, BedDouble } from 'lucide-react';
-import type { Workout } from '@/lib/data/DatabaseTypes';
+import { Plus, BedDouble, Trophy, Target, Calendar, MapPin, Mountain } from 'lucide-react';
+import type { Workout, Objective } from '@/lib/data/DatabaseTypes';
 import { WorkoutBadge } from './WorkoutBadge';
 import { formatDateKey, DAY_NAMES_SHORT, MONTH_NAMES } from '@/lib/utils';
 import { Schedule } from '@/lib/data/DatabaseTypes';
@@ -11,6 +11,7 @@ interface MobileCalendarStripProps {
     weekRows: (Date | null)[][];
     currentMonth: number;
     scheduleData: Schedule;
+    objectives: Objective[];
     selectedDay: Date;
     onSelectDay: (date: Date) => void;
     onOpenManualModal: (e: React.MouseEvent, date: Date) => void;
@@ -37,10 +38,19 @@ function getDotColor(workout: Workout): string {
     return SPORT_DOT[workout.sportType?.toLowerCase()] ?? SPORT_DOT.default;
 }
 
+const SPORT_LABELS: Record<string, string> = {
+    cycling:   'Vélo',
+    running:   'Course',
+    swimming:  'Natation',
+    triathlon: 'Triathlon',
+    duathlon:  'Duathlon',
+};
+
 export function MobileCalendarStrip({
     weekRows,
     currentMonth,
     scheduleData,
+    objectives,
     selectedDay,
     onSelectDay,
     onOpenManualModal,
@@ -59,6 +69,11 @@ export function MobileCalendarStrip({
     const dayWorkouts = useMemo(() =>
         scheduleData.workouts.filter(w => w.date === selectedKey)
     , [selectedKey, scheduleData.workouts]);
+
+    // Objectives for the selected day
+    const dayObjectives = useMemo(() =>
+        objectives.filter(o => o.date === selectedKey)
+    , [selectedKey, objectives]);
 
     // Auto-scroll the selected day into view whenever it changes
     useEffect(() => {
@@ -80,6 +95,9 @@ export function MobileCalendarStrip({
                     const isSelected = key === selectedKey;
                     const isToday    = key === todayKey;
                     const wks        = scheduleData.workouts.filter(w => w.date === key);
+                    const dayObjs    = objectives.filter(o => o.date === key);
+                    const hasPrimary = dayObjs.some(o => o.priority === 'principale');
+                    const hasSecondary = !hasPrimary && dayObjs.length > 0;
 
                     return (
                         <button
@@ -94,7 +112,11 @@ export function MobileCalendarStrip({
                                     ? 'bg-blue-600 shadow-md shadow-blue-900/40'
                                     : isToday
                                         ? 'bg-slate-800 ring-1 ring-blue-500/60'
-                                        : 'bg-transparent active:bg-slate-800/60'
+                                        : hasPrimary
+                                            ? 'bg-rose-950/40 ring-1 ring-rose-500/40'
+                                            : hasSecondary
+                                                ? 'bg-amber-950/30 ring-1 ring-amber-500/30'
+                                                : 'bg-transparent active:bg-slate-800/60'
                                 }
                             `}
                         >
@@ -114,11 +136,17 @@ export function MobileCalendarStrip({
                                 {date.getDate()}
                             </span>
 
-                            {/* Sport dots */}
+                            {/* Sport dots + objective indicator */}
                             <div className="flex gap-[3px] mt-1.5 h-[5px] items-center">
-                                {wks.length === 0
+                                {hasPrimary && (
+                                    <div className="w-[5px] h-[5px] rounded-full bg-rose-400" />
+                                )}
+                                {hasSecondary && (
+                                    <div className="w-[5px] h-[5px] rounded-full bg-amber-400" />
+                                )}
+                                {wks.length === 0 && !hasPrimary && !hasSecondary
                                     ? <div className="w-[5px] h-[5px] rounded-full bg-transparent" />
-                                    : wks.slice(0, 3).map((w, i) => (
+                                    : wks.slice(0, hasPrimary || hasSecondary ? 2 : 3).map((w, i) => (
                                         <div
                                             key={i}
                                             className={`w-[5px] h-[5px] rounded-full ${getDotColor(w)}`}
@@ -141,6 +169,11 @@ export function MobileCalendarStrip({
                         {dayWorkouts.length > 0
                             ? `${dayWorkouts.length} séance${dayWorkouts.length > 1 ? 's' : ''}`
                             : 'Aucune séance planifiée'}
+                        {dayObjectives.length > 0 && (
+                            <span className="text-rose-400 ml-1">
+                                · {dayObjectives.length} objectif{dayObjectives.length > 1 ? 's' : ''}
+                            </span>
+                        )}
                     </p>
                 </div>
                 <button
@@ -151,6 +184,68 @@ export function MobileCalendarStrip({
                     Ajouter
                 </button>
             </div>
+
+            {/* ── Objective Cards ── */}
+            {dayObjectives.length > 0 && (
+                <div className="space-y-2">
+                    {dayObjectives.map(obj => {
+                        const isPrimary = obj.priority === 'principale';
+                        return (
+                            <div
+                                key={obj.id}
+                                className={`flex items-start gap-2.5 p-3 rounded-xl border ${
+                                    isPrimary
+                                        ? 'bg-rose-950/40 border-rose-500/40'
+                                        : 'bg-amber-950/30 border-amber-500/30'
+                                }`}
+                            >
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                                    isPrimary ? 'bg-rose-600/20 border border-rose-500/30' : 'bg-amber-600/20 border border-amber-500/30'
+                                }`}>
+                                    {isPrimary
+                                        ? <Trophy size={13} className="text-rose-400" />
+                                        : <Target size={13} className="text-amber-400" />
+                                    }
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className="text-white text-sm font-semibold truncate">{obj.name}</span>
+                                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${
+                                            isPrimary
+                                                ? 'text-rose-400 bg-rose-500/10 border-rose-500/30'
+                                                : 'text-amber-400 bg-amber-500/10 border-amber-500/30'
+                                        }`}>
+                                            {isPrimary ? 'Principal' : 'Secondaire'}
+                                        </span>
+                                    </div>
+                                    <p className="text-slate-500 text-xs mt-0.5">{SPORT_LABELS[obj.sport] ?? obj.sport}</p>
+                                    <div className="flex flex-wrap gap-2.5 mt-1">
+                                        <span className="flex items-center gap-1 text-xs text-slate-400">
+                                            <Calendar size={9} />
+                                            {new Date(obj.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                        </span>
+                                        {obj.distanceKm && (
+                                            <span className="flex items-center gap-1 text-xs text-slate-400">
+                                                <MapPin size={9} />
+                                                {obj.distanceKm} km
+                                            </span>
+                                        )}
+                                        {obj.elevationGainM && (
+                                            <span className="flex items-center gap-1 text-xs text-slate-400">
+                                                <Mountain size={9} />
+                                                {obj.elevationGainM} m D+
+                                            </span>
+                                        )}
+                                    </div>
+                                    {obj.comment && (
+                                        <p className="text-slate-500 text-xs mt-1 italic line-clamp-1">{obj.comment}</p>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
 
             {/* Divider */}
             <div className="h-px bg-slate-800/80" />

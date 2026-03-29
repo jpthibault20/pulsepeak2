@@ -2,7 +2,7 @@
 
 import { generatePlanFromAI, generateSingleWorkoutFromAI } from '@/lib/ai/coach-api';
 import { formatDateKey } from '@/lib/utils';
-import { getBlock, getObjectives, getPlan, getProfile, getSchedule, getWeek, getWorkout, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek, saveWorkout } from '@/lib/data/crud';
+import { getBlock, getObjectives, getPlan, getProfile, getSchedule, getWeek, getWorkout, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek, saveWorkout, deleteWorkoutById } from '@/lib/data/crud';
 import { ReturnCode } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
 import type { AvailabilitySlot, CompletedData, CompletedDataFeedback, SportType } from '@/lib/data/type';
@@ -1244,16 +1244,8 @@ export async function addManualWorkout(workout: Workout) {
 
 
 export async function deleteWorkout(workoutIdOrDate: string) {
-    const schedule = await getSchedule();
-
-    // Filtrer pour exclure la séance ciblée
-    const initialLength = schedule.workouts.length;
-    schedule.workouts = schedule.workouts.filter(w => w.id !== workoutIdOrDate && w.date !== workoutIdOrDate);
-
-    if (schedule.workouts.length !== initialLength) {
-        await saveSchedule(schedule);
-        revalidatePath('/');
-    }
+    await deleteWorkoutById(workoutIdOrDate);
+    revalidatePath('/');
 }
 
 export async function syncStravaActivities() {

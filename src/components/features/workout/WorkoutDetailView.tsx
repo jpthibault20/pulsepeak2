@@ -281,7 +281,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
     const handleDeleteClick = async () => {
         setIsMutating(true);
         try {
-            await onDelete(workout.date);
+            await onDelete(workout.id);
             // Pas besoin de fermer ici, le parent s'en chargera peut-être
         } catch (e) {
             console.error("Erreur suppression:", e);

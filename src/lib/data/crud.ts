@@ -463,6 +463,16 @@ export async function saveWorkout(workoutList: Workout[]): Promise<void> {
     });
 }
 
+export async function deleteWorkoutById(workoutId: string): Promise<void> {
+    const userId = await getCurrentUserId();
+    await db.delete(workoutsTable).where(
+        and(
+            eq(workoutsTable.userId, userId),
+            eq(workoutsTable.id, workoutId)
+        )
+    );
+}
+
 // ─── Objectives ───────────────────────────────────────────────────────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
