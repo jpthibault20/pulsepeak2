@@ -122,7 +122,7 @@ export function WorkoutPopover({ workouts, onClose, onViewWorkout }: WorkoutPopo
             </div>
 
             {/* Liste */}
-            <div className="p-3 space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar bg-[var(--surface-popover)]">
+            <div className="p-3 space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar bg-(--surface-popover">
                 {workouts.map((workout, index) => (
                     <div key={workout.id} className="relative group">
                         {index !== workouts.length - 1 && (

@@ -361,18 +361,33 @@ function applySecondaryObjectiveTaper(
 
     const blockMap = new Map(blocks.map(b => [b.id, b]));
 
-    return weeks.map(week => {
+    // Calculer les plages de chaque semaine
+    const weekRanges = weeks.map(week => {
         const block = blockMap.get(week.blockID);
-        if (!block) return week;
-
+        if (!block) return { week, start: '', end: '' };
         const weekStart = addDays(parseISO(block.startDate), (week.weekNumber - 1) * 7);
         const weekEnd   = addDays(weekStart, 6);
-        const weekStartStr = format(weekStart, 'yyyy-MM-dd');
-        const weekEndStr   = format(weekEnd,   'yyyy-MM-dd');
+        return { week, start: format(weekStart, 'yyyy-MM-dd'), end: format(weekEnd, 'yyyy-MM-dd') };
+    });
 
-        const hasSec = secondaryObjectives.some(o => o.date >= weekStartStr && o.date <= weekEndStr);
-        if (!hasSec) return week;
+    // Identifier les semaines qui contiennent un objectif OU qui précèdent une semaine avec objectif
+    const taperWeekIds = new Set<string>();
 
+    for (let i = 0; i < weekRanges.length; i++) {
+        const { week, start, end } = weekRanges[i];
+        if (!start) continue;
+
+        const hasObj = secondaryObjectives.some(o => o.date >= start && o.date <= end);
+        if (hasObj) {
+            // La semaine de la course → Taper
+            taperWeekIds.add(week.id);
+            // La semaine précédente → aussi Taper (pré-course)
+            if (i > 0) taperWeekIds.add(weekRanges[i - 1].week.id);
+        }
+    }
+
+    return weeks.map(week => {
+        if (!taperWeekIds.has(week.id)) return week;
         return {
             ...week,
             type: 'Taper' as const,
@@ -653,10 +668,76 @@ ${userComment        ? `- Commentaire athlète : "${userComment}"` : ""}
 - Complétion des 4 dernières semaines : ${avgCompletion}%
 ${avgCompletion < 80 ? `- ⚠️ Complétion faible : réduire l'intensité et le volume global` : ""}
 ${avgCompletion > 95 ? `- ✅ Complétion excellente : l'athlète peut absorber plus de charge` : ""}
-${weekObjectives && weekObjectives.length > 0 ? `
-## OBJECTIFS / COURSES CETTE SEMAINE OU LA SEMAINE SUIVANTE
-${weekObjectives.map(o => `- 🏁 ${o.name} le ${o.date} (${o.sport}${o.distanceKm ? ', ' + o.distanceKm + ' km' : ''}${o.elevationGainM ? ', D+ ' + o.elevationGainM + ' m' : ''}) — Priorité : ${o.priority}
-  → Adapter la semaine : pré-fatigue minimale avant la course, placer des séances légères les jours précédents, ne PAS planifier de séance dure le jour de la course (la course EST la séance).`).join('\n')}` : ""}
+${(() => {
+    if (!weekObjectives || weekObjectives.length === 0) return '';
+
+    // Calculer les dates de la semaine (lundi=0 ... dimanche=6)
+    const weekStartStr = format(weekStartDate, 'yyyy-MM-dd');
+    const weekEndStr = format(addDays(weekStartDate, 6), 'yyyy-MM-dd');
+    const nextMondayStr = format(addDays(weekStartDate, 7), 'yyyy-MM-dd');
+
+    // Classer les objectifs
+    const objThisWeek = weekObjectives.filter(o => o.date >= weekStartStr && o.date <= weekEndStr);
+    const objNextMonday = weekObjectives.filter(o => o.date === nextMondayStr);
+
+    const lines: string[] = [];
+    lines.push('## ⚠️ COURSES / OBJECTIFS À PROXIMITÉ — PRIORITÉ ABSOLUE');
+    lines.push(weekObjectives.map(o =>
+        `- 🏁 ${o.name} le ${o.date} (${o.sport}${o.distanceKm ? ', ' + o.distanceKm + ' km' : ''}${o.elevationGainM ? ', D+ ' + o.elevationGainM + ' m' : ''}) — Priorité : ${o.priority}`
+    ).join('\n'));
+    lines.push('');
+
+    if (objThisWeek.length > 0) {
+        // Cas 1 : course CETTE semaine
+        const raceDays = objThisWeek.map(o => {
+            const d = parseISO(o.date);
+            const dayIdx = Math.round((d.getTime() - weekStartDate.getTime()) / (1000*60*60*24));
+            return { ...o, dayIdx };
+        });
+        const earliestRaceDay = Math.min(...raceDays.map(r => r.dayIdx));
+
+        lines.push('RÈGLES IMPÉRATIVES — COURSE CETTE SEMAINE :');
+        lines.push(`- Le jour de la course (dayOffset=${earliestRaceDay}) : NE PAS planifier de séance. La course EST l'entraînement.`);
+
+        if (earliestRaceDay === 0) {
+            // Course le LUNDI → toute la semaine est post-course
+            lines.push('- La course est LUNDI (premier jour). Le déblocage a déjà eu lieu la semaine précédente.');
+            lines.push('- MARDI (dayOffset=1) : repos complet ou Recovery très léger (20-30 min Z1 max).');
+            lines.push('- Le reste de la semaine : reprise progressive. Séances modérées, pas de haute intensité avant mercredi/jeudi.');
+            lines.push('- Volume normal ou légèrement réduit selon la fatigue post-course.');
+        } else if (earliestRaceDay === 1) {
+            // Course le MARDI
+            lines.push('- LUNDI (dayOffset=0) : séance de DÉBLOCAGE courte (20-30 min) avec quelques accélérations brèves.');
+            lines.push('- Après la course : Recovery mercredi, reprise progressive jeudi+.');
+            lines.push('- Volume global réduit de 30%.');
+        } else {
+            // Course mercredi ou après → jours avant = pré-course
+            lines.push(`- Les jours AVANT la course (dayOffset 0 à ${earliestRaceDay - 1}) : séances courtes (30-45 min max), Recovery ou Endurance très basse (Z1-Z2). C'est du DÉBLOCAGE.`);
+            lines.push(`- La VEILLE de la course (dayOffset=${earliestRaceDay - 1}) : séance de déblocage/openers courte (20-30 min) avec quelques accélérations brèves pour activer les jambes.`);
+            lines.push('- Aucune séance longue ni haute intensité AVANT la course.');
+        }
+
+        if (earliestRaceDay < 6) {
+            lines.push(`- Après la course : séance Recovery très légère le lendemain (30 min max Z1).`);
+        }
+        lines.push('- Volume global de la semaine réduit de 30-50%.');
+    } else if (objNextMonday.length > 0) {
+        // Cas 2 : course le LUNDI suivant → déblocage dimanche
+        lines.push('RÈGLES IMPÉRATIVES — COURSE LE LUNDI SUIVANT :');
+        lines.push('- La semaine doit être ALLÉGÉE (pré-course). Volume réduit de 30-40%.');
+        lines.push('- Pas de séance longue (max 60-75 min).');
+        lines.push('- Pas de haute intensité après mercredi (dayOffset=2).');
+        lines.push('- DIMANCHE (dayOffset=6) : planifier une séance de DÉBLOCAGE (openers) courte (20-30 min) avec quelques accélérations brèves (3-4x 30s) pour activer les jambes avant la course du lendemain. C\'est la séance la plus importante de la semaine.');
+        lines.push('- Vendredi-Samedi : repos ou Recovery très léger uniquement.');
+    } else {
+        // Cas 3 : course dans les 2 semaines mais pas immédiate
+        lines.push('RÈGLES — COURSE À PROXIMITÉ :');
+        lines.push('- Semaine de transition : réduire progressivement le volume.');
+        lines.push('- Pas de séance très longue. Garder des séances courtes et dynamiques.');
+    }
+
+    return lines.join('\n');
+})()}
 
 ## RÈGLES NIVEAU ATHLÈTE
 ${profile.experience === 'Débutant' ? `⚠️ DÉBUTANT — Appliquer impérativement :

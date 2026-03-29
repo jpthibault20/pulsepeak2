@@ -58,6 +58,10 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
     const [objectives, setObjectives] = useState<Objective[]>(initialObjectives);
     const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
 
+    // Calendrier — persist le mois sélectionné entre les changements de vue
+    const [calendarDate, setCalendarDate] = useState(new Date());
+    const [calendarMobileDay, setCalendarMobileDay] = useState(new Date());
+
     // Etats UI
     const [error, setError] = useState<string | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -435,6 +439,10 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
                                 onRefresh={refreshData}
                                 onSyncStrava={handleSyncStrava}
                                 isSyncing={isSyncing}
+                                calendarDate={calendarDate}
+                                onCalendarDateChange={setCalendarDate}
+                                calendarMobileDay={calendarMobileDay}
+                                onCalendarMobileDayChange={setCalendarMobileDay}
                             />
                         </div>
                     )}

@@ -29,6 +29,10 @@ interface CalendarViewProps {
     onRefresh: () => void;
     onSyncStrava?: () => void;
     isSyncing?: boolean;
+    calendarDate: Date;
+    onCalendarDateChange: (date: Date) => void;
+    calendarMobileDay: Date;
+    onCalendarMobileDayChange: (date: Date) => void;
 }
 
 export function CalendarView({
@@ -43,10 +47,14 @@ export function CalendarView({
     onSaveObjective,
     onRefresh,
     onSyncStrava,
-    isSyncing = false
+    isSyncing = false,
+    calendarDate,
+    onCalendarDateChange: setSelectedDate,
+    calendarMobileDay,
+    onCalendarMobileDayChange: setSelectedMobileDay,
 }: CalendarViewProps) {
-    const [selectedDate, setSelectedDate] = useState(new Date());
-    const [selectedMobileDay, setSelectedMobileDay] = useState(new Date());
+    const selectedDate = calendarDate ?? new Date();
+    const selectedMobileDay = calendarMobileDay ?? new Date();
     const [showGenModal, setShowGenModal] = useState(false);
     const [showManualModal, setShowManualModal] = useState(false);
     const [showObjectiveModal, setShowObjectiveModal] = useState(false);
@@ -149,7 +157,7 @@ export function CalendarView({
                             >
                                 <ChevronLeft size={18} />
                             </button>
-                            <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white min-w-[120px] text-center capitalize px-2">
+                            <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white w-40 md:w-[180px] text-center capitalize px-1">
                                 {MONTH_NAMES[month]} {year}
                             </h2>
                             <button
