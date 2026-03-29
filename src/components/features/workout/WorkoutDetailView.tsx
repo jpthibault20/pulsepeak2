@@ -44,19 +44,19 @@ const SPORT_CONFIG: Record<SportType, {
 }> = {
     cycling: {
         icon: Bike,
-        color: 'text-blue-400',
+        color: 'text-blue-600 dark:text-blue-400',
         label: 'Vélo',
         unit: 'W'
     },
     running: {
         icon: Running,
-        color: 'text-orange-400',
+        color: 'text-orange-600 dark:text-orange-400',
         label: 'Course',
         unit: 'min/km'
     },
     swimming: {
         icon: Waves,
-        color: 'text-cyan-400',
+        color: 'text-cyan-600 dark:text-cyan-400',
         label: 'Natation',
         unit: 'min/100m'
     }
@@ -148,7 +148,7 @@ const StatsCard: React.FC<{
     rpeColor?: string;
 }> = ({ title, icon: Icon, color, data, note, rpe, rpeColor }) => {
     return (
-        <div className={`relative overflow-hidden rounded-xl p-4 sm:p-5 shadow-lg border ${color.replace('text-', 'border-')}/30 bg-linear-to-br from-slate-800/70 via-slate-900/90 to-slate-800/70`}>
+        <div className={`relative overflow-hidden rounded-xl p-4 sm:p-5 shadow-lg border ${color.replace('text-', 'border-')}/30 bg-linear-to-br from-white/70 dark:from-slate-800/70 via-white/90 dark:via-slate-900/90 to-white/70 dark:to-slate-800/70`}>
             <div className={`absolute -top-2 -right-2 w-24 h-24 rounded-full opacity-20 ${color} blur-lg`}></div>
             <div className={`absolute -bottom-4 -left-4 w-32 h-32 rounded-full opacity-15 ${color} blur-xl`}></div>
 
@@ -161,11 +161,11 @@ const StatsCard: React.FC<{
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 sm:gap-x-6 sm:gap-y-4 grow">
                     {data.map((item, index) => (
                         <div key={index} className="flex flex-col items-start col-span-1">
-                            <div className="flex items-center text-xs sm:text-sm text-slate-400 font-medium mb-1">
+                            <div className="flex items-center text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mb-1">
                                 {item.icon && <item.icon size={14} className="mr-1" />}
                                 {item.label}
                             </div>
-                            <div className={`text-sm sm:text-base font-bold font-mono ${item.value ? 'text-white' : 'text-slate-500'}`}>
+                            <div className={`text-sm sm:text-base font-bold font-mono ${item.value ? 'text-slate-900 dark:text-white' : 'text-slate-500'}`}>
                                 {item.value ?? '-'}
                             </div>
                         </div>
@@ -173,8 +173,8 @@ const StatsCard: React.FC<{
                 </div>
 
                 {(rpe !== null && rpe !== undefined) && (
-                    <div className="mt-4 pt-3 border-t border-slate-700/50 flex items-center justify-between text-xs sm:text-sm">
-                        <div className="flex items-center text-slate-400">
+                    <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700/50 flex items-center justify-between text-xs sm:text-sm">
+                        <div className="flex items-center text-slate-500 dark:text-slate-400">
                             <Heart size={16} className={`mr-1.5 ${rpeColor || 'text-red-400'}`} />
                             RPE
                         </div>
@@ -313,11 +313,11 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
 
     // --- Calcul RPE Color Dynamiquement ---
     const rpeColor = useMemo(() => {
-        if (sportMetrics?.rpe === null || sportMetrics?.rpe === undefined) return 'text-slate-400';
+        if (sportMetrics?.rpe === null || sportMetrics?.rpe === undefined) return 'text-slate-500 dark:text-slate-400';
         // Exemple: < 7 Vert, 7-8 Orange, > 8 Rouge
-        if (sportMetrics.rpe < 7) return 'text-emerald-400';
-        if (sportMetrics.rpe < 8.5) return 'text-orange-400';
-        return 'text-red-400';
+        if (sportMetrics.rpe < 7) return 'text-emerald-600 dark:text-emerald-400';
+        if (sportMetrics.rpe < 8.5) return 'text-orange-600 dark:text-orange-400';
+        return 'text-red-600 dark:text-red-400';
     }, [sportMetrics?.rpe]);
 
 
@@ -327,7 +327,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
             {/* Bouton Retour */}
             <button
                 onClick={onClose}
-                className="flex items-center text-slate-400 hover:text-white mb-4 md:mb-6 transition-colors px-1"
+                className="flex items-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-4 md:mb-6 transition-colors px-1"
                 aria-label="Retour au calendrier"
             >
                 <ChevronLeft size={20} className="mr-1" /> Retour
@@ -335,7 +335,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
 
             <Card className="relative overflow-hidden">
                 {/* Header: Titre, Dates, Badges */}
-                <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4 pb-4 border-b border-slate-800">
+                <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
                     <div className="w-full">
                         {/* Badges Sport & Type */}
                         <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-3">
@@ -348,11 +348,11 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                         </div>
 
                         {/* Titre */}
-                        <h1 className="text-2xl md:text-3xl font-bold text-white mb-1 leading-tight">
+                        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-1 leading-tight">
                             {workout.title}
                         </h1>
                         {/* Dates */}
-                        <p className="text-slate-400 text-sm flex items-center gap-2">
+                        <p className="text-slate-500 dark:text-slate-400 text-sm flex items-center gap-2">
                             <CalendarDays size={14} className="text-slate-500" />
                             <span className="font-mono">{formatDate(workout.date)}</span>
                             {workout.status === 'completed' && workout.date && (
@@ -365,12 +365,12 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
 
                     {/* Métriques Planifiées (si pas complété) */}
                     {workout.status !== 'completed' && workout.plannedData && (
-                        <div className="flex items-center gap-3 text-slate-400 bg-slate-800/50 rounded-full px-3 py-1 text-xs md:text-sm shrink-0">
+                        <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/50 rounded-full px-3 py-1 text-xs md:text-sm shrink-0">
                             <span className="flex items-center">
                                 <Clock size={12} className="mr-1.5" />
                                 {workout.plannedData.durationMinutes} min
                             </span>
-                            <div className="w-px h-3 bg-slate-600"></div>
+                            <div className="w-px h-3 bg-slate-300 dark:bg-slate-600"></div>
                             <span className="flex items-center">
                                 <Zap size={12} className="mr-1.5" />
                                 TSS: {workout.plannedData.plannedTSS || '-'}
@@ -405,14 +405,14 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
 
                 {/* Barre d'actions secondaire */}
                 {workout.workoutType !== 'Rest' && (
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center my-6 border-b border-slate-800 pb-6 gap-4">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center my-6 border-b border-slate-200 dark:border-slate-800 pb-6 gap-4">
                         <div className="w-full md:w-auto">
                             {showRegenInput ? (
                                 <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 w-full md:w-auto">
                                     <input
                                         type="text"
                                         placeholder={`Ex: Plus court, focus endurance...`}
-                                        className="flex-1 md:w-64 bg-slate-900 border border-blue-500/50 rounded-lg text-sm px-3 py-2 text-white focus:ring-1 focus:ring-blue-500 outline-none"
+                                        className="flex-1 md:w-64 bg-white dark:bg-slate-900 border border-blue-500/50 rounded-lg text-sm px-3 py-2 text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-500 outline-none"
                                         value={regenInstruction}
                                         onChange={(e) => setRegenInstruction(e.target.value)}
                                         autoFocus
@@ -469,7 +469,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                                         <FeatureGate feature="regenerate-workout" mode="modal" label="Régénérer avec l'IA">
                                             <Button
                                                 variant="ghost"
-                                                className="whitespace-nowrap h-9 text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
+                                                className="whitespace-nowrap h-9 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/20"
                                                 onClick={() => setShowRegenInput(true)}
                                                 disabled={isMutating}
                                             >
@@ -486,7 +486,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                         <div className="flex gap-2 shrink-0">
                             <Button
                                 variant="ghost"
-                                className="px-3 text-slate-500 hover:text-red-400"
+                                className="px-3 text-slate-500 hover:text-red-600 dark:hover:text-red-400"
                                 onClick={() => setShowDeleteConfirm(true)}
                                 disabled={isMutating}
                                 aria-label="Supprimer la séance"
@@ -500,16 +500,16 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
 
                 {/* Modal de déplacement INLINE */}
                 {isMoving && (
-                    <div className="mb-6 bg-slate-900/80 border border-blue-500/30 p-4 rounded-xl animate-in fade-in slide-in-from-top-2">
-                        <h4 className="text-sm font-bold text-white mb-3 flex items-center">
-                            <CalendarDays size={16} className="mr-2 text-blue-400" />
+                    <div className="mb-6 bg-white/80 dark:bg-slate-900/80 border border-blue-200 dark:border-blue-500/30 p-4 rounded-xl animate-in fade-in slide-in-from-top-2">
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center">
+                            <CalendarDays size={16} className="mr-2 text-blue-600 dark:text-blue-400" />
                             Choisir une nouvelle date
                         </h4>
                         <div className="flex gap-2 items-center">
                             <input
                                 type="date"
                                 style={{ colorScheme: 'dark' }}
-                                className="bg-slate-950 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm flex-1 outline-none focus:border-blue-500"
+                                className="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm flex-1 outline-none focus:border-blue-500"
                                 onChange={(e) => setNewMoveDate(e.target.value)}
                                 aria-label="Nouvelle date"
                                 defaultValue={workout.date} // Pré-remplir avec la date actuelle
@@ -536,12 +536,12 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
 
                 {/* Modal de Confirmation Suppression INLINE */}
                 {showDeleteConfirm && (
-                    <div className="mb-6 bg-red-900/10 border border-red-500/30 p-4 rounded-xl animate-in fade-in slide-in-from-top-2">
-                        <h4 className="text-sm font-bold text-red-400 mb-2 flex items-center">
+                    <div className="mb-6 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/30 p-4 rounded-xl animate-in fade-in slide-in-from-top-2">
+                        <h4 className="text-sm font-bold text-red-600 dark:text-red-400 mb-2 flex items-center">
                             <AlertTriangle size={16} className="mr-2" />
                             Supprimer cette séance ?
                         </h4>
-                        <p className="text-xs text-red-300/70 mb-4">
+                        <p className="text-xs text-red-600 dark:text-red-300/70 mb-4">
                             Cette action est irréversible et supprimera les données associées.
                         </p>
                         <div className="flex gap-2 justify-end">
@@ -568,12 +568,12 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
 
                 {/* Description de la séance (si applicable) */}
                 {currentDescription && (
-                    <div className="bg-slate-900/50 rounded-xl p-4 md:p-6 mb-8 border border-slate-800">
-                        <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4 flex items-center">
-                            <Activity size={18} className="mr-2 text-blue-400" />
+                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 md:p-6 mb-8 border border-slate-200 dark:border-slate-800">
+                        <h3 className="text-base md:text-lg font-semibold text-slate-900 dark:text-white mb-3 md:mb-4 flex items-center">
+                            <Activity size={18} className="mr-2 text-blue-600 dark:text-blue-400" />
                             Structure de la séance
                         </h3>
-                        <div className="prose prose-invert prose-sm max-w-none text-slate-300 whitespace-pre-line leading-relaxed font-mono">
+                        <div className="prose prose-invert prose-sm max-w-none text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed font-mono">
                             {currentDescription}
                         </div>
                     </div>
@@ -594,7 +594,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                     />
                 ) : (
                     /* Actions Principales (Bas du Card) */
-                    <div className="grid grid-cols-1 gap-3 pt-4 border-t border-slate-800">
+                    <div className="grid grid-cols-1 gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
                         {workout.status !== 'completed' && !showDeleteConfirm && (
                             <Button
                                 variant="success"
@@ -632,7 +632,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                             <Button
                                 variant="danger"
                                 onClick={() => handleStatusUpdate('missed')}
-                                className="h-10 text-sm font-medium bg-red-950/30 border-red-900/50 text-red-400 hover:bg-red-900/50"
+                                className="h-10 text-sm font-medium bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50"
                                 disabled={isMutating}
                                 icon={XCircle}
                             >

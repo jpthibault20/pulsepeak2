@@ -51,9 +51,9 @@ export function FeatureGate({ feature, mode = 'modal', label, children }: Featur
                         className="absolute inset-0 flex items-center justify-center cursor-pointer"
                         onClick={() => setShowPaywall(true)}
                     >
-                        <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-700 rounded-full px-4 py-2 shadow-lg backdrop-blur-sm">
-                            <Lock size={13} className="text-blue-400" />
-                            <span className="text-xs font-semibold text-white">{label ?? 'Plan Athlete'}</span>
+                        <div className="flex items-center gap-2 bg-white/90 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 rounded-full px-4 py-2 shadow-lg backdrop-blur-sm">
+                            <Lock size={13} className="text-blue-600 dark:text-blue-400" />
+                            <span className="text-xs font-semibold text-slate-900 dark:text-white">{label ?? 'Plan Athlete'}</span>
                         </div>
                     </div>
                 </div>
@@ -72,7 +72,7 @@ export function FeatureGate({ feature, mode = 'modal', label, children }: Featur
         <>
             <button
                 onClick={() => setShowPaywall(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-700 text-slate-500 text-sm hover:border-blue-500/40 hover:text-blue-400 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-500 text-sm hover:border-blue-500/40 hover:text-blue-400 transition-colors"
             >
                 <Lock size={13} />
                 {label ?? 'Fonctionnalité Pro'}

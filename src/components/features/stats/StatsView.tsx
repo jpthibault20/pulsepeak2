@@ -19,6 +19,7 @@ import {
     computePMC, computeWeeklyTSS, getTSBStatus, aggregateZones, getWorkoutTSS,
     type PMCPoint,
 } from '@/lib/stats/computePMC';
+import { useTheme } from '@/components/ThemeProvider';
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -104,11 +105,11 @@ function InfoTooltip({ title, content }: { title: string; content: string }) {
 
     const tooltip = open ? createPortal(
         <div
-            className="fixed z-[9999] w-56 bg-slate-950 border border-slate-700 rounded-xl p-3 shadow-2xl pointer-events-none"
+            className="fixed z-[9999] w-56 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl p-3 shadow-2xl pointer-events-none"
             style={{ top: pos.top, left: pos.left }}
         >
-            <p className="text-xs font-semibold text-white mb-1.5">{title}</p>
-            <p className="text-[11px] text-slate-400 leading-relaxed whitespace-pre-line">{content}</p>
+            <p className="text-xs font-semibold text-slate-900 dark:text-white mb-1.5">{title}</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed whitespace-pre-line">{content}</p>
         </div>,
         document.body
     ) : null;
@@ -146,7 +147,7 @@ function PMCSnapshot({ ctl, atl }: { ctl: number; atl: number }) {
             <div className="flex items-start justify-between mb-4">
                 <div>
                     <div className="flex items-center gap-1.5">
-                        <p className="text-[10px] text-slate-400 uppercase tracking-widest font-medium">Forme du Jour</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-medium">Forme du Jour</p>
                         <InfoTooltip
                             title="Performance Management Chart"
                             content={"CTL (bleu) : forme chronique sur 42j. Plus c'est élevé, mieux c'est (cible : 50-100).\n\nATL (rouge) : fatigue aiguë sur 7j.\n\nTSB = CTL − ATL : ta fraîcheur du jour.\n  > 0 : frais\n  -10 à 0 : chargé mais optimal\n  < -20 : surmenage\n\nIdéal avant une course : TSB entre +5 et +15."}
@@ -164,7 +165,7 @@ function PMCSnapshot({ ctl, atl }: { ctl: number; atl: number }) {
                     </div>
                 </div>
                 <div className="text-right">
-                    <p className="text-xs text-slate-400">TSB</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">TSB</p>
                     <p className="text-3xl font-black" style={{ color: status.color }}>
                         {tsb > 0 ? '+' : ''}{tsb}
                     </p>
@@ -174,10 +175,10 @@ function PMCSnapshot({ ctl, atl }: { ctl: number; atl: number }) {
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] text-slate-400 uppercase tracking-wider">CTL (Forme)</span>
-                        <span className="text-sm font-bold text-blue-400">{Math.round(ctl)}</span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">CTL (Forme)</span>
+                        <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{Math.round(ctl)}</span>
                     </div>
-                    <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div
                             className="h-full bg-blue-500 rounded-full"
                             style={{ width: `${Math.min(100, (ctl / 120) * 100)}%` }}
@@ -186,10 +187,10 @@ function PMCSnapshot({ ctl, atl }: { ctl: number; atl: number }) {
                 </div>
                 <div>
                     <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] text-slate-400 uppercase tracking-wider">ATL (Fatigue)</span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">ATL (Fatigue)</span>
                         <span className="text-sm font-bold text-red-400">{Math.round(atl)}</span>
                     </div>
-                    <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div
                             className="h-full bg-red-500 rounded-full"
                             style={{ width: `${Math.min(100, (atl / 150) * 100)}%` }}
@@ -199,24 +200,24 @@ function PMCSnapshot({ ctl, atl }: { ctl: number; atl: number }) {
             </div>
 
             {rampAlert && (
-                <div className="flex items-center gap-2 mt-3 px-3 py-2 bg-red-950/60 border border-red-900/50 rounded-lg">
+                <div className="flex items-center gap-2 mt-3 px-3 py-2 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 rounded-lg">
                     <AlertTriangle size={14} className="text-red-400 shrink-0" />
-                    <p className="text-xs text-red-300">Charge aiguë élevée — risque de blessure accru</p>
+                    <p className="text-xs text-red-600 dark:text-red-300">Charge aiguë élevée — risque de blessure accru</p>
                 </div>
             )}
 
             <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                 <div>
                     <p className="text-[9px] text-slate-500 uppercase tracking-wider">TSB &gt; 0</p>
-                    <p className="text-[10px] text-slate-400">Frais</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Frais</p>
                 </div>
                 <div>
                     <p className="text-[9px] text-slate-500 uppercase tracking-wider">-10 à 0</p>
-                    <p className="text-[10px] text-slate-400">Optimal</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Optimal</p>
                 </div>
                 <div>
                     <p className="text-[9px] text-slate-500 uppercase tracking-wider">&lt; -20</p>
-                    <p className="text-[10px] text-slate-400 text-red-400/70">Danger</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 text-red-400/70">Danger</p>
                 </div>
             </div>
         </Card>
@@ -241,7 +242,7 @@ function KPICard({ value, label, subLabel, icon, accentColor, trend, info }: KPI
 
     return (
         <div
-            className="relative rounded-xl p-4 border border-slate-800 bg-slate-900/60"
+            className="relative rounded-xl p-4 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60"
             style={{ borderLeftWidth: '3px', borderLeftColor: accentColor }}
         >
             {/* Clipped background icon */}
@@ -256,7 +257,7 @@ function KPICard({ value, label, subLabel, icon, accentColor, trend, info }: KPI
                     <InfoTooltip title={label} content={info} />
                 </div>
             )}
-            <p className="text-2xl md:text-3xl font-black text-white tracking-tight">{value}</p>
+            <p className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">{value}</p>
             <p
                 className="text-[10px] uppercase tracking-widest mt-0.5 font-medium"
                 style={{ color: accentColor }}
@@ -283,16 +284,16 @@ function PMCTooltipContent({ active, payload, label }: { active?: boolean; paylo
     const tss = payload.find(p => p.name === 'tss')?.value;
     const tsbColor = tsb != null ? getTSBStatus(tsb).color : '#94a3b8';
     return (
-        <div className="bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs shadow-2xl pointer-events-none">
-            <p className="text-slate-400 font-medium mb-2">{label}</p>
+        <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-xs shadow-2xl pointer-events-none">
+            <p className="text-slate-500 dark:text-slate-400 font-medium mb-2">{label}</p>
             {tss != null && tss > 0 && (
-                <div className="flex items-center gap-2 text-slate-300 mb-1.5">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 mb-1.5">
                     <span className="w-2 h-2 rounded-full bg-slate-600" />
                     TSS {tss}
                 </div>
             )}
             {ctl != null && (
-                <div className="flex items-center gap-2 text-blue-400">
+                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
                     <span className="w-2 h-2 rounded-full bg-blue-500" />
                     CTL {ctl?.toFixed(1)}
                 </div>
@@ -320,18 +321,18 @@ function WeeklyTooltipContent({ active, payload, label }: { active?: boolean; pa
     const actual = payload.find(p => p.name === 'actual');
     const compliance = planned?.value ? Math.round(((actual?.value ?? 0) / planned.value) * 100) : 0;
     return (
-        <div className="bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs shadow-2xl pointer-events-none">
-            <p className="text-slate-400 font-medium mb-2">{label}</p>
-            <div className="flex items-center gap-2 text-slate-400">
+        <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-xs shadow-2xl pointer-events-none">
+            <p className="text-slate-500 dark:text-slate-400 font-medium mb-2">{label}</p>
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                 <span className="w-2 h-2 rounded-full bg-slate-600" />
                 Planifié {planned?.value} TSS
             </div>
-            <div className="flex items-center gap-2 text-blue-400 mt-1">
+            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mt-1">
                 <span className="w-2 h-2 rounded-full bg-blue-500" />
                 Réalisé {actual?.value} TSS
             </div>
             {planned?.value != null && planned.value > 0 && (
-                <div className={`mt-1.5 font-semibold ${compliance >= 90 ? 'text-emerald-400' : compliance >= 70 ? 'text-amber-400' : 'text-red-400'}`}>
+                <div className={`mt-1.5 font-semibold ${compliance >= 90 ? 'text-emerald-600 dark:text-emerald-400' : compliance >= 70 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
                     {compliance}% réalisation
                 </div>
             )}
@@ -340,12 +341,14 @@ function WeeklyTooltipContent({ active, payload, label }: { active?: boolean; pa
 }
 
 // Compliance gauge SVG
-function ComplianceGauge({ value }: { value: number }) {
+function ComplianceGauge({ value, theme }: { value: number; theme: string }) {
     const r = 48;
     const circ = Math.PI * r;
     const dash = Math.max(0, Math.min(1, value / 100)) * circ;
     const color = value >= 90 ? '#22c55e' : value >= 75 ? '#3b82f6' : value >= 60 ? '#f59e0b' : '#ef4444';
     const label = value >= 90 ? 'Excellent' : value >= 75 ? 'Bien' : value >= 60 ? 'Moyen' : 'À améliorer';
+    const trackColor = theme === 'dark' ? '#1e293b' : '#e2e8f0';
+    const textColor = theme === 'dark' ? '#ffffff' : '#0f172a';
 
     return (
         <div className="flex flex-col items-center">
@@ -353,7 +356,7 @@ function ComplianceGauge({ value }: { value: number }) {
                 <path
                     d="M 12 60 A 48 48 0 0 1 108 60"
                     fill="none"
-                    stroke="#1e293b"
+                    stroke={trackColor}
                     strokeWidth="10"
                     strokeLinecap="round"
                 />
@@ -366,7 +369,7 @@ function ComplianceGauge({ value }: { value: number }) {
                     strokeDasharray={`${dash} ${circ}`}
                     style={{ transition: 'stroke-dasharray 1s ease' }}
                 />
-                <text x="60" y="56" textAnchor="middle" fontSize="20" fontWeight="800" fill="white">
+                <text x="60" y="56" textAnchor="middle" fontSize="20" fontWeight="800" fill={textColor}>
                     {value}%
                 </text>
             </svg>
@@ -393,13 +396,13 @@ function ZoneDistribution({ zones }: { zones: number[] }) {
                 return (
                     <div key={i} className="flex items-center gap-2">
                         <span className="text-[10px] text-slate-500 w-4 shrink-0 font-medium">{ZONE_LABELS[i]}</span>
-                        <div className="flex-1 h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div className="flex-1 h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                             <div
                                 className="h-full rounded-full transition-all duration-700"
                                 style={{ width: `${pct}%`, backgroundColor: ZONE_COLORS[i] }}
                             />
                         </div>
-                        <span className="text-[10px] text-slate-400 w-7 text-right shrink-0">{pct}%</span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 w-7 text-right shrink-0">{pct}%</span>
                     </div>
                 );
             })}
@@ -438,23 +441,23 @@ function ObjectiveCard({ obj }: { obj: Objective }) {
     }[obj.sport];
 
     return (
-        <div className="snap-start shrink-0 w-44 rounded-xl bg-slate-900 border border-slate-800 p-4 flex flex-col gap-2">
+        <div className="snap-start shrink-0 w-44 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 flex flex-col gap-2">
             {isPast ? (
                 <p className="text-xs text-slate-500">Passé il y a {Math.abs(days)}j</p>
             ) : (
                 <div>
-                    <p className="text-3xl font-black text-white leading-none">{days}</p>
-                    <p className="text-[10px] text-slate-400">jours restants</p>
+                    <p className="text-3xl font-black text-slate-900 dark:text-white leading-none">{days}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">jours restants</p>
                 </div>
             )}
-            <p className="text-sm font-semibold text-white truncate leading-tight">{obj.name}</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-white truncate leading-tight">{obj.name}</p>
             <div className="flex items-center gap-2 flex-wrap">
                 <div className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md" style={{ backgroundColor: sportColor + '20', color: sportColor }}>
                     {sportIcon}
                     <span>{obj.sport}</span>
                 </div>
                 {obj.priority === 'principale' && (
-                    <span className="text-[9px] text-amber-400 uppercase tracking-wider font-bold">A-Race</span>
+                    <span className="text-[9px] text-amber-600 dark:text-amber-400 uppercase tracking-wider font-bold">A-Race</span>
                 )}
             </div>
             {obj.distanceKm && (
@@ -468,6 +471,7 @@ function ObjectiveCard({ obj }: { obj: Objective }) {
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 
 export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, objectives = [] }) => {
+    const { theme } = useTheme();
     const [period, setPeriod] = useState<PeriodId>('30d');
     const [customRange, setCustomRange] = useState(() => {
         const end = new Date();
@@ -616,7 +620,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
                             className="shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all"
                             style={period === btn.id
                                 ? { backgroundColor: accentColor, color: '#fff' }
-                                : { backgroundColor: '#1e293b', color: '#64748b' }}
+                                : { backgroundColor: theme === 'dark' ? '#1e293b' : '#f1f5f9', color: '#64748b' }}
                         >
                             {btn.label}
                         </button>
@@ -633,25 +637,25 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
 
             {/* Custom date range */}
             {period === 'custom' && (
-                <div className="flex flex-col sm:flex-row gap-2 bg-slate-900/50 p-3 rounded-xl border border-slate-800 animate-in zoom-in-95 duration-200">
+                <div className="flex flex-col sm:flex-row gap-2 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200">
                     <div className="flex items-center gap-2 flex-1">
-                        <span className="text-[10px] text-slate-400 uppercase w-5">Du</span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase w-5">Du</span>
                         <input
                             type="date"
-                            style={{ colorScheme: 'dark' }}
+                            style={{ colorScheme: theme }}
                             value={customRange.start}
                             onChange={e => setCustomRange(p => ({ ...p, start: e.target.value }))}
-                            className="flex-1 bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-1.5 text-sm outline-none focus:border-blue-500"
+                            className="flex-1 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg px-3 py-1.5 text-sm outline-none focus:border-blue-500"
                         />
                     </div>
                     <div className="flex items-center gap-2 flex-1">
-                        <span className="text-[10px] text-slate-400 uppercase w-5">Au</span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase w-5">Au</span>
                         <input
                             type="date"
-                            style={{ colorScheme: 'dark' }}
+                            style={{ colorScheme: theme }}
                             value={customRange.end}
                             onChange={e => setCustomRange(p => ({ ...p, end: e.target.value }))}
-                            className="flex-1 bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-1.5 text-sm outline-none focus:border-blue-500"
+                            className="flex-1 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg px-3 py-1.5 text-sm outline-none focus:border-blue-500"
                         />
                     </div>
                 </div>
@@ -711,7 +715,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
                 <div className="flex items-center justify-between mb-4">
                     <div>
                         <div className="flex items-center gap-1.5">
-                            <h3 className="text-sm font-semibold text-white">Performance Management Chart</h3>
+                            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Performance Management Chart</h3>
                             <InfoTooltip
                                 title="Comment lire le PMC ?"
                                 content={"CTL (bleu) : ta forme sur 42j. Monte = tu progresses.\n\nATL (rouge) : fatigue des 7 derniers jours.\n\nTSB (fond vert) : fraîcheur = CTL − ATL. Positif = frais, négatif = chargé.\n\nBarres grises : charge TSS journalière.\n\nObjectif : CTL qui monte progressivement, ATL maîtrisée entre les blocs."}
@@ -719,7 +723,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
                         </div>
                         <p className="text-[10px] text-slate-500 mt-0.5">90 derniers jours</p>
                     </div>
-                    <div className="flex items-center gap-3 text-[10px] text-slate-400">
+                    <div className="flex items-center gap-3 text-[10px] text-slate-500 dark:text-slate-400">
                         <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-blue-500 inline-block" />CTL</span>
                         <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-red-500 inline-block" style={{ borderTop: '2px dashed #ef4444', width: 12, height: 0 }} />ATL</span>
                         <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-slate-600 inline-block opacity-60" />TSB</span>
@@ -729,7 +733,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
                 {pmcData.length > 0 ? (
                     <ResponsiveContainer width="100%" height={200}>
                         <ComposedChart data={pmcData} margin={{ top: 5, right: 5, bottom: 0, left: -20 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                            <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#1e293b' : '#e2e8f0'} vertical={false} />
                             <XAxis
                                 dataKey="date"
                                 tickFormatter={formatPMCTick}
@@ -785,7 +789,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
                 {/* Weekly TSS Bars */}
                 <Card className="md:col-span-2 p-4 md:p-6">
                     <div className="flex items-center gap-1.5 mb-4">
-                        <h3 className="text-sm font-semibold text-white">Charge hebdomadaire (TSS)</h3>
+                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Charge hebdomadaire (TSS)</h3>
                         <InfoTooltip
                             title="Charge hebdomadaire"
                             content={"Barres foncées : TSS planifié.\nBarres colorées : TSS réalisé.\n\n90-110% du planifié → optimal\n<70% → semaine sous-chargée\n>120% → risque de surcharge\n\nUne semaine légère (récup) tous les 3-4 est normale et nécessaire."}
@@ -794,11 +798,11 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
                     {weeklyData.some(w => w.planned > 0 || w.actual > 0) ? (
                         <ResponsiveContainer width="100%" height={160}>
                             <BarChart data={weeklyData} barGap={2} margin={{ top: 0, right: 5, bottom: 0, left: -25 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#1e293b' : '#e2e8f0'} vertical={false} />
                                 <XAxis dataKey="weekLabel" tick={{ fontSize: 9, fill: '#475569' }} axisLine={false} tickLine={false} />
                                 <YAxis tick={{ fontSize: 9, fill: '#475569' }} axisLine={false} tickLine={false} />
                                 <Tooltip content={<WeeklyTooltipContent />} />
-                                <Bar dataKey="planned" name="planned" fill="#1e293b" radius={[3, 3, 0, 0]} />
+                                <Bar dataKey="planned" name="planned" fill={theme === 'dark' ? '#1e293b' : '#e2e8f0'} radius={[3, 3, 0, 0]} />
                                 <Bar dataKey="actual" name="actual" fill={accentColor} radius={[3, 3, 0, 0]} opacity={0.9} />
                             </BarChart>
                         </ResponsiveContainer>
@@ -807,8 +811,8 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
                             <p className="text-slate-500 text-sm">Aucun plan de charge enregistré</p>
                         </div>
                     )}
-                    <div className="flex items-center gap-4 mt-2 text-[10px] text-slate-400">
-                        <span className="flex items-center gap-1.5"><span className="w-3 h-2 rounded-sm bg-slate-700 inline-block" />Planifié</span>
+                    <div className="flex items-center gap-4 mt-2 text-[10px] text-slate-500 dark:text-slate-400">
+                        <span className="flex items-center gap-1.5"><span className="w-3 h-2 rounded-sm bg-slate-200 dark:bg-slate-700 inline-block" />Planifié</span>
                         <span className="flex items-center gap-1.5"><span className="w-3 h-2 rounded-sm inline-block" style={{ backgroundColor: accentColor }} />Réalisé</span>
                     </div>
                 </Card>
@@ -822,26 +826,26 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
                             content={"% des séances planifiées (passées) effectivement réalisées.\n\nRPE moyen : effort perçu de 1 (très facile) à 10 (maximal). >7 régulièrement = fatigue accumulée.\n\nIntensité TSS/h : charge par heure. Utile pour comparer des semaines de volumes différents."}
                         />
                     </div>
-                    <ComplianceGauge value={kpis.complianceRate} />
+                    <ComplianceGauge value={kpis.complianceRate} theme={theme} />
                     <div className="w-full space-y-2">
                         <div className="flex justify-between text-[10px]">
-                            <span className="text-slate-400">Complétées</span>
+                            <span className="text-slate-500 dark:text-slate-400">Complétées</span>
                             <span className="text-emerald-400 font-semibold">{kpis.completedCount}</span>
                         </div>
                         <div className="flex justify-between text-[10px]">
-                            <span className="text-slate-400">Manquées</span>
+                            <span className="text-slate-500 dark:text-slate-400">Manquées</span>
                             <span className="text-red-400 font-semibold">{kpis.missedCount}</span>
                         </div>
                         {kpis.avgRpe && (
                             <div className="flex justify-between text-[10px]">
-                                <span className="text-slate-400">RPE moyen</span>
-                                <span className="text-white font-semibold">{kpis.avgRpe}/10</span>
+                                <span className="text-slate-500 dark:text-slate-400">RPE moyen</span>
+                                <span className="text-slate-900 dark:text-white font-semibold">{kpis.avgRpe}/10</span>
                             </div>
                         )}
                         {kpis.intensityFactor > 0 && (
                             <div className="flex justify-between text-[10px]">
-                                <span className="text-slate-400">Intensité (TSS/h)</span>
-                                <span className="text-white font-semibold">{kpis.intensityFactor}</span>
+                                <span className="text-slate-500 dark:text-slate-400">Intensité (TSS/h)</span>
+                                <span className="text-slate-900 dark:text-white font-semibold">{kpis.intensityFactor}</span>
                             </div>
                         )}
                     </div>
@@ -851,7 +855,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
             {/* ── SPORT TABS + ZONES ───────────────────────────────────── */}
             <Card className="p-4 md:p-6">
                 <div className="flex items-center gap-1.5 mb-4">
-                    <h3 className="text-sm font-semibold text-white">Distribution des efforts</h3>
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Distribution des efforts</h3>
                     <InfoTooltip
                         title="Distribution des zones"
                         content={"Temps passé dans chaque zone de fréquence cardiaque.\n\nZ1 (gris) : récupération\nZ2 (bleu) : endurance aérobie ← objectif ~70-80%\nZ3 (vert) : tempo (zone grise, à limiter)\nZ4 (ambre) : seuil\nZ5 (rouge) : VO2max\n\nUn bon plan endurance = beaucoup de Z1-Z2, peu de Z3, un peu de Z4-Z5."}
@@ -892,8 +896,8 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
                 <Card className="p-4 md:p-6">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-1.5">
-                            <CalendarDays size={16} className="text-amber-400" />
-                            <h3 className="text-sm font-semibold text-white">Objectifs</h3>
+                            <CalendarDays size={16} className="text-amber-600 dark:text-amber-400" />
+                            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Objectifs</h3>
                             <InfoTooltip
                                 title="Objectifs course"
                                 content={"Tes prochaines compétitions classées par date.\n\nA-Race : objectif principal de la saison. Ton plan est construit autour.\n\nLe compte à rebours t'aide à calibrer ta fraîcheur (TSB cible : +5 à +15 le jour J).\n\nGère les secondaires comme des répétitions sans taper dans les réserves."}
@@ -998,7 +1002,7 @@ function SportSpecificStats({ workouts, sport, profile }: {
             {bySport.running > 0 && <StatRow label="Séances course" value={`${bySport.running}`} color="#10b981" icon={<Footprints size={12} />} />}
             {bySport.swimming > 0 && <StatRow label="Séances natation" value={`${bySport.swimming}`} color="#06b6d4" icon={<Waves size={12} />} />}
             <StatRow label="Total séances" value={`${completed.length}`} />
-            <div className="pt-1 flex items-center gap-1.5 text-[10px] text-slate-400">
+            <div className="pt-1 flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
                 <ChevronRight size={10} />
                 Filtrez par sport pour plus de détails
             </div>
@@ -1009,11 +1013,11 @@ function SportSpecificStats({ workouts, sport, profile }: {
 function StatRow({ label, value, color, icon }: { label: string; value: string; color?: string; icon?: React.ReactNode }) {
     return (
         <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
                 {icon && <span style={{ color }}>{icon}</span>}
                 {label}
             </div>
-            <span className="text-[11px] font-semibold text-white">{value}</span>
+            <span className="text-[11px] font-semibold text-slate-900 dark:text-white">{value}</span>
         </div>
     );
 }

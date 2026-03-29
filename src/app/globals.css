@@ -1,18 +1,33 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ── Tailwind v4: dark mode piloté par data-theme="dark" sur <html> ── */
+@variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-@media (prefers-color-scheme: dark) {
-/* Custom font (Inter is used by default in Next.js/Tailwind, but setting a fallback) */
+/* ── CSS custom properties pour les rares valeurs inline ── */
 :root {
+  --surface-popover: #f8fafc;
+  --chart-grid-stroke: #e2e8f0;
+  --chart-bar-planned: #e2e8f0;
+  --shadow-popover: rgba(0,0,0,0.15);
   font-family: 'Inter', sans-serif;
+  color-scheme: light;
 }
 
-body {
-  background-color: #0f172a; /* slate-950 */
-  color: #e2e8f0; /* slate-200 */
+[data-theme="dark"] {
+  --surface-popover: #1f2937;
+  --chart-grid-stroke: #1e293b;
+  --chart-bar-planned: #1e293b;
+  --shadow-popover: rgba(0,0,0,0.9);
+  color-scheme: dark;
 }
+
+/* ── Base body ── */
+body {
+  background-color: #f8fafc; /* slate-50 */
+  color: #0f172a; /* slate-900 */
+}
+
+[data-theme="dark"] body {
+  background-color: #020617; /* slate-950 */
+  color: #e2e8f0; /* slate-200 */
 }

@@ -24,16 +24,16 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
     // - inline-flex et items-center : Pour centrer parfaitement icône et texte
     // - active:scale-95 : Le petit effet "clic" satisfaisant sur mobile
     // - disabled:opacity-50 : Feedback visuel immédiat si désactivé
-    const baseStyles = "inline-flex items-center justify-center rounded-xl font-semibold transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-900";
+    const baseStyles = "inline-flex items-center justify-center rounded-xl font-semibold transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900";
 
     // DESIGN: Variantes de couleurs
     const variants = {
         primary: "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20 border border-transparent",
-        secondary: "bg-slate-700 hover:bg-slate-600 text-slate-100 border border-transparent",
-        outline: "bg-transparent border border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white",
-        danger: "bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20",
-        success: "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20",
-        ghost: "bg-transparent hover:bg-slate-800 text-slate-400 hover:text-white border border-transparent"
+        secondary: "bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 border border-transparent",
+        outline: "bg-transparent border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white",
+        danger: "bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 border border-red-200 dark:border-red-500/20",
+        success: "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20",
+        ghost: "bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-transparent"
     };
 
     // DESIGN: Tailles adaptées au tactile
@@ -49,9 +49,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
             ref={ref}
             disabled={disabled || isLoading}
             className={`
-                ${baseStyles} 
-                ${variants[variant]} 
-                ${sizes[size]} 
+                ${baseStyles}
+                ${variants[variant]}
+                ${sizes[size]}
                 ${className}
             `}
             {...props}

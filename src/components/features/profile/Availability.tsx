@@ -99,7 +99,7 @@ export const DurationInput = ({
                 }
             }}
             placeholder={placeholder}
-            className={`w-full h-9 bg-transparent text-center text-slate-300 placeholder-slate-700 font-medium rounded outline-none ring-1 ring-transparent transition-all hover:bg-slate-800/50 focus:bg-slate-800 ${className}`}
+            className={`w-full h-9 bg-transparent text-center text-slate-600 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-700 font-medium rounded outline-none ring-1 ring-transparent transition-all hover:bg-slate-100/80 dark:hover:bg-slate-800/50 focus:bg-slate-100 dark:focus:bg-slate-800 ${className}`}
             style={{ caretColor: 'white' }}
         />
     );
@@ -148,25 +148,25 @@ export const Availability: React.FC<AvailabilityProps> = ({ formData, setFormDat
     };
 
     const activeSportList = [
-        formData.activeSports.swimming && { key: 'swimming' as const, icon: Waves, color: 'text-cyan-400', ring: 'focus:ring-cyan-500/50 focus:text-cyan-300', accent: 'bg-cyan-500/10' },
-        formData.activeSports.cycling  && { key: 'cycling'  as const, icon: Bike,  color: 'text-orange-400', ring: 'focus:ring-orange-500/50 focus:text-orange-300', accent: 'bg-orange-500/10' },
-        formData.activeSports.running  && { key: 'running'  as const, icon: Footprints, color: 'text-emerald-400', ring: 'focus:ring-emerald-500/50 focus:text-emerald-300', accent: 'bg-emerald-500/10' },
+        formData.activeSports.swimming && { key: 'swimming' as const, icon: Waves, color: 'text-cyan-600 dark:text-cyan-400', ring: 'focus:ring-cyan-500/50 focus:text-cyan-600 dark:focus:text-cyan-300', accent: 'bg-cyan-100 dark:bg-cyan-500/10' },
+        formData.activeSports.cycling  && { key: 'cycling'  as const, icon: Bike,  color: 'text-orange-600 dark:text-orange-400', ring: 'focus:ring-orange-500/50 focus:text-orange-600 dark:focus:text-orange-300', accent: 'bg-orange-100 dark:bg-orange-500/10' },
+        formData.activeSports.running  && { key: 'running'  as const, icon: Footprints, color: 'text-emerald-600 dark:text-emerald-400', ring: 'focus:ring-emerald-500/50 focus:text-emerald-600 dark:focus:text-emerald-300', accent: 'bg-emerald-100 dark:bg-emerald-500/10' },
     ].filter(Boolean) as { key: 'swimming'|'cycling'|'running'; icon: React.ElementType; color: string; ring: string; accent: string }[];
 
     return (
-        <Card className="bg-slate-900/50 border-slate-800 overflow-hidden">
+        <Card className="bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 overflow-hidden">
             <div className="p-5">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                            <Calendar size={14} className="text-purple-400" />
+                        <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-500/10 flex items-center justify-center">
+                            <Calendar size={14} className="text-purple-600 dark:text-purple-400" />
                         </div>
-                        <h3 className="text-sm font-semibold text-white">Volume Hebdomadaire</h3>
+                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Volume Hebdomadaire</h3>
                     </div>
-                    <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-800 rounded-full border border-slate-700">
-                        <Clock size={12} className="text-slate-400" />
-                        <span className="text-xs font-semibold text-slate-200">{getTotalHours()}<span className="text-slate-500 font-normal ml-0.5">/sem</span></span>
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full border border-slate-300 dark:border-slate-700">
+                        <Clock size={12} className="text-slate-500 dark:text-slate-400" />
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{getTotalHours()}<span className="text-slate-500 dark:text-slate-500 font-normal ml-0.5">/sem</span></span>
                     </div>
                 </div>
 
@@ -174,8 +174,8 @@ export const Availability: React.FC<AvailabilityProps> = ({ formData, setFormDat
                 <div className="hidden sm:block overflow-x-auto">
                     <table className="w-full text-sm border-collapse">
                         <thead>
-                            <tr className="border-b border-slate-800">
-                                <th className="text-left py-3 font-medium text-slate-500 w-24 pl-2">Jour</th>
+                            <tr className="border-b border-slate-200 dark:border-slate-800">
+                                <th className="text-left py-3 font-medium text-slate-500 dark:text-slate-500 w-24 pl-2">Jour</th>
                                 {activeSportList.map(s => (
                                     <th key={s.key} className="py-3 w-24 text-center">
                                         <div className="flex justify-center">
@@ -185,13 +185,13 @@ export const Availability: React.FC<AvailabilityProps> = ({ formData, setFormDat
                                         </div>
                                     </th>
                                 ))}
-                                <th className="text-left py-3 pl-4 font-medium text-slate-500">Notes</th>
+                                <th className="text-left py-3 pl-4 font-medium text-slate-500 dark:text-slate-500">Notes</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-800/50">
+                        <tbody className="divide-y divide-slate-200/50 dark:divide-slate-800/50">
                             {Object.keys(formData.weeklyAvailability).map((day) => (
-                                <tr key={day} className="group hover:bg-slate-800/30 transition-colors">
-                                    <td className="py-2.5 pl-2 text-slate-300 font-medium text-sm">{day}</td>
+                                <tr key={day} className="group hover:bg-slate-100/80 dark:hover:bg-slate-800/30 transition-colors">
+                                    <td className="py-2.5 pl-2 text-slate-600 dark:text-slate-300 font-medium text-sm">{day}</td>
                                     {activeSportList.map(s => (
                                         <td key={s.key} className="p-1">
                                             <DurationInput
@@ -208,7 +208,7 @@ export const Availability: React.FC<AvailabilityProps> = ({ formData, setFormDat
                                             value={formData.weeklyAvailability[day].comment || ''}
                                             onChange={(e) => handleCommentChange(day, e.target.value)}
                                             placeholder="Club, récup, ..."
-                                            className="w-full h-9 bg-transparent text-sm text-slate-400 placeholder-slate-700 rounded px-2 outline-none focus:text-slate-200 focus:bg-slate-800 transition-all"
+                                            className="w-full h-9 bg-transparent text-sm text-slate-500 dark:text-slate-400 placeholder-slate-400 dark:placeholder-slate-700 rounded px-2 outline-none focus:text-slate-700 dark:focus:text-slate-200 focus:bg-slate-100 dark:focus:bg-slate-800 transition-all"
                                         />
                                     </td>
                                 </tr>
@@ -224,11 +224,11 @@ export const Availability: React.FC<AvailabilityProps> = ({ formData, setFormDat
                         const total = activeSportList.reduce((s, sp) => s + (slot[sp.key] || 0), 0);
                         const isEmpty = total === 0;
                         return (
-                            <div key={day} className={`rounded-xl border transition-all ${isEmpty ? 'border-slate-800 bg-slate-900/30' : 'border-slate-700 bg-slate-800/40'}`}>
+                            <div key={day} className={`rounded-xl border transition-all ${isEmpty ? 'border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900/30' : 'border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/40'}`}>
                                 <div className="flex items-center justify-between px-4 py-3">
-                                    <span className={`text-sm font-semibold ${isEmpty ? 'text-slate-500' : 'text-white'}`}>{day}</span>
+                                    <span className={`text-sm font-semibold ${isEmpty ? 'text-slate-500 dark:text-slate-500' : 'text-slate-900 dark:text-white'}`}>{day}</span>
                                     {total > 0 && (
-                                        <span className="text-xs text-slate-400 font-medium">
+                                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                                             {Math.floor(total / 60) > 0 ? `${Math.floor(total / 60)}h` : ''}{total % 60 > 0 ? `${total % 60}m` : ''}
                                         </span>
                                     )}
@@ -247,7 +247,7 @@ export const Availability: React.FC<AvailabilityProps> = ({ formData, setFormDat
                                                     value={slot[s.key]}
                                                     onChange={(val) => handleSportChange(day, s.key, val)}
                                                     placeholder="—"
-                                                    className={`text-sm ${s.ring} bg-slate-900/60 rounded-lg ring-1 ring-slate-700`}
+                                                    className={`text-sm ${s.ring} bg-slate-50/60 dark:bg-slate-900/60 rounded-lg ring-1 ring-slate-300 dark:ring-slate-700`}
                                                 />
                                             </div>
                                         ))}
@@ -260,7 +260,7 @@ export const Availability: React.FC<AvailabilityProps> = ({ formData, setFormDat
                                         value={slot.comment || ''}
                                         onChange={(e) => handleCommentChange(day, e.target.value)}
                                         placeholder="Note (club, récup...)"
-                                        className="w-full h-8 bg-transparent text-xs text-slate-400 placeholder-slate-600 rounded px-1 outline-none focus:text-slate-200 border-b border-slate-800 focus:border-slate-600 transition-all"
+                                        className="w-full h-8 bg-transparent text-xs text-slate-500 dark:text-slate-400 placeholder-slate-400 dark:placeholder-slate-600 rounded px-1 outline-none focus:text-slate-700 dark:focus:text-slate-200 border-b border-slate-200 dark:border-slate-800 focus:border-slate-400 dark:focus:border-slate-600 transition-all"
                                     />
                                 </div>
                             </div>
@@ -268,7 +268,7 @@ export const Availability: React.FC<AvailabilityProps> = ({ formData, setFormDat
                     })}
                 </div>
 
-                <p className="text-[11px] text-slate-600 italic mt-3 text-right">
+                <p className="text-[11px] text-slate-400 dark:text-slate-600 italic mt-3 text-right">
                     Format accepté : 1h30, 90, 1:30, 1.5
                 </p>
             </div>

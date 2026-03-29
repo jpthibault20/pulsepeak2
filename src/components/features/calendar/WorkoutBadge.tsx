@@ -37,15 +37,15 @@ export function WorkoutBadge({ workout, onClick, isCompact = false }: WorkoutBad
     // --- Style dynamique du conteneur ---
     // Si manqué : fond rougeatre très léger + bordure rouge
     // Si fait : fond vert très léger
-    let containerStyle = "border-l-2 bg-slate-800 border-slate-700 hover:border-slate-500 hover:bg-slate-750";
+    let containerStyle = "border-l-2 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 hover:bg-slate-200 dark:hover:bg-slate-750";
 
     if (isCompleted) {
-        containerStyle = "border-l-2 border-emerald-500 bg-emerald-950/10 hover:bg-emerald-950/20";
+        containerStyle = "border-l-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-950/10 hover:bg-emerald-100 dark:hover:bg-emerald-950/20";
     } else if (isMissed) {
-        containerStyle = "border-l-2 border-red-500 bg-red-950/10 hover:bg-red-950/20";
+        containerStyle = "border-l-2 border-red-500 bg-red-50 dark:bg-red-950/10 hover:bg-red-100 dark:hover:bg-red-950/20";
     } else {
         // En attente : on utlise la couleur du sport pour la bordure gauche
-        containerStyle = `border-l-2 border-blue-500 bg-slate-800 hover:bg-slate-750`;
+        containerStyle = `border-l-2 border-blue-500 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750`;
     }
 
     return (
@@ -69,7 +69,7 @@ export function WorkoutBadge({ workout, onClick, isCompact = false }: WorkoutBad
                     </div>
 
                     {/* Titre tronqué */}
-                    <span className={`truncate font-medium text-slate-200 ${isCompact ? 'text-[10px]' : 'text-xs'}`}>
+                    <span className={`truncate font-medium text-slate-700 dark:text-slate-200 ${isCompact ? 'text-[10px]' : 'text-xs'}`}>
                         {workout.title}
                     </span>
                 </div>
@@ -82,8 +82,8 @@ export function WorkoutBadge({ workout, onClick, isCompact = false }: WorkoutBad
                         shrink-0 flex items-center justify-center rounded-sm px-1 py-0.5
                         text-[9px] font-bold uppercase tracking-wider border
                         ${isIndoor
-                            ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20'
-                            : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                            ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-200/60 dark:border-indigo-500/20'
+                            : 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200/60 dark:border-amber-500/20'
                         }
                     `}
                 >
@@ -97,12 +97,12 @@ export function WorkoutBadge({ workout, onClick, isCompact = false }: WorkoutBad
 
             {/* --- LIGNE DE DÉTAILS (Temps, TSS, Statut) --- */}
             {!isCompact && (
-                <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1">
+                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-1">
 
                     {/* Groupe Metrics */}
                     <div className="flex items-center gap-3">
                         {/* Temps */}
-                        <div className="flex items-center gap-1 hover:text-slate-300 transition-colors">
+                        <div className="flex items-center gap-1 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
                             <Clock size={11} />
                             <span>{duration}&apos;</span>
                         </div>
@@ -110,7 +110,7 @@ export function WorkoutBadge({ workout, onClick, isCompact = false }: WorkoutBad
                         {/* TSS (Affiché seulement si > 0) */}
                         {tss ? (
                             <div className="flex items-center gap-1 hover:text-yellow-500/80 transition-colors">
-                                <Zap size={11} className={isCompleted ? "text-yellow-600" : "text-slate-500"} />
+                                <Zap size={11} className={isCompleted ? "text-yellow-600" : "text-slate-500 dark:text-slate-500"} />
                                 <span>{tss}</span>
                             </div>
                         ) : null}

@@ -109,21 +109,21 @@ export function MobileCalendarStrip({
                                 w-[46px] pt-2.5 pb-2.5 rounded-2xl
                                 transition-all duration-150 focus:outline-none
                                 ${isSelected
-                                    ? 'bg-blue-600 shadow-md shadow-blue-900/40'
+                                    ? 'bg-blue-600 shadow-md shadow-blue-500/20 dark:shadow-blue-900/40'
                                     : isToday
-                                        ? 'bg-slate-800 ring-1 ring-blue-500/60'
+                                        ? 'bg-slate-100 dark:bg-slate-800 ring-1 ring-blue-400/60 dark:ring-blue-500/60'
                                         : hasPrimary
-                                            ? 'bg-rose-950/40 ring-1 ring-rose-500/40'
+                                            ? 'bg-rose-50 dark:bg-rose-950/40 ring-1 ring-rose-500/40'
                                             : hasSecondary
-                                                ? 'bg-amber-950/30 ring-1 ring-amber-500/30'
-                                                : 'bg-transparent active:bg-slate-800/60'
+                                                ? 'bg-amber-50 dark:bg-amber-950/30 ring-1 ring-amber-500/30'
+                                                : 'bg-transparent active:bg-slate-100/80 dark:active:bg-slate-800/60'
                                 }
                             `}
                         >
                             {/* Day abbreviation */}
                             <span className={`
                                 text-[9px] font-semibold uppercase tracking-widest leading-none mb-1.5
-                                ${isSelected ? 'text-blue-200' : isToday ? 'text-blue-400' : 'text-slate-500'}
+                                ${isSelected ? 'text-blue-200' : isToday ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'}
                             `}>
                                 {getDayLabel(date)}
                             </span>
@@ -131,7 +131,7 @@ export function MobileCalendarStrip({
                             {/* Day number */}
                             <span className={`
                                 text-[15px] font-bold leading-none
-                                ${isSelected ? 'text-white' : 'text-slate-200'}
+                                ${isSelected ? 'text-white' : 'text-slate-700 dark:text-slate-200'}
                             `}>
                                 {date.getDate()}
                             </span>
@@ -162,7 +162,7 @@ export function MobileCalendarStrip({
             {/* ── Selected Day Header ── */}
             <div className="flex items-center justify-between px-1">
                 <div>
-                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                    <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         {getDayLabel(selectedDay)} {selectedDay.getDate()} {MONTH_NAMES[selectedDay.getMonth()]}
                     </p>
                     <p className="text-xs text-slate-500 mt-0.5">
@@ -170,7 +170,7 @@ export function MobileCalendarStrip({
                             ? `${dayWorkouts.length} séance${dayWorkouts.length > 1 ? 's' : ''}`
                             : 'Aucune séance planifiée'}
                         {dayObjectives.length > 0 && (
-                            <span className="text-rose-400 ml-1">
+                            <span className="text-rose-600 dark:text-rose-400 ml-1">
                                 · {dayObjectives.length} objectif{dayObjectives.length > 1 ? 's' : ''}
                             </span>
                         )}
@@ -178,7 +178,7 @@ export function MobileCalendarStrip({
                 </div>
                 <button
                     onClick={e => onOpenManualModal(e, selectedDay)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-700 rounded-xl text-slate-300 text-sm font-medium transition-colors border border-slate-700/60"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:bg-slate-200 dark:active:bg-slate-700 rounded-xl text-slate-600 dark:text-slate-300 text-sm font-medium transition-colors border border-slate-200/60 dark:border-slate-700/60"
                 >
                     <Plus size={14} />
                     Ajouter
@@ -195,43 +195,43 @@ export function MobileCalendarStrip({
                                 key={obj.id}
                                 className={`flex items-start gap-2.5 p-3 rounded-xl border ${
                                     isPrimary
-                                        ? 'bg-rose-950/40 border-rose-500/40'
-                                        : 'bg-amber-950/30 border-amber-500/30'
+                                        ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-500/40'
+                                        : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-500/30'
                                 }`}
                             >
                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                                    isPrimary ? 'bg-rose-600/20 border border-rose-500/30' : 'bg-amber-600/20 border border-amber-500/30'
+                                    isPrimary ? 'bg-rose-100 dark:bg-rose-600/20 border border-rose-200 dark:border-rose-500/30' : 'bg-amber-100 dark:bg-amber-600/20 border border-amber-200 dark:border-amber-500/30'
                                 }`}>
                                     {isPrimary
-                                        ? <Trophy size={13} className="text-rose-400" />
-                                        : <Target size={13} className="text-amber-400" />
+                                        ? <Trophy size={13} className="text-rose-600 dark:text-rose-400" />
+                                        : <Target size={13} className="text-amber-600 dark:text-amber-400" />
                                     }
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5 flex-wrap">
-                                        <span className="text-white text-sm font-semibold truncate">{obj.name}</span>
+                                        <span className="text-slate-900 dark:text-white text-sm font-semibold truncate">{obj.name}</span>
                                         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${
                                             isPrimary
-                                                ? 'text-rose-400 bg-rose-500/10 border-rose-500/30'
-                                                : 'text-amber-400 bg-amber-500/10 border-amber-500/30'
+                                                ? 'text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30'
+                                                : 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30'
                                         }`}>
                                             {isPrimary ? 'Principal' : 'Secondaire'}
                                         </span>
                                     </div>
                                     <p className="text-slate-500 text-xs mt-0.5">{SPORT_LABELS[obj.sport] ?? obj.sport}</p>
                                     <div className="flex flex-wrap gap-2.5 mt-1">
-                                        <span className="flex items-center gap-1 text-xs text-slate-400">
+                                        <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                                             <Calendar size={9} />
                                             {new Date(obj.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                                         </span>
                                         {obj.distanceKm && (
-                                            <span className="flex items-center gap-1 text-xs text-slate-400">
+                                            <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                                                 <MapPin size={9} />
                                                 {obj.distanceKm} km
                                             </span>
                                         )}
                                         {obj.elevationGainM && (
-                                            <span className="flex items-center gap-1 text-xs text-slate-400">
+                                            <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                                                 <Mountain size={9} />
                                                 {obj.elevationGainM} m D+
                                             </span>
@@ -248,7 +248,7 @@ export function MobileCalendarStrip({
             )}
 
             {/* Divider */}
-            <div className="h-px bg-slate-800/80" />
+            <div className="h-px bg-slate-200 dark:bg-slate-800/80" />
 
             {/* ── Day Workouts ── */}
             {dayWorkouts.length > 0 ? (
@@ -264,12 +264,12 @@ export function MobileCalendarStrip({
                 </div>
             ) : (
                 <div className="flex flex-col items-center justify-center py-10 gap-3">
-                    <div className="w-14 h-14 rounded-2xl bg-slate-800/50 flex items-center justify-center">
-                        <BedDouble size={22} className="text-slate-600" />
+                    <div className="w-14 h-14 rounded-2xl bg-slate-100/60 dark:bg-slate-800/50 flex items-center justify-center">
+                        <BedDouble size={22} className="text-slate-400 dark:text-slate-600" />
                     </div>
                     <div className="text-center">
                         <p className="text-sm text-slate-500">Jour de repos</p>
-                        <p className="text-xs text-slate-600 mt-0.5">Aucune séance planifiée</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-600 mt-0.5">Aucune séance planifiée</p>
                     </div>
                 </div>
             )}

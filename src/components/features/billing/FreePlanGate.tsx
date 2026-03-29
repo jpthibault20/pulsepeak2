@@ -33,41 +33,41 @@ export function FreePlanGate({ children, featureLabel, featureDesc }: FreePlanGa
 
                 {/* Icône */}
                 <div className="flex justify-center mb-6">
-                    <div className="w-20 h-20 rounded-2xl bg-linear-to-br from-amber-600/20 to-amber-800/10 border border-amber-500/20 flex items-center justify-center shadow-xl shadow-amber-900/10">
-                        <Lock size={34} className="text-amber-400" />
+                    <div className="w-20 h-20 rounded-2xl bg-linear-to-br from-amber-600/20 to-amber-800/10 border border-amber-200 dark:border-amber-500/20 flex items-center justify-center shadow-xl shadow-amber-900/10">
+                        <Lock size={34} className="text-amber-600 dark:text-amber-400" />
                     </div>
                 </div>
 
                 {/* Titre */}
                 <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-white mb-2">{featureLabel}</h2>
-                    <p className="text-slate-400 text-sm leading-relaxed">
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{featureLabel}</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
                         {featureDesc ?? 'Cette fonctionnalité est réservée aux abonnés PulsePeak.'}
                     </p>
                 </div>
 
                 {/* Carte offre Développeur */}
-                <div className="bg-slate-900 border border-amber-500/25 rounded-2xl p-5 mb-4 shadow-xl shadow-black/20">
+                <div className="bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-500/25 rounded-2xl p-5 mb-4 shadow-xl shadow-black/20">
                     <div className="flex items-start justify-between mb-4">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
-                                <span className="text-white font-bold text-lg">Offre Développeur</span>
-                                <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wider">
+                                <span className="text-slate-900 dark:text-white font-bold text-lg">Offre Développeur</span>
+                                <span className="bg-amber-50 dark:bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wider">
                                     BÊTA
                                 </span>
                             </div>
                             <p className="text-slate-500 text-xs">Accès complet · Phase de lancement</p>
                         </div>
                         <div className="text-right">
-                            <span className="text-3xl font-bold text-white">5€</span>
-                            <span className="text-slate-400 text-sm">/mois</span>
+                            <span className="text-3xl font-bold text-slate-900 dark:text-white">5€</span>
+                            <span className="text-slate-500 dark:text-slate-400 text-sm">/mois</span>
                         </div>
                     </div>
 
                     <ul className="space-y-2 mb-5">
                         {DEV_HIGHLIGHTS.map(h => (
-                            <li key={h} className="flex items-center gap-2.5 text-sm text-slate-300">
-                                <Check size={13} className="text-emerald-400 shrink-0" />
+                            <li key={h} className="flex items-center gap-2.5 text-sm text-slate-600 dark:text-slate-300">
+                                <Check size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                                 {h}
                             </li>
                         ))}
@@ -84,7 +84,7 @@ export function FreePlanGate({ children, featureLabel, featureDesc }: FreePlanGa
                 </div>
 
                 {/* Plan gratuit mention */}
-                <p className="text-center text-slate-600 text-xs">
+                <p className="text-center text-slate-500 dark:text-slate-600 text-xs">
                     Vous êtes sur le plan <span className="text-slate-500 font-medium">Gratuit</span> · Aucune fonctionnalité disponible
                 </p>
             </div>

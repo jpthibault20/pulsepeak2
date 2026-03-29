@@ -201,11 +201,11 @@ const handleTestChange = (
     };
 
     const RUNNING_COLORS = {
-        z1: 'border-emerald-500 text-emerald-400', // Vert doux
-        z2: 'border-cyan-500 text-cyan-400',       // Cyan (Base)
-        z3: 'border-blue-500 text-blue-400',       // Bleu
-        z4: 'border-orange-500 text-orange-400',   // Orange
-        z5: 'border-red-500 text-red-400',         // Rouge
+        z1: 'border-emerald-500 text-emerald-600 dark:text-emerald-400', // Vert doux
+        z2: 'border-cyan-500 text-cyan-600 dark:text-cyan-400',       // Cyan (Base)
+        z3: 'border-blue-500 text-blue-600 dark:text-blue-400',       // Bleu
+        z4: 'border-orange-500 text-orange-600 dark:text-orange-400',   // Orange
+        z5: 'border-red-500 text-red-600 dark:text-red-400',         // Rouge
     };
 
 
@@ -257,13 +257,13 @@ const handleTestChange = (
 
     return (
         <>
-            <Card className="p-0 bg-slate-900/50 border-slate-800 overflow-hidden">
+            <Card className="p-0 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 overflow-hidden">
                 <div className="p-6 pb-0">
-                    <SectionHeader icon={Zap} title="Physiologie & Zones" color="text-yellow-400" />
+                    <SectionHeader icon={Zap} title="Physiologie & Zones" color="text-yellow-600 dark:text-yellow-400" />
                 </div>
 
                 {/* Tab Navigation */}
-                <div className="flex border-b border-slate-700 px-6 gap-2">
+                <div className="flex border-b border-slate-300 dark:border-slate-700 px-6 gap-2">
                     <TabButton
                         active={activeZoneTab === 'power'}
                         onClick={() => setActiveZoneTab('power')}
@@ -284,17 +284,17 @@ const handleTestChange = (
                     />
                 </div>
 
-                <div className="p-6 bg-slate-900/80 min-h-[250px]">
+                <div className="p-6 bg-white/80 dark:bg-slate-900/80 min-h-[250px]">
                     {/* Power Zones */}
                     {activeZoneTab === 'power' && (
                         <div className="animate-in fade-in slide-in-from-left-4">
-                            <div className="bg-slate-900/50 p-3 md:p-4">
+                            <div className="bg-slate-50 dark:bg-slate-900/50 p-3 md:p-4">
                                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
-                                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                                    <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                         <Zap size={16} className="text-yellow-500" /> Tests de Puissance (Watts Moyens)
                                     </h4>
                                     {formData.cycling?.Test?.ftp != null && formData.cycling?.Test?.ftp > 0 &&
-                                        <span className="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded-full">FTP: {formData.cycling.Test.ftp}W</span>}
+                                        <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-full">FTP: {formData.cycling.Test.ftp}W</span>}
                                 </div>
 
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4">
@@ -305,13 +305,13 @@ const handleTestChange = (
                                         { label: '20 min (FTP)', key: 'p20min' as const, highlight: true }
                                     ].map((test) => (
                                         <div key={test.key}>
-                                            <label className="block text-xs text-slate-400 mb-1 text-center">{test.label}</label>
+                                            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1 text-center">{test.label}</label>
                                             <input
                                                 type="number"
                                                 value={formData.cycling?.Test?.[test.key] || ''}
                                                 onChange={e => handleTestChange(test.key, e.target.value)}
                                                 className={`
-                            w-full h-10 md:h-9 bg-slate-800 border border-slate-600 rounded p-2 text-white text-center focus:border-blue-500 outline-none
+                            w-full h-10 md:h-9 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded p-2 text-slate-900 dark:text-white text-center focus:border-blue-500 outline-none
                             ${test.highlight ? 'border-l-2 border-l-blue-500 font-semibold' : ''}
                         `}
                                                 placeholder="---"
@@ -326,10 +326,10 @@ const handleTestChange = (
 
                                 {/* Affichage des zones calculées */}
                                 {formData.cycling?.Test?.ftp && (
-                                    <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 pt-4 border-t border-slate-700">
+                                    <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 pt-4 border-t border-slate-300 dark:border-slate-700">
                                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                                            <span className="text-sm text-slate-300">Nouvelle FTP: <span className="font-bold text-white text-lg">{formData.cycling.Test.ftp} W</span></span>
-                                            <span className="text-sm text-slate-300">Ratio: <span className="font-bold text-emerald-400">{formData.weight && formData.cycling?.Test?.ftp
+                                            <span className="text-sm text-slate-600 dark:text-slate-300">Nouvelle FTP: <span className="font-bold text-slate-900 dark:text-white text-lg">{formData.cycling.Test.ftp} W</span></span>
+                                            <span className="text-sm text-slate-600 dark:text-slate-300">Ratio: <span className="font-bold text-emerald-600 dark:text-emerald-400">{formData.weight && formData.cycling?.Test?.ftp
                                                 ? (formData.cycling.Test.ftp / formData.weight).toFixed(2)
                                                 : '-'}
                                                 W/kg
@@ -339,33 +339,33 @@ const handleTestChange = (
 
                                         {/* On vérifie directement si c'est supérieur à 0, ce qui retourne true/false au lieu de 0 */}
                                         {(formData.cycling?.Test?.seasonData?.wPrime || 0) > 0 && (
-                                            <div className="flex items-center gap-2 bg-slate-800/50 p-2 rounded mb-2 text-xs text-slate-400 border border-slate-600/30">
-                                                <TrendingUp size={12} className="text-orange-400" />
-                                                <span>W&apos; (Anaérobie): <span className="text-orange-300 font-mono">{formData.cycling.Test.seasonData!.wPrime} J</span></span>
+                                            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/50 p-2 rounded mb-2 text-xs text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-600/30">
+                                                <TrendingUp size={12} className="text-orange-600 dark:text-orange-400" />
+                                                <span>W&apos; (Anaérobie): <span className="text-orange-600 dark:text-orange-300 font-mono">{formData.cycling.Test.seasonData!.wPrime} J</span></span>
                                             </div>
                                         )}
 
 
                                         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 text-center">
                                             {[
-                                                { label: 'Z1', name: 'Récup', val: formData.cycling?.Test?.zones?.z1 || { min: 0, max: 0 }, color: 'border-gray-400 text-gray-300' },
-                                                { label: 'Z2', name: 'Endur.', val: formData.cycling?.Test?.zones?.z2 || { min: 0, max: 0 }, color: 'border-green-500 text-green-400' },
-                                                { label: 'Z3', name: 'Tempo', val: formData.cycling?.Test?.zones?.z3 || { min: 0, max: 0 }, color: 'border-blue-500 text-blue-400' },
-                                                { label: 'Z4', name: 'Seuil', val: formData.cycling?.Test?.zones?.z4 || { min: 0, max: 0 }, color: 'border-yellow-500 text-yellow-400' },
-                                                { label: 'Z5', name: 'PMA', val: formData.cycling?.Test?.zones?.z5 || { min: 0, max: 0 }, color: 'border-orange-500 text-orange-400' },
-                                                { label: 'Z6', name: 'Anaé.', val: formData.cycling?.Test?.zones?.z6 || { min: 0, max: 0 }, color: 'border-red-500 text-red-400' },
-                                                { label: 'Z7', name: 'Neuro', val: formData.cycling?.Test?.zones?.z7 || { min: 0, max: 0 }, color: 'border-purple-500 text-purple-400' },
+                                                { label: 'Z1', name: 'Récup', val: formData.cycling?.Test?.zones?.z1 || { min: 0, max: 0 }, color: 'border-gray-400 text-gray-600 dark:text-gray-300' },
+                                                { label: 'Z2', name: 'Endur.', val: formData.cycling?.Test?.zones?.z2 || { min: 0, max: 0 }, color: 'border-green-500 text-green-600 dark:text-green-400' },
+                                                { label: 'Z3', name: 'Tempo', val: formData.cycling?.Test?.zones?.z3 || { min: 0, max: 0 }, color: 'border-blue-500 text-blue-600 dark:text-blue-400' },
+                                                { label: 'Z4', name: 'Seuil', val: formData.cycling?.Test?.zones?.z4 || { min: 0, max: 0 }, color: 'border-yellow-500 text-yellow-600 dark:text-yellow-400' },
+                                                { label: 'Z5', name: 'PMA', val: formData.cycling?.Test?.zones?.z5 || { min: 0, max: 0 }, color: 'border-orange-500 text-orange-600 dark:text-orange-400' },
+                                                { label: 'Z6', name: 'Anaé.', val: formData.cycling?.Test?.zones?.z6 || { min: 0, max: 0 }, color: 'border-red-500 text-red-600 dark:text-red-400' },
+                                                { label: 'Z7', name: 'Neuro', val: formData.cycling?.Test?.zones?.z7 || { min: 0, max: 0 }, color: 'border-purple-500 text-purple-600 dark:text-purple-400' },
                                             ].map((zone, idx) => (
                                                 <div key={zone.label} className={`
-                    bg-slate-800/40 p-2 rounded border-t-2 flex flex-col justify-center min-h-[60px]
+                    bg-slate-100 dark:bg-slate-800/40 p-2 rounded border-t-2 flex flex-col justify-center min-h-[60px]
                     ${zone.color.split(' ')[0]}
                     ${/* La dernière case prend toute la largeur sur mobile impair pour éviter le trou */ idx === 6 ? 'col-span-2 sm:col-span-1' : ''}
                   `}>
                                                     <div className="flex justify-between items-center md:block">
-                                                        <div className={`font-bold text-xs ${zone.color.split(' ')[1]}`}>{zone.label}</div>
+                                                        <div className={`font-bold text-xs ${zone.color.split(' ').slice(1).join(' ')}`}>{zone.label}</div>
                                                         <div className="text-[10px] text-slate-500 uppercase md:mb-1">{zone.name}</div>
                                                     </div>
-                                                    <div className="text-[10px] font-mono text-white mt-1 md:mt-0">
+                                                    <div className="text-[10px] font-mono text-slate-900 dark:text-white mt-1 md:mt-0">
                                                         {zone.label === 'Z1' ? `<${zone.val.max}` : zone.label === 'Z7' ? `>${zone.val.min}` : `${zone.val.min}-${zone.val.max}`}
                                                     </div>
                                                 </div>
@@ -381,11 +381,11 @@ const handleTestChange = (
                     {/* --- ZONES CARDIAQUES (HEART RATE) --- */}
                     {activeZoneTab === 'hr' && (
                         <div className="animate-in fade-in slide-in-from-right-4">
-                            <div className="bg-slate-900/50 p-3 md:p-4 rounded-lg">
+                            <div className="bg-slate-50 dark:bg-slate-900/50 p-3 md:p-4 rounded-lg">
 
                                 {/* Header */}
                                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
-                                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                                    <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                         <Heart size={16} className="text-red-500" /> Paramètres Cardiaques
                                     </h4>
                                 </div>
@@ -393,7 +393,7 @@ const handleTestChange = (
                                 {/* Input FC Max */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                     <div>
-                                        <label className="block text-xs text-slate-400 mb-1">
+                                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
                                             FC Max (Battements/min)
                                         </label>
                                         <div className="relative">
@@ -401,7 +401,7 @@ const handleTestChange = (
                                                 type="number"
                                                 value={formData.heartRate?.max || ''}
                                                 onChange={e => handleFcMaxChange(e.target.value)}
-                                                className="w-full h-10 md:h-11 bg-slate-800 border border-slate-600 rounded p-2 pl-10 text-white font-bold text-lg focus:border-red-500 outline-none"
+                                                className="w-full h-10 md:h-11 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded p-2 pl-10 text-slate-900 dark:text-white font-bold text-lg focus:border-red-500 outline-none"
                                                 placeholder="ex: 185"
                                             />
                                             <Activity className="absolute left-3 top-3 text-slate-500" size={18} />
@@ -423,30 +423,30 @@ const handleTestChange = (
 
                                 {/* Affichage des zones calculées */}
                                 {formData.heartRate?.zones && (
-                                    <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 pt-4 border-t border-slate-700">
+                                    <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 pt-4 border-t border-slate-300 dark:border-slate-700">
                                         <div className="flex justify-between items-center">
-                                            <span className="text-sm text-slate-300">FC Max configurée: <span className="font-bold text-white text-lg">{formData.heartRate.max} bpm</span></span>
+                                            <span className="text-sm text-slate-600 dark:text-slate-300">FC Max configurée: <span className="font-bold text-slate-900 dark:text-white text-lg">{formData.heartRate.max} bpm</span></span>
                                         </div>
 
                                         {/* Grid 5 colonnes pour les 5 zones FC */}
                                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 text-center">
                                             {[
-                                                { label: 'Z1', name: 'Récup', val: formData.heartRate.zones.z1, color: 'border-gray-400 text-gray-300' },
-                                                { label: 'Z2', name: 'Endur.', val: formData.heartRate.zones.z2, color: 'border-green-500 text-green-400' },
-                                                { label: 'Z3', name: 'Tempo', val: formData.heartRate.zones.z3, color: 'border-blue-500 text-blue-400' },
-                                                { label: 'Z4', name: 'Seuil', val: formData.heartRate.zones.z4, color: 'border-yellow-500 text-yellow-400' },
-                                                { label: 'Z5', name: 'Max', val: formData.heartRate.zones.z5, color: 'border-red-500 text-red-400' },
+                                                { label: 'Z1', name: 'Récup', val: formData.heartRate.zones.z1, color: 'border-gray-400 text-gray-600 dark:text-gray-300' },
+                                                { label: 'Z2', name: 'Endur.', val: formData.heartRate.zones.z2, color: 'border-green-500 text-green-600 dark:text-green-400' },
+                                                { label: 'Z3', name: 'Tempo', val: formData.heartRate.zones.z3, color: 'border-blue-500 text-blue-600 dark:text-blue-400' },
+                                                { label: 'Z4', name: 'Seuil', val: formData.heartRate.zones.z4, color: 'border-yellow-500 text-yellow-600 dark:text-yellow-400' },
+                                                { label: 'Z5', name: 'Max', val: formData.heartRate.zones.z5, color: 'border-red-500 text-red-600 dark:text-red-400' },
                                             ].map((zone, idx) => (
                                                 <div key={zone.label} className={`
-                                                    bg-slate-800/40 p-2 rounded border-t-2 flex flex-col justify-center min-h-[60px]
+                                                    bg-slate-100 dark:bg-slate-800/40 p-2 rounded border-t-2 flex flex-col justify-center min-h-[60px]
                                                     ${zone.color.split(' ')[0]}
                                                     ${/* Gestion responsive pour la dernière case si nombre impair */ idx === 4 ? 'col-span-2 sm:col-span-1 md:col-span-1' : ''}
                                                 `}>
                                                     <div className="flex justify-between items-center md:block">
-                                                        <div className={`font-bold text-xs ${zone.color.split(' ')[1]}`}>{zone.label}</div>
+                                                        <div className={`font-bold text-xs ${zone.color.split(' ').slice(1).join(' ')}`}>{zone.label}</div>
                                                         <div className="text-[10px] text-slate-500 uppercase md:mb-1">{zone.name}</div>
                                                     </div>
-                                                    <div className="text-[11px] font-mono text-white mt-1 md:mt-0 font-bold">
+                                                    <div className="text-[11px] font-mono text-slate-900 dark:text-white mt-1 md:mt-0 font-bold">
                                                         {zone.label === 'Z1' ? `< ${zone.val.max}` : `${zone.val.min} - ${zone.val.max}`} <span className="text-[9px] text-slate-500 font-normal">bpm</span>
                                                     </div>
                                                 </div>
@@ -464,17 +464,17 @@ const handleTestChange = (
                     {/* --- 6. Course à Pied (Allure / VMA) --- */}
                     {activeZoneTab === 'pace' && (
                         <div className="animate-in fade-in slide-in-from-right-4">
-                            <div className="bg-slate-900/50 p-3 md:p-4">
+                            <div className="bg-slate-50 dark:bg-slate-900/50 p-3 md:p-4">
 
                                 {/* Header identique à Power */}
                                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
-                                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                                        <Wind size={16} className="text-cyan-400" /> {/* Icône Vent/Vitesse */}
+                                    <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                        <Wind size={16} className="text-cyan-600 dark:text-cyan-400" /> {/* Icône Vent/Vitesse */}
                                         Profil Allure (VMA)
                                     </h4>
                                     {formData.running?.Test?.vma && (
-                                        <span className="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded-full border border-slate-700">
-                                            VMA: <span className="text-white font-bold">{formData?.running?.Test?.vma} km/h</span>
+                                        <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-full border border-slate-300 dark:border-slate-700">
+                                            VMA: <span className="text-slate-900 dark:text-white font-bold">{formData?.running?.Test?.vma} km/h</span>
                                         </span>
                                     )}
                                 </div>
@@ -484,7 +484,7 @@ const handleTestChange = (
 
                                     {/* 1. VMA Directe */}
                                     <div>
-                                        <label className="block text-xs text-slate-400 mb-1 text-center">VMA Directe (km/h)</label>
+                                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1 text-center">VMA Directe (km/h)</label>
                                         <input
                                             type="number"
                                             step="0.1"
@@ -492,30 +492,30 @@ const handleTestChange = (
                                             value={formData.running?.Test?.vma || ''}
                                             onChange={e => handleVMAChange(e.target.value)}
                                             // onChange={(e) => updateRunningZones(parseFloat(e.target.value))}
-                                            className="w-full h-10 md:h-9 bg-slate-800 border border-slate-600 rounded p-2 text-white text-center focus:border-cyan-500 outline-none "
+                                            className="w-full h-10 md:h-9 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded p-2 text-slate-900 dark:text-white text-center focus:border-cyan-500 outline-none "
                                         />
                                     </div>
 
                                     {/* 2. Données de Test (Séparateur visuel implicite via le grid) */}
-                                    <div className="sm:col-span-2 bg-slate-800/30 rounded border border-slate-700/50 p-2 flex gap-3 items-end">
+                                    <div className="sm:col-span-2 bg-slate-100 dark:bg-slate-800/30 rounded border border-slate-200 dark:border-slate-700/50 p-2 flex gap-3 items-end">
                                         <div className="flex-1">
-                                            <label className="block text-[10px] text-slate-400 mb-1 text-center">Test Distance (km)</label>
+                                            <label className="block text-[10px] text-slate-500 dark:text-slate-400 mb-1 text-center">Test Distance (km)</label>
                                             <input
                                                 type="text"
                                                 value={formData.running?.Test?.recentRaceDistanceMeters || ''}
                                                 onChange={e => handleDistChange(e.target.value)}
                                                 placeholder="10"
-                                                className="w-full h-8 bg-slate-900 border border-slate-700 rounded px-2 text-white text-xs text-center focus:border-cyan-500 outline-none"
+                                                className="w-full h-8 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 text-slate-900 dark:text-white text-xs text-center focus:border-cyan-500 outline-none"
                                             />
                                         </div>
                                         <div className="flex-1">
-                                            <label className="block text-[10px] text-slate-400 mb-1 text-center">Temps (mm:ss)</label>
+                                            <label className="block text-[10px] text-slate-500 dark:text-slate-400 mb-1 text-center">Temps (mm:ss)</label>
                                             <input
                                                 type="text"
                                                 value={formData.running?.Test?.recentRaceTimeSec || ''}
                                                 onChange={e => handleTpsChange(e.target.value)}
                                                 placeholder="06:00"
-                                                className="w-full h-8 bg-slate-900 border border-slate-700 rounded px-2 text-white text-xs text-center focus:border-cyan-500 outline-none"
+                                                className="w-full h-8 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 text-slate-900 dark:text-white text-xs text-center focus:border-cyan-500 outline-none"
                                             />
                                         </div>
                                     </div>
@@ -543,7 +543,7 @@ const handleTestChange = (
                                         }
 
                                     }}
-                                    className="w-full py-3 md:py-2 text-sm mb-4 h-auto hover:bg-slate-800 border-slate-700"
+                                    className="w-full py-3 md:py-2 text-sm mb-4 h-auto hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-300 dark:border-slate-700"
                                     icon={Calculator}
                                 >
                                     Calculer VMA depuis Perf
@@ -551,15 +551,15 @@ const handleTestChange = (
 
                                 {/* --- ZONES RESULTS --- */}
                                 {formData.running?.Test?.zones && (
-                                    <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 pt-4 border-t border-slate-700">
+                                    <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 pt-4 border-t border-slate-300 dark:border-slate-700">
 
                                         {/* Metrics Summary Row */}
                                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 px-1">
-                                            <span className="text-sm text-slate-300">
-                                                VMA: <span className="font-bold text-white text-lg">{formData.running.Test.vma} km/h</span>
+                                            <span className="text-sm text-slate-600 dark:text-slate-300">
+                                                VMA: <span className="font-bold text-slate-900 dark:text-white text-lg">{formData.running.Test.vma} km/h</span>
                                             </span>
-                                            <span className="text-sm text-slate-300">
-                                                Allure VMA: <span className="font-bold text-cyan-400 font-mono">
+                                            <span className="text-sm text-slate-600 dark:text-slate-300">
+                                                Allure VMA: <span className="font-bold text-cyan-600 dark:text-cyan-400 font-mono">
                                                     {formatPace(3600 / (formData.running.Test.vma || 1))}/km
                                                 </span>
                                             </span>
@@ -575,17 +575,17 @@ const handleTestChange = (
                                                 { label: 'Z5', name: 'VMA', val: formData.running.Test.zones.z5, style: RUNNING_COLORS.z5 },
                                             ].map((zone, idx) => (
                                                 <div key={zone.label} className={`
-                                bg-slate-800/40 p-2 rounded border-t-2 flex flex-col justify-center min-h-[60px]
+                                bg-slate-100 dark:bg-slate-800/40 p-2 rounded border-t-2 flex flex-col justify-center min-h-[60px]
                                 ${zone.style.split(' ')[0]} {/* Border color */}
                                 ${/* Gestion responsive pour la dernière case impaire */ idx === 4 ? 'col-span-2 sm:col-span-1 md:col-span-1' : ''}
                             `}>
                                                     <div className="flex justify-between items-center md:block">
-                                                        <div className={`font-bold text-xs ${zone.style.split(' ')[1]}`}>{zone.label}</div>
+                                                        <div className={`font-bold text-xs ${zone.style.split(' ').slice(1).join(' ')}`}>{zone.label}</div>
                                                         <div className="text-[10px] text-slate-500 uppercase md:mb-1">{zone.name}</div>
                                                     </div>
 
                                                     {/* Affichage Allure : Du plus lent (chiffre haut) au plus rapide (chiffre bas) */}
-                                                    <div className="text-[11px] font-mono text-white mt-1 md:mt-0 font-bold">
+                                                    <div className="text-[11px] font-mono text-slate-900 dark:text-white mt-1 md:mt-0 font-bold">
                                                         {formatPace(zone.val.min)} - {formatPace(zone.val.max)}
                                                     </div>
                                                 </div>

@@ -58,38 +58,38 @@ export function PaywallModal({ isOpen, onClose, feature, label }: PaywallModalPr
             onClick={onClose}
         >
             <div
-                className="relative w-full max-w-sm bg-slate-900 border border-slate-700 rounded-2xl p-6 shadow-2xl animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200"
+                className="relative w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl p-6 shadow-2xl animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200"
                 onClick={e => e.stopPropagation()}
             >
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"
+                    className="absolute top-4 right-4 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
                     <X size={18} />
                 </button>
 
                 {/* Icon */}
-                <div className="w-12 h-12 rounded-xl bg-amber-600/10 border border-amber-500/20 flex items-center justify-center mb-4">
-                    <Lock size={22} className="text-amber-400" />
+                <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-600/10 border border-amber-200 dark:border-amber-500/20 flex items-center justify-center mb-4">
+                    <Lock size={22} className="text-amber-600 dark:text-amber-400" />
                 </div>
 
-                <h3 className="text-white font-bold text-lg mb-1">{label ?? content.title}</h3>
-                <p className="text-slate-400 text-sm mb-5 leading-relaxed">{content.desc}</p>
+                <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-1">{label ?? content.title}</h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-5 leading-relaxed">{content.desc}</p>
 
                 <ul className="space-y-2 mb-5">
                     {content.highlights.map(h => (
-                        <li key={h} className="flex items-center gap-2 text-sm text-slate-300">
-                            <Check size={13} className="text-emerald-400 shrink-0" />
+                        <li key={h} className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                            <Check size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                             {h}
                         </li>
                     ))}
                 </ul>
 
                 {/* Dev plan teaser */}
-                <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-3 mb-4">
+                <div className="bg-amber-50 dark:bg-amber-500/5 border border-amber-200 dark:border-amber-500/20 rounded-xl px-4 py-3 mb-4">
                     <div className="flex items-center justify-between">
-                        <span className="text-amber-300 text-sm font-semibold">Offre Développeur</span>
-                        <span className="text-amber-300 font-bold">5€<span className="text-amber-500 text-xs font-normal">/mois</span></span>
+                        <span className="text-amber-600 dark:text-amber-300 text-sm font-semibold">Offre Développeur</span>
+                        <span className="text-amber-600 dark:text-amber-300 font-bold">5€<span className="text-amber-500 text-xs font-normal">/mois</span></span>
                     </div>
                     <p className="text-slate-500 text-xs mt-0.5">Accès complet · Phase bêta</p>
                 </div>
@@ -102,7 +102,7 @@ export function PaywallModal({ isOpen, onClose, feature, label }: PaywallModalPr
                     Voir les offres
                 </button>
 
-                <p className="text-center text-slate-600 text-xs mt-3">Résiliation à tout moment · Sans engagement</p>
+                <p className="text-center text-slate-500 dark:text-slate-600 text-xs mt-3">Résiliation à tout moment · Sans engagement</p>
             </div>
         </div>
     );

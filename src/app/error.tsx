@@ -14,11 +14,11 @@ export default function Error({
     }, [error]);
 
     return (
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+        <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center px-4">
             <div className="text-center max-w-sm">
-                <p className="text-slate-500 text-sm font-mono mb-2">Erreur</p>
-                <h1 className="text-2xl font-bold text-white mb-3">Quelque chose s&apos;est mal passé</h1>
-                <p className="text-slate-400 text-sm mb-6">
+                <p className="text-slate-500 dark:text-slate-500 text-sm font-mono mb-2">Erreur</p>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Quelque chose s&apos;est mal passé</h1>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
                     Une erreur inattendue est survenue. Réessaie ou contacte le support si le problème persiste.
                 </p>
                 <div className="flex gap-3 justify-center">
@@ -30,7 +30,7 @@ export default function Error({
                     </button>
                     <a
                         href="/"
-                        className="bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+                        className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
                     >
                         Accueil
                     </a>
