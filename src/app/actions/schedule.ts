@@ -5,7 +5,7 @@ import { getBlock, getObjectives, getPlan, getProfile, getSchedule, getWeek, get
 import { ReturnCode } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
 import type { AvailabilitySlot, CompletedData, CompletedDataFeedback, SportType } from '@/lib/data/type';
-import { getStravaActivities, getStravaActivitiesAllPages, getStravaActivityById } from '@/lib/strava-service';
+import { getStravaActivitiesAllPages, getStravaActivityById } from '@/lib/strava-service';
 import { mapStravaToCompletedData } from '@/lib/strava-mapper';
 import { Block, Objective, Plan, Profile, Schedule, Week, Workout } from '@/lib/data/DatabaseTypes';
 import { randomUUID } from 'crypto';
@@ -1425,51 +1425,23 @@ export async function syncStravaActivities() {
             profile?.role !== 'admin' &&
             profile?.role !== 'freeUse';
 
-        // 2. Trouver la date de la dernière activité Strava importée
-        let lastStravaTimestamp = 0;
+        // 2. Compter les activités Strava existantes (pour la limite free)
         const stravaWorkouts = workouts.filter(w =>
             w.status === 'completed' &&
             w.completedData?.source?.type === 'strava'
         );
 
-        if (stravaWorkouts.length > 0) {
-            stravaWorkouts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-            lastStravaTimestamp = Math.floor(new Date(stravaWorkouts[0].date).getTime() / 1000);
-            console.log(`📅 Dernière activité Strava connue : ${stravaWorkouts[0].date}`);
-        } else {
-            console.log("⚠️ Aucune activité Strava en DB. Sync complète de l'année en cours.");
-        }
-
-        // 3. Stratégie de sync :
-        //    - Incrémentale (rapide) : si la dernière activité connue est dans l'année en cours
-        //    - Complète avec pagination : sinon (premier lancement, ou dernière activité de l'an passé)
+        // 3. Sync complète de l'année en cours (pagination).
+        //    On récupère toujours toutes les summaries (1-2 appels légers per_page=200),
+        //    le dedup en étape 4 évite de re-fetcher les détails des activités déjà connues.
+        //    Cela garantit qu'aucune activité n'est ratée, même si la première sync était incomplète.
         const currentYear = new Date().getFullYear();
         const startOfYear = Math.floor(new Date(`${currentYear}-01-01T00:00:00Z`).getTime() / 1000);
 
-        // ── Détection de montée en plan (free → dev/pro) ─────────────────────
-        // Si l'utilisateur vient d'être promu ET qu'il a peu d'activités (plafond du plan free),
-        // on force une sync complète de l'année pour récupérer les activités manquées.
-        if (
-            !isFreePlan &&
-            stravaWorkouts.length > 0 &&
-            stravaWorkouts.length <= FREE_STRAVA_LIMIT &&
-            lastStravaTimestamp >= startOfYear
-        ) {
-            console.log(`🔄 Compte promu détecté (${stravaWorkouts.length} activité(s) ≤ limite free). Full resync annuelle pour récupérer les activités manquées...`);
-            lastStravaTimestamp = startOfYear - 1; // déclenche le chemin full-sync
-        }
-
-        const isIncremental = lastStravaTimestamp >= startOfYear;
-
-        let activitiesSummary: { id: number; start_date: string; [key: string]: unknown }[];
-        if (isIncremental) {
-            console.log(`⚡ Sync incrémentale (après ${stravaWorkouts[0].date})...`);
-            activitiesSummary = await getStravaActivities(lastStravaTimestamp, 30);
-        } else {
-            console.log(`📅 Sync complète ${currentYear} (pagination)...`);
-            activitiesSummary = await getStravaActivitiesAllPages(startOfYear);
-            console.log(`📊 ${activitiesSummary.length} activité(s) trouvée(s) sur Strava pour ${currentYear}`);
-        }
+        console.log(`📅 Sync complète ${currentYear} (pagination)...`);
+        const activitiesSummary: { id: number; start_date: string; [key: string]: unknown }[] =
+            await getStravaActivitiesAllPages(startOfYear);
+        console.log(`📊 ${activitiesSummary.length} activité(s) trouvée(s) sur Strava pour ${currentYear}`);
 
         if (!activitiesSummary || activitiesSummary.length === 0) {
             console.log("✅ Aucune nouvelle activité à synchroniser.");
@@ -1548,8 +1520,10 @@ export async function syncStravaActivities() {
 
                 // Trouver la semaine du bloc actif correspondant à cette date
                 let activeWeekID = '';
+                const newWorkoutId = randomUUID();
                 if (existingBlocks && existingWeeks) {
                     const activityDateObj = parseISO(activityDate);
+
                     const activeBlock = existingBlocks.find(block => {
                         const blockStart = parseISO(block.startDate);
                         const blockEnd = addDays(blockStart, block.weekCount * 7);
@@ -1569,11 +1543,10 @@ export async function syncStravaActivities() {
                             activeWeekID = activeWeek.id;
                             const weekIdx = updatedWeeks.findIndex(w => w.id === activeWeek.id);
                             if (weekIdx !== -1) {
-                                const newId = `strava_${summary.id}`;
-                                if (!updatedWeeks[weekIdx].workoutsId.includes(newId)) {
+                                if (!updatedWeeks[weekIdx].workoutsId.includes(newWorkoutId)) {
                                     updatedWeeks[weekIdx] = {
                                         ...updatedWeeks[weekIdx],
-                                        workoutsId: [...updatedWeeks[weekIdx].workoutsId, newId],
+                                        workoutsId: [...updatedWeeks[weekIdx].workoutsId, newWorkoutId],
                                     };
                                 }
                             }
@@ -1582,7 +1555,7 @@ export async function syncStravaActivities() {
                 }
 
                 workouts.push({
-                    id: `strava_${summary.id}`,
+                    id: newWorkoutId,
                     userId: profile?.id ?? '',
                     weekId: activeWeekID,
                     date: activityDate,

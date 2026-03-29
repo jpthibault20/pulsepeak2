@@ -128,6 +128,16 @@ export async function mapStravaToCompletedData(activity: StravaActivityInput): P
       maxSpeedKmH: activity.max_speed * 3.6,
       strideLength: null
     };
+  } else if (sport === 'swimming') {
+    completed.metrics.swimming = {
+      avgPace100m: null,
+      bestPace100m: null,
+      strokeType: null,
+      avgStrokeRate: null,
+      avgSwolf: null,
+      poolLengthMeters: null,
+      totalStrokes: null,
+    };
   }
 
   // --- INTEGRATION PULSEPEAK AUTOMATIQUE ---

@@ -5,7 +5,9 @@
       "Bash(npx tsc:*)",
       "WebSearch",
       "Bash(pushd \"C:/Users/tjean/Documents/GitHub/pulsepeak2025\")",
-      "Bash(npx --prefix \"C:/Users/tjean/Documents/GitHub/pulsepeak2025\" tsc --noEmit --project \"C:/Users/tjean/Documents/GitHub/pulsepeak2025/tsconfig.json\")"
+      "Bash(npx --prefix \"C:/Users/tjean/Documents/GitHub/pulsepeak2025\" tsc --noEmit --project \"C:/Users/tjean/Documents/GitHub/pulsepeak2025/tsconfig.json\")",
+      "Bash(find /c/Users/tjean/Documents/GitHub/pulsepeak2025 -type f \\\\\\(-name *.ts -o -name *.tsx -o -name *.js -o -name *.jsx \\\\\\))",
+      "Bash(find C:UserstjeanDocumentsGitHubpulsepeak2025src -type f \\\\\\(-name *.tsx -o -name *.ts \\\\\\))"
     ]
   }
 }
