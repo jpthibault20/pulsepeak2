@@ -321,6 +321,9 @@ export function CalendarView({
                     onSelectDay={setSelectedMobileDay}
                     onOpenManualModal={handleOpenDayAction}
                     onViewWorkout={onViewWorkout}
+                    profile={profile}
+                    onRefresh={onRefresh}
+                    onOpenGenModal={() => setShowGenModal(true)}
                 />
             </div>
 

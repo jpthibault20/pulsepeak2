@@ -2,10 +2,12 @@
 
 import React, { useMemo, useRef, useEffect } from 'react';
 import { Plus, BedDouble, Trophy, Target, Calendar, MapPin, Mountain } from 'lucide-react';
-import type { Workout, Objective } from '@/lib/data/DatabaseTypes';
+import type { Workout, Objective, Profile } from '@/lib/data/DatabaseTypes';
 import { WorkoutBadge } from './WorkoutBadge';
+import { MobileWeekBar } from './MobileWeekBar';
 import { formatDateKey, DAY_NAMES_SHORT, MONTH_NAMES } from '@/lib/utils';
 import { Schedule } from '@/lib/data/DatabaseTypes';
+import type { WeekStats } from '@/hooks/useWeekStats';
 
 interface MobileCalendarStripProps {
     weekRows: (Date | null)[][];
@@ -17,6 +19,9 @@ interface MobileCalendarStripProps {
     onOpenManualModal: (e: React.MouseEvent, date: Date) => void;
     onViewWorkout: (workout: Workout) => void;
     onEditObjective: (obj: Objective) => void;
+    profile: Profile;
+    onRefresh: () => void;
+    onOpenGenModal: () => void;
 }
 
 // DAY_NAMES_SHORT = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'] (Mon=0)
@@ -57,6 +62,9 @@ export function MobileCalendarStrip({
     onOpenManualModal,
     onViewWorkout,
     onEditObjective,
+    profile,
+    onRefresh,
+    onOpenGenModal,
 }: MobileCalendarStripProps) {
     const scrollRef  = useRef<HTMLDivElement>(null);
     const todayKey   = useMemo(() => formatDateKey(new Date()), []);
@@ -82,6 +90,76 @@ export function MobileCalendarStrip({
         const el = scrollRef.current?.querySelector<HTMLElement>('[data-selected="true"]');
         el?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }, [selectedKey, currentMonth]);
+
+    // ── Week stats for the selected day ──
+    const selectedWeek = useMemo(() => {
+        return weekRows.find(week =>
+            week.some(d => d !== null && formatDateKey(d) === selectedKey)
+        ) ?? [];
+    }, [weekRows, selectedKey]);
+
+    const weekStartDate = useMemo(() => {
+        const firstNonNull = selectedWeek.find(d => d !== null);
+        if (!firstNonNull) return null;
+        const idx = selectedWeek.indexOf(firstNonNull);
+        const monday = new Date(firstNonNull);
+        monday.setDate(monday.getDate() - idx);
+        return formatDateKey(monday);
+    }, [selectedWeek]);
+
+    const weekStats = useMemo<WeekStats>(() => {
+        const stats: WeekStats = {
+            plannedTSS: 0, plannedDuration: 0, actualDuration: 0, distance: 0,
+            completed: 0, completedTSS: 0, total: 0,
+            sportBreakdown: { cycling: 0, running: 0, swimming: 0, other: 0 },
+            sportDuration:  { cycling: 0, running: 0, swimming: 0, other: 0 },
+        };
+        const dates = new Set(
+            selectedWeek.filter((d): d is Date => d !== null).map(d => formatDateKey(d))
+        );
+        scheduleData.workouts.forEach(w => {
+            if (!dates.has(w.date)) return;
+            stats.total++;
+            stats.plannedTSS += w.plannedData.plannedTSS ?? 0;
+            stats.plannedDuration += w.plannedData.durationMinutes;
+            const sport = w.sportType as keyof typeof stats.sportBreakdown;
+            if (stats.sportBreakdown[sport] !== undefined) {
+                stats.sportBreakdown[sport]++;
+            }
+            if (w.status === 'completed' && w.completedData) {
+                stats.completed++;
+                stats.actualDuration += w.completedData.actualDurationMinutes;
+                stats.distance += w.completedData.distanceKm ?? 0;
+                const cd = w.completedData;
+                const tss = cd.metrics?.cycling?.tss ?? cd.calculatedTSS ?? w.plannedData.plannedTSS ?? 0;
+                stats.completedTSS += tss;
+                if (stats.sportDuration[sport] !== undefined) {
+                    stats.sportDuration[sport] += cd.actualDurationMinutes;
+                }
+            } else {
+                if (stats.sportDuration[sport] !== undefined) {
+                    stats.sportDuration[sport] += w.plannedData.durationMinutes;
+                }
+            }
+        });
+        return stats;
+    }, [selectedWeek, scheduleData.workouts]);
+
+    const { isPastWeek, isFarFuture, weeksAhead } = useMemo(() => {
+        const today = new Date();
+        const day = today.getDay();
+        const daysToMon = day === 0 ? -6 : 1 - day;
+        const thisMonday = new Date(today);
+        thisMonday.setDate(today.getDate() + daysToMon);
+        thisMonday.setHours(0, 0, 0, 0);
+
+        const weekStart = weekStartDate ? new Date(weekStartDate + 'T00:00:00') : null;
+        const past = weekStart ? weekStart < thisMonday : false;
+        const ahead = weekStart
+            ? Math.round((weekStart.getTime() - thisMonday.getTime()) / (7 * 24 * 60 * 60 * 1000))
+            : 0;
+        return { isPastWeek: past, isFarFuture: ahead >= 2, weeksAhead: ahead };
+    }, [weekStartDate]);
 
     return (
         <div className="space-y-4">
@@ -160,6 +238,19 @@ export function MobileCalendarStrip({
                     );
                 })}
             </div>
+
+            {/* ── Week Summary Bar ── */}
+            <MobileWeekBar
+                stats={weekStats}
+                weekStartDate={weekStartDate}
+                isPastWeek={isPastWeek}
+                isFarFuture={isFarFuture}
+                weeksAhead={weeksAhead}
+                profileAvailability={profile.weeklyAvailability}
+                activeSports={profile.activeSports}
+                onRefresh={onRefresh}
+                onOpenGenModal={onOpenGenModal}
+            />
 
             {/* ── Selected Day Header ── */}
             <div className="flex items-center justify-between px-1">
