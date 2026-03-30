@@ -5,11 +5,12 @@ import {
     LucideIcon,
     UserRound,
     Bot,
+    Map,
 } from 'lucide-react';
 import Image from 'next/image';
 import { ThemeToggle } from '@/components/ThemeProvider';
 
-export type View = 'dashboard' | 'settings' | 'stats' | 'workout-detail' | 'onboarding' | 'loading' | 'chat';
+export type View = 'dashboard' | 'plan' | 'settings' | 'stats' | 'workout-detail' | 'onboarding' | 'loading' | 'chat';
 
 interface NavProps {
     onViewChange: (view: View) => void;
@@ -54,6 +55,7 @@ export const Nav: React.FC<NavProps> = ({
                     {/* ── Right: desktop nav + theme toggle ── */}
                     <div className="hidden md:flex items-center gap-1">
                         <DesktopItem active={isActive('dashboard')} onClick={() => onViewChange('dashboard')} icon={LayoutDashboard} label="Agenda"   />
+                        <DesktopItem active={isActive('plan')}      onClick={() => onViewChange('plan')}      icon={Map}            label="Plan"     />
                         <DesktopItem active={isActive('stats')}     onClick={() => onViewChange('stats')}     icon={BarChart2}      label="Stats"    />
                         <DesktopItem active={isActive('settings')}  onClick={() => onViewChange('settings')}  icon={UserRound}      label="Profil"   />
                         <DesktopItem active={isActive('chat')}      onClick={() => onViewChange('chat')}      icon={Bot}            label="Coach IA" />
@@ -76,8 +78,9 @@ export const Nav: React.FC<NavProps> = ({
                 <div className="relative bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] rounded-2xl shadow-lg shadow-slate-900/10 dark:shadow-black/60 h-16 flex items-center px-1">
 
                     <MobileItem active={isActive('dashboard')} onClick={() => onViewChange('dashboard')} icon={LayoutDashboard} label="Agenda"   />
+                    <MobileItem active={isActive('plan')}      onClick={() => onViewChange('plan')}      icon={Map}            label="Plan"     />
                     <MobileItem active={isActive('stats')}     onClick={() => onViewChange('stats')}     icon={BarChart2}      label="Stats"    />
-                    <MobileItem active={isActive('chat')}      onClick={() => onViewChange('chat')}      icon={Bot}            label="Coach IA" />
+                    <MobileItem active={isActive('chat')}      onClick={() => onViewChange('chat')}      icon={Bot}            label="Coach"    />
                     <MobileItem active={isActive('settings')}  onClick={() => onViewChange('settings')}  icon={UserRound}      label="Profil"   />
                 </div>
             </div>
