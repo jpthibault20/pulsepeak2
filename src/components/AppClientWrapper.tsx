@@ -34,6 +34,7 @@ import { StatsView } from '@/components/features/stats/StatsView';
 import { WorkoutDetailView } from '@/components/features/workout/WorkoutDetailView';
 import { Nav, View } from '@/components/layout/nav';
 import { ChatView } from '@/components/features/chat/ChatView';
+import { PlanView } from '@/components/features/plan/PlanView';
 import { GenerationProgressModal, type GenProgressState } from '@/components/features/calendar/GenerationProgressModal';
 import { Card } from '@/components/ui';
 import { createCompletedData } from '@/lib/utils';
@@ -478,6 +479,19 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
                                 onCalendarDateChange={setCalendarDate}
                                 calendarMobileDay={calendarMobileDay}
                                 onCalendarMobileDayChange={setCalendarMobileDay}
+                            />
+                        </div>
+                    )}
+
+                    {view === 'plan' && (
+                        <div className="max-w-2xl mx-auto animate-in fade-in duration-300">
+                            <PlanView
+                                profile={profile}
+                                onRefresh={refreshData}
+                                onViewWorkout={(workoutId) => {
+                                    const w = schedule.workouts.find(wo => wo.id === workoutId);
+                                    if (w) { setSelectedWorkout(w); setView('workout-detail'); }
+                                }}
                             />
                         </div>
                     )}
