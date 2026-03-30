@@ -18,6 +18,7 @@ interface StravaActivityInput {
   distance: number;
   description?: string | null;
   calories?: number;
+  perceived_exertion?: number | null;
   map?: {
     summary_polyline?: string | null;
   };
@@ -61,21 +62,48 @@ function mapStravaSport(stravaType: string): SportType {
 // Transforme l'objet API Strava TYPÉ en notre objet CompletedData
 export async function mapStravaToCompletedData(activity: StravaActivityInput): Promise<CompletedData> {
   const sport = mapStravaSport(activity.type);
-  let calculatedTSS: number | null = null; // Typage explicite
+  let calculatedTSS: number | null = null;
 
   try {
     const profile = await getProfile();
-    // Optimisation : on vérifie profile?.ftp direct
-    const ftp = profile?.cycling?.Test?.ftp || 200; 
-    
-    // Normalisation de la puissance (Weighted > Average > 0)
-    const np = activity.weighted_average_watts || activity.average_watts || 0;
+    const durationInHours = activity.moving_time / 3600;
 
+    // 1) Puissance (vélo) : TSS = durée(h) × IF² × 100
+    const ftp = profile?.cycling?.Test?.ftp || 0;
+    const np = activity.weighted_average_watts || activity.average_watts || 0;
     if (np > 0 && ftp > 0) {
-        // Calcul IF et TSS
         const intensityFactor = np / ftp;
-        const durationInHours = activity.moving_time / 3600;
-        calculatedTSS = Math.round(durationInHours * (intensityFactor * intensityFactor) * 100);
+        calculatedTSS = Math.round(durationInHours * intensityFactor * intensityFactor * 100);
+    }
+
+    // 2) Cardio (hrTSS) : si pas de TSS puissance, utiliser la FC
+    if (calculatedTSS == null) {
+        const avgHR = activity.average_heartrate;
+        const maxHR = profile?.heartRate?.max;
+        if (avgHR && avgHR > 0 && maxHR && maxHR > 0) {
+            const restHR = profile?.heartRate?.resting ?? 0;
+            const hrRatio = restHR > 0
+                ? (avgHR - restHR) / (maxHR - restHR)
+                : avgHR / maxHR;
+            const ifHR = Math.min(Math.max(hrRatio, 0), 1);
+            calculatedTSS = Math.round(durationInHours * ifHR * ifHR * 100);
+        }
+    }
+
+    // 3) RPE Strava : estimation via perceived_exertion (échelle 1-10)
+    if (calculatedTSS == null && activity.perceived_exertion && activity.perceived_exertion > 0) {
+        calculatedTSS = Math.round(durationInHours * Math.pow(activity.perceived_exertion / 10, 2) * 100);
+    }
+
+    // 4) Défaut : TSS estimé par heure selon le sport (intensité modérée)
+    if (calculatedTSS == null) {
+        const defaultTSSPerHour: Record<SportType, number> = {
+            cycling: 50,
+            running: 60,
+            swimming: 55,
+            other: 50,
+        };
+        calculatedTSS = Math.round(durationInHours * defaultTSSPerHour[sport]);
     }
 
   } catch (error) {
@@ -86,7 +114,7 @@ export async function mapStravaToCompletedData(activity: StravaActivityInput): P
   const completed: CompletedData = {
     actualDurationMinutes: Math.floor(activity.moving_time / 60),
     distanceKm: parseFloat((activity.distance / 1000).toFixed(2)),
-    perceivedEffort: null,
+    perceivedEffort: activity.perceived_exertion ?? null,
     notes: activity.description || "",
     caloriesBurned: activity.calories ?? null,
     source: {
@@ -100,7 +128,8 @@ export async function mapStravaToCompletedData(activity: StravaActivityInput): P
       maxBPM: activity.max_heartrate || null,
       zoneDistribution: [],
     },
-    metrics: { cycling: null, running: null, swimming: null }
+    metrics: { cycling: null, running: null, swimming: null },
+    calculatedTSS: calculatedTSS ?? undefined,
   };
 
   // --- METRICS PAR SPORT ---
