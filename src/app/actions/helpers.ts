@@ -108,7 +108,7 @@ export const computeProgressionPerWeek = (
 
 export const getActiveSports = (activeSports: Profile['activeSports']): string[] => {
     return Object.entries(activeSports)
-        .filter(([_, isActive]) => isActive)
+        .filter(([isActive]) => isActive)
         .map(([sport]) => sport);
 };
 
@@ -120,6 +120,11 @@ export const formatAvailability = (availability: { [key: string]: AvailabilitySl
 
     return Object.entries(availability)
         .map(([day, slot]) => {
+            if (slot.aiChoice) {
+                const comment = slot.comment ? ` (${slot.comment})` : '';
+                return `- ${days[day] ?? day} : IA LIBRE — tu choisis le sport, la durée et l'intensité${comment}`;
+            }
+
             const sports = [
                 slot.swimming > 0 ? `natation ${slot.swimming}h` : null,
                 slot.cycling   > 0 ? `vélo ${slot.cycling}h`     : null,
