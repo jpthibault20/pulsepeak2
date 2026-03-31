@@ -701,7 +701,7 @@ ${zonesContext}
 ## DISPONIBILITÉS DE LA SEMAINE
 ${formattedAvailability || "Non spécifiées"}
 Les commentaires entre parenthèses décrivent le contexte de la journée (ex: sortie club, chill, compétition). Adapte le type et l'intensité de la séance en conséquence.
-Les jours marqués aiChoice = true sont des jours où l'athlète te laisse carte blanche : tu choisis librement le sport, la durée et l'intensité en fonction du contexte de la semaine (charge, récupération, objectifs). Tu peux aussi décider de laisser un jour de repos complet si c'est plus pertinent. Si un commentaire est présent (ex: "vacances", "repos"), adapte ton choix en conséquence.
+Les jours marqués IA LIBRE sont des jours où l'athlète te laisse carte blanche : tu choisis librement le sport, la durée et l'intensité en fonction du contexte de la semaine (charge, récupération, objectifs). Tu peux aussi décider de laisser un jour de repos complet si c'est plus pertinent. Si un commentaire est présent (ex: "vacances", "repos"), adapte ton choix en conséquence.
 
 ## CONTEXTE DE LA SEMAINE
 - Thème du bloc : ${block.theme}

@@ -7,7 +7,8 @@
       "Bash(grep -n \"await.*\\\\.\\\\.\\\\.new Date\\\\|new Date\\(\\)\\\\.getDay\\\\|Math.pow\\\\|parseFloat\\\\|parseInt\" /c/Users/tjean/Documents/GitHub/pulsepeak2025/src/**/*.ts)",
       "Bash(npx tsc:*)",
       "Bash(xargs grep:*)",
-      "Bash(npx next:*)"
+      "Bash(npx next:*)",
+      "Bash(grep -iE \"\\\\.\\(tsx|ts\\)$\")"
     ]
   }
 }
