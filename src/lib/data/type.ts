@@ -12,6 +12,7 @@ export interface AvailabilitySlot {
   cycling: number;
   running: number;
   comment: string;
+  aiChoice: boolean;
 }
 export interface PlannedData {
   durationMinutes: number;

@@ -701,6 +701,7 @@ ${zonesContext}
 ## DISPONIBILITÉS DE LA SEMAINE
 ${formattedAvailability || "Non spécifiées"}
 Les commentaires entre parenthèses décrivent le contexte de la journée (ex: sortie club, chill, compétition). Adapte le type et l'intensité de la séance en conséquence.
+Les jours marqués IA LIBRE sont des jours où l'athlète te laisse carte blanche : tu choisis librement le sport, la durée et l'intensité en fonction du contexte de la semaine (charge, récupération, objectifs). Tu peux aussi décider de laisser un jour de repos complet si c'est plus pertinent. Si un commentaire est présent (ex: "vacances", "repos"), adapte ton choix en conséquence.
 
 ## CONTEXTE DE LA SEMAINE
 - Thème du bloc : ${block.theme}
@@ -798,16 +799,15 @@ ${profile.experience === 'Débutant' ? `⚠️ DÉBUTANT — Appliquer impérati
 - Descriptions techniques mais accessibles`}
 
 ## RÈGLES GÉNÉRALES
-1. Placer chaque séance UNIQUEMENT aux jours disponibles.
-2. Respecter la durée max par sport et par jour.
-3. Répartir les séances UNIQUEMENT sur les disciplines actives : ${activeSports.join(", ")}.
-4. La somme des plannedTSS doit être égale à ${week.targetTSS} (±5%).
-5. Respecter le thème "${block.theme}" dans le choix des types de séances.
-6. Ne pas placer 2 séances dures (Interval, Tempo) consécutives.
-7. En semaine Recovery : séances courtes, faible intensité uniquement.
-8. Le dayOffset doit correspondre exactement au jour disponible (0=Lundi ... 6=Dimanche).
-9. Exactement UNE séance par créneau disponible (pas plus, pas moins), sauf en semaine de course où certains jours peuvent être laissés vides (repos).
-10. La "description" doit être précise, technique, structurée (échauffement, corps de séance, retour au calme).
+1. Respecter la durée max par sport et par jour. Pour les jours LIBRE, tu choisis une durée raisonnable selon le contexte.
+2. Répartir les séances UNIQUEMENT sur les disciplines actives : ${activeSports.join(", ")}.
+3. La somme des plannedTSS doit être égale à ${week.targetTSS} (±5%).
+4. Respecter le thème "${block.theme}" dans le choix des types de séances.
+5. Ne pas placer 2 séances dures (Interval, Tempo) consécutives.
+6. En semaine Recovery : séances courtes, faible intensité uniquement.
+7. Le dayOffset doit correspondre exactement au jour disponible (0=Lundi ... 6=Dimanche).
+8. Exactement UNE séance par créneau disponible (pas plus, pas moins), sauf en semaine de course où certains jours peuvent être laissés vides (repos). Pour les jours LIBRE, tu peux aussi décider de ne pas planifier de séance (repos) si c'est pertinent.
+9. La "description" doit être précise, technique, structurée (échauffement, corps de séance, retour au calme).
    Utilise la métrique PRIORITAIRE par sport :
    - VÉLO : en priorité les WATTS/zones de puissance. Si le profil n'a pas de FTP/zones, utilise le cardio (FC). En dernier recours, les sensations (RPE).
      Exemple vélo : "Échauffement: 20 min Z1-Z2. Corps: 3x10 min @ 230-240W (Z4). Récup 5 min Z1. Retour au calme: 15 min Z1."

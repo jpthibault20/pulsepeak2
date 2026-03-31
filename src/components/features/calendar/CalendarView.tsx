@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Info, X, Target, Home, Dumbbell, Trophy, Zap } from 'lucide-react';
 import type { Workout, Profile, Objective } from '@/lib/data/DatabaseTypes';
 import { Button } from '@/components/ui/Button';
@@ -70,6 +70,8 @@ export function CalendarView({
     const { year, month, weekRows } = useCalendarDays(selectedDate);
     const { plan } = useSubscription();
     const router = useRouter();
+    // Displayed month on mobile (updated by scroll, separate from calendarDate to avoid regenerating the day strip)
+    const [mobileDisplayMonth, setMobileDisplayMonth] = useState<{ year: number; month: number }>({ year, month });
 
     // --- Handlers ---
     const handleGeneratePlan = async (
@@ -126,22 +128,36 @@ export function CalendarView({
     };
 
     const goToMonthDay = (newYear: number, newMonth: number) => {
-        setSelectedDate(new Date(newYear, newMonth));
+        const normalized = new Date(newYear, newMonth);
+        setSelectedDate(normalized);
+        setMobileDisplayMonth({ year: normalized.getFullYear(), month: normalized.getMonth() });
         const today = new Date();
-        if (today.getFullYear() === newYear && today.getMonth() === newMonth) {
+        if (today.getFullYear() === normalized.getFullYear() && today.getMonth() === normalized.getMonth()) {
             setSelectedMobileDay(today);
         } else {
-            setSelectedMobileDay(new Date(newYear, newMonth, 1));
+            setSelectedMobileDay(new Date(normalized.getFullYear(), normalized.getMonth(), 1));
         }
     };
 
-    const handlePrevMonth = () => goToMonthDay(year, month - 1);
+    const handlePrevMonth = () => {
+        const d = new Date(mobileDisplayMonth.year, mobileDisplayMonth.month - 1);
+        goToMonthDay(d.getFullYear(), d.getMonth());
+    };
     const handleActualMonth = () => {
         const today = new Date();
         setSelectedDate(new Date(today.getFullYear(), today.getMonth()));
+        setMobileDisplayMonth({ year: today.getFullYear(), month: today.getMonth() });
         setSelectedMobileDay(today);
     };
-    const handleNextMonth = () => goToMonthDay(year, month + 1);
+    const handleNextMonth = () => {
+        const d = new Date(mobileDisplayMonth.year, mobileDisplayMonth.month + 1);
+        goToMonthDay(d.getFullYear(), d.getMonth());
+    };
+
+    // Called by mobile strip when user scrolls to a different month — only updates display, not the day strip
+    const handleVisibleMonthChange = useCallback((newYear: number, newMonth: number) => {
+        setMobileDisplayMonth({ year: newYear, month: newMonth });
+    }, []);
 
     return (
         <div className="space-y-4 md:space-y-6 animate-in fade-in duration-500 pb-20 md:pb-0">
@@ -158,8 +174,10 @@ export function CalendarView({
                             >
                                 <ChevronLeft size={18} />
                             </button>
+                            {/* Desktop: month from calendarDate / Mobile: month from scroll position */}
                             <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white w-40 md:w-[180px] text-center capitalize px-1">
-                                {MONTH_NAMES[month]} {year}
+                                <span className="hidden md:inline">{MONTH_NAMES[month]} {year}</span>
+                                <span className="md:hidden">{MONTH_NAMES[mobileDisplayMonth.month]} {mobileDisplayMonth.year}</span>
                             </h2>
                             <button
                                 onClick={handleNextMonth}
@@ -274,16 +292,6 @@ export function CalendarView({
                 </div>
             </div>
 
-            {/* Badge plan mobile */}
-            {plan === 'dev' && (
-                <button
-                    onClick={() => router.push('/pricing')}
-                    className="xl:hidden flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-amber-500/25 bg-amber-50 dark:bg-amber-500/5 w-fit text-xs"
-                >
-                    <Zap size={10} className="text-amber-600 dark:text-amber-400" />
-                    <span className="text-amber-600 dark:text-amber-300 font-semibold">DEV BÊTA</span>
-                </button>
-            )}
 
             {/* Loading Indicator */}
             {isGenerating && (
@@ -317,9 +325,11 @@ export function CalendarView({
                     <MobileCalendarStrip
                         weekRows={weekRows}
                         currentMonth={month}
+                        currentYear={year}
                         selectedDay={selectedMobileDay}
                         onSelectDay={setSelectedMobileDay}
                         onOpenManualModal={handleOpenDayAction}
+                        onVisibleMonthChange={handleVisibleMonthChange}
                     />
                 </div>
             </CalendarProvider>
