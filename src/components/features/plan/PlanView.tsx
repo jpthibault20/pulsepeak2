@@ -281,7 +281,7 @@ function BlockCard({ block, isFirst, isLast, expanded, onToggle, onRegenerate, o
                             <span className="text-[10px] text-slate-400">·</span>
                             <span className="text-[10px] text-slate-500 dark:text-slate-400">{block.weekCount} sem</span>
                         </div>
-                        <p className="text-sm font-medium text-slate-900 dark:text-white truncate mt-0.5">{block.theme}</p>
+                        <p className="text-sm font-medium text-slate-900 dark:text-white mt-0.5">{block.theme}</p>
                     </div>
 
                     {/* Completion ring */}
