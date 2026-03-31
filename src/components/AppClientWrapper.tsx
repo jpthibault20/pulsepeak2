@@ -408,26 +408,26 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
                     )}
 
                     {isSyncing && (
-                        <div className="fixed top-20 right-4 z-40 bg-orange-500/90 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in slide-in-from-top-2">
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            <span className="text-sm font-medium">Synchronisation Strava...</span>
+                        <div className="fixed top-[5px] right-2 md:top-20 md:right-4 z-40 bg-orange-500/90 text-white px-2 py-1 md:px-4 md:py-2 rounded-full md:rounded-lg shadow-lg flex items-center gap-1.5 md:gap-2 animate-in slide-in-from-top-2 pointer-events-none">
+                            <div className="w-3 h-3 md:w-4 md:h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <span className="text-xs md:text-sm font-medium">Strava...</span>
                         </div>
                     )}
 
                     {isRefreshing && !isSyncing && (
-                        <div className="fixed top-20 right-4 z-40 bg-blue-500/90 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in slide-in-from-top-2">
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            <span className="text-sm font-medium">Actualisation...</span>
+                        <div className="fixed top-[5px] right-2 md:top-20 md:right-4 z-40 bg-blue-500/90 text-white px-2 py-1 md:px-4 md:py-2 rounded-full md:rounded-lg shadow-lg flex items-center gap-1.5 md:gap-2 animate-in slide-in-from-top-2 pointer-events-none">
+                            <div className="w-3 h-3 md:w-4 md:h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <span className="text-xs md:text-sm font-medium">Synchro...</span>
                         </div>
                     )}
 
                     {syncResult && !isSyncing && !isRefreshing && (
-                        <div className={`fixed top-20 right-4 z-40 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in slide-in-from-top-2 ${syncResult.type === 'success'
+                        <div className={`fixed top-[5px] right-2 md:top-20 md:right-4 z-40 px-2 py-1 md:px-4 md:py-2 rounded-full md:rounded-lg shadow-lg flex items-center gap-1.5 md:gap-2 animate-in slide-in-from-top-2 pointer-events-none ${syncResult.type === 'success'
                                 ? 'bg-emerald-500/90 text-white'
                                 : 'bg-slate-600/90 text-white'
                             }`}>
-                            <span className="text-sm">{syncResult.type === 'success' ? '✓' : '—'}</span>
-                            <span className="text-sm font-medium">{syncResult.message}</span>
+                            <span className="text-xs md:text-sm">{syncResult.type === 'success' ? '✓' : '—'}</span>
+                            <span className="text-xs md:text-sm font-medium">{syncResult.message}</span>
                         </div>
                     )}
 

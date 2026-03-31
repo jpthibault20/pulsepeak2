@@ -2,7 +2,7 @@
 
 import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react';
 import { Plus, BedDouble, Trophy, Target, Calendar, MapPin, Mountain } from 'lucide-react';
-import type { Workout } from '@/lib/data/DatabaseTypes';
+import type { Workout, Objective } from '@/lib/data/DatabaseTypes';
 import { WorkoutBadge } from './WorkoutBadge';
 import { MobileWeekBar } from './MobileWeekBar';
 import { useCalendarContext } from './CalendarContext';
@@ -19,8 +19,6 @@ interface MobileCalendarStripProps {
     onVisibleMonthChange?: (year: number, month: number) => void;
 }
 
-// DAY_NAMES_SHORT = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'] (Mon=0)
-// date.getDay() returns 0=Sun, so offset: (getDay() + 6) % 7
 function getDayLabel(date: Date): string {
     return DAY_NAMES_SHORT[(date.getDay() + 6) % 7];
 }
@@ -47,7 +45,6 @@ const SPORT_LABELS: Record<string, string> = {
     duathlon:  'Duathlon',
 };
 
-/** Generate all days for a single month */
 function generateMonthDays(year: number, month: number): Date[] {
     const days: Date[] = [];
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -56,6 +53,82 @@ function generateMonthDays(year: number, month: number): Date[] {
     }
     return days;
 }
+
+// ── Memoized day button — only re-renders when its own props change ──
+interface DayButtonProps {
+    date: Date;
+    dateKey: string;
+    isSelected: boolean;
+    isToday: boolean;
+    workouts: Workout[];
+    hasPrimary: boolean;
+    hasSecondary: boolean;
+    isFirstOfMonth: boolean;
+    showSeparator: boolean;
+    onSelect: (date: Date) => void;
+}
+
+const DayButton = React.memo(function DayButton({
+    date, dateKey, isSelected, isToday, workouts,
+    hasPrimary, hasSecondary, isFirstOfMonth, showSeparator, onSelect,
+}: DayButtonProps) {
+    const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+    return (
+        <>
+            {isFirstOfMonth && showSeparator && (
+                <div className="flex-shrink-0 flex flex-col items-center justify-end px-1 pb-1">
+                    <span className="text-[10px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wide whitespace-nowrap">
+                        {MONTH_NAMES[date.getMonth()].slice(0, 4)}
+                    </span>
+                    <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mt-1" />
+                </div>
+            )}
+            <button
+                data-selected={isSelected ? 'true' : 'false'}
+                data-month={monthKey}
+                onClick={() => onSelect(date)}
+                className={`
+                    flex-shrink-0 flex flex-col items-center
+                    w-[46px] pt-2.5 pb-2.5 rounded-2xl
+                    focus:outline-none
+                    ${isSelected
+                        ? 'bg-blue-600 shadow-md shadow-blue-500/20 dark:shadow-blue-900/40'
+                        : isToday
+                            ? 'bg-slate-100 dark:bg-slate-800 ring-1 ring-blue-400/60 dark:ring-blue-500/60'
+                            : hasPrimary
+                                ? 'bg-rose-50 dark:bg-rose-950/40 ring-1 ring-rose-500/40'
+                                : hasSecondary
+                                    ? 'bg-amber-50 dark:bg-amber-950/30 ring-1 ring-amber-500/30'
+                                    : 'bg-transparent active:bg-slate-100/80 dark:active:bg-slate-800/60'
+                    }
+                `}
+            >
+                <span className={`
+                    text-[9px] font-semibold uppercase tracking-widest leading-none mb-1.5
+                    ${isSelected ? 'text-blue-200' : isToday ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'}
+                `}>
+                    {getDayLabel(date)}
+                </span>
+                <span className={`
+                    text-[15px] font-bold leading-none
+                    ${isSelected ? 'text-white' : 'text-slate-700 dark:text-slate-200'}
+                `}>
+                    {date.getDate()}
+                </span>
+                <div className="flex gap-[3px] mt-1.5 h-[5px] items-center">
+                    {hasPrimary && <div className="w-[5px] h-[5px] rounded-full bg-rose-400" />}
+                    {hasSecondary && <div className="w-[5px] h-[5px] rounded-full bg-amber-400" />}
+                    {workouts.length === 0 && !hasPrimary && !hasSecondary
+                        ? <div className="w-[5px] h-[5px] rounded-full bg-transparent" />
+                        : workouts.slice(0, hasPrimary || hasSecondary ? 2 : 3).map((w, i) => (
+                            <div key={i} className={`w-[5px] h-[5px] rounded-full ${getDotColor(w)}`} />
+                        ))
+                    }
+                </div>
+            </button>
+        </>
+    );
+});
 
 export function MobileCalendarStrip({
     weekRows,
@@ -73,13 +146,29 @@ export function MobileCalendarStrip({
     const lastReportedMonth = useRef<string>('');
     const initialScrollDone = useRef(false);
 
+    // ── Pre-compute lookup maps (O(n) once instead of O(n×m) per render) ──
+    const workoutsByDate = useMemo(() => {
+        const map = new Map<string, Workout[]>();
+        for (const w of scheduleData.workouts) {
+            const arr = map.get(w.date);
+            if (arr) arr.push(w); else map.set(w.date, [w]);
+        }
+        return map;
+    }, [scheduleData.workouts]);
+
+    const objectivesByDate = useMemo(() => {
+        const map = new Map<string, Objective[]>();
+        for (const o of objectives) {
+            const arr = map.get(o.date);
+            if (arr) arr.push(o); else map.set(o.date, [o]);
+        }
+        return map;
+    }, [objectives]);
+
     // ── Dynamic month range: start with prev/current/next ──
     const [monthRange, setMonthRange] = useState({ min: -1, max: 1 });
-
-    // Anchor = the month the component was mounted with (today's month)
     const anchorRef = useRef({ year: currentYear, month: currentMonth });
 
-    // All days for the current range
     const allDays = useMemo(() => {
         const { year: aY, month: aM } = anchorRef.current;
         const days: Date[] = [];
@@ -90,15 +179,9 @@ export function MobileCalendarStrip({
         return days;
     }, [monthRange]);
 
-    // Workouts for the selected day
-    const dayWorkouts = useMemo(() =>
-        scheduleData.workouts.filter(w => w.date === selectedKey)
-    , [selectedKey, scheduleData.workouts]);
-
-    // Objectives for the selected day
-    const dayObjectives = useMemo(() =>
-        objectives.filter(o => o.date === selectedKey)
-    , [selectedKey, objectives]);
+    // Workouts & objectives for selected day (used below the strip)
+    const dayWorkouts = useMemo(() => workoutsByDate.get(selectedKey) ?? [], [selectedKey, workoutsByDate]);
+    const dayObjectives = useMemo(() => objectivesByDate.get(selectedKey) ?? [], [selectedKey, objectivesByDate]);
 
     // ── Auto-scroll to today on mount (instant), then smooth on day change ──
     useEffect(() => {
@@ -119,11 +202,9 @@ export function MobileCalendarStrip({
         if (!container) return;
 
         if (direction === 'prev') {
-            // Save scroll width before expansion
             const prevWidth = container.scrollWidth;
             const prevScroll = container.scrollLeft;
             setMonthRange(prev => ({ ...prev, min: prev.min - 1 }));
-            // After React re-renders, restore scroll position
             requestAnimationFrame(() => {
                 const newWidth = container.scrollWidth;
                 container.scrollLeft = prevScroll + (newWidth - prevWidth);
@@ -137,7 +218,7 @@ export function MobileCalendarStrip({
         const container = scrollRef.current;
         if (!container) return;
         let ticking = false;
-        const EDGE_THRESHOLD = 100; // px from edge to trigger load
+        const EDGE_THRESHOLD = 100;
 
         const handleScroll = () => {
             if (ticking) return;
@@ -146,7 +227,6 @@ export function MobileCalendarStrip({
                 ticking = false;
                 if (!container) return;
 
-                // Expand range when near edges
                 if (container.scrollLeft < EDGE_THRESHOLD) {
                     expandMonth('prev');
                 }
@@ -154,7 +234,6 @@ export function MobileCalendarStrip({
                     expandMonth('next');
                 }
 
-                // Detect visible month from center element
                 const centerX = container.scrollLeft + container.clientWidth / 2;
                 const buttons = container.querySelectorAll<HTMLElement>('[data-month]');
                 let closest: HTMLElement | null = null;
@@ -180,15 +259,13 @@ export function MobileCalendarStrip({
 
     // ── Week stats for the selected day ──
     const selectedWeek = useMemo(() => {
-        // First try the weekRows (covers the displayed month grid)
         const fromRows = weekRows.find(week =>
             week.some(d => d !== null && formatDateKey(d) === selectedKey)
         );
         if (fromRows && fromRows.length > 0) return fromRows;
 
-        // If selected day is outside the current month grid, compute the week from the date
         const d = new Date(selectedDay);
-        const dayIdx = (d.getDay() + 6) % 7; // 0=Mon
+        const dayIdx = (d.getDay() + 6) % 7;
         const monday = new Date(d);
         monday.setDate(d.getDate() - dayIdx);
         const week: Date[] = [];
@@ -273,83 +350,26 @@ export function MobileCalendarStrip({
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
                 {allDays.map((date, idx) => {
-                    const key        = formatDateKey(date);
-                    const isSelected = key === selectedKey;
-                    const isToday    = key === todayKey;
-                    const wks        = scheduleData.workouts.filter(w => w.date === key);
-                    const dayObjs    = objectives.filter(o => o.date === key);
+                    const key = formatDateKey(date);
+                    const wks = workoutsByDate.get(key) ?? [];
+                    const dayObjs = objectivesByDate.get(key) ?? [];
                     const hasPrimary = dayObjs.some(o => o.priority === 'principale');
                     const hasSecondary = !hasPrimary && dayObjs.length > 0;
-                    const isFirstOfMonth = date.getDate() === 1;
-                    const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
 
                     return (
-                        <React.Fragment key={key}>
-                            {/* Month separator label */}
-                            {isFirstOfMonth && idx > 0 && (
-                                <div className="flex-shrink-0 flex flex-col items-center justify-end px-1 pb-1">
-                                    <span className="text-[10px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wide whitespace-nowrap">
-                                        {MONTH_NAMES[date.getMonth()].slice(0, 4)}
-                                    </span>
-                                    <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mt-1" />
-                                </div>
-                            )}
-                            <button
-                                data-selected={isSelected ? 'true' : 'false'}
-                                data-month={monthKey}
-                                onClick={() => onSelectDay(date)}
-                                className={`
-                                    flex-shrink-0 flex flex-col items-center
-                                    w-[46px] pt-2.5 pb-2.5 rounded-2xl
-                                    transition-all duration-150 focus:outline-none
-                                    ${isSelected
-                                        ? 'bg-blue-600 shadow-md shadow-blue-500/20 dark:shadow-blue-900/40'
-                                        : isToday
-                                            ? 'bg-slate-100 dark:bg-slate-800 ring-1 ring-blue-400/60 dark:ring-blue-500/60'
-                                            : hasPrimary
-                                                ? 'bg-rose-50 dark:bg-rose-950/40 ring-1 ring-rose-500/40'
-                                                : hasSecondary
-                                                    ? 'bg-amber-50 dark:bg-amber-950/30 ring-1 ring-amber-500/30'
-                                                    : 'bg-transparent active:bg-slate-100/80 dark:active:bg-slate-800/60'
-                                    }
-                                `}
-                            >
-                                {/* Day abbreviation */}
-                                <span className={`
-                                    text-[9px] font-semibold uppercase tracking-widest leading-none mb-1.5
-                                    ${isSelected ? 'text-blue-200' : isToday ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'}
-                                `}>
-                                    {getDayLabel(date)}
-                                </span>
-
-                                {/* Day number */}
-                                <span className={`
-                                    text-[15px] font-bold leading-none
-                                    ${isSelected ? 'text-white' : 'text-slate-700 dark:text-slate-200'}
-                                `}>
-                                    {date.getDate()}
-                                </span>
-
-                                {/* Sport dots + objective indicator */}
-                                <div className="flex gap-[3px] mt-1.5 h-[5px] items-center">
-                                    {hasPrimary && (
-                                        <div className="w-[5px] h-[5px] rounded-full bg-rose-400" />
-                                    )}
-                                    {hasSecondary && (
-                                        <div className="w-[5px] h-[5px] rounded-full bg-amber-400" />
-                                    )}
-                                    {wks.length === 0 && !hasPrimary && !hasSecondary
-                                        ? <div className="w-[5px] h-[5px] rounded-full bg-transparent" />
-                                        : wks.slice(0, hasPrimary || hasSecondary ? 2 : 3).map((w, i) => (
-                                            <div
-                                                key={i}
-                                                className={`w-[5px] h-[5px] rounded-full ${getDotColor(w)}`}
-                                            />
-                                        ))
-                                    }
-                                </div>
-                            </button>
-                        </React.Fragment>
+                        <DayButton
+                            key={key}
+                            date={date}
+                            dateKey={key}
+                            isSelected={key === selectedKey}
+                            isToday={key === todayKey}
+                            workouts={wks}
+                            hasPrimary={hasPrimary}
+                            hasSecondary={hasSecondary}
+                            isFirstOfMonth={date.getDate() === 1}
+                            showSeparator={idx > 0}
+                            onSelect={onSelectDay}
+                        />
                     );
                 })}
             </div>

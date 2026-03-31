@@ -292,16 +292,6 @@ export function CalendarView({
                 </div>
             </div>
 
-            {/* Badge plan mobile */}
-            {plan === 'dev' && (
-                <button
-                    onClick={() => router.push('/pricing')}
-                    className="xl:hidden flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-amber-500/25 bg-amber-50 dark:bg-amber-500/5 w-fit text-xs"
-                >
-                    <Zap size={10} className="text-amber-600 dark:text-amber-400" />
-                    <span className="text-amber-600 dark:text-amber-300 font-semibold">DEV BÊTA</span>
-                </button>
-            )}
 
             {/* Loading Indicator */}
             {isGenerating && (
