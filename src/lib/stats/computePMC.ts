@@ -1,6 +1,14 @@
 import type { Workout } from '@/lib/data/DatabaseTypes';
 import type { Zones } from '@/lib/data/type';
 
+/** Format a Date as YYYY-MM-DD in local timezone (avoids UTC shift from toISOString) */
+function toLocalDateStr(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
 export interface PMCPoint {
     date: string;    // YYYY-MM-DD
     ctl: number;     // Chronic Training Load (fitness)
@@ -65,7 +73,7 @@ export function computePMC(
     // Warm up period (before display window)
     const warmupCursor = new Date(warmupStart);
     while (warmupCursor < displayStart) {
-        const dateStr = warmupCursor.toISOString().split('T')[0];
+        const dateStr = toLocalDateStr(warmupCursor);
         const tss = dailyTSS.get(dateStr) ?? 0;
         ctl = ctl + K_CTL * (tss - ctl);
         atl = atl + K_ATL * (tss - atl);
@@ -76,7 +84,7 @@ export function computePMC(
     const result: PMCPoint[] = [];
     const cursor = new Date(displayStart);
     while (cursor <= today) {
-        const dateStr = cursor.toISOString().split('T')[0];
+        const dateStr = toLocalDateStr(cursor);
         const tss = dailyTSS.get(dateStr) ?? 0;
         ctl = ctl + K_CTL * (tss - ctl);
         atl = atl + K_ATL * (tss - atl);
@@ -105,8 +113,8 @@ export function computeWeeklyTSS(workouts: Workout[], weeks = 12): WeeklyTSSPoin
         const weekStart = new Date(weekEnd);
         weekStart.setDate(weekStart.getDate() - 6);
 
-        const weekStartStr = weekStart.toISOString().split('T')[0];
-        const weekEndStr = weekEnd.toISOString().split('T')[0];
+        const weekStartStr = toLocalDateStr(weekStart);
+        const weekEndStr = toLocalDateStr(weekEnd);
 
         let planned = 0;
         let actual = 0;
