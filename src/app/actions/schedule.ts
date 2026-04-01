@@ -6,7 +6,7 @@ import { ReturnCode } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
 import type { AvailabilitySlot, CompletedData, CompletedDataFeedback, SportType } from '@/lib/data/type';
 import { getStravaActivitiesAllPages, getStravaActivityById } from '@/lib/strava-service';
-import { mapStravaToCompletedData } from '@/lib/strava-mapper';
+import { mapStravaToCompletedData, mapStravaSport } from '@/lib/strava-mapper';
 import { Block, Objective, Plan, Profile, Schedule, Week, Workout } from '@/lib/data/DatabaseTypes';
 import { randomUUID } from 'crypto';
 import {
@@ -1553,21 +1553,24 @@ export async function syncStravaActivities() {
             const detail = result.value;
             const completedData = await mapStravaToCompletedData(detail);
             const activityDate = summary.start_date.split('T')[0];
+            const stravaSport = mapStravaSport(String(summary.type ?? detail.type ?? ''));
 
-            // 🧠 MATCHING : séance planifiée existante pour cette date ?
+            // 🧠 MATCHING : séance planifiée existante pour cette date ET le même sport ?
             const matchingIndex = workouts.findIndex(w =>
                 w.date === activityDate &&
-                w.status !== 'completed'
+                w.status !== 'completed' &&
+                w.sportType === stravaSport
             );
 
             if (matchingIndex !== -1) {
-                console.log(`   🤝 Match le ${activityDate} -> mise à jour du plan.`);
+                console.log(`   🤝 Match le ${activityDate} (${stravaSport}) -> mise à jour du plan.`);
                 workouts[matchingIndex].status = 'completed';
                 workouts[matchingIndex].completedData = completedData;
             } else {
-                console.log(`   ➕ Activité libre ajoutée : ${activityDate}`);
+                console.log(`   ➕ Activité libre ajoutée : ${activityDate} (${stravaSport})`);
 
-                const sportType = completedData.metrics.swimming ? 'swimming'
+                const sportType = stravaSport !== 'other' ? stravaSport
+                    : completedData.metrics.swimming ? 'swimming'
                     : completedData.metrics.running ? 'running'
                     : 'cycling';
 
@@ -1631,6 +1634,17 @@ export async function syncStravaActivities() {
                 });
             }
             newItemsCount++;
+        }
+
+        // 6b. Marquer les séances passées (avant hier) sans completedData comme "missed"
+        const now = new Date();
+        const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+        const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+        for (const w of workouts) {
+            if (w.status === 'pending' && !w.completedData && w.date < yesterdayStr) {
+                w.status = 'missed';
+                newItemsCount++;
+            }
         }
 
         // 7. Sauvegarder si changements
