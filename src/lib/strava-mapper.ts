@@ -44,7 +44,7 @@ interface StravaActivityInput {
 // --- LOGIQUE ---
 
 // Fonction utilitaire pour mapper le sport Strava -> Notre Sport
-function mapStravaSport(stravaType: string): SportType {
+export function mapStravaSport(stravaType: string): SportType {
   switch (stravaType) {
     case 'Run':
     case 'TrailRun':
