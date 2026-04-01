@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Info, X, Target, Home, Dumbbell, Trophy, Zap } from 'lucide-react';
 import type { Workout, Profile, Objective } from '@/lib/data/DatabaseTypes';
 import { Button } from '@/components/ui/Button';
@@ -16,6 +16,7 @@ import { useSubscription } from '@/lib/subscription/context';
 import { FeatureGate } from '@/components/features/billing/FeatureGate';
 import { useRouter } from 'next/navigation';
 import { CalendarProvider } from './CalendarContext';
+import { TriathlonEasterEgg } from './TriathlonEasterEgg';
 
 interface CalendarViewProps {
     scheduleData: Schedule;
@@ -66,6 +67,8 @@ export function CalendarView({
     const [isSavingObjective, setIsSavingObjective] = useState(false);
     const [showRecalcPrompt, setShowRecalcPrompt] = useState(false);
     const [editingObjective, setEditingObjective] = useState<Objective | null>(null);
+    const [easterEgg, setEasterEgg] = useState(false);
+    const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const { year, month, weekRows } = useCalendarDays(selectedDate);
     const { plan } = useSubscription();
@@ -175,7 +178,21 @@ export function CalendarView({
                                 <ChevronLeft size={18} />
                             </button>
                             {/* Desktop: month from calendarDate / Mobile: month from scroll position */}
-                            <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white w-40 md:w-[180px] text-center capitalize px-1">
+                            <h2
+                                className="text-lg md:text-xl font-bold text-slate-900 dark:text-white w-40 md:w-[180px] text-center capitalize px-1 select-none cursor-default"
+                                onMouseDown={() => {
+                                    if (easterEgg) return;
+                                    longPressRef.current = setTimeout(() => setEasterEgg(true), 3000);
+                                }}
+                                onMouseUp={() => { if (longPressRef.current) { clearTimeout(longPressRef.current); longPressRef.current = null; } }}
+                                onMouseLeave={() => { if (longPressRef.current) { clearTimeout(longPressRef.current); longPressRef.current = null; } }}
+                                onTouchStart={() => {
+                                    if (easterEgg) return;
+                                    longPressRef.current = setTimeout(() => setEasterEgg(true), 3000);
+                                }}
+                                onTouchEnd={() => { if (longPressRef.current) { clearTimeout(longPressRef.current); longPressRef.current = null; } }}
+                                onTouchMove={() => { if (longPressRef.current) { clearTimeout(longPressRef.current); longPressRef.current = null; } }}
+                            >
                                 <span className="hidden md:inline">{MONTH_NAMES[month]} {year}</span>
                                 <span className="md:hidden">{MONTH_NAMES[mobileDisplayMonth.month]} {mobileDisplayMonth.year}</span>
                             </h2>
@@ -486,6 +503,7 @@ export function CalendarView({
                     isSaving={isSavingObjective}
                 />
             )}
+            <TriathlonEasterEgg active={easterEgg} onDone={() => setEasterEgg(false)} />
         </div>
     );
 }
