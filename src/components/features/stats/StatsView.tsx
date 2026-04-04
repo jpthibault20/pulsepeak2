@@ -45,6 +45,14 @@ const ZONE_LABELS = ['Z1', 'Z2', 'Z3', 'Z4', 'Z5'];
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
+/** Format a Date as YYYY-MM-DD in local timezone (avoids UTC shift from toISOString) */
+function toLocalDateStr(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
 function formatDuration(mins: number): string {
     if (!mins || mins <= 0) return '0h';
     const h = Math.floor(mins / 60);
@@ -134,91 +142,219 @@ function InfoTooltip({ title, content }: { title: string; content: string }) {
 
 // ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
 
+// Coach recommendation based on TSB, ramp rate, and next objective
+function getCoachAdvice(tsb: number, rampRate: number, daysToObj: number | null): { text: string; icon: string } {
+    // Ramp rate alert overrides everything
+    if (rampRate > 1.5) return { text: 'Ta fatigue monte trop vite. Allège les 2-3 prochains jours pour éviter la blessure.', icon: '🛑' };
+
+    // Context with objective proximity
+    if (daysToObj !== null && daysToObj <= 14 && daysToObj > 0) {
+        if (tsb > 10) return { text: `À J-${daysToObj} de ta course, tu es frais. Maintiens l'intensité légère.`, icon: '✅' };
+        if (tsb > 0) return { text: `À J-${daysToObj}, ta forme est bonne. Dernières séances de rappel puis repos.`, icon: '👍' };
+        if (tsb > -10) return { text: `À J-${daysToObj}, tu es chargé. Réduis le volume maintenant pour arriver frais.`, icon: '⚠️' };
+        return { text: `À J-${daysToObj}, tu es très fatigué. Coupe tout sauf du très léger pour récupérer.`, icon: '🔴' };
+    }
+
+    // General advice
+    if (tsb > 15) return { text: 'Tu es très frais. C\'est le moment de placer une grosse séance ou un bloc intense.', icon: '🚀' };
+    if (tsb > 5) return { text: 'Bonne fraîcheur. Tu peux pousser aujourd\'hui, les jambes sont là.', icon: '💪' };
+    if (tsb > -5) return { text: 'Zone optimale d\'entraînement. Continue sur cette lancée.', icon: '✅' };
+    if (tsb > -15) return { text: 'Tu accumules de la fatigue. C\'est normal en charge, mais surveille la récupération.', icon: '👀' };
+    return { text: 'Fatigue élevée. Priorise le sommeil et l\'alimentation. Prochaine séance : récup active max.', icon: '😴' };
+}
+
+// TSB gauge — visual thermometer
+function TSBGauge({ tsb, theme }: { tsb: number; theme: string }) {
+    const [showDetails, setShowDetails] = useState(false);
+
+    // Gauge range: -30 to +30, clamped
+    const clampedTsb = Math.max(-30, Math.min(30, tsb));
+    const pct = ((clampedTsb + 30) / 60) * 100;
+
+    const zones = [
+        { end: 16.7, color: '#ef4444', label: 'Surmenage', range: '< −20' },
+        { end: 33.3, color: '#f97316', label: 'Chargé', range: '−20 à −10' },
+        { end: 50, color: '#eab308', label: 'Fatigué', range: '−10 à 0' },
+        { end: 66.7, color: '#86efac', label: 'Équilibré', range: '0 à +10' },
+        { end: 100, color: '#22c55e', label: 'Frais', range: '> +10' },
+    ];
+    const trackBg = theme === 'dark' ? '#1e293b' : '#e2e8f0';
+    const cursorColor = zones.find(z => pct <= z.end)?.color ?? '#22c55e';
+
+    return (
+        <div className="w-full">
+            {/* Gauge track + cursor wrapper — clickable / hoverable */}
+            <div
+                className="relative h-6 flex items-center cursor-pointer"
+                onClick={() => setShowDetails(d => !d)}
+                onMouseEnter={() => setShowDetails(true)}
+                onMouseLeave={() => setShowDetails(false)}
+            >
+                {/* Track (colored zones) */}
+                <div className="absolute inset-x-0 h-2.5 rounded-full overflow-hidden flex" style={{ background: trackBg }}>
+                    {zones.map((z, i) => {
+                        const prevEnd = i === 0 ? 0 : zones[i - 1].end;
+                        return (
+                            <div
+                                key={i}
+                                className="h-full"
+                                style={{
+                                    width: `${z.end - prevEnd}%`,
+                                    backgroundColor: z.color,
+                                    opacity: 0.25,
+                                }}
+                            />
+                        );
+                    })}
+                </div>
+                {/* Cursor */}
+                <div
+                    className="absolute w-5 h-5 rounded-full shadow-lg transition-all duration-500"
+                    style={{
+                        left: `${pct}%`,
+                        top: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        backgroundColor: cursorColor,
+                        border: `2.5px solid ${theme === 'dark' ? '#0f172a' : '#ffffff'}`,
+                        boxShadow: `0 0 0 2px ${cursorColor}40, 0 2px 8px ${cursorColor}60`,
+                    }}
+                />
+            </div>
+
+            {/* Collapsed labels */}
+            {!showDetails && (
+                <div className="flex justify-between mt-0.5 text-[9px] text-slate-400">
+                    <span>Surmenage</span>
+                    <span>Chargé</span>
+                    <span>Optimal</span>
+                    <span>Frais</span>
+                </div>
+            )}
+
+            {/* Expanded detail — zone labels + TSB ranges */}
+            {showDetails && (
+                <div className="flex mt-1.5 gap-0.5 animate-in fade-in duration-200">
+                    {zones.map((z, i) => {
+                        const prevEnd = i === 0 ? 0 : zones[i - 1].end;
+                        const isActive = pct > prevEnd && pct <= z.end;
+                        return (
+                            <div
+                                key={i}
+                                className="flex flex-col items-center rounded-md py-1 transition-all"
+                                style={{
+                                    width: `${z.end - prevEnd}%`,
+                                    backgroundColor: isActive ? z.color + '20' : 'transparent',
+                                    border: isActive ? `1px solid ${z.color}40` : '1px solid transparent',
+                                }}
+                            >
+                                <span className="text-[9px] font-semibold" style={{ color: z.color }}>{z.label}</span>
+                                <span className="text-[8px] text-slate-400">{z.range}</span>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
+}
+
 // PMC Snapshot — forme du jour
-function PMCSnapshot({ ctl, atl }: { ctl: number; atl: number }) {
+function PMCSnapshot({ ctl, atl, nextObjective, theme }: {
+    ctl: number; atl: number;
+    nextObjective?: { name: string; date: string; priority: string } | null;
+    theme: string;
+}) {
     const tsb = Math.round((ctl - atl) * 10) / 10;
     const status = getTSBStatus(tsb);
     const rampRate = ctl > 0 ? Math.round((atl / ctl) * 100) / 100 : 0;
-    const rampAlert = rampRate > 1.5;
+
+    const daysToObj = nextObjective ? daysUntil(nextObjective.date) : null;
+    const advice = getCoachAdvice(tsb, rampRate, daysToObj);
 
     return (
         <Card className="p-4 md:p-6 border-l-4" style={{ borderLeftColor: status.color }}>
-            <div className="flex items-start justify-between mb-4">
+            {/* Row 1 — Status + TSB value */}
+            <div className="flex items-start justify-between mb-3">
                 <div>
                     <div className="flex items-center gap-1.5">
                         <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-medium">Forme du Jour</p>
                         <InfoTooltip
-                            title="Performance Management Chart"
-                            content={"CTL (bleu) : forme chronique sur 42j. Plus c'est élevé, mieux c'est (cible : 50-100).\n\nATL (rouge) : fatigue aiguë sur 7j.\n\nTSB = CTL − ATL : ta fraîcheur du jour.\n  > 0 : frais\n  -10 à 0 : chargé mais optimal\n  < -20 : surmenage\n\nIdéal avant une course : TSB entre +5 et +15."}
+                            title="Comment ça marche ?"
+                            content={"Forme (CTL) : ta condition physique sur 42 jours.\n\nFatigue (ATL) : stress accumulé sur 7 jours.\n\nFraîcheur (TSB) = Forme − Fatigue.\n\nPlus le TSB est positif, plus tu es reposé.\nPlus il est négatif, plus tu es fatigué.\n\nAvant une course, vise TSB entre +5 et +15."}
                         />
                     </div>
                     <div
                         className="inline-flex items-center gap-1.5 mt-1.5 px-3 py-1 rounded-full text-xs font-semibold"
                         style={{ color: status.color, backgroundColor: status.bgColor }}
                     >
-                        <span
-                            className="w-1.5 h-1.5 rounded-full"
-                            style={{ backgroundColor: status.color }}
-                        />
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: status.color }} />
                         {status.label}
                     </div>
                 </div>
                 <div className="text-right">
-                    <p className="text-xs text-slate-500 dark:text-slate-400">TSB</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">Fraîcheur</p>
                     <p className="text-3xl font-black" style={{ color: status.color }}>
                         {tsb > 0 ? '+' : ''}{tsb}
                     </p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">CTL (Forme)</span>
-                        <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{Math.round(ctl)}</span>
-                    </div>
-                    <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-blue-500 rounded-full"
-                            style={{ width: `${Math.min(100, (ctl / 120) * 100)}%` }}
-                        />
-                    </div>
+            {/* Row 2 — TSB Gauge */}
+            <div className="mb-3">
+                <TSBGauge tsb={tsb} theme={theme} />
+            </div>
+
+            {/* Row 3 — Coach advice */}
+            <div
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg mb-3 text-xs leading-relaxed"
+                style={{
+                    backgroundColor: status.bgColor,
+                    color: theme === 'dark' ? '#e2e8f0' : '#334155',
+                }}
+            >
+                <span className="text-base shrink-0">{advice.icon}</span>
+                <p>{advice.text}</p>
+            </div>
+
+            {/* Row 4 — Metrics inline */}
+            <div className="flex items-center gap-4 text-xs">
+                <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-blue-500" />
+                    <span className="text-slate-500 dark:text-slate-400">Forme</span>
+                    <span className="font-bold text-blue-600 dark:text-blue-400">{Math.round(ctl)}</span>
                 </div>
-                <div>
-                    <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">ATL (Fatigue)</span>
-                        <span className="text-sm font-bold text-red-400">{Math.round(atl)}</span>
-                    </div>
-                    <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-red-500 rounded-full"
-                            style={{ width: `${Math.min(100, (atl / 150) * 100)}%` }}
-                        />
-                    </div>
+                <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-red-500" />
+                    <span className="text-slate-500 dark:text-slate-400">Fatigue</span>
+                    <span className="font-bold text-red-400">{Math.round(atl)}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <span className="text-slate-500 dark:text-slate-400">Ratio</span>
+                    <span className={`font-bold ${rampRate > 1.5 ? 'text-red-400' : rampRate > 1.3 ? 'text-amber-400' : 'text-slate-400'}`}>
+                        {rampRate.toFixed(2)}
+                    </span>
                 </div>
             </div>
 
-            {rampAlert && (
+            {/* Row 5 — Ramp rate alert */}
+            {rampRate > 1.5 && (
                 <div className="flex items-center gap-2 mt-3 px-3 py-2 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 rounded-lg">
                     <AlertTriangle size={14} className="text-red-400 shrink-0" />
-                    <p className="text-xs text-red-600 dark:text-red-300">Charge aiguë élevée — risque de blessure accru</p>
+                    <p className="text-[11px] text-red-600 dark:text-red-300">
+                        Ratio fatigue/forme à {rampRate.toFixed(2)} — au-dessus de 1.5 le risque de blessure augmente.
+                    </p>
                 </div>
             )}
 
-            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                <div>
-                    <p className="text-[9px] text-slate-500 uppercase tracking-wider">TSB &gt; 0</p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Frais</p>
+            {/* Row 6 — Next objective context */}
+            {nextObjective && daysToObj !== null && daysToObj > 0 && (
+                <div className="flex items-center gap-2 mt-3 px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg">
+                    <Target size={14} className={nextObjective.priority === 'principale' ? 'text-amber-400 shrink-0' : 'text-violet-400 shrink-0'} />
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                        <strong>{nextObjective.name}</strong> dans {daysToObj}j — {tsb > 5 ? 'tu es dans les clous' : tsb > -5 ? 'commence à alléger' : 'il faut couper maintenant'}
+                    </p>
                 </div>
-                <div>
-                    <p className="text-[9px] text-slate-500 uppercase tracking-wider">-10 à 0</p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Optimal</p>
-                </div>
-                <div>
-                    <p className="text-[9px] text-slate-500 uppercase tracking-wider">&lt; -20</p>
-                    <p className="text-[10px]  dark:text-slate-400 text-red-400/70">Danger</p>
-                </div>
-            </div>
+            )}
         </Card>
     );
 }
@@ -478,8 +614,8 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
         const start = new Date();
         start.setDate(start.getDate() - 30);
         return {
-            start: start.toISOString().split('T')[0],
-            end: end.toISOString().split('T')[0],
+            start: toLocalDateStr(start),
+            end: toLocalDateStr(end),
         };
     });
     const [sportFilter, setSportFilter] = useState<SportFilter>('all');
@@ -490,11 +626,11 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
     const { rangeStart, rangeEnd } = useMemo(() => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const todayStr = today.toISOString().split('T')[0];
+        const todayStr = toLocalDateStr(today);
         const subtract = (days: number) => {
             const d = new Date(today);
             d.setDate(d.getDate() - days);
-            return d.toISOString().split('T')[0];
+            return toLocalDateStr(d);
         };
         switch (period) {
             case '7d': return { rangeStart: subtract(7), rangeEnd: todayStr };
@@ -523,7 +659,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
 
     // ── KPIs ────────────────────────────────────────────────────────────────
     const kpis = useMemo(() => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = toLocalDateStr(new Date());
         let totalPlannedDur = 0, totalActualDur = 0, totalActualDist = 0;
         let totalPlannedTSS = 0, totalActualTSS = 0;
         let totalRPE = 0, rpeCount = 0;
@@ -622,6 +758,12 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
         [objectives]
     );
 
+    // ── Next upcoming objective (for PMC snapshot context) ───────────────────
+    const nextObjective = useMemo(() => {
+        const today = toLocalDateStr(new Date());
+        return upcomingObjectives.find(o => o.date >= today) ?? null;
+    }, [upcomingObjectives]);
+
     // ── PMC chart tick formatter ─────────────────────────────────────────────
     const formatPMCTick = (val: string) =>
         new Date(val).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
@@ -693,7 +835,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
 
             {/* ── TOP SECTION: PMC + KPIs ──────────────────────────────── */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <PMCSnapshot ctl={currentCTL} atl={currentATL} />
+                <PMCSnapshot ctl={currentCTL} atl={currentATL} nextObjective={nextObjective} theme={theme} />
 
                 {/* KPI Grid */}
                 <div className="grid grid-cols-2 gap-3">
