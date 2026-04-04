@@ -8,7 +8,15 @@
       "Bash(npx tsc:*)",
       "Bash(xargs grep:*)",
       "Bash(npx next:*)",
-      "Bash(grep -iE \"\\\\.\\(tsx|ts\\)$\")"
+      "Bash(grep -iE \"\\\\.\\(tsx|ts\\)$\")",
+      "WebSearch",
+      "WebFetch(domain:help.trainingpeaks.com)",
+      "WebFetch(domain:joefrieltraining.com)",
+      "WebFetch(domain:trainright.com)",
+      "WebFetch(domain:www.alancouzens.com)",
+      "WebFetch(domain:buildpeakcompete.com)",
+      "Bash(curl -s \"https://www.google.com/search?q=progressive+overload+weekly+workout+mesocycle+endurance+cycling+triathlon+coaching+methodology\")",
+      "WebFetch(domain:www.hyroxtrainingplans.com)"
     ]
   }
 }

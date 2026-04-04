@@ -10,14 +10,13 @@ import {
 import {
     ComposedChart, Area, Line, Bar, XAxis, YAxis,
     CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine,
-    BarChart, Legend,
+    BarChart,
 } from 'recharts';
 import type { Workout, Objective } from '@/lib/data/DatabaseTypes';
 import { Card } from '@/components/ui/Card';
 import { Profile, Schedule } from '@/lib/data/DatabaseTypes';
 import {
-    computePMC, computeWeeklyTSS, getTSBStatus, aggregateZones, getWorkoutTSS,
-    type PMCPoint,
+    computePMC, computeWeeklyTSS, getTSBStatus, aggregateZones, getWorkoutTSS
 } from '@/lib/stats/computePMC';
 import { useTheme } from '@/components/ThemeProvider';
 
@@ -35,9 +34,9 @@ type SportFilter = 'all' | 'cycling' | 'running' | 'swimming';
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
 const SPORT_COLORS: Record<SportFilter, string> = {
-    all:      '#8b5cf6',
-    cycling:  '#3b82f6',
-    running:  '#10b981',
+    all: '#8b5cf6',
+    cycling: '#3b82f6',
+    running: '#10b981',
     swimming: '#06b6d4',
 };
 
@@ -105,7 +104,7 @@ function InfoTooltip({ title, content }: { title: string; content: string }) {
 
     const tooltip = open ? createPortal(
         <div
-            className="fixed z-[9999] w-56 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl p-3 shadow-2xl pointer-events-none"
+            className="fixed z-9999 w-56 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl p-3 shadow-2xl pointer-events-none"
             style={{ top: pos.top, left: pos.left }}
         >
             <p className="text-xs font-semibold text-slate-900 dark:text-white mb-1.5">{title}</p>
@@ -217,7 +216,7 @@ function PMCSnapshot({ ctl, atl }: { ctl: number; atl: number }) {
                 </div>
                 <div>
                     <p className="text-[9px] text-slate-500 uppercase tracking-wider">&lt; -20</p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 text-red-400/70">Danger</p>
+                    <p className="text-[10px]  dark:text-slate-400 text-red-400/70">Danger</p>
                 </div>
             </div>
         </Card>
@@ -412,7 +411,7 @@ function ZoneDistribution({ zones }: { zones: number[] }) {
 
 // Sport Tab Button
 function SportTabButton({
-    sport, label, icon, active, color, onClick,
+    label, icon, active, color, onClick,
 }: {
     sport: SportFilter; label: string; icon: React.ReactNode; active: boolean; color: string; onClick: () => void;
 }) {
@@ -498,12 +497,12 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
             return d.toISOString().split('T')[0];
         };
         switch (period) {
-            case '7d':     return { rangeStart: subtract(7),   rangeEnd: todayStr };
-            case '30d':    return { rangeStart: subtract(30),  rangeEnd: todayStr };
-            case '90d':    return { rangeStart: subtract(90),  rangeEnd: todayStr };
+            case '7d': return { rangeStart: subtract(7), rangeEnd: todayStr };
+            case '30d': return { rangeStart: subtract(30), rangeEnd: todayStr };
+            case '90d': return { rangeStart: subtract(90), rangeEnd: todayStr };
             case 'season': return { rangeStart: `${currentYear}-01-01`, rangeEnd: `${currentYear}-12-31` };
             case 'custom': return { rangeStart: customRange.start, rangeEnd: customRange.end };
-            default:       return { rangeStart: subtract(30),  rangeEnd: todayStr };
+            default: return { rangeStart: subtract(30), rangeEnd: todayStr };
         }
     }, [period, customRange, currentYear]);
 
@@ -628,10 +627,10 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
                 </div>
                 {/* Sport filter pills */}
                 <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
-                    <SportTabButton sport="all"     label="Tous sports" icon={<Activity size={12} />} active={sportFilter === 'all'}     color={SPORT_COLORS.all}      onClick={() => setSportFilter('all')} />
-                    {profile.activeSports.cycling  && <SportTabButton sport="cycling"  label="Vélo"    icon={<Bike size={12} />}       active={sportFilter === 'cycling'}  color={SPORT_COLORS.cycling}  onClick={() => setSportFilter('cycling')} />}
-                    {profile.activeSports.running  && <SportTabButton sport="running"  label="Course"  icon={<Footprints size={12} />} active={sportFilter === 'running'}  color={SPORT_COLORS.running}  onClick={() => setSportFilter('running')} />}
-                    {profile.activeSports.swimming && <SportTabButton sport="swimming" label="Natation" icon={<Waves size={12} />}     active={sportFilter === 'swimming'} color={SPORT_COLORS.swimming} onClick={() => setSportFilter('swimming')} />}
+                    <SportTabButton sport="all" label="Tous sports" icon={<Activity size={12} />} active={sportFilter === 'all'} color={SPORT_COLORS.all} onClick={() => setSportFilter('all')} />
+                    {profile.activeSports.cycling && <SportTabButton sport="cycling" label="Vélo" icon={<Bike size={12} />} active={sportFilter === 'cycling'} color={SPORT_COLORS.cycling} onClick={() => setSportFilter('cycling')} />}
+                    {profile.activeSports.running && <SportTabButton sport="running" label="Course" icon={<Footprints size={12} />} active={sportFilter === 'running'} color={SPORT_COLORS.running} onClick={() => setSportFilter('running')} />}
+                    {profile.activeSports.swimming && <SportTabButton sport="swimming" label="Natation" icon={<Waves size={12} />} active={sportFilter === 'swimming'} color={SPORT_COLORS.swimming} onClick={() => setSportFilter('swimming')} />}
                 </div>
             </div>
 
@@ -726,7 +725,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
                     <div className="flex items-center gap-3 text-[10px] text-slate-500 dark:text-slate-400">
                         <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-blue-500 inline-block" />CTL</span>
                         <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-red-500 inline-block" style={{ borderTop: '2px dashed #ef4444', width: 12, height: 0 }} />ATL</span>
-                        <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-slate-600 inline-block opacity-60" />TSB</span>
+                        <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-slate-600 inline-block opacity-60" />TSS</span>
                     </div>
                 </div>
 

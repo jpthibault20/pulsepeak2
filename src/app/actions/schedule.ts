@@ -19,18 +19,23 @@ import {
     parseISO,
 } from 'date-fns';
 import { callGeminiAPI } from '@/lib/ai/coach-api';
-import { CTL_PROGRESSION, RECOVERY_WEEK_THRESHOLD, RECOVERY_TSS_RATIO } from './constants';
+import { CTL_PROGRESSION, CTL_LEVEL_MULTIPLIER, TAPER_CTL_DROP_PERCENT, RECOVERY_WEEK_THRESHOLD, RECOVERY_TSS_RATIO, RESIDUAL_EFFECTS_DAYS } from './constants';
 import { computeBlockSkeletons, computeWeeklyTSS, formatAvailability, getActiveSports } from './helpers';
 
 
 
 // ─── Rate limiting ────────────────────────────────────────────────────────────
 
-const AI_DAILY_LIMITS = { plan: 3, workout: 10 } as const;
+const AI_DAILY_LIMITS_FREE = { plan: 3, workout: 10 } as const;
+const AI_DAILY_LIMITS_PRO  = { plan: 999, workout: 999 } as const;
 
 async function checkAndIncrementAICallLimit(type: 'plan' | 'workout'): Promise<void> {
     const today = format(new Date(), 'yyyy-MM-dd');
-    await atomicIncrementAICallCount(type, today, AI_DAILY_LIMITS[type]);
+    const profile = await getProfile();
+    const isPro = profile?.plan === 'pro' || profile?.plan === 'dev'
+               || profile?.role === 'admin' || profile?.role === 'freeUse';
+    const limits = isPro ? AI_DAILY_LIMITS_PRO : AI_DAILY_LIMITS_FREE;
+    await atomicIncrementAICallCount(type, today, limits[type]);
 }
 
 /******************************************************************************
@@ -91,7 +96,19 @@ export async function CreateAdvancedPlan(
     // Les semaines suivantes seront générées le dimanche précédant chaque semaine.
     const firstWeek = newWeeks[0];
     const firstBlock = updatedBlocks.find(b => b.id === firstWeek.blockId) ?? updatedBlocks[0];
-    const firstWeekWorkouts = await CreateWorkoutForWeek(profile, newPlan, firstBlock, firstWeek, null, 100, profile.weeklyAvailability);
+    // Première semaine d'un nouveau plan : calculer la complétion + chercher les courses à proximité
+    const [existingAllWorkouts, existingAllWeeks, existingObjectives] = await Promise.all([
+        getWorkout(), getWeek(), getObjectives(),
+    ]);
+    const realCompletion = computeAvgCompletion(existingAllWorkouts ?? [], existingAllWeeks ?? [], firstWeek.id);
+    const firstWeekStart = parseISO(firstBlock.startDate);
+    const firstWeekEnd = addDays(firstWeekStart, 13); // cette semaine + semaine suivante
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const firstWeekObjectives = existingObjectives.filter(o =>
+        o.status === 'upcoming' && o.date >= todayStr
+        && parseISO(o.date) >= firstWeekStart && parseISO(o.date) <= firstWeekEnd
+    );
+    const firstWeekWorkouts = await CreateWorkoutForWeek(profile, newPlan, firstBlock, firstWeek, null, realCompletion, profile.weeklyAvailability, firstWeekObjectives);
 
     const newWorkouts: Workout[] = [...firstWeekWorkouts];
     const updatedWeeks = newWeeks.map((week) =>
@@ -208,7 +225,10 @@ export async function CreatePlanToObjective(userID: string, planStartDate: strin
         return objDate >= firstWeekStart && objDate <= firstWeekEnd;
     });
 
-    const firstWeekWorkouts = await CreateWorkoutForWeek(profile, newPlan, firstBlock, firstWeek, null, 100, profile.weeklyAvailability, relevantObjectives);
+    const existingAllWorkouts2 = await getWorkout();
+    const existingAllWeeks2 = await getWeek();
+    const realCompletion2 = computeAvgCompletion(existingAllWorkouts2 ?? [], existingAllWeeks2 ?? [], firstWeek.id);
+    const firstWeekWorkouts = await CreateWorkoutForWeek(profile, newPlan, firstBlock, firstWeek, null, realCompletion2, profile.weeklyAvailability, relevantObjectives);
 
     const newWorkouts: Workout[] = [...firstWeekWorkouts];
     const weeksWithWorkouts = finalWeeks.map(w =>
@@ -251,9 +271,20 @@ async function CreateBlocksToObjective(
 
     const blockSkeletons = computeBlockSkeletons(totalWeeks);
 
-    // Récupérer l'historique des séances pour informer l'IA
-    const existingWorkouts = await getWorkout();
+    // Récupérer tout le contexte pour informer l'IA
+    const [existingWorkouts, allBlocks, allObjectives] = await Promise.all([
+        getWorkout(),
+        getBlock(),
+        getObjectives(),
+    ]);
     const historySummary = getTrainingHistorySummary(existingWorkouts ?? []);
+    const blocksHistory = await getCompletedBlocksHistory();
+    const athleteContext = await analyzeAthleteContext(
+        profile,
+        existingWorkouts ?? [],
+        allBlocks ?? [],
+        allObjectives ?? [],
+    );
 
     const secondaryContext = secondaryObjs.length > 0
         ? `\n## OBJECTIFS SECONDAIRES (courses intermédiaires)\n` +
@@ -261,8 +292,10 @@ async function CreateBlocksToObjective(
           `\n→ Prévoir une semaine de relâche (Taper) autour de chaque objectif secondaire.`
         : '';
 
+    const levelMultiplier = CTL_LEVEL_MULTIPLIER[profile.experience ?? 'Intermédiaire'] ?? 1.0;
+
     const aiPrompt = `
-Tu es un coach de ${profile.activeSports.cycling ? 'cyclisme' : ''}${profile.activeSports.running ? ', course à pied' : ''}${profile.activeSports.swimming ? ', natation' : ''} certifié avec 15 ans d'expérience.
+Tu es un coach de ${profile.activeSports.cycling ? 'cyclisme' : ''}${profile.activeSports.running ? ', course à pied' : ''}${profile.activeSports.swimming ? ', natation' : ''} certifié avec 15 ans d'expérience en périodisation (Friel, Issurin, Coggan).
 
 ## OBJECTIF PRINCIPAL
 - Course : ${primaryObj.name}
@@ -274,31 +307,47 @@ ${secondaryContext}
 
 ## CONTEXTE ATHLÈTE
 - Niveau : ${profile.experience ?? 'Intermédiaire'}
-- CTL actuelle : ${profile.currentCTL}
-- ATL actuelle : ${profile.currentATL}
 - Disciplines : ${profile.activeSports.cycling ? 'cyclisme' : ''}${profile.activeSports.running ? ', course à pied' : ''}${profile.activeSports.swimming ? ', natation' : ''}
 
-## HISTORIQUE D'ENTRAÎNEMENT RÉCENT
+${athleteContext}
+
+## HISTORIQUE DE PÉRIODISATION (BLOCS PASSÉS)
+${blocksHistory}
+
+## HISTORIQUE D'ENTRAÎNEMENT (12 DERNIÈRES SEMAINES)
 ${historySummary}
-→ UTILISE CET HISTORIQUE pour adapter les blocs : si l'athlète a déjà fait du travail de base (endurance longue, volume élevé), ne repropose PAS un bloc Base. Enchaîne directement sur Build/Peak selon la progression logique.
 
 ## STRUCTURE TEMPORELLE
 ${blockSkeletons.length} blocs de méso-cycles :
 ${blockSkeletons.map(b => `- Bloc ${b.index} : ${b.duration} semaines${b.isLast ? ' (DERNIER → semaine de course incluse)' : ''}`).join('\n')}
 
+## PHILOSOPHIE — L'HISTORIQUE PRIME SUR LE TEMPLATE
+Tu ne dois JAMAIS suivre aveuglément la progression classique Base→Build→Peak→Taper.
+Ton rôle est d'analyser l'état RÉEL de l'athlète et de prescrire les blocs dont il a BESOIN.
+
+Exemples de décisions attendues :
+- Athlète en pleine saison (CTL 60+) avec base déjà faite → commencer par Build PMA, Build Seuil, ou Peak
+- Athlète qui a fait beaucoup d'intensité récemment → un bloc Build volume/endurance pour rééquilibrer
+- Athlète avec CTL faible après une coupure → Base nécessaire
+- Athlète 4 semaines avant la course avec bonne forme → Peak puis Taper
+- Plan court (≤4 semaines) → pas de Base, aller directement au spécifique
+
+Les effets résiduels (Issurin) guident aussi :
+- Base aérobie persiste 25-35j → pas besoin de la retravailler si faite dans le dernier mois
+- VO2max/PMA persiste 12-18j → à retravailler régulièrement
+- Seuil persiste 15-25j
+
 ## RÈGLES OBLIGATOIRES
 1. Le dernier bloc DOIT être de type "Taper" (affûtage pré-course).
-2. Structurer les blocs pour progresser logiquement vers l'objectif principal.
-3. Prendre en compte les objectifs secondaires pour la périodisation.
-4. Prendre en compte l'historique récent pour ne pas répéter une phase déjà accomplie.
-5. Thèmes spécifiques à la discipline et à l'objectif (ex: "Endurance longue distance", "PMA triathlon").
+2. Jamais 2 blocs du même type consécutivement (alternance des stimuli — Issurin).
+3. Thèmes SPÉCIFIQUES et VARIÉS selon les besoins identifiés. Exemples de thèmes : "Développement PMA", "Travail au seuil", "Force sous-max", "Spécificité course", "Sweet Spot", "Endurance musculaire", "VO2max intervalles courts", etc.
+4. Prendre en compte les objectifs secondaires pour la périodisation.
 
+## FORMAT DE RÉPONSE (JSON uniquement)
 Retourner un tableau JSON. Chaque objet contient exactement :
 - "index" (number) : numéro du bloc
 - "type" (string) : l'un de ["Base", "Build", "Peak", "Taper"]
-- "theme" (string) : objectif principal en 3 à 6 mots
-
-## RÉPONSE (JSON uniquement) :
+- "theme" (string) : focus spécifique en 3 à 6 mots (PAS juste "Build" ou "Préparation" — sois PRÉCIS sur le contenu : PMA, seuil, force, endurance musculaire, spécificité, etc.)
 `;
 
     const { data: rawBlocks, tokensUsed: tokensBlocks } = await callGeminiAPI({
@@ -314,7 +363,15 @@ Retourner un tableau JSON. Chaque objet contient exactement :
 
     return blockSkeletons.map((skeleton) => {
         const aiInfo = aiResponse.find(b => b.index === skeleton.index);
-        const progression = CTL_PROGRESSION[aiInfo?.type ?? 'Base'] ?? 5;
+        const blockType = aiInfo?.type ?? 'Build';
+
+        // Calcul CTL dynamique : Taper en % au lieu de fixe, progression ajustée au niveau
+        let progression: number;
+        if (blockType === 'Taper') {
+            progression = -Math.round(previousTargetCTL * TAPER_CTL_DROP_PERCENT);
+        } else {
+            progression = Math.round((CTL_PROGRESSION[blockType] ?? 8) * levelMultiplier);
+        }
 
         const startCTL     = previousTargetCTL;
         const targetCTL    = startCTL + progression;
@@ -325,7 +382,7 @@ Retourner un tableau JSON. Chaque objet contient exactement :
             planId: plan.id,
             userId: plan.userId,
             orderIndex: skeleton.index,
-            type:  aiInfo?.type  ?? 'General',
+            type:  blockType,
             theme: aiInfo?.theme ?? 'Préparation',
             weekCount: skeleton.duration,
             startDate: format(currentStartDate, 'yyyy-MM-dd'),
@@ -452,59 +509,89 @@ async function CreateBlocks(plan: Plan, profile: Profile): Promise<Block[]> {
 
     const blockSkeletons = computeBlockSkeletons(totalWeeks);
 
-    // Récupérer l'historique des séances pour informer l'IA
-    const existingWorkouts = await getWorkout();
+    // Récupérer tout le contexte pour informer l'IA
+    const [existingWorkouts, allBlocks, allObjectives] = await Promise.all([
+        getWorkout(),
+        getBlock(),
+        getObjectives(),
+    ]);
     const historySummary = getTrainingHistorySummary(existingWorkouts ?? []);
+    const blocksHistory = await getCompletedBlocksHistory();
+    const athleteContext = await analyzeAthleteContext(
+        profile,
+        existingWorkouts ?? [],
+        allBlocks ?? [],
+        allObjectives ?? [],
+    );
+
+    const levelMultiplier = CTL_LEVEL_MULTIPLIER[profile.experience ?? 'Intermédiaire'] ?? 1.0;
 
     const aiPrompt = `
-        Tu es un coach de ${profile.activeSports.cycling ? 'cyclisme' : ''}${profile.activeSports.running ? ', course à pied' : ''}${profile.activeSports.swimming ? ', natation' : ''} certifié et avec 15 ans d'experience dans le monde du sport.
+Tu es un coach de ${profile.activeSports.cycling ? 'cyclisme' : ''}${profile.activeSports.running ? ', course à pied' : ''}${profile.activeSports.swimming ? ', natation' : ''} certifié avec 15 ans d'expérience en périodisation (Friel, Issurin, Coggan).
 
-        ## CONTEXTE ATHLÈTE
-        - Objectif : ${plan.macroStrategyDescription}
-        - Date de course : ${plan.goalDate}
-        - Niveau : ${profile.experience ?? "Intermédiaire"}
-        - CTL actuelle : ${profile.currentCTL}
-        - ATL actuelle : ${profile.currentATL}
+## CONTEXTE ATHLÈTE
+- Objectif : ${plan.macroStrategyDescription}
+- Date de fin : ${plan.goalDate}
+- Niveau : ${profile.experience ?? "Intermédiaire"}
+- Disciplines : ${profile.activeSports.cycling ? 'cyclisme' : ''}${profile.activeSports.running ? ', course à pied' : ''}${profile.activeSports.swimming ? ', natation' : ''}
 
-        ## HISTORIQUE D'ENTRAÎNEMENT RÉCENT
+${athleteContext}
+
+## HISTORIQUE DE PÉRIODISATION (BLOCS PASSÉS)
+${blocksHistory}
+
+## HISTORIQUE D'ENTRAÎNEMENT (12 DERNIÈRES SEMAINES)
 ${historySummary}
-→ UTILISE CET HISTORIQUE pour adapter les blocs : si l'athlète a déjà fait du travail de base (endurance longue, volume élevé), ne repropose PAS un bloc Base. Enchaîne directement sur Build/Peak selon la progression logique.
 
-        ## STRUCTURE TEMPORELLE
-        ${blockSkeletons.length} blocs de méso-cycles :
-        ${blockSkeletons.map(b =>
-                `- Bloc ${b.index} : ${b.duration} semaines${b.isLast ? " (DERNIER → inclut la semaine de course)" : ""}`
-            ).join('\n')}
+## STRUCTURE TEMPORELLE
+${blockSkeletons.length} blocs de méso-cycles :
+${blockSkeletons.map(b =>
+    `- Bloc ${b.index} : ${b.duration} semaines${b.isLast ? " (DERNIER → inclut la semaine de course)" : ""}`
+).join('\n')}
 
-        ## PROFIL NIVEAU
-        ${profile.experience === 'Débutant' ? `
-        ⚠️ ATHLÈTE DÉBUTANT — Règles impératives :
-        - Commence TOUJOURS par un bloc "Base" long (fondamentaux, endurance aérobie)
-        - Progression très graduelle (<5% de charge par semaine)
-        - Priorité à la régularité et la récupération, pas à la performance` : profile.experience === 'Avancé' ? `
-        🏆 ATHLÈTE AVANCÉ — Objectif performance :
-        - Blocs Peak, Build et Taper autorisés dès le début si le plan est court
-        - Périodisation polarisée recommandée (blocs alternant volume et intensité)
-        - Peut supporter des blocs courts et intenses` : `
-        📈 ATHLÈTE INTERMÉDIAIRE :
-        - Progression équilibrée entre volume et intensité
-        - Commence par Base si plan ≥ 8 semaines, sinon Build direct
-        - Un bloc de récupération active conseillé en milieu de plan`}
+## PHILOSOPHIE — L'HISTORIQUE PRIME SUR LE TEMPLATE
+Tu ne dois JAMAIS suivre aveuglément la progression classique Base→Build→Peak→Taper.
+Ton rôle est d'analyser l'état RÉEL de l'athlète et de prescrire les blocs dont il a BESOIN.
 
-        ## RÈGLES OBLIGATOIRES
-        1. tu dois prendre en compte le profil de l'athlète et son objectif pour définir un thème spécifique à chaque bloc
-        2. tu dois prendre en compte l'historique a disposition pour s'adapter au mieux a l'athlète
-        3. Dans le mesure du possible suivre une progression logique progressive et pertinente
-        4. Si il n'y a qu'un seul bloc, part du principe que l'athlète a déjà une base et qu'on est dans une logique de préparation spécifique (pas de bloc de base sauf si demandé)
+Exemples de décisions attendues :
+- Athlète en pleine saison (CTL 60+) avec base déjà faite → commencer par Build PMA, Build Seuil, ou Peak
+- Athlète qui sort d'un bloc PMA → enchaîner avec Seuil ou Spécificité (alternance Issurin)
+- Athlète avec CTL faible après coupure → Base nécessaire
+- Bloc unique (1 seul bloc) → l'athlète a déjà une base, aller au spécifique (PMA, seuil, etc.)
+- Plan court (≤4 semaines) → pas de Base, aller directement au travail ciblé
 
+Les effets résiduels guident aussi :
+- Base aérobie persiste 25-35j → pas besoin si faite récemment
+- VO2max/PMA persiste 12-18j → à retravailler régulièrement
+- Seuil persiste 15-25j
 
-        Chaque objet contient exactement :
-        - "index" (number) : numéro du bloc
-        - "type" (string) : l'un de ["Base", "Build", "Peak", "Taper"]
-        - "theme" (string) : objectif principal en 3 à 6 mots, spécifique à ${profile.activeSports.cycling ? 'cyclisme' : ''}${profile.activeSports.running ? ', course à pied' : ''}${profile.activeSports.swimming ? ', natation' : ''}
+## PROFIL NIVEAU
+${profile.experience === 'Débutant' ? `
+⚠️ ATHLÈTE DÉBUTANT :
+- Si CTL < 30, commence par un bloc Base (fondamentaux aérobies)
+- Progression très graduelle (<5% de charge par semaine)
+- Même débutant : si CTL ≥ 40 et historique montre une base récente, peut passer à Build` : profile.experience === 'Avancé' ? `
+🏆 ATHLÈTE AVANCÉ :
+- Blocs Peak, Build et Taper autorisés dès le début si la forme est là
+- Périodisation polarisée recommandée (alterner volume et intensité)
+- Peut supporter des blocs courts et intenses (PMA, anaérobie)` : `
+📈 ATHLÈTE INTERMÉDIAIRE :
+- Progression équilibrée entre volume et intensité
+- Commence par Build si CTL ≥ 40 ou historique montre une base récente
+- Base uniquement si CTL < 40 ET aucune base récente`}
 
-        ## RÉPONSE (JSON uniquement) :
-        `;
+## RÈGLES OBLIGATOIRES
+1. L'historique et l'état actuel déterminent le premier bloc, PAS un template.
+2. Jamais 2 blocs du même type consécutivement (alternance des stimuli).
+3. Thèmes PRÉCIS et SPÉCIFIQUES. Exemples : "Développement PMA", "Travail seuil anaérobie", "Force sous-max côtes", "Sweet Spot progression", "VO2max intervalles courts", "Spécificité endurance longue", etc.
+4. Si 1 seul bloc : PAS de Base sauf si CTL < 30.
+
+## FORMAT DE RÉPONSE (JSON uniquement)
+Chaque objet contient exactement :
+- "index" (number) : numéro du bloc
+- "type" (string) : l'un de ["Base", "Build", "Peak", "Taper"]
+- "theme" (string) : focus spécifique en 3 à 6 mots
+`;
 
     const { data: rawAiResponse, tokensUsed: tokensWeeks } = await callGeminiAPI({
         contents: [{ parts: [{ text: aiPrompt }] }],
@@ -521,13 +608,21 @@ ${historySummary}
     }
     const aiResponse = rawAiResponse as { index: number; type: string; theme: string }[];
 
-    // Construction des blocs
+    // Construction des blocs avec CTL dynamique
     let currentStartDate = start;
     let previousTargetCTL = profile.currentCTL;
 
     return blockSkeletons.map((skeleton) => {
         const aiInfo = aiResponse.find(b => b.index === skeleton.index);
-        const progression = CTL_PROGRESSION[aiInfo?.type ?? "Base"] ?? 5;
+        const blockType = aiInfo?.type ?? 'Build';
+
+        // Calcul CTL dynamique : Taper en % au lieu de fixe, progression ajustée au niveau
+        let progression: number;
+        if (blockType === 'Taper') {
+            progression = -Math.round(previousTargetCTL * TAPER_CTL_DROP_PERCENT);
+        } else {
+            progression = Math.round((CTL_PROGRESSION[blockType] ?? 8) * levelMultiplier);
+        }
 
         const startCTL   = previousTargetCTL;
         const targetCTL  = startCTL + progression;
@@ -538,7 +633,7 @@ ${historySummary}
             planId: plan.id,
             userId: plan.userId,
             orderIndex: skeleton.index,
-            type:  aiInfo?.type  ?? "General",
+            type:  blockType,
             theme: aiInfo?.theme ?? "Préparation",
             weekCount: skeleton.duration,
             startDate: format(currentStartDate, 'yyyy-MM-dd'),
@@ -561,7 +656,7 @@ ${historySummary}
  * @brief Génère les semaines d'entraînement d'un bloc avec une progression
  *        linéaire du TSS entre startCTL et targetCTL du bloc.
  *        Si le bloc contient plus de 3 semaines, la dernière est
- *        automatiquement une semaine de récupération à 90% du TSS de départ.
+ *        automatiquement une semaine de récupération à 50% du TSS de départ.
  * @input
  * - plan    : Plan parent (référence)
  * - block   : Bloc parent contenant startCTL, targetCTL, weekCount et theme
@@ -632,6 +727,19 @@ export async function CreateWorkoutForWeek(
     const activeSports = getActiveSports(profile.activeSports);
     const formattedAvailability = formatAvailability(weeklyAvailability);
 
+    // Récupérer le contexte de la semaine précédente pour la continuité
+    const [allWorkouts, allWeeks, allBlocks] = await Promise.all([
+        getWorkout(),
+        getWeek(),
+        getBlock(),
+    ]);
+    const previousWeekContext = getPreviousWeekSummary(
+        allWorkouts ?? [],
+        allWeeks ?? [],
+        allBlocks ?? [],
+        week.id,
+    );
+
     // Zones context pour des descriptions précises
     let zonesContext = "";
 
@@ -689,8 +797,15 @@ ${profile.heartRate.resting ? `- FC Repos : ${profile.heartRate.resting} bpm` : 
 - VMA : ${profile.running.Test.vma} km/h`;
     }
 
+    // Position dans le bloc pour guider la progression
+    const weekPosition = week.weekNumber <= 1
+        ? 'DÉBUT DE BLOC — introduire les séances clés, volume modéré'
+        : week.weekNumber >= block.weekCount
+            ? (week.type === 'Recovery' ? 'SEMAINE DE RÉCUPÉRATION — décharge' : 'FIN DE BLOC — pic de charge ou transition')
+            : `MILIEU DE BLOC (S${week.weekNumber}/${block.weekCount}) — progression depuis la semaine précédente`;
+
    const aiPrompt = `
-Tu es un coach certifié, spécialisé en ${activeSports.join(", ")}, avec 15 ans d'expérience.
+Tu es un coach certifié, spécialisé en ${activeSports.join(", ")}, avec 15 ans d'expérience. Tu génères la semaine ${week.weekNumber} d'un bloc de ${block.weekCount} semaines.
 
 ## PROFIL ATHLÈTE
 - Niveau : ${profile.experience ?? "Intermédiaire"}
@@ -698,10 +813,20 @@ Tu es un coach certifié, spécialisé en ${activeSports.join(", ")}, avec 15 an
 - Disciplines actives :${profile.activeSports.cycling ? 'cyclisme' : ''}${profile.activeSports.running ? ', course à pied' : ''}${profile.activeSports.swimming ? ', natation' : ''}
 ${zonesContext}
 
-## DISPONIBILITÉS DE LA SEMAINE
+## DISPONIBILITÉS ET PROGRAMME DE LA SEMAINE — PRIORITÉ ABSOLUE
 ${formattedAvailability || "Non spécifiées"}
-Les commentaires entre parenthèses décrivent le contexte de la journée (ex: sortie club, chill, compétition). Adapte le type et l'intensité de la séance en conséquence.
-Les jours marqués IA LIBRE sont des jours où l'athlète te laisse carte blanche : tu choisis librement le sport, la durée et l'intensité en fonction du contexte de la semaine (charge, récupération, objectifs). Tu peux aussi décider de laisser un jour de repos complet si c'est plus pertinent. Si un commentaire est présent (ex: "vacances", "repos"), adapte ton choix en conséquence.
+
+### RÈGLES DE RESPECT DU PROGRAMME (NON NÉGOCIABLE) :
+- Si l'athlète a défini un SPORT et une DURÉE pour un jour (ex: "vélo 1.5h"), tu DOIS :
+  · Utiliser EXACTEMENT ce sport pour ce jour (pas un autre)
+  · Respecter la durée indiquée comme durée MAX de la séance
+  · Seul le TYPE de séance (Endurance, Interval, Tempo...) et le CONTENU sont à ta discrétion
+- Si l'athlète a défini PLUSIEURS sports un même jour (ex: "natation 1h, vélo 0.5h"), il attend UNE séance par sport listé.
+- Les commentaires entre parenthèses (ex: "sortie club", "chill", "compétition") décrivent le contexte. Adapte le type et l'intensité en conséquence.
+- SEULS les jours marqués "IA LIBRE" te donnent carte blanche : tu choisis le sport, la durée et l'intensité. Tu peux aussi décider de laisser un jour de repos complet si c'est pertinent.
+- Les jours NON LISTÉS dans les disponibilités sont des jours de REPOS. Ne génère AUCUNE séance pour ces jours.
+
+${previousWeekContext}
 
 ## CONTEXTE DE LA SEMAINE
 - Thème du bloc : ${block.theme}
@@ -709,10 +834,42 @@ Les jours marqués IA LIBRE sont des jours où l'athlète te laisse carte blanch
 - Type de semaine : ${week.type}
 - TSS cible total : ${week.targetTSS}
 - Semaine n°${week.weekNumber} / ${block.weekCount}
-${userComment        ? `- Commentaire athlète : "${userComment}"` : ""}
+- Position : ${weekPosition}
+${userComment ? `- Commentaire athlète : "${userComment}"` : ""}
 - Complétion des 4 dernières semaines : ${avgCompletion}%
-${avgCompletion < 80 ? `- ⚠️ Complétion faible : réduire l'intensité et le volume global` : ""}
-${avgCompletion > 95 ? `- ✅ Complétion excellente : l'athlète peut absorber plus de charge` : ""}
+${avgCompletion < 80 ? `- ⚠️ Complétion faible (${avgCompletion}%) : l'athlète ne termine pas ses semaines. RÉDUIRE l'intensité et le volume. Proposer des séances réalistes et atteignables plutôt qu'ambitieuses.` : ""}
+${avgCompletion >= 80 && avgCompletion <= 95 ? `- ✔️ Complétion correcte (${avgCompletion}%) : maintenir la progression normale.` : ""}
+${avgCompletion > 95 ? `- ✅ Complétion excellente (${avgCompletion}%) : l'athlète absorbe bien la charge. Peut progresser normalement.` : ""}
+
+## RÈGLES DE PROGRESSION ET CONTINUITÉ (CRUCIAL)
+Tu DOIS construire cette semaine en continuité avec la semaine précédente. Chaque semaine n'est pas indépendante — c'est une étape dans une progression.
+
+### Séances clés vs séances secondaires
+Chaque semaine contient 2-3 SÉANCES CLÉS qui portent l'adaptation :
+1. La séance d'intervalles principale (cible du bloc : PMA, seuil, VO2max, etc.)
+2. La sortie longue (endurance fondamentale)
+3. Optionnel : une 2ème séance d'intensité
+Les autres séances sont SECONDAIRES (endurance facile Z1-Z2, récupération). Si l'athlète doit manquer une séance, ce sont celles-là qu'il saute.
+
+### Progression des séances clés semaine après semaine
+${week.type === 'Recovery' ? `
+⚠️ SEMAINE DE RÉCUPÉRATION (modèle Friel en 2 phases) :
+- Jours 1-3 : Intensité Z1 uniquement. Séances courtes. Peut inclure 1 jour de repos complet.
+- Jours 4-6 : Réintroduire 1-2 touches d'intensité COURTES (ex: 4x2min au seuil dans une séance de 45min).
+- Volume global : 40-60% du pic de la semaine précédente.
+- Maintenir la fréquence (nombre de séances similaire) mais réduire drastiquement la durée.
+- PAS de sortie longue. Max 60-75% de la durée de la sortie longue précédente.` : `
+PROGRESSION DE CHARGE (semaine de type ${week.type}) :
+- Sortie longue : ${week.weekNumber === 1 ? 'établir la durée de base' : 'augmenter de 15-30 min par rapport à la semaine précédente (dans la limite de la dispo du jour)'}.
+- Intervalles : progresser via UNE seule variable à la fois :
+  · OPTION A : +1 répétition (ex: 4x5min → 5x5min)
+  · OPTION B : +1min de durée par intervalle (ex: 4x5min → 4x6min)
+  · OPTION C : -1min de repos entre les intervalles
+  · NE JAMAIS augmenter intensité + volume + réduire repos en même temps.
+- L'intensité (zones/watts) reste dans la MÊME zone que la semaine précédente. C'est le volume de travail qui augmente.
+- PLACEMENT DES SÉANCES CLÉS : respecter le programme de l'athlète en priorité. Placer la séance d'intervalles sur un jour où l'athlète a prévu un créneau suffisant (≥1h). Placer la sortie longue sur le créneau le plus long de la semaine. Si un jour est marqué "IA LIBRE", il peut servir à placer une séance clé manquante.
+- Alterner SYSTÉMATIQUEMENT : jour dur → jour facile → jour dur (dans les limites du programme défini).`}
+
 ${(() => {
     if (!weekObjectives || weekObjectives.length === 0) return '';
 
@@ -720,10 +877,12 @@ ${(() => {
     const weekStartStr = format(weekStartDate, 'yyyy-MM-dd');
     const weekEndStr = format(addDays(weekStartDate, 6), 'yyyy-MM-dd');
     const nextMondayStr = format(addDays(weekStartDate, 7), 'yyyy-MM-dd');
+    const nextWednesdayStr = format(addDays(weekStartDate, 9), 'yyyy-MM-dd');
 
     // Classer les objectifs
     const objThisWeek = weekObjectives.filter(o => o.date >= weekStartStr && o.date <= weekEndStr);
-    const objNextMonday = weekObjectives.filter(o => o.date === nextMondayStr);
+    // Course en début de semaine suivante (lun-mer) → la semaine actuelle doit être allégée
+    const objEarlyNextWeek = weekObjectives.filter(o => o.date >= nextMondayStr && o.date <= nextWednesdayStr);
 
     const lines: string[] = [];
     lines.push('## ⚠️ COURSES / OBJECTIFS À PROXIMITÉ — PRIORITÉ ABSOLUE');
@@ -733,7 +892,6 @@ ${(() => {
     lines.push('');
 
     if (objThisWeek.length > 0) {
-        // Cas 1 : course CETTE semaine
         const raceDays = objThisWeek.map(o => {
             const d = parseISO(o.date);
             const dayIdx = Math.round((d.getTime() - weekStartDate.getTime()) / (1000*60*60*24));
@@ -745,40 +903,33 @@ ${(() => {
         lines.push(`- Le jour de la course (dayOffset=${earliestRaceDay}) : NE PAS planifier de séance. La course EST l'entraînement.`);
 
         if (earliestRaceDay === 0) {
-            // Course le LUNDI → toute la semaine est post-course
-            lines.push('- La course est LUNDI (premier jour). Le déblocage a déjà eu lieu la semaine précédente.');
-            lines.push('- MARDI (dayOffset=1) : repos complet ou Recovery très léger (20-30 min Z1 max).');
-            lines.push('- Le reste de la semaine : reprise progressive. Séances modérées, pas de haute intensité avant mercredi/jeudi.');
-            lines.push('- Volume normal ou légèrement réduit selon la fatigue post-course.');
+            lines.push('- La course est LUNDI. MARDI : repos ou Recovery très léger (20-30 min Z1 max).');
+            lines.push('- Reste de la semaine : reprise progressive.');
         } else if (earliestRaceDay === 1) {
-            // Course le MARDI
-            lines.push('- LUNDI (dayOffset=0) : séance de DÉBLOCAGE courte (20-30 min) avec quelques accélérations brèves.');
+            lines.push('- LUNDI : DÉBLOCAGE court (20-30 min) avec accélérations brèves.');
             lines.push('- Après la course : Recovery mercredi, reprise progressive jeudi+.');
             lines.push('- Volume global réduit de 30%.');
         } else {
-            // Course mercredi ou après → jours avant = pré-course
-            lines.push(`- Les jours AVANT la course (dayOffset 0 à ${earliestRaceDay - 1}) : séances courtes (30-45 min max), Recovery ou Endurance très basse (Z1-Z2). C'est du DÉBLOCAGE.`);
-            lines.push(`- La VEILLE de la course (dayOffset=${earliestRaceDay - 1}) : séance de déblocage/openers courte (20-30 min) avec quelques accélérations brèves pour activer les jambes.`);
+            lines.push(`- Jours AVANT la course (dayOffset 0 à ${earliestRaceDay - 1}) : séances courtes (30-45 min max), Z1-Z2 déblocage.`);
+            lines.push(`- VEILLE (dayOffset=${earliestRaceDay - 1}) : openers 20-30 min avec accélérations brèves.`);
             lines.push('- Aucune séance longue ni haute intensité AVANT la course.');
         }
-
         if (earliestRaceDay < 6) {
-            lines.push(`- Après la course : séance Recovery très légère le lendemain (30 min max Z1).`);
+            lines.push(`- Après la course : Recovery très légère le lendemain (30 min max Z1).`);
         }
-        lines.push('- Volume global de la semaine réduit de 30-50%.');
-    } else if (objNextMonday.length > 0) {
-        // Cas 2 : course le LUNDI suivant → déblocage dimanche
-        lines.push('RÈGLES IMPÉRATIVES — COURSE LE LUNDI SUIVANT :');
-        lines.push('- La semaine doit être ALLÉGÉE (pré-course). Volume réduit de 30-40%.');
-        lines.push('- Pas de séance longue (max 60-75 min).');
+        lines.push('- Volume global réduit de 30-50%.');
+    } else if (objEarlyNextWeek.length > 0) {
+        const raceDay = objEarlyNextWeek[0];
+        const daysUntilRace = Math.round((parseISO(raceDay.date).getTime() - weekStartDate.getTime()) / (1000*60*60*24));
+        lines.push(`RÈGLES IMPÉRATIVES — COURSE EN DÉBUT DE SEMAINE PROCHAINE (${raceDay.name} le ${raceDay.date}, dans ${daysUntilRace} jours) :`);
+        lines.push('- Semaine ALLÉGÉE (pré-course). Volume réduit de 30-40%. Max 60-75 min par séance.');
         lines.push('- Pas de haute intensité après mercredi (dayOffset=2).');
-        lines.push('- DIMANCHE (dayOffset=6) : planifier une séance de DÉBLOCAGE (openers) courte (20-30 min) avec quelques accélérations brèves (3-4x 30s) pour activer les jambes avant la course du lendemain. C\'est la séance la plus importante de la semaine.');
+        lines.push('- DIMANCHE (dayOffset=6) : OPENERS 20-30 min avec 3-4x30s accélérations pour activer les jambes.');
         lines.push('- Vendredi-Samedi : repos ou Recovery très léger uniquement.');
+        lines.push('- Pas de sortie longue cette semaine.');
     } else {
-        // Cas 3 : course dans les 2 semaines mais pas immédiate
         lines.push('RÈGLES — COURSE À PROXIMITÉ :');
-        lines.push('- Semaine de transition : réduire progressivement le volume.');
-        lines.push('- Pas de séance très longue. Garder des séances courtes et dynamiques.');
+        lines.push('- Réduire progressivement le volume. Séances courtes et dynamiques.');
     }
 
     return lines.join('\n');
@@ -799,22 +950,18 @@ ${profile.experience === 'Débutant' ? `⚠️ DÉBUTANT — Appliquer impérati
 - Descriptions techniques mais accessibles`}
 
 ## RÈGLES GÉNÉRALES
-1. Respecter la durée max par sport et par jour. Pour les jours LIBRE, tu choisis une durée raisonnable selon le contexte.
-2. Répartir les séances UNIQUEMENT sur les disciplines actives : ${activeSports.join(", ")}.
+1. RESPECTER LE PROGRAMME : chaque jour a un sport et une durée définis par l'athlète. Utilise CE sport et cette durée. Tu ne choisis que le contenu (type, intensité, structure). Les jours IA LIBRE sont les seuls où tu as le choix du sport/durée.
+2. Répartir les séances UNIQUEMENT sur les disciplines actives : ${activeSports.join(", ")}. Ne jamais proposer un sport que l'athlète n'a pas activé.
 3. La somme des plannedTSS doit être égale à ${week.targetTSS} (±5%).
 4. Respecter le thème "${block.theme}" dans le choix des types de séances.
-5. Ne pas placer 2 séances dures (Interval, Tempo) consécutives.
-6. En semaine Recovery : séances courtes, faible intensité uniquement.
-7. Le dayOffset doit correspondre exactement au jour disponible (0=Lundi ... 6=Dimanche).
-8. Exactement UNE séance par créneau disponible (pas plus, pas moins), sauf en semaine de course où certains jours peuvent être laissés vides (repos). Pour les jours LIBRE, tu peux aussi décider de ne pas planifier de séance (repos) si c'est pertinent.
-9. La "description" doit être précise, technique, structurée (échauffement, corps de séance, retour au calme).
-   Utilise la métrique PRIORITAIRE par sport :
-   - VÉLO : en priorité les WATTS/zones de puissance. Si le profil n'a pas de FTP/zones, utilise le cardio (FC). En dernier recours, les sensations (RPE).
-     Exemple vélo : "Échauffement: 20 min Z1-Z2. Corps: 3x10 min @ 230-240W (Z4). Récup 5 min Z1. Retour au calme: 15 min Z1."
-   - COURSE À PIED : en priorité les ALLURES (min/km). Si pas d'allures connues, utilise le cardio (FC). En dernier recours, les sensations (RPE).
-     Exemple course : "Échauffement: 15 min allure libre. Corps: 5x1000m @ 4:30/km, récup 2 min trot. Retour au calme: 10 min footing souple."
-   - NATATION : en priorité le CARDIO (FC/zones). Si pas de données cardio, utilise les sensations (RPE/effort perçu).
-     Exemple natation : "Échauffement: 400m crawl souple. Corps: 10x100m @ effort soutenu (Z3-Z4), repos 20s. Retour au calme: 200m nage au choix."
+5. Ne pas placer 2 séances dures (Interval, Tempo) consécutives. TOUJOURS alterner dur/facile.
+6. dayOffset doit correspondre exactement au jour disponible (0=Lundi ... 6=Dimanche).
+7. Exactement UNE séance par sport par créneau (si "vélo 1.5h" → 1 séance vélo). Jours non listés = repos, pas de séance. Jours LIBRE = repos possible si pertinent.
+8. La "description" doit être précise, technique, structurée (échauffement, corps de séance, retour au calme).
+   Métrique PRIORITAIRE par sport :
+   - VÉLO : WATTS/zones de puissance en priorité. Fallback : FC. Dernier recours : RPE.
+   - COURSE : ALLURES (min/km) en priorité. Fallback : FC. Dernier recours : RPE.
+   - NATATION : FC/zones en priorité. Fallback : RPE.
 
 ## FORMAT DE RÉPONSE
 Réponds UNIQUEMENT avec un tableau JSON valide — sans markdown, sans explication.
@@ -825,7 +972,7 @@ Chaque objet contient exactement :
 - "workoutType"     (string) : l'un de ["Endurance", "Tempo", "Interval", "Recovery", "Long", "Strength"]
 - "durationMinutes" (number) : durée totale en minutes (respecter le max du créneau)
 - "plannedTSS"      (number) : TSS prévu pour cette séance
-- "description"     (string) : description technique complète de la séance (échauffement, corps, retour au calme, avec valeurs de zones/watts réelles)
+- "description"     (string) : description technique complète (échauffement, corps, retour au calme, avec valeurs de zones/watts)
 
 ## JSON :
 `.trim();
@@ -925,7 +1072,8 @@ Chaque objet contient exactement :
 
 /**
  * Résumé compact de l'historique récent pour informer la génération des blocs.
- * Retourne les 4 dernières semaines : volume, sports, types d'entraînement.
+ * Retourne les 12 dernières semaines : volume, sports, types d'entraînement.
+ * Permet à l'IA de comprendre la trajectoire d'entraînement complète de l'athlète.
  */
 function getTrainingHistorySummary(workouts: Workout[]): string {
     const completed = workouts
@@ -934,7 +1082,7 @@ function getTrainingHistorySummary(workouts: Workout[]): string {
 
     if (completed.length === 0) return "Aucun historique d'entraînement disponible — l'athlète débute ou n'a pas de données.";
 
-    // Regrouper par semaine (4 dernières)
+    // Regrouper par semaine (12 dernières)
     const weekMap = new Map<string, Workout[]>();
     for (const w of completed) {
         const d = new Date(w.date);
@@ -945,7 +1093,7 @@ function getTrainingHistorySummary(workouts: Workout[]): string {
         weekMap.get(key)!.push(w);
     }
 
-    const recentWeeks = [...weekMap.entries()].slice(0, 4);
+    const recentWeeks = [...weekMap.entries()].slice(0, 12);
     if (recentWeeks.length === 0) return "Aucun historique récent.";
 
     const lines = recentWeeks.map(([weekOf, wks]) => {
@@ -967,6 +1115,328 @@ function getTrainingHistorySummary(workouts: Workout[]): string {
 
         return `- Semaine du ${weekOf} : ${wks.length} séances | ${hours}h | TSS ${totalTSS} | Sports: ${sports} | Types: ${types}`;
     });
+
+    // Résumé global de la tendance
+    const totalWeeksWithData = recentWeeks.length;
+    const allTSS = recentWeeks.map(([, wks]) => wks.reduce((sum, w) => sum + (w.completedData?.metrics?.cycling?.tss || 0), 0));
+    const avgTSS = Math.round(allTSS.reduce((a, b) => a + b, 0) / totalWeeksWithData);
+    const tssFirst4 = allTSS.slice(0, Math.min(4, allTSS.length));
+    const tssLast4 = allTSS.slice(Math.max(0, allTSS.length - 4));
+    const avgRecent = Math.round(tssFirst4.reduce((a, b) => a + b, 0) / tssFirst4.length);
+    const avgOlder = Math.round(tssLast4.reduce((a, b) => a + b, 0) / tssLast4.length);
+    const trend = avgRecent > avgOlder * 1.1 ? '📈 en progression' : avgRecent < avgOlder * 0.9 ? '📉 en baisse' : '➡️ stable';
+
+    return `TENDANCE SUR ${totalWeeksWithData} SEMAINES : TSS moyen ${avgTSS}/sem | Charge récente vs ancienne : ${trend}\n\n` + lines.join('\n');
+}
+
+/**
+ * Analyse les blocs d'entraînement déjà complétés pour informer l'IA
+ * des phases de périodisation déjà effectuées par l'athlète.
+ * Évite de reproposer une phase Base quand l'athlète est en pleine saison.
+ */
+async function getCompletedBlocksHistory(): Promise<string> {
+    const [plans, blocks] = await Promise.all([getPlan(), getBlock()]);
+    if (!plans || plans.length === 0 || !blocks || blocks.length === 0) {
+        return "Aucun plan précédent — l'athlète n'a pas d'historique de périodisation.";
+    }
+
+    // Trier les blocs par date de début (plus récent en premier)
+    const sortedBlocks = [...blocks].sort((a, b) =>
+        new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+    );
+
+    const today = new Date();
+    const lines = sortedBlocks.map(block => {
+        const blockEnd = addWeeks(parseISO(block.startDate), block.weekCount);
+        const isPast = today > blockEnd;
+        const isCurrent = today >= parseISO(block.startDate) && today <= blockEnd;
+        const status = isCurrent ? '🔵 EN COURS' : isPast ? '✅ TERMINÉ' : '⏳ À VENIR';
+        const plan = plans.find(p => p.id === block.planId);
+        return `- [${status}] ${block.type} — "${block.theme}" (${block.weekCount} sem, du ${block.startDate}) | CTL: ${block.startCTL}→${block.targetCTL} | Plan: ${plan?.name ?? 'N/A'}`;
+    });
+
+    // Résumé des phases complétées
+    const completedTypes = sortedBlocks
+        .filter(b => today > addWeeks(parseISO(b.startDate), b.weekCount))
+        .map(b => b.type);
+    const typeCounts = completedTypes.reduce((acc, t) => { acc[t] = (acc[t] || 0) + 1; return acc; }, {} as Record<string, number>);
+    const summary = Object.entries(typeCounts).map(([t, n]) => `${t}(${n}x)`).join(', ');
+
+    return `PHASES DÉJÀ RÉALISÉES : ${summary || 'aucune'}\n\n${lines.join('\n')}`;
+}
+
+/**
+ * Analyse complète du contexte de l'athlète pour guider la génération de plan.
+ * Basé sur les méthodologies de Friel, Coggan/Allen, Issurin (block periodization).
+ *
+ * Détermine :
+ * - Si l'athlète est en pré-saison, pleine saison, ou fin de saison
+ * - Quelles qualités physiques ont encore un effet résiduel actif
+ * - Quel type de bloc est recommandé en priorité
+ * - Ce qu'il faut ÉVITER de reproposer
+ */
+async function analyzeAthleteContext(
+    profile: Profile,
+    workouts: Workout[],
+    blocks: Block[],
+    objectives: Objective[]
+): Promise<string> {
+    const today = new Date();
+    const lines: string[] = [];
+
+    // --- 1. Niveau de forme actuel ---
+    const ctl = profile.currentCTL;
+    const atl = profile.currentATL;
+    const tsb = ctl - atl;
+    let fitnessState = '';
+    if (ctl >= 80) fitnessState = 'Excellent — athlète très entraîné, pleine saison';
+    else if (ctl >= 60) fitnessState = 'Bon — base solide construite, prêt pour intensité';
+    else if (ctl >= 40) fitnessState = 'Modéré — condition correcte, peut encore construire';
+    else fitnessState = 'Faible — besoin de reconstruire une base aérobie';
+
+    let fatigueState = '';
+    if (tsb < -30) fatigueState = '⚠️ SURCHARGE — TSB très négatif, récupération prioritaire';
+    else if (tsb < -15) fatigueState = 'Fatigue accumulée — attention à la charge';
+    else if (tsb > 15) fatigueState = 'Très reposé — peut absorber de la charge';
+    else fatigueState = 'Équilibre correct';
+
+    lines.push(`## ÉTAT DE FORME ACTUEL`);
+    lines.push(`- CTL: ${ctl} | ATL: ${atl} | TSB (forme): ${tsb}`);
+    lines.push(`- Condition : ${fitnessState}`);
+    lines.push(`- Fatigue : ${fatigueState}`);
+
+    // --- 2. Analyse des effets résiduels ---
+    const completed = workouts
+        .filter(w => w.status === 'completed' && w.completedData)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    const recentTypeMap: Record<string, Date> = {};
+    for (const w of completed) {
+        const type = w.workoutType || 'Autre';
+        if (!recentTypeMap[type]) {
+            recentTypeMap[type] = new Date(w.date);
+        }
+    }
+
+    lines.push(`\n## EFFETS RÉSIDUELS (dernière séance par type)`);
+    for (const [type, lastDate] of Object.entries(recentTypeMap)) {
+        const daysAgo = Math.round((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+        const residual = RESIDUAL_EFFECTS_DAYS[type] ?? 20;
+        const stillActive = daysAgo <= residual;
+        const status = stillActive
+            ? `✅ Actif (fait il y a ${daysAgo}j, effet résiduel ${residual}j)`
+            : `❌ Expiré (fait il y a ${daysAgo}j, effet résiduel ${residual}j) → à retravailler`;
+        lines.push(`- ${type} : ${status}`);
+    }
+
+    // --- 3. Répartition récente intensité/volume (4 dernières semaines) ---
+    const fourWeeksAgo = new Date(today);
+    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+    const recentWorkouts = completed.filter(w => new Date(w.date) >= fourWeeksAgo);
+
+    if (recentWorkouts.length > 0) {
+        const intensityCount = recentWorkouts.filter(w =>
+            ['Interval', 'Tempo', 'Sprint'].includes(w.workoutType || '')
+        ).length;
+        const enduranceCount = recentWorkouts.filter(w =>
+            ['Endurance', 'Long', 'Recovery'].includes(w.workoutType || '')
+        ).length;
+        const total = recentWorkouts.length;
+        const intensityPct = Math.round((intensityCount / total) * 100);
+        const endurancePct = Math.round((enduranceCount / total) * 100);
+
+        lines.push(`\n## RÉPARTITION RÉCENTE (4 dernières semaines)`);
+        lines.push(`- ${total} séances : ${intensityPct}% intensité (${intensityCount}) | ${endurancePct}% endurance/récup (${enduranceCount})`);
+
+        if (intensityPct > 30) {
+            lines.push(`→ Beaucoup d'intensité récemment — envisager un bloc plus aérobie ou de récupération`);
+        } else if (intensityPct < 15) {
+            lines.push(`→ Peu d'intensité récemment — l'athlète peut bénéficier d'un bloc PMA/seuil/intervalles`);
+        } else {
+            lines.push(`→ Distribution équilibrée — adapter selon l'objectif`);
+        }
+    }
+
+    // --- 4. Analyse des blocs passés récents ---
+    const recentBlocks = blocks
+        .filter(b => today > addWeeks(parseISO(b.startDate), b.weekCount))
+        .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
+        .slice(0, 3);
+
+    if (recentBlocks.length > 0) {
+        const lastBlock = recentBlocks[0];
+        const daysSinceLastBlock = Math.round(
+            (today.getTime() - addWeeks(parseISO(lastBlock.startDate), lastBlock.weekCount).getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        lines.push(`\n## DERNIER BLOC TERMINÉ`);
+        lines.push(`- Type: ${lastBlock.type} — "${lastBlock.theme}"`);
+        lines.push(`- Terminé il y a ${daysSinceLastBlock} jours`);
+        lines.push(`- CTL: ${lastBlock.startCTL} → ${lastBlock.targetCTL}`);
+
+        // Règle d'alternance (Issurin) : ne pas répéter le même type
+        lines.push(`→ RÈGLE D'ALTERNANCE : ne PAS enchaîner avec un bloc "${lastBlock.type}" identique. Alterner les stimuli.`);
+    }
+
+    // --- 5. Recommandation de phase ---
+    lines.push(`\n## RECOMMANDATION CONTEXTUELLE`);
+
+    const nextObjective = objectives
+        .filter(o => new Date(o.date) > today)
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+
+    if (nextObjective) {
+        const daysToRace = Math.round((new Date(nextObjective.date).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysToRace <= 14) {
+            lines.push(`→ Course dans ${daysToRace} jours : TAPER / AFFÛTAGE obligatoire`);
+        } else if (daysToRace <= 28) {
+            lines.push(`→ Course dans ${daysToRace} jours : PEAK (intensité ciblée, volume réduit)`);
+        } else {
+            lines.push(`→ Course dans ${daysToRace} jours : temps suffisant pour un bloc de développement`);
+        }
+    }
+
+    if (tsb < -30) {
+        lines.push(`→ PRIORITÉ : bloc de RÉCUPÉRATION (TSB = ${tsb}, seuil critique dépassé)`);
+    } else if (ctl >= 60) {
+        lines.push(`→ Base aérobie DÉJÀ CONSTRUITE (CTL ${ctl}). NE PAS reproposer de bloc Base/Endurance.`);
+        lines.push(`→ Privilégier : Build intensité (PMA, seuil, VO2max), Peak, ou Spécificité course.`);
+    } else if (ctl >= 40) {
+        lines.push(`→ Condition correcte. Selon l'historique, un bloc Build ou Base court est approprié.`);
+    } else {
+        lines.push(`→ CTL faible (${ctl}). Un bloc Base/Accumulation est nécessaire pour reconstruire.`);
+    }
+
+    return lines.join('\n');
+}
+
+/**
+ * Calcule le taux de complétion moyen des 4 dernières semaines.
+ * Remplace le hardcoded 100 pour donner un feedback réel à l'IA.
+ */
+function computeAvgCompletion(workouts: Workout[], weeks: Week[], currentWeekId: string): number {
+    // Trouver les 4 semaines précédant la semaine courante
+    const currentWeek = weeks.find(w => w.id === currentWeekId);
+    if (!currentWeek) return 100;
+
+    const previousWeeks = weeks
+        .filter(w => w.id !== currentWeekId && w.weekNumber < currentWeek.weekNumber)
+        .sort((a, b) => b.weekNumber - a.weekNumber)
+        .slice(0, 4);
+
+    if (previousWeeks.length === 0) return 100;
+
+    const completionRates = previousWeeks.map(week => {
+        const weekWorkouts = workouts.filter(w => w.weekId === week.id);
+        if (weekWorkouts.length === 0) return 100;
+        const completed = weekWorkouts.filter(w => w.status === 'completed').length;
+        return Math.round((completed / weekWorkouts.length) * 100);
+    });
+
+    return Math.round(completionRates.reduce((a, b) => a + b, 0) / completionRates.length);
+}
+
+/**
+ * Résumé de la semaine précédente pour guider la continuité.
+ * Donne à l'IA le contexte de ce que l'athlète a réellement fait :
+ * TSS réel vs planifié, RPE, types de séances, durée sortie longue.
+ */
+function getPreviousWeekSummary(
+    workouts: Workout[],
+    weeks: Week[],
+    blocks: Block[],
+    currentWeekId: string
+): string {
+    const currentWeek = weeks.find(w => w.id === currentWeekId);
+    if (!currentWeek) return "Aucune semaine précédente disponible.";
+
+    // Chercher la semaine juste avant (même bloc ou bloc précédent)
+    const allWeeksSorted = weeks
+        .filter(w => w.id !== currentWeekId)
+        .sort((a, b) => {
+            const blockA = blocks.find(bl => bl.id === a.blockId);
+            const blockB = blocks.find(bl => bl.id === b.blockId);
+            if (!blockA || !blockB) return 0;
+            if (blockA.orderIndex !== blockB.orderIndex) return blockB.orderIndex - blockA.orderIndex;
+            return b.weekNumber - a.weekNumber;
+        });
+
+    const prevWeek = allWeeksSorted[0];
+    if (!prevWeek) return "Première semaine du plan — pas de semaine précédente.";
+
+    const prevWorkouts = workouts.filter(w => w.weekId === prevWeek.id);
+    const completedWorkouts = prevWorkouts.filter(w => w.status === 'completed' && w.completedData);
+    const missedWorkouts = prevWorkouts.filter(w => w.status === 'missed' || (w.status === 'pending' && new Date(w.date) < new Date()));
+
+    if (completedWorkouts.length === 0 && missedWorkouts.length === 0) {
+        return "Semaine précédente sans données de complétion.";
+    }
+
+    const lines: string[] = [];
+    const prevBlock = blocks.find(b => b.id === prevWeek.blockId);
+
+    lines.push(`## SEMAINE PRÉCÉDENTE (S${prevWeek.weekNumber}${prevBlock ? ` — ${prevBlock.type} "${prevBlock.theme}"` : ''})`);
+
+    // TSS réel vs planifié
+    const actualTSS = completedWorkouts.reduce((sum, w) => {
+        const cd = w.completedData!;
+        return sum + (cd.metrics?.cycling?.tss ?? cd.calculatedTSS ?? w.plannedData?.plannedTSS ?? 0);
+    }, 0);
+    const plannedTSS = prevWorkouts.reduce((sum, w) => sum + (w.plannedData?.plannedTSS ?? 0), 0);
+    const tssRatio = plannedTSS > 0 ? Math.round((actualTSS / plannedTSS) * 100) : 0;
+
+    lines.push(`- TSS : ${actualTSS} réalisé / ${plannedTSS} planifié (${tssRatio}%)`);
+    lines.push(`- Complétion : ${completedWorkouts.length}/${prevWorkouts.length} séances (${missedWorkouts.length} manquées)`);
+
+    // RPE moyen
+    const rpeValues = completedWorkouts
+        .map(w => w.completedData?.perceivedEffort)
+        .filter((rpe): rpe is number => rpe != null && rpe > 0);
+    if (rpeValues.length > 0) {
+        const avgRPE = (rpeValues.reduce((a, b) => a + b, 0) / rpeValues.length).toFixed(1);
+        lines.push(`- RPE moyen : ${avgRPE}/10${Number(avgRPE) >= 8 ? ' ⚠️ FATIGUE ÉLEVÉE' : ''}`);
+    }
+
+    // Détail des séances complétées (pour continuité)
+    if (completedWorkouts.length > 0) {
+        lines.push(`- Séances réalisées :`);
+        for (const w of completedWorkouts) {
+            const cd = w.completedData!;
+            const duration = cd.actualDurationMinutes;
+            const tss = cd.metrics?.cycling?.tss ?? cd.calculatedTSS ?? w.plannedData?.plannedTSS ?? 0;
+            const rpe = cd.perceivedEffort ? ` | RPE ${cd.perceivedEffort}/10` : '';
+            lines.push(`  · ${w.sportType} ${w.workoutType} — ${duration}min | TSS ${tss}${rpe} | "${w.title}"`);
+        }
+
+        // Identifier la sortie longue pour la progression
+        const longWorkout = completedWorkouts
+            .filter(w => w.workoutType === 'Long' || w.workoutType === 'Endurance')
+            .sort((a, b) => (b.completedData?.actualDurationMinutes ?? 0) - (a.completedData?.actualDurationMinutes ?? 0))[0];
+
+        if (longWorkout) {
+            lines.push(`- Sortie longue de la semaine : ${longWorkout.completedData?.actualDurationMinutes}min (${longWorkout.sportType})`);
+            lines.push(`  → CETTE SEMAINE : augmenter de 15-30min si semaine de charge, réduire de 50% si semaine de récup`);
+        }
+
+        // Identifier les séances d'intervalles pour la progression
+        const intervalWorkouts = completedWorkouts.filter(w =>
+            w.workoutType === 'Interval' || w.workoutType === 'Tempo'
+        );
+        if (intervalWorkouts.length > 0) {
+            lines.push(`- Séances intensité réalisées : ${intervalWorkouts.length}`);
+            for (const iw of intervalWorkouts) {
+                lines.push(`  · "${iw.title}" — ${iw.completedData?.actualDurationMinutes}min`);
+            }
+            lines.push(`  → CETTE SEMAINE : progresser en ajoutant 1 rep OU en allongeant les intervalles OU en réduisant le repos`);
+        }
+    }
+
+    // Analyse de l'écart TSS
+    if (tssRatio > 110) {
+        lines.push(`\n⚠️ L'athlète a DÉPASSÉ le TSS planifié de ${tssRatio - 100}%. Vérifier que la charge cette semaine ne s'accumule pas excessivement (ACWR < 1.3).`);
+    } else if (tssRatio < 70) {
+        lines.push(`\n⚠️ L'athlète n'a réalisé que ${tssRatio}% du TSS planifié. Adapter cette semaine : ne pas surcharger, progresser depuis le TSS RÉEL (${actualTSS}), pas le planifié.`);
+    }
 
     return lines.join('\n');
 }
@@ -1775,13 +2245,14 @@ export async function generateWeekWorkoutsFromDate(
         && parseISO(o.date) >= weekStart && parseISO(o.date) <= weekEndPlusOne
     );
 
+    const realCompletion3 = computeAvgCompletion(existingWorkouts ?? [], weeks, week.id);
     const newWorkouts = await CreateWorkoutForWeek(
         profile,
         plan,
         block,
         week,
         comment,
-        100,
+        realCompletion3,
         weeklyAvailability,
         weekObjectives,
     );
