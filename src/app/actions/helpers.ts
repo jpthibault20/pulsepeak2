@@ -108,21 +108,19 @@ export const computeProgressionPerWeek = (
 
 export const getActiveSports = (activeSports: Profile['activeSports']): string[] => {
     return Object.entries(activeSports)
-        .filter(([isActive]) => isActive)
+        .filter(([, isActive]) => isActive)
         .map(([sport]) => sport);
 };
 
-export const formatAvailability = (availability: { [key: string]: AvailabilitySlot }): string => {
-    const days: Record<string, string> = {
-        monday: "Lundi", tuesday: "Mardi", wednesday: "Mercredi",
-        thursday: "Jeudi", friday: "Vendredi", saturday: "Samedi", sunday: "Dimanche",
-    };
+// Mapping dayOffset (0=Lundi … 6=Dimanche) → clé française
+const DAY_OFFSET_TO_FR = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'] as const;
 
+export const formatAvailability = (availability: { [key: string]: AvailabilitySlot }): string => {
     return Object.entries(availability)
         .map(([day, slot]) => {
             if (slot.aiChoice) {
                 const comment = slot.comment ? ` (${slot.comment})` : '';
-                return `- ${days[day] ?? day} : IA LIBRE — tu choisis le sport, la durée et l'intensité${comment}`;
+                return `- ${day} : IA LIBRE — tu choisis le sport, la durée et l'intensité${comment}`;
             }
 
             const sports = [
@@ -131,11 +129,47 @@ export const formatAvailability = (availability: { [key: string]: AvailabilitySl
                 slot.running   > 0 ? `course ${slot.running}h`   : null,
             ].filter(Boolean).join(", ");
 
-            if (!sports && !slot.comment) return null;
+            // Aucun sport prévu → jour de repos (même s'il y a un commentaire)
+            if (!sports) return null;
 
             const parts = [sports, slot.comment ? `(${slot.comment})` : null].filter(Boolean).join(" ");
-            return `- ${days[day] ?? day} : ${parts}`;
+            return `- ${day} : ${parts}`;
         })
         .filter(Boolean)
         .join("\n");
+};
+
+/**
+ * Construit un Set des (dayOffset, sportType) autorisés à partir des disponibilités.
+ * Jours IA LIBRE → toutes les disciplines actives sont autorisées.
+ * Jours sans sport → aucun workout autorisé (repos).
+ */
+export const buildAllowedSlots = (
+    availability: { [key: string]: AvailabilitySlot },
+    activeSports: string[],
+): Map<number, { sports: Set<string>; maxMinutes: Record<string, number> }> => {
+    const allowed = new Map<number, { sports: Set<string>; maxMinutes: Record<string, number> }>();
+
+    for (const [day, slot] of Object.entries(availability)) {
+        const dayIdx = DAY_OFFSET_TO_FR.indexOf(day as typeof DAY_OFFSET_TO_FR[number]);
+        if (dayIdx === -1) continue;
+
+        const sports = new Set<string>();
+        const maxMinutes: Record<string, number> = {};
+
+        if (slot.aiChoice) {
+            // IA libre : tous les sports actifs autorisés, pas de plafond dur
+            activeSports.forEach(s => sports.add(s));
+        } else {
+            if (slot.swimming > 0) { sports.add('swimming'); maxMinutes['swimming'] = slot.swimming * 60; }
+            if (slot.cycling > 0)  { sports.add('cycling');  maxMinutes['cycling']  = slot.cycling * 60; }
+            if (slot.running > 0)  { sports.add('running');  maxMinutes['running']  = slot.running * 60; }
+        }
+
+        if (sports.size > 0) {
+            allowed.set(dayIdx, { sports, maxMinutes });
+        }
+    }
+
+    return allowed;
 };

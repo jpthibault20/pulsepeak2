@@ -20,7 +20,7 @@ import {
 } from 'date-fns';
 import { callGeminiAPI } from '@/lib/ai/coach-api';
 import { CTL_PROGRESSION, CTL_LEVEL_MULTIPLIER, TAPER_CTL_DROP_PERCENT, RECOVERY_WEEK_THRESHOLD, RECOVERY_TSS_RATIO, RESIDUAL_EFFECTS_DAYS } from './constants';
-import { computeBlockSkeletons, computeWeeklyTSS, formatAvailability, getActiveSports } from './helpers';
+import { computeBlockSkeletons, computeWeeklyTSS, formatAvailability, buildAllowedSlots, getActiveSports } from './helpers';
 
 
 
@@ -819,12 +819,14 @@ ${formattedAvailability || "Non spécifiées"}
 ### RÈGLES DE RESPECT DU PROGRAMME (NON NÉGOCIABLE) :
 - Si l'athlète a défini un SPORT et une DURÉE pour un jour (ex: "vélo 1.5h"), tu DOIS :
   · Utiliser EXACTEMENT ce sport pour ce jour (pas un autre)
-  · Respecter la durée indiquée comme durée MAX de la séance
+  · La durée indiquée est un MAXIMUM ABSOLU — tu peux proposer MOINS (ex: 1h au lieu de 1.5h si la fatigue ou la logique d'entraînement le justifie), mais JAMAIS PLUS
+  · Tu ne peux PAS ajouter un sport que l'athlète n'a pas listé ce jour-là (ex: si seul "vélo 1.5h" est prévu, pas de course ni natation ce jour)
   · Seul le TYPE de séance (Endurance, Interval, Tempo...) et le CONTENU sont à ta discrétion
-- Si l'athlète a défini PLUSIEURS sports un même jour (ex: "natation 1h, vélo 0.5h"), il attend UNE séance par sport listé.
+- Si l'athlète a défini PLUSIEURS sports un même jour (ex: "natation 1h, vélo 0.5h"), il attend UNE séance par sport listé. Chaque séance doit respecter la durée MAX de son créneau. Tu peux réduire la durée d'un ou plusieurs sports si nécessaire.
 - Les commentaires entre parenthèses (ex: "sortie club", "chill", "compétition") décrivent le contexte. Adapte le type et l'intensité en conséquence.
 - SEULS les jours marqués "IA LIBRE" te donnent carte blanche : tu choisis le sport, la durée et l'intensité. Tu peux aussi décider de laisser un jour de repos complet si c'est pertinent.
 - Les jours NON LISTÉS dans les disponibilités sont des jours de REPOS. Ne génère AUCUNE séance pour ces jours.
+- LIBERTÉ DE RÉDUIRE : tu as toujours le droit de proposer moins de volume que prévu (durées plus courtes, suppression d'une séance secondaire) si c'est cohérent avec l'état de fatigue, la progression ou une course à venir. L'objectif est la qualité, pas de remplir les créneaux à tout prix.
 
 ${previousWeekContext}
 
@@ -950,14 +952,15 @@ ${profile.experience === 'Débutant' ? `⚠️ DÉBUTANT — Appliquer impérati
 - Descriptions techniques mais accessibles`}
 
 ## RÈGLES GÉNÉRALES
-1. RESPECTER LE PROGRAMME : chaque jour a un sport et une durée définis par l'athlète. Utilise CE sport et cette durée. Tu ne choisis que le contenu (type, intensité, structure). Les jours IA LIBRE sont les seuls où tu as le choix du sport/durée.
-2. Répartir les séances UNIQUEMENT sur les disciplines actives : ${activeSports.join(", ")}. Ne jamais proposer un sport que l'athlète n'a pas activé.
-3. La somme des plannedTSS doit être égale à ${week.targetTSS} (±5%).
-4. Respecter le thème "${block.theme}" dans le choix des types de séances.
-5. Ne pas placer 2 séances dures (Interval, Tempo) consécutives. TOUJOURS alterner dur/facile.
-6. dayOffset doit correspondre exactement au jour disponible (0=Lundi ... 6=Dimanche).
-7. Exactement UNE séance par sport par créneau (si "vélo 1.5h" → 1 séance vélo). Jours non listés = repos, pas de séance. Jours LIBRE = repos possible si pertinent.
-8. La "description" doit être précise, technique, structurée (échauffement, corps de séance, retour au calme).
+1. RESPECTER LE PROGRAMME : chaque jour a un sport et une durée définis par l'athlète. Utilise CE sport et cette durée comme MAXIMUM. Tu ne choisis que le contenu (type, intensité, structure). Les jours IA LIBRE sont les seuls où tu as le choix du sport/durée.
+2. Répartir les séances UNIQUEMENT sur les disciplines actives : ${activeSports.join(", ")}. Ne jamais proposer un sport que l'athlète n'a pas activé, et ne jamais ajouter un sport sur un jour où il n'est pas prévu (sauf jours IA LIBRE).
+3. DURÉE = PLAFOND : la durationMinutes d'une séance ne doit JAMAIS dépasser la durée indiquée dans les disponibilités pour ce sport ce jour-là. Elle peut être inférieure si la logique d'entraînement le justifie.
+4. La somme des plannedTSS doit approcher ${week.targetTSS} (±10%). Si tu réduis des séances, le TSS total peut être inférieur — c'est acceptable.
+5. Respecter le thème "${block.theme}" dans le choix des types de séances.
+6. Ne pas placer 2 séances dures (Interval, Tempo) consécutives. TOUJOURS alterner dur/facile.
+7. dayOffset doit correspondre exactement au jour disponible (0=Lundi ... 6=Dimanche).
+8. Exactement UNE séance par sport par créneau (si "vélo 1.5h" → 1 séance vélo). Jours non listés = repos, pas de séance. Jours LIBRE = repos possible si pertinent.
+9. La "description" doit être précise, technique, structurée (échauffement, corps de séance, retour au calme).
    Métrique PRIORITAIRE par sport :
    - VÉLO : WATTS/zones de puissance en priorité. Fallback : FC. Dernier recours : RPE.
    - COURSE : ALLURES (min/km) en priorité. Fallback : FC. Dernier recours : RPE.
@@ -1016,7 +1019,22 @@ Chaque objet contient exactement :
     });
     await atomicIncrementTokenCount(tokensWorkouts);
     if (!Array.isArray(rawWorkouts)) throw new Error('Réponse IA invalide : tableau attendu.');
-    const aiResponse = rawWorkouts as AIWorkout[];
+
+    // ── Validation post-IA : filtrer / capper les séances hors programme ──
+    const allowedSlots = buildAllowedSlots(weeklyAvailability, activeSports);
+    const aiResponse = (rawWorkouts as AIWorkout[]).filter((w) => {
+        const dayRule = allowedSlots.get(w.dayOffset);
+        // Jour non autorisé → supprimer la séance
+        if (!dayRule) return false;
+        // Sport non prévu ce jour → supprimer
+        if (!dayRule.sports.has(w.sportType)) return false;
+        // Capper la durée au maximum autorisé (si défini)
+        const maxMin = dayRule.maxMinutes[w.sportType];
+        if (maxMin != null && w.durationMinutes > maxMin) {
+            w.durationMinutes = maxMin;
+        }
+        return true;
+    });
 
     return aiResponse.map((w) => {
     const workoutDate = addDays(weekStartDate, w.dayOffset);

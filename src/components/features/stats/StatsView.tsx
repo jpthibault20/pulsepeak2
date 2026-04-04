@@ -561,17 +561,48 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
         };
     }, [filteredWorkouts]);
 
-    // ── PMC data (always 90 days) — recalcul complet depuis 0 ─────────────
+    // ── PMC data — linked to period filter ─────────────────────────────────
     const pmcData = useMemo(() => {
-        const raw = computePMC(scheduleData.workouts, 0, 0, 90);
-        // Reduce ticks for mobile readability
-        return raw.filter((_, i) => i % 3 === 0 || i === raw.length - 1);
-    }, [scheduleData.workouts]);
+        const raw = computePMC(scheduleData.workouts, 0, 0, 90, rangeStart, rangeEnd);
+        // Thin out data when range is large (>60 points) for readability
+        if (raw.length > 60) {
+            const step = Math.ceil(raw.length / 60);
+            return raw.filter((_, i) => i % step === 0 || i === raw.length - 1);
+        }
+        return raw;
+    }, [scheduleData.workouts, rangeStart, rangeEnd]);
 
     // Current CTL/ATL from PMC (recalculé, pas depuis le profil)
     const currentPMC = pmcData[pmcData.length - 1];
     const currentCTL = currentPMC?.ctl ?? 0;
     const currentATL = currentPMC?.atl ?? 0;
+
+    // PMC stats for the period
+    const pmcStats = useMemo(() => {
+        if (pmcData.length < 2) return null;
+        const first = pmcData[0];
+        const last = pmcData[pmcData.length - 1];
+        const ctlDelta = last.ctl - first.ctl;
+        const minTSB = Math.min(...pmcData.map(p => p.tsb));
+        const maxTSB = Math.max(...pmcData.map(p => p.tsb));
+        const avgTSS = Math.round(pmcData.reduce((s, p) => s + p.tss, 0) / pmcData.length);
+        return { ctlDelta, minTSB, maxTSB, avgTSS };
+    }, [pmcData]);
+
+    // TSB gradient offset (split green/red at y=0)
+    const tsbGradientOffset = useMemo(() => {
+        if (!pmcData.length) return 0.5;
+        const maxTsb = Math.max(...pmcData.map(p => p.tsb));
+        const minTsb = Math.min(...pmcData.map(p => p.tsb));
+        if (maxTsb <= 0) return 0;
+        if (minTsb >= 0) return 1;
+        return maxTsb / (maxTsb - minTsb);
+    }, [pmcData]);
+
+    // Objectives in the current PMC range
+    const pmcObjectives = useMemo(() => {
+        return objectives.filter(o => o.date >= rangeStart && o.date <= rangeEnd);
+    }, [objectives, rangeStart, rangeEnd]);
 
     // ── Weekly TSS (12 weeks) ────────────────────────────────────────────────
     const weeklyData = useMemo(() => computeWeeklyTSS(scheduleData.workouts, 12), [scheduleData.workouts]);
@@ -711,27 +742,51 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
 
             {/* ── PMC CHART ─────────────────────────────────────────────── */}
             <Card className="p-4 md:p-6">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-2">
                     <div>
                         <div className="flex items-center gap-1.5">
                             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Performance Management Chart</h3>
                             <InfoTooltip
                                 title="Comment lire le PMC ?"
-                                content={"CTL (bleu) : ta forme sur 42j. Monte = tu progresses.\n\nATL (rouge) : fatigue des 7 derniers jours.\n\nTSB (fond vert) : fraîcheur = CTL − ATL. Positif = frais, négatif = chargé.\n\nBarres grises : charge TSS journalière.\n\nObjectif : CTL qui monte progressivement, ATL maîtrisée entre les blocs."}
+                                content={"CTL (bleu) : forme chronique sur 42j. Monte = tu progresses.\n\nATL (rouge) : fatigue aiguë sur 7j.\n\nTSB (zone verte/rouge) : fraîcheur = CTL − ATL.\n  Vert = frais, Rouge = chargé.\n\nBarres grises : charge TSS journalière.\n\nDrapeaux : tes objectifs / courses.\n\nUtilise les filtres en haut pour zoomer."}
                             />
                         </div>
-                        <p className="text-[10px] text-slate-500 mt-0.5">90 derniers jours</p>
                     </div>
-                    <div className="flex items-center gap-3 text-[10px] text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-3 text-[10px] text-slate-500 dark:text-slate-400 flex-wrap justify-end">
                         <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-blue-500 inline-block" />CTL</span>
-                        <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-red-500 inline-block" style={{ borderTop: '2px dashed #ef4444', width: 12, height: 0 }} />ATL</span>
-                        <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-slate-600 inline-block opacity-60" />TSS</span>
+                        <span className="flex items-center gap-1"><span className="w-3 h-0.5 inline-block" style={{ borderTop: '2px dashed #ef4444', width: 12, height: 0 }} />ATL</span>
+                        <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: 'linear-gradient(180deg, #22c55e40 0%, #ef444440 100%)' }} />TSB</span>
+                        <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-slate-600 inline-block opacity-40" />TSS</span>
                     </div>
                 </div>
 
+                {/* PMC mini-stats */}
+                {pmcStats && (
+                    <div className="flex items-center gap-4 mb-3 text-[10px] text-slate-500 dark:text-slate-400">
+                        <span>
+                            CTL {pmcStats.ctlDelta >= 0 ? '+' : ''}{pmcStats.ctlDelta.toFixed(1)} sur la période
+                        </span>
+                        <span>TSB min <strong className="text-red-400">{pmcStats.minTSB}</strong></span>
+                        <span>TSB max <strong className="text-emerald-400">{pmcStats.maxTSB}</strong></span>
+                        <span>TSS moy/j <strong className="text-slate-300">{pmcStats.avgTSS}</strong></span>
+                    </div>
+                )}
+
                 {pmcData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={200}>
+                    <ResponsiveContainer width="100%" height={240}>
                         <ComposedChart data={pmcData} margin={{ top: 5, right: 5, bottom: 0, left: -20 }}>
+                            <defs>
+                                <linearGradient id="tsbGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#22c55e" stopOpacity={0.25} />
+                                    <stop offset={`${tsbGradientOffset * 100}%`} stopColor="#22c55e" stopOpacity={0.08} />
+                                    <stop offset={`${tsbGradientOffset * 100}%`} stopColor="#ef4444" stopOpacity={0.08} />
+                                    <stop offset="100%" stopColor="#ef4444" stopOpacity={0.25} />
+                                </linearGradient>
+                                <linearGradient id="tsbStroke" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset={`${tsbGradientOffset * 100}%`} stopColor="#22c55e" />
+                                    <stop offset={`${tsbGradientOffset * 100}%`} stopColor="#ef4444" />
+                                </linearGradient>
+                            </defs>
                             <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#1e293b' : '#e2e8f0'} vertical={false} />
                             <XAxis
                                 dataKey="date"
@@ -754,25 +809,44 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
                                 tick={{ fontSize: 9, fill: '#475569' }}
                                 axisLine={false}
                                 tickLine={false}
+                                domain={['auto', 'auto']}
                             />
                             <Tooltip content={<PMCTooltipContent />} />
                             {/* Daily TSS bars */}
-                            <Bar dataKey="tss" yAxisId="tss" fill="#334155" opacity={0.4} radius={[2, 2, 0, 0]} />
-                            {/* TSB area */}
+                            <Bar dataKey="tss" yAxisId="tss" fill="#334155" opacity={0.3} radius={[2, 2, 0, 0]} />
+                            {/* TSB area with green/red gradient */}
                             <Area
                                 dataKey="tsb"
                                 yAxisId="tss"
-                                fill="#22c55e"
-                                fillOpacity={0.08}
-                                stroke="none"
+                                fill="url(#tsbGradient)"
+                                stroke="url(#tsbStroke)"
+                                strokeWidth={1.5}
                                 activeDot={false}
                             />
-                            {/* CTL */}
+                            {/* CTL (fitness) */}
                             <Line dataKey="ctl" yAxisId="load" stroke="#3b82f6" strokeWidth={2.5} dot={false} />
-                            {/* ATL */}
+                            {/* ATL (fatigue) */}
                             <Line dataKey="atl" yAxisId="load" stroke="#ef4444" strokeWidth={2} dot={false} strokeDasharray="4 3" />
-                            {/* Zero TSB line */}
-                            <ReferenceLine y={0} yAxisId="tss" stroke="#334155" strokeDasharray="3 3" />
+                            {/* Zero TSB reference line */}
+                            <ReferenceLine y={0} yAxisId="tss" stroke={theme === 'dark' ? '#475569' : '#94a3b8'} strokeDasharray="3 3" strokeWidth={1} />
+                            {/* Objective markers */}
+                            {pmcObjectives.map(obj => (
+                                <ReferenceLine
+                                    key={obj.id ?? obj.name}
+                                    x={obj.date}
+                                    yAxisId="load"
+                                    stroke={obj.priority === 'principale' ? '#f59e0b' : '#8b5cf6'}
+                                    strokeDasharray="4 2"
+                                    strokeWidth={1.5}
+                                    label={{
+                                        value: `🏁 ${obj.name}`,
+                                        position: 'top',
+                                        fill: obj.priority === 'principale' ? '#f59e0b' : '#8b5cf6',
+                                        fontSize: 9,
+                                        fontWeight: 600,
+                                    }}
+                                />
+                            ))}
                         </ComposedChart>
                     </ResponsiveContainer>
                 ) : (

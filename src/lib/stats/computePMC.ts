@@ -37,12 +37,14 @@ export function getWorkoutTSS(w: Workout): number {
     return plannedTSS;
 }
 
-/** Compute PMC data for the last `days` days */
+/** Compute PMC data for the last `days` days, or between `startDate` and `endDate` */
 export function computePMC(
     workouts: Workout[],
     initialCTL: number,
     initialATL: number,
-    days = 90
+    days = 90,
+    startDate?: string,
+    endDate?: string
 ): PMCPoint[] {
     const K_CTL = 1 - Math.exp(-1 / 42);
     const K_ATL = 1 - Math.exp(-1 / 7);
@@ -58,12 +60,27 @@ export function computePMC(
         }
     }
 
-    // We need to warm up the EWMA before the display window.
-    // Warm up over 180 days before the display window starts.
+    // Determine display window
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const displayStart = new Date(today);
-    displayStart.setDate(displayStart.getDate() - days + 1);
+
+    let displayStart: Date;
+    let displayEnd: Date;
+
+    if (startDate && endDate) {
+        displayStart = new Date(startDate);
+        displayStart.setHours(0, 0, 0, 0);
+        displayEnd = new Date(endDate);
+        displayEnd.setHours(0, 0, 0, 0);
+        // Clamp end to today (no future PMC values)
+        if (displayEnd > today) displayEnd = new Date(today);
+    } else {
+        displayEnd = new Date(today);
+        displayStart = new Date(today);
+        displayStart.setDate(displayStart.getDate() - days + 1);
+    }
+
+    // Warm up over 180 days before the display window starts.
     const warmupStart = new Date(displayStart);
     warmupStart.setDate(warmupStart.getDate() - 180);
 
@@ -83,7 +100,7 @@ export function computePMC(
     // Build display window
     const result: PMCPoint[] = [];
     const cursor = new Date(displayStart);
-    while (cursor <= today) {
+    while (cursor <= displayEnd) {
         const dateStr = toLocalDateStr(cursor);
         const tss = dailyTSS.get(dateStr) ?? 0;
         ctl = ctl + K_CTL * (tss - ctl);
