@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { BarChart3, Bot, Plus, Sparkles, Zap, X, Loader2, AlertCircle, Target, Calendar, Bike, Waves, Footprints, MessageSquare, Sparkle } from 'lucide-react';
+import { WeekGenerationProgressModal, type WeekGenProgressState } from './WeekGenerationProgressModal';
 import { DurationInput } from '@/components/features/profile/Availability';
 import { WeekStatsPopover } from './WeekStatsPopover';
 import type { WeekStats } from '@/hooks/useWeekStats';
@@ -49,6 +50,9 @@ export function WeekSummaryCell({
     const [isLoadingContext, setIsLoadingContext] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [weekGenProgress, setWeekGenProgress] = useState<WeekGenProgressState>({
+        active: false, minimized: false, done: false, error: null, startedAt: 0, weekLabel: '',
+    });
 
     // Monday of this week (weekDates[0] = Lundi dans la grille ISO)
     const weekStartDate = (() => {
@@ -114,14 +118,23 @@ export function WeekSummaryCell({
             return;
         }
 
+        const weekLabel = `Semaine du ${new Date(weekStartDate + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`;
+
         setIsGenerating(true);
         setError(null);
+        setShowAIModal(false);
+        setWeekGenProgress({
+            active: true, minimized: false, done: false, error: null,
+            startedAt: Date.now(), weekLabel,
+        });
+
         try {
             await generateWeekWorkoutsFromDate(weekStartDate, comment || null, availability);
-            setShowAIModal(false);
+            setWeekGenProgress(prev => ({ ...prev, done: true }));
             onRefresh();
         } catch (e) {
-            setError(e instanceof Error ? e.message : 'Erreur lors de la génération.');
+            const msg = e instanceof Error ? e.message : 'Erreur lors de la génération.';
+            setWeekGenProgress(prev => ({ ...prev, done: true, error: msg }));
         } finally {
             setIsGenerating(false);
             setConfirmOverwrite(false);
@@ -596,6 +609,14 @@ export function WeekSummaryCell({
                     </div>
                 </div>
             )}
+
+            {/* ─── PROGRESS MODAL GÉNÉRATION SEMAINE ─── */}
+            <WeekGenerationProgressModal
+                state={weekGenProgress}
+                onMinimize={() => setWeekGenProgress(prev => ({ ...prev, minimized: true }))}
+                onRestore={() => setWeekGenProgress(prev => ({ ...prev, minimized: false }))}
+                onClose={() => setWeekGenProgress(prev => ({ ...prev, active: false }))}
+            />
         </div>
     );
 }

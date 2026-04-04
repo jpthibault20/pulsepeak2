@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { Sparkles, Sparkle, Zap, ChevronDown, ChevronUp, Bike, Waves, Footprints, Bot, Loader2, AlertCircle, Plus, Target, Calendar, X, MessageSquare } from 'lucide-react';
+import { WeekGenerationProgressModal, type WeekGenProgressState } from './WeekGenerationProgressModal';
 import type { WeekStats } from '@/hooks/useWeekStats';
 import type { AvailabilitySlot } from '@/lib/data/type';
 import { getWeekContextForDate, generateWeekWorkoutsFromDate, getWeekPendingCount, type WeekContext } from '@/app/actions/schedule';
@@ -51,6 +52,9 @@ export function MobileWeekBar({
     const [isLoadingContext, setIsLoadingContext] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [weekGenProgress, setWeekGenProgress] = useState<WeekGenProgressState>({
+        active: false, minimized: false, done: false, error: null, startedAt: 0, weekLabel: '',
+    });
 
     const formatDuration = (totalMinutes: number) => {
         if (!totalMinutes) return '0h00';
@@ -97,14 +101,23 @@ export function MobileWeekBar({
             return;
         }
 
+        const weekLabel = `Semaine du ${new Date(weekStartDate + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`;
+
         setIsGenerating(true);
         setError(null);
+        setShowGenSheet(false);
+        setWeekGenProgress({
+            active: true, minimized: false, done: false, error: null,
+            startedAt: Date.now(), weekLabel,
+        });
+
         try {
             await generateWeekWorkoutsFromDate(weekStartDate, comment || null, availability);
-            setShowGenSheet(false);
+            setWeekGenProgress(prev => ({ ...prev, done: true }));
             onRefresh();
         } catch (e) {
-            setError(e instanceof Error ? e.message : 'Erreur lors de la génération.');
+            const msg = e instanceof Error ? e.message : 'Erreur lors de la génération.';
+            setWeekGenProgress(prev => ({ ...prev, done: true, error: msg }));
         } finally {
             setIsGenerating(false);
             setConfirmOverwrite(false);
@@ -174,6 +187,12 @@ export function MobileWeekBar({
                         {renderGenSheet()}
                     </>
                 )}
+                <WeekGenerationProgressModal
+                    state={weekGenProgress}
+                    onMinimize={() => setWeekGenProgress(prev => ({ ...prev, minimized: true }))}
+                    onRestore={() => setWeekGenProgress(prev => ({ ...prev, minimized: false }))}
+                    onClose={() => setWeekGenProgress(prev => ({ ...prev, active: false }))}
+                />
             </div>
         );
     }
@@ -252,6 +271,12 @@ export function MobileWeekBar({
             )}
 
             {renderGenSheet()}
+            <WeekGenerationProgressModal
+                state={weekGenProgress}
+                onMinimize={() => setWeekGenProgress(prev => ({ ...prev, minimized: true }))}
+                onRestore={() => setWeekGenProgress(prev => ({ ...prev, minimized: false }))}
+                onClose={() => setWeekGenProgress(prev => ({ ...prev, active: false }))}
+            />
         </div>
     );
 

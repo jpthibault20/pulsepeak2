@@ -7,6 +7,7 @@ import {
     MessageSquare, RotateCcw, Flag, X,
 } from 'lucide-react';
 import { getPlanOverview, generateWeekWorkoutsFromDate, type PlanOverviewData, type PlanOverviewBlock, type PlanOverviewWeek } from '@/app/actions/schedule';
+import { WeekGenerationProgressModal, type WeekGenProgressState } from '@/components/features/calendar/WeekGenerationProgressModal';
 import type { Profile } from '@/lib/data/DatabaseTypes';
 import { FeatureGate } from '@/components/features/billing/FeatureGate';
 
@@ -47,6 +48,9 @@ export function PlanView({ profile, onRefresh, onViewWorkout }: PlanViewProps) {
     const [loading, setLoading] = useState(true);
     const [expandedBlock, setExpandedBlock] = useState<string | null>(null);
     const [regenTarget, setRegenTarget] = useState<{ blockId: string; weekId?: string } | null>(null);
+    const [weekGenProgress, setWeekGenProgress] = useState<WeekGenProgressState>({
+        active: false, minimized: false, done: false, error: null, startedAt: 0, weekLabel: '',
+    });
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -190,8 +194,23 @@ export function PlanView({ profile, onRefresh, onViewWorkout }: PlanViewProps) {
                     profile={profile}
                     onClose={() => setRegenTarget(null)}
                     onDone={() => { setRegenTarget(null); load(); onRefresh(); }}
+                    onSetProgress={setWeekGenProgress}
                 />
             )}
+
+            {/* ── Week Generation Progress Modal ─────────────── */}
+            <WeekGenerationProgressModal
+                state={weekGenProgress}
+                onMinimize={() => setWeekGenProgress(prev => ({ ...prev, minimized: true }))}
+                onRestore={() => setWeekGenProgress(prev => ({ ...prev, minimized: false }))}
+                onClose={() => {
+                    setWeekGenProgress(prev => ({ ...prev, active: false }));
+                    if (!weekGenProgress.error) {
+                        load();
+                        onRefresh();
+                    }
+                }}
+            />
         </div>
     );
 }
@@ -461,9 +480,10 @@ interface RegenSheetProps {
     profile: Profile;
     onClose: () => void;
     onDone: () => void;
+    onSetProgress: React.Dispatch<React.SetStateAction<WeekGenProgressState>>;
 }
 
-function RegenSheet({ block, weekId, profile, onClose, onDone }: RegenSheetProps) {
+function RegenSheet({ block, weekId, profile, onClose, onDone, onSetProgress }: RegenSheetProps) {
     const [comment, setComment] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -480,15 +500,26 @@ function RegenSheet({ block, weekId, profile, onClose, onDone }: RegenSheetProps
     const defaultAvailability = profile.weeklyAvailability ?? {};
 
     const handleGenerate = async () => {
+        const weekLabel = targetWeeks.length === 1
+            ? `Semaine du ${new Date(targetWeeks[0].startDate + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`
+            : `${targetWeeks.length} semaines à régénérer`;
+
         setIsGenerating(true);
         setError(null);
+        onClose();
+        onSetProgress({
+            active: true, minimized: false, done: false, error: null,
+            startedAt: Date.now(), weekLabel,
+        });
+
         try {
             for (const week of targetWeeks) {
                 await generateWeekWorkoutsFromDate(week.startDate, comment || null, defaultAvailability);
             }
-            onDone();
+            onSetProgress(prev => ({ ...prev, done: true }));
         } catch (e) {
-            setError(e instanceof Error ? e.message : 'Erreur lors de la génération.');
+            const msg = e instanceof Error ? e.message : 'Erreur lors de la génération.';
+            onSetProgress(prev => ({ ...prev, done: true, error: msg }));
         } finally {
             setIsGenerating(false);
         }

@@ -1,5 +1,5 @@
 import './globals.css';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
@@ -29,6 +29,9 @@ export const metadata: Metadata = {
         statusBarStyle: 'default',
         title: 'PulsePeak',
     },
+};
+
+export const viewport: Viewport = {
     themeColor: [
         { media: '(prefers-color-scheme: light)', color: '#f8fafc' },
         { media: '(prefers-color-scheme: dark)',  color: '#020617' },
