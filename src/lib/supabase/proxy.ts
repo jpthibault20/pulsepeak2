@@ -2,7 +2,6 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function updateSession(request: NextRequest) {
-    console.log('[proxy] updateSession →', request.nextUrl.pathname);
     let supabaseResponse = NextResponse.next({ request });
 
     const supabase = createServerClient(
@@ -19,7 +18,12 @@ export async function updateSession(request: NextRequest) {
                     );
                     supabaseResponse = NextResponse.next({ request });
                     cookiesToSet.forEach(({ name, value, options }) =>
-                        supabaseResponse.cookies.set(name, value, options),
+                        supabaseResponse.cookies.set(name, value, {
+                            ...options,
+                            secure: process.env.NODE_ENV === 'production',
+                            sameSite: 'lax',
+                            maxAge: 400 * 24 * 60 * 60, // 400 jours — max autorisé
+                        }),
                     );
                 },
             },
