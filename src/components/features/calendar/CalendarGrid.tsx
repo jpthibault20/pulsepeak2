@@ -51,9 +51,9 @@ export function CalendarGrid({
 
                     // Stats planifiées (toujours comptées)
                     stats.total++;
-                    stats.plannedTSS += workout.plannedData.plannedTSS ?? 0;
+                    stats.plannedTSS += workout.plannedData?.plannedTSS ?? 0;
                     stats.completedTSS += workout.completedData?.metrics.cycling?.tss ?? 0;
-                    stats.plannedDuration += workout.plannedData.durationMinutes ?? 0;
+                    stats.plannedDuration += workout.plannedData?.durationMinutes ?? 0;
 
                     // Comptage des séances par sport
                     if (stats.sportBreakdown[sport] !== undefined) {

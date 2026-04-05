@@ -372,7 +372,7 @@ export async function generateSingleWorkoutFromAI(
 
     let oldWorkoutContext = "Nouveau créneau.";
     if (oldWorkout) {
-        oldWorkoutContext = `REMPLACE: ${oldWorkout.title} (${oldWorkout.workoutType}, ${oldWorkout.plannedData.durationMinutes}min)`;
+        oldWorkoutContext = `REMPLACE: ${oldWorkout.title} (${oldWorkout.workoutType}, ${oldWorkout.plannedData?.durationMinutes ?? 0}min)`;
     }
 
     const userDirective = userInstruction ? `DEMANDE UTILISATEUR: "${userInstruction}"` : "Propose une alternative pertinente.";

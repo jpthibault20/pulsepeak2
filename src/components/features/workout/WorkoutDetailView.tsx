@@ -7,7 +7,7 @@ import {
     CalendarDays, Edit, Trash2, RefreshCw,
     AlertTriangle, Send, X, MapPin,
     Bike, FootprintsIcon as Running, Waves, Heart,
-    Timer, Gauge, TrendingUp
+    Timer, Gauge, TrendingUp, Unlink
 } from 'lucide-react';
 import type { SportType, CompletedDataFeedback } from '@/lib/data/type';
 import type { Workout } from '@/lib/data/DatabaseTypes';
@@ -21,6 +21,7 @@ import { Profile } from '@/lib/data/DatabaseTypes';
 // --- Types ---
 interface WorkoutDetailViewProps {
     workout: Workout;
+    sameDayWorkouts: Workout[];
     profile: Profile;
     onClose: () => void;
     onUpdate: (
@@ -29,7 +30,8 @@ interface WorkoutDetailViewProps {
         feedback?: CompletedDataFeedback
     ) => Promise<void>;
     onToggleMode: (dateKey: string) => Promise<void>;
-    onMoveWorkout: (originalDateStr: string, newDateStr: string) => Promise<void>;
+    onMoveWorkout: (workoutId: string, newDateStr: string) => Promise<void>;
+    onUnlinkStrava: (workoutId: string, targetWorkoutId: string | null) => Promise<void>;
     onDelete: (dateKey: string) => Promise<void>;
     onRegenerate: (dateKey: string, instruction?: string) => Promise<void>;
 }
@@ -129,10 +131,12 @@ function getCompletedMetrics(workout: Workout): MetricTile[] {
 // --- Composant Principal ---
 export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
     workout,
+    sameDayWorkouts,
     profile,
     onClose,
     onUpdate,
     onMoveWorkout,
+    onUnlinkStrava,
     onDelete,
     onRegenerate,
 }) => {
@@ -145,23 +149,34 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
     const [newMoveDate, setNewMoveDate] = useState('');
     const [isMutating, setIsMutating] = useState(false);
     const [isRegenerating, setIsRegenerating] = useState(false);
+    const [isUnlinking, setIsUnlinking] = useState(false);
 
     const sportConfig = SPORT_CONFIG[workout.sportType] ?? SPORT_CONFIG.other;
     const SportIcon = sportConfig.icon;
     const isCompleted = workout.status === 'completed';
     const isMissed = workout.status === 'missed';
     const isPending = !isCompleted && !isMissed;
+    const isStravaSource = workout.completedData?.source?.type === 'strava';
+    const canUnlink = isCompleted && isStravaSource;
     const planned = workout.plannedData;
     const description = planned?.description;
 
     const completedMetrics = useMemo(() => getCompletedMetrics(workout), [workout]);
 
     // --- Handlers ---
+    const handleUnlink = async (targetWorkoutId: string | null) => {
+        setIsMutating(true);
+        try {
+            await onUnlinkStrava(workout.id, targetWorkoutId);
+        } catch (e) { console.error(e); }
+        finally { setIsMutating(false); setIsUnlinking(false); }
+    };
+
     const handleMove = async () => {
         if (!newMoveDate) return;
         setIsMutating(true);
         try {
-            await onMoveWorkout(workout.date, newMoveDate);
+            await onMoveWorkout(workout.id, newMoveDate);
             onClose();
         } catch (e) { console.error(e); }
         finally { setIsMutating(false); }
@@ -330,11 +345,22 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                             {/* Move */}
                             <button
                                 onClick={() => setIsMoving(!isMoving)}
-                                disabled={isMutating}
+                                disabled={isMutating || !planned}
                                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-40"
                             >
-                                <CalendarDays size={14} /> Déplacer
+                                <CalendarDays size={14} /> {isCompleted ? 'Replanifier' : 'Déplacer'}
                             </button>
+
+                            {/* Unlink Strava */}
+                            {canUnlink && (
+                                <button
+                                    onClick={() => setIsUnlinking(!isUnlinking)}
+                                    disabled={isMutating}
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 hover:bg-orange-100 dark:hover:bg-orange-500/20 transition-colors disabled:opacity-40"
+                                >
+                                    <Unlink size={14} /> Délier
+                                </button>
+                            )}
 
                             {/* Regenerate (pending only) */}
                             {isPending && (
@@ -379,6 +405,43 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                         />
                         <button onClick={() => setIsMoving(false)} className="px-3 py-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-200" disabled={isMutating}>Annuler</button>
                         <Button variant="primary" disabled={isMutating || !newMoveDate} onClick={handleMove} className="h-9 text-sm">Confirmer</Button>
+                    </div>
+                </div>
+            )}
+
+            {/* Unlink panel */}
+            {isUnlinking && (
+                <div className="mb-6 p-4 rounded-xl bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-500/30 animate-in slide-in-from-top-2 duration-200">
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200 mb-3">Réattribuer l&apos;activité Strava à :</p>
+                    <div className="flex flex-col gap-2">
+                        {sameDayWorkouts.map(w => (
+                            <button
+                                key={w.id}
+                                onClick={() => handleUnlink(w.id)}
+                                disabled={isMutating}
+                                className="flex items-center gap-3 p-3 rounded-lg text-left text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors disabled:opacity-40"
+                            >
+                                <div className="flex-1">
+                                    <span className="font-medium text-slate-800 dark:text-slate-100">{w.title}</span>
+                                    <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">{w.workoutType} · {w.plannedData?.durationMinutes ?? '?'} min</span>
+                                </div>
+                                <CheckCircle size={16} className="text-blue-500 opacity-0 group-hover:opacity-100" />
+                            </button>
+                        ))}
+                        <button
+                            onClick={() => handleUnlink(null)}
+                            disabled={isMutating}
+                            className="flex items-center gap-3 p-3 rounded-lg text-left text-sm bg-white dark:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-600 hover:border-orange-400 dark:hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors disabled:opacity-40"
+                        >
+                            <span className="font-medium text-slate-600 dark:text-slate-300">Nouvelle séance libre</span>
+                        </button>
+                        <button
+                            onClick={() => setIsUnlinking(false)}
+                            disabled={isMutating}
+                            className="mt-1 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 self-end"
+                        >
+                            Annuler
+                        </button>
                     </div>
                 </div>
             )}

@@ -41,8 +41,8 @@ export function useWeekStats(
             if (!uniqueDates.has(workout.date)) return;
 
             stats.total++;
-            stats.plannedTSS += workout.plannedData.plannedTSS ?? 0;
-            stats.plannedDuration += workout.plannedData.durationMinutes;
+            stats.plannedTSS += workout.plannedData?.plannedTSS ?? 0;
+            stats.plannedDuration += workout.plannedData?.durationMinutes ?? 0;
 
             if (stats.sportBreakdown[workout.sportType] !== undefined) {
                 stats.sportBreakdown[workout.sportType]++;
@@ -61,7 +61,7 @@ export function useWeekStats(
                 const tss =
                     (cd.metrics?.cycling?.tss ?? 0) > 0 ? cd.metrics!.cycling!.tss! :
                     (cd.calculatedTSS ?? 0) > 0 ? cd.calculatedTSS! :
-                    workout.plannedData.plannedTSS ?? 0;
+                    workout.plannedData?.plannedTSS ?? 0;
                 stats.completedTSS += tss;
 
                 if (stats.sportDuration[workout.sportType] !== undefined) {

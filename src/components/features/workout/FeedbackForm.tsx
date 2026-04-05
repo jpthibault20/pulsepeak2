@@ -93,11 +93,11 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
     );
 
     const [actualDuration, setActualDuration] = useState<number>(
-        getCompletedValue(workout.completedData, 'actualDuration', workout.plannedData.durationMinutes)
+        getCompletedValue(workout.completedData, 'actualDuration', workout.plannedData?.durationMinutes ?? 0)
     );
 
     const [distance, setDistance] = useState<number>(
-        getCompletedValue(workout.completedData, 'distance', workout.plannedData.distanceKm || 0)
+        getCompletedValue(workout.completedData, 'distance', workout.plannedData?.distanceKm || 0)
     );
 
     const [notes, setNotes] = useState<string>(

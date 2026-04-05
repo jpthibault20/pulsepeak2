@@ -41,8 +41,8 @@ export function MobileCalendarList({
 
                 workouts.forEach(workout => {
                     stats.total++;
-                    stats.plannedTSS += workout.plannedData.plannedTSS ?? 0;
-                    stats.plannedDuration += workout.plannedData.durationMinutes;
+                    stats.plannedTSS += workout.plannedData?.plannedTSS ?? 0;
+                    stats.plannedDuration += workout.plannedData?.durationMinutes ?? 0;
                     stats.sportBreakdown[workout.sportType]++;
 
                     if (workout.status === 'completed' && workout.completedData) {

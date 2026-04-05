@@ -15,6 +15,7 @@ import {
     regenerateWorkout,
     syncStravaActivities,
     CreatePlanToObjective,
+    unlinkStravaWorkout,
 } from '@/app/actions/schedule';
 import {
     saveObjectiveAction,
@@ -319,15 +320,26 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
         }
     }, [refreshData, schedule]);
 
-    const handleMoveWorkout = useCallback(async (originalDateOrId: string, newDateStr: string) => {
+    const handleMoveWorkout = useCallback(async (workoutId: string, newDateStr: string) => {
         try {
-            await moveWorkout(originalDateOrId, newDateStr);
+            await moveWorkout(workoutId, newDateStr);
             await refreshData();
         } catch (e) {
             console.error('Erreur déplacement séance:', e);
             setError('Impossible de déplacer la séance.');
         }
     }, [refreshData]);
+
+    const handleUnlinkStrava = useCallback(async (workoutId: string, targetWorkoutId: string | null) => {
+        try {
+            await unlinkStravaWorkout(workoutId, targetWorkoutId);
+            await refreshData();
+            handleViewChange('dashboard');
+        } catch (e) {
+            console.error('Erreur déliaison Strava:', e);
+            setError('Impossible de délier la séance.');
+        }
+    }, [refreshData, handleViewChange]);
 
     const handleAddManualWorkout = useCallback(async (workout: Workout) => {
         try {
@@ -500,11 +512,18 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
                         <div className="animate-in slide-in-from-right-4 duration-300">
                             <WorkoutDetailView
                                 workout={selectedWorkout}
+                                sameDayWorkouts={schedule?.workouts.filter(w =>
+                                    w.date === selectedWorkout.date &&
+                                    w.id !== selectedWorkout.id &&
+                                    w.status === 'pending' &&
+                                    w.sportType === selectedWorkout.sportType
+                                ) ?? []}
                                 profile={profile}
                                 onClose={() => handleViewChange('dashboard')}
                                 onUpdate={handleUpdateStatus}
                                 onToggleMode={handleToggleMode}
                                 onMoveWorkout={handleMoveWorkout}
+                                onUnlinkStrava={handleUnlinkStrava}
                                 onDelete={handleDeleteWorkout}
                                 onRegenerate={handleRegenerateWorkout}
                             />

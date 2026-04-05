@@ -30,8 +30,8 @@ export function getWorkoutTSS(w: Workout): number {
     const cd = w.completedData;
     if (cd.metrics?.cycling?.tss != null && cd.metrics.cycling.tss > 0) return cd.metrics.cycling.tss;
     if (cd.calculatedTSS != null && cd.calculatedTSS > 0) return cd.calculatedTSS;
-    const plannedTSS = w.plannedData.plannedTSS ?? 0;
-    const plannedDur = w.plannedData.durationMinutes ?? 0;
+    const plannedTSS = w.plannedData?.plannedTSS ?? 0;
+    const plannedDur = w.plannedData?.durationMinutes ?? 0;
     const actualDur = cd.actualDurationMinutes ?? 0;
     if (plannedDur > 0 && plannedTSS > 0) return (actualDur / plannedDur) * plannedTSS;
     return plannedTSS;
@@ -138,7 +138,7 @@ export function computeWeeklyTSS(workouts: Workout[], weeks = 12): WeeklyTSSPoin
 
         for (const w of workouts) {
             if (w.date >= weekStartStr && w.date <= weekEndStr) {
-                planned += w.plannedData.plannedTSS ?? 0;
+                planned += w.plannedData?.plannedTSS ?? 0;
                 if (w.status === 'completed') actual += getWorkoutTSS(w);
             }
         }
