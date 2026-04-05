@@ -16,7 +16,12 @@
       "WebFetch(domain:www.alancouzens.com)",
       "WebFetch(domain:buildpeakcompete.com)",
       "Bash(curl -s \"https://www.google.com/search?q=progressive+overload+weekly+workout+mesocycle+endurance+cycling+triathlon+coaching+methodology\")",
-      "WebFetch(domain:www.hyroxtrainingplans.com)"
+      "WebFetch(domain:www.hyroxtrainingplans.com)",
+      "Bash(find:*)",
+      "WebFetch(domain:supabase.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(gh api:*)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }

@@ -22,8 +22,8 @@ export default function ResetPasswordPage() {
 
     // Vérifie que l'utilisateur a bien une session valide (issue du lien email)
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (!session) {
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            if (!user) {
                 // Lien invalide ou expiré → renvoyer vers forgot-password
                 router.replace('/auth/forgot-password?error=link_expired');
             }
