@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useCallback, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Info, X, Target, Home, Dumbbell, Trophy, Zap } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Info, X, Target, Home, Dumbbell, Trophy, Zap, CalendarPlus } from 'lucide-react';
 import type { Workout, Profile, Objective } from '@/lib/data/DatabaseTypes';
+import type { SportType } from '@/lib/data/type';
 import { Button } from '@/components/ui/Button';
 import { ManualWorkoutModal } from '../workout/ManualWorkoutModal';
+import { CreatePlannedWorkoutModal } from '../workout/CreatePlannedWorkoutModal';
 import { GenerationModal } from './GenerationModal';
 import { ObjectiveModal } from './ObjectiveModal';
 import { CalendarGrid } from '@/components/features/calendar/CalendarGrid';
@@ -27,6 +29,7 @@ interface CalendarViewProps {
     onGenerate: (blockFocus: string, customTheme: string | null, startDate: string, numWeeks: number) => void;
     onGenerateToObjective: (planStartDate: string) => Promise<void>;
     onAddManualWorkout: (workout: Workout) => void;
+    onCreatePlannedWorkoutAI: (dateStr: string, sportType: SportType, duration: number, comment: string) => Promise<void>;
     onSaveObjective: (obj: Objective) => Promise<void>;
     onRefresh: () => void;
     onSyncStrava?: () => void;
@@ -46,6 +49,7 @@ export function CalendarView({
     onGenerate,
     onGenerateToObjective,
     onAddManualWorkout,
+    onCreatePlannedWorkoutAI,
     onSaveObjective,
     onRefresh,
     onSyncStrava,
@@ -59,6 +63,7 @@ export function CalendarView({
     const selectedMobileDay = calendarMobileDay ?? new Date();
     const [showGenModal, setShowGenModal] = useState(false);
     const [showManualModal, setShowManualModal] = useState(false);
+    const [showPlannedModal, setShowPlannedModal] = useState(false);
     const [showObjectiveModal, setShowObjectiveModal] = useState(false);
     const [showDayActionModal, setShowDayActionModal] = useState(false);
     const [showSummaryModal, setShowSummaryModal] = useState(false);
@@ -101,6 +106,11 @@ export function CalendarView({
     const handlePickWorkout = () => {
         setShowDayActionModal(false);
         setShowManualModal(true);
+    };
+
+    const handlePickPlannedWorkout = () => {
+        setShowDayActionModal(false);
+        setShowPlannedModal(true);
     };
 
     const handlePickObjective = () => {
@@ -403,6 +413,18 @@ export function CalendarView({
                         </div>
                         <div className="p-3 space-y-2">
                             <button
+                                onClick={handlePickPlannedWorkout}
+                                className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-all text-left"
+                            >
+                                <div className="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-600/20 border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center shrink-0">
+                                    <CalendarPlus size={16} className="text-emerald-600 dark:text-emerald-400" />
+                                </div>
+                                <div>
+                                    <p className="text-slate-900 dark:text-white text-sm font-medium">Planifier une séance</p>
+                                    <p className="text-slate-500 text-xs">Créer une séance à faire</p>
+                                </div>
+                            </button>
+                            <button
                                 onClick={handlePickWorkout}
                                 className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-all text-left"
                             >
@@ -410,8 +432,8 @@ export function CalendarView({
                                     <Dumbbell size={16} className="text-blue-600 dark:text-blue-400" />
                                 </div>
                                 <div>
-                                    <p className="text-slate-900 dark:text-white text-sm font-medium">Ajouter une séance</p>
-                                    <p className="text-slate-500 text-xs">Vélo, course, natation...</p>
+                                    <p className="text-slate-900 dark:text-white text-sm font-medium">Ajouter une activité</p>
+                                    <p className="text-slate-500 text-xs">Enregistrer une séance réalisée</p>
                                 </div>
                             </button>
                             <button
@@ -490,6 +512,14 @@ export function CalendarView({
                     userID={userID}
                     onClose={() => setShowManualModal(false)}
                     onSave={handleSaveManual}
+                />
+            )}
+
+            {showPlannedModal && dateForAction && (
+                <CreatePlannedWorkoutModal
+                    date={dateForAction}
+                    onClose={() => setShowPlannedModal(false)}
+                    onCreateAI={onCreatePlannedWorkoutAI}
                 />
             )}
 
