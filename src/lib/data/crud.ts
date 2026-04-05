@@ -553,6 +553,23 @@ export async function updateWorkoutById(
         ));
 }
 
+export async function insertSingleWorkout(w: Workout): Promise<void> {
+    const userId = await getCurrentUserId();
+    await db.insert(workoutsTable).values({
+        id:            w.id,
+        userId,
+        weekId:        w.weekId || null,
+        date:          w.date,
+        sportType:     w.sportType,
+        title:         w.title         ?? '',
+        workoutType:   w.workoutType   ?? null,
+        mode:          (w.mode as 'Outdoor' | 'Indoor') ?? 'Outdoor',
+        status:        (w.status as 'pending' | 'completed' | 'missed') ?? 'pending',
+        plannedData:   w.plannedData   ?? null,
+        completedData: w.completedData ?? null,
+    });
+}
+
 // ─── Objectives ───────────────────────────────────────────────────────────────
 
 function toObjective(row: typeof objectivesTable.$inferSelect): Objective {

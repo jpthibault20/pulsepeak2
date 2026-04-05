@@ -16,6 +16,7 @@ import {
     syncStravaActivities,
     CreatePlanToObjective,
     unlinkStravaWorkout,
+    createPlannedWorkoutAI,
 } from '@/app/actions/schedule';
 import {
     saveObjectiveAction,
@@ -23,7 +24,7 @@ import {
 } from '@/app/actions/objectives';
 
 // Import des types
-import type { CompletedDataFeedback } from '@/lib/data/type';
+import type { CompletedDataFeedback, SportType } from '@/lib/data/type';
 import type { Objective, Workout } from '@/lib/data/DatabaseTypes';
 import { SubscriptionProvider, type Plan } from '@/lib/subscription/context';
 import { FreePlanGate } from '@/components/features/billing/FreePlanGate';
@@ -341,6 +342,16 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
         }
     }, [refreshData, handleViewChange]);
 
+    const handleCreatePlannedWorkoutAI = useCallback(async (dateStr: string, sportType: SportType, duration: number, comment: string) => {
+        try {
+            await createPlannedWorkoutAI(dateStr, sportType, duration, comment);
+            await refreshData();
+        } catch (e) {
+            console.error('Erreur création séance IA:', e);
+            throw e; // Remonter pour que le progress modal affiche l'erreur
+        }
+    }, [refreshData]);
+
     const handleAddManualWorkout = useCallback(async (workout: Workout) => {
         try {
             await addManualWorkout(workout);
@@ -483,6 +494,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
                                 onGenerate={handleGenerate}
                                 onGenerateToObjective={handleGenerateToObjective}
                                 onAddManualWorkout={handleAddManualWorkout}
+                                onCreatePlannedWorkoutAI={handleCreatePlannedWorkoutAI}
                                 onSaveObjective={handleSaveObjective}
                                 onRefresh={refreshData}
                                 onSyncStrava={handleSyncStrava}

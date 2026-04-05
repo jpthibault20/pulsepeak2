@@ -1,7 +1,7 @@
 'use server';
 
 import { generateSingleWorkoutFromAI } from '@/lib/ai/coach-api';
-import { getBlock, getObjectives, getPlan, getProfile, getSchedule, getWeek, getWorkout, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek, saveWorkout, deleteWorkoutById, atomicIncrementAICallCount, atomicIncrementTokenCount, updateWorkoutById, saveTheme } from '@/lib/data/crud';
+import { getBlock, getObjectives, getPlan, getProfile, getSchedule, getWeek, getWorkout, saveBlocks, savePlan, saveProfile, saveSchedule, saveWeek, saveWorkout, deleteWorkoutById, atomicIncrementAICallCount, atomicIncrementTokenCount, updateWorkoutById, saveTheme, insertSingleWorkout } from '@/lib/data/crud';
 import { ReturnCode } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
 import type { AvailabilitySlot, CompletedData, CompletedDataFeedback, SportType } from '@/lib/data/type';
@@ -1547,6 +1547,63 @@ export async function saveThemePreference(theme: 'dark' | 'light') {
 }
 
 
+// Création d'une séance planifiée via l'IA
+export async function createPlannedWorkoutAI(
+    dateStr: string,
+    sportType: SportType,
+    durationMinutes: number,
+    comment: string,
+) {
+    await checkAndIncrementAICallLimit('workout');
+
+    const existingSchedule = await getSchedule();
+    const existingProfile = await getProfile();
+    if (!existingProfile) throw new Error("Profil manquant");
+
+    const history = getRecentPerformanceHistory(existingSchedule);
+    const surroundingWorkouts = getSurroundingWorkouts(existingSchedule, dateStr);
+
+    const instruction = [
+        `Sport: ${sportType}`,
+        `Durée cible: ${durationMinutes} min`,
+        comment ? `Thème: ${comment}` : '',
+    ].filter(Boolean).join('. ');
+
+    try {
+        const newWorkoutData = await generateSingleWorkoutFromAI(
+            existingProfile,
+            history,
+            dateStr,
+            surroundingWorkouts,
+            undefined,
+            "General Fitness",
+            instruction,
+        );
+
+        const workout: Workout = {
+            ...newWorkoutData,
+            id: randomUUID(),
+            userId: existingProfile.id,
+            weekId: '',
+            date: dateStr,
+            sportType,
+            status: 'pending',
+            completedData: null,
+        };
+
+        // Forcer la durée demandée si l'IA s'en écarte
+        if (workout.plannedData) {
+            workout.plannedData.durationMinutes = durationMinutes;
+        }
+
+        await insertSingleWorkout(workout);
+        revalidatePath('/');
+    } catch (error) {
+        console.error("Échec création séance IA:", error);
+        throw new Error("L'IA n'a pas pu créer la séance.");
+    }
+}
+
 // Régénération d'une séance unique
 export async function regenerateWorkout(workoutIdOrDate: string, instruction?: string) {
 
@@ -1889,7 +1946,7 @@ export async function moveWorkout(workoutId: string, newDateStr: string) {
         // Retirer le plannedData de la séance complétée + insérer la nouvelle séance
         await Promise.all([
             updateWorkoutById(sourceWorkout.id, { plannedData: null as any }),
-            saveWorkout([newWorkout]),
+            insertSingleWorkout(newWorkout),
         ]);
     } else {
         // --- CAS PENDING / MISSED : déplacement simple ---
@@ -1944,7 +2001,7 @@ export async function unlinkStravaWorkout(workoutId: string, targetWorkoutId: st
             // Source : retirer completedData, repasser en pending
             updateWorkoutById(sourceWorkout.id, { status: 'pending', completedData: null }),
             // Insérer la séance libre
-            saveWorkout([freeWorkout]),
+            insertSingleWorkout(freeWorkout),
         ]);
     }
 
