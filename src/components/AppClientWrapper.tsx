@@ -319,9 +319,9 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
         }
     }, [refreshData, schedule]);
 
-    const handleMoveWorkout = useCallback(async (originalDateOrId: string, newDateStr: string) => {
+    const handleMoveWorkout = useCallback(async (workoutId: string, newDateStr: string) => {
         try {
-            await moveWorkout(originalDateOrId, newDateStr);
+            await moveWorkout(workoutId, newDateStr);
             await refreshData();
         } catch (e) {
             console.error('Erreur déplacement séance:', e);

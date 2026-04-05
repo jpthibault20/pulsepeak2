@@ -29,7 +29,7 @@ interface WorkoutDetailViewProps {
         feedback?: CompletedDataFeedback
     ) => Promise<void>;
     onToggleMode: (dateKey: string) => Promise<void>;
-    onMoveWorkout: (originalDateStr: string, newDateStr: string) => Promise<void>;
+    onMoveWorkout: (workoutId: string, newDateStr: string) => Promise<void>;
     onDelete: (dateKey: string) => Promise<void>;
     onRegenerate: (dateKey: string, instruction?: string) => Promise<void>;
 }
@@ -161,7 +161,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
         if (!newMoveDate) return;
         setIsMutating(true);
         try {
-            await onMoveWorkout(workout.date, newMoveDate);
+            await onMoveWorkout(workout.id, newMoveDate);
             onClose();
         } catch (e) { console.error(e); }
         finally { setIsMutating(false); }
@@ -330,10 +330,10 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
                             {/* Move */}
                             <button
                                 onClick={() => setIsMoving(!isMoving)}
-                                disabled={isMutating}
+                                disabled={isMutating || !planned}
                                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-40"
                             >
-                                <CalendarDays size={14} /> Déplacer
+                                <CalendarDays size={14} /> {isCompleted ? 'Replanifier' : 'Déplacer'}
                             </button>
 
                             {/* Regenerate (pending only) */}

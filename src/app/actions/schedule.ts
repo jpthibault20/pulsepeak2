@@ -1864,27 +1864,36 @@ export async function toggleWorkoutMode(workoutIdOrDate: string) {
     }
 }
 
-export async function moveWorkout(originalDateOrId: string, newDateStr: string) {
+export async function moveWorkout(workoutId: string, newDateStr: string) {
     const schedule = await getSchedule();
 
-    // 1. Trouver la source
-    const sourceIndex = findWorkoutIndex1(schedule.workouts, originalDateOrId);
-    if (sourceIndex === -1) throw new Error("Séance source non trouvée.");
+    // 1. Trouver la source par ID
+    const sourceWorkout = schedule.workouts.find(w => w.id === workoutId);
+    if (!sourceWorkout) throw new Error("Séance source non trouvée.");
 
-    const sourceWorkout = schedule.workouts[sourceIndex];
-
-    // 2. Vérifier s'il y a déjà une séance sur la date cible
-    const targetWorkout = schedule.workouts.find(w => w.date === newDateStr);
-
-    if (targetWorkout) {
-        // --- CAS 1 : ÉCHANGE (SWAP) — atomic per-row updates ---
+    if (sourceWorkout.status === 'completed') {
+        // --- CAS COMPLETED : extraire le plannedData vers une nouvelle séance ---
+        const newWorkout: Workout = {
+            id: randomUUID(),
+            userId: sourceWorkout.userId,
+            weekId: sourceWorkout.weekId,
+            date: newDateStr,
+            sportType: sourceWorkout.sportType,
+            title: sourceWorkout.title,
+            workoutType: sourceWorkout.workoutType,
+            mode: sourceWorkout.mode,
+            status: 'pending',
+            plannedData: sourceWorkout.plannedData,
+            completedData: null,
+        };
+        // Retirer le plannedData de la séance complétée + insérer la nouvelle séance
         await Promise.all([
-            updateWorkoutById(sourceWorkout.id, { date: newDateStr, status: 'pending', completedData: null }),
-            updateWorkoutById(targetWorkout.id, { date: sourceWorkout.date, status: 'pending', completedData: null }),
+            updateWorkoutById(sourceWorkout.id, { plannedData: null as any }),
+            saveWorkout([newWorkout]),
         ]);
     } else {
-        // --- CAS 2 : DÉPLACEMENT SIMPLE ---
-        await updateWorkoutById(sourceWorkout.id, { date: newDateStr, status: 'pending', completedData: null });
+        // --- CAS PENDING / MISSED : déplacement simple ---
+        await updateWorkoutById(sourceWorkout.id, { date: newDateStr });
     }
 
     revalidatePath('/');
