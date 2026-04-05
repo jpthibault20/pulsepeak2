@@ -667,8 +667,8 @@ export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, obj
 
         filteredWorkouts.forEach(w => {
             const isPast = w.date <= today;
-            totalPlannedDur += w.plannedData.durationMinutes ?? 0;
-            totalPlannedTSS += w.plannedData.plannedTSS ?? 0;
+            totalPlannedDur += w.plannedData?.durationMinutes ?? 0;
+            totalPlannedTSS += w.plannedData?.plannedTSS ?? 0;
             if (isPast) plannedCountSoFar++;
             if (w.status === 'completed' && w.completedData) {
                 completedCount++;

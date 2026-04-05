@@ -1899,6 +1899,58 @@ export async function moveWorkout(workoutId: string, newDateStr: string) {
     revalidatePath('/');
 }
 
+export async function unlinkStravaWorkout(workoutId: string, targetWorkoutId: string | null) {
+    const schedule = await getSchedule();
+
+    const sourceWorkout = schedule.workouts.find(w => w.id === workoutId);
+    if (!sourceWorkout) throw new Error("Séance source non trouvée.");
+    if (sourceWorkout.status !== 'completed' || !sourceWorkout.completedData) {
+        throw new Error("Cette séance n'a pas de données complétées à délier.");
+    }
+
+    const completedData = sourceWorkout.completedData;
+
+    if (targetWorkoutId) {
+        // --- Transférer le completedData vers une séance planifiée ---
+        const targetWorkout = schedule.workouts.find(w => w.id === targetWorkoutId);
+        if (!targetWorkout) throw new Error("Séance cible non trouvée.");
+
+        const sourceBecomesEmpty = !sourceWorkout.plannedData;
+        await Promise.all([
+            // Source : supprimer si vide, sinon repasser en pending
+            sourceBecomesEmpty
+                ? deleteWorkoutById(sourceWorkout.id)
+                : updateWorkoutById(sourceWorkout.id, { status: 'pending', completedData: null }),
+            // Cible : recevoir le completedData, passer en completed
+            updateWorkoutById(targetWorkout.id, { status: 'completed', completedData }),
+        ]);
+    } else {
+        // --- Créer une séance libre avec le completedData ---
+        const freeWorkout: Workout = {
+            id: randomUUID(),
+            userId: sourceWorkout.userId,
+            weekId: sourceWorkout.weekId,
+            date: sourceWorkout.date,
+            sportType: sourceWorkout.sportType,
+            title: 'Sortie Libre',
+            workoutType: 'Sortie Libre',
+            mode: sourceWorkout.mode,
+            status: 'completed',
+            plannedData: null as any,
+            completedData,
+        };
+
+        await Promise.all([
+            // Source : retirer completedData, repasser en pending
+            updateWorkoutById(sourceWorkout.id, { status: 'pending', completedData: null }),
+            // Insérer la séance libre
+            saveWorkout([freeWorkout]),
+        ]);
+    }
+
+    revalidatePath('/');
+}
+
 export async function addManualWorkout(workout: Workout) {
     const profile = await getProfile();
     const schedule = await getSchedule();

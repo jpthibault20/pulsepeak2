@@ -299,8 +299,8 @@ export function MobileCalendarStrip({
         scheduleData.workouts.forEach(w => {
             if (!dates.has(w.date)) return;
             stats.total++;
-            stats.plannedTSS += w.plannedData.plannedTSS ?? 0;
-            stats.plannedDuration += w.plannedData.durationMinutes;
+            stats.plannedTSS += w.plannedData?.plannedTSS ?? 0;
+            stats.plannedDuration += w.plannedData?.durationMinutes ?? 0;
             const sport = w.sportType as keyof typeof stats.sportBreakdown;
             if (stats.sportBreakdown[sport] !== undefined) {
                 stats.sportBreakdown[sport]++;
@@ -310,14 +310,14 @@ export function MobileCalendarStrip({
                 stats.actualDuration += w.completedData.actualDurationMinutes;
                 stats.distance += w.completedData.distanceKm ?? 0;
                 const cd = w.completedData;
-                const tss = cd.metrics?.cycling?.tss ?? cd.calculatedTSS ?? w.plannedData.plannedTSS ?? 0;
+                const tss = cd.metrics?.cycling?.tss ?? cd.calculatedTSS ?? w.plannedData?.plannedTSS ?? 0;
                 stats.completedTSS += tss;
                 if (stats.sportDuration[sport] !== undefined) {
                     stats.sportDuration[sport] += cd.actualDurationMinutes;
                 }
             } else {
                 if (stats.sportDuration[sport] !== undefined) {
-                    stats.sportDuration[sport] += w.plannedData.durationMinutes;
+                    stats.sportDuration[sport] += w.plannedData?.durationMinutes ?? 0;
                 }
             }
         });
