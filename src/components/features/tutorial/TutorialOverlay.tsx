@@ -187,11 +187,10 @@ const PlanGenVisual = () => (
         {/* Focus badges */}
         <div className="flex flex-wrap gap-1.5">
             {['Endurance', 'PMA', 'Seuil', 'Fartlek', 'Sweet Spot'].map((f, i) => (
-                <span key={i} className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border ${
-                    i === 0
-                        ? 'bg-blue-100 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/30'
-                        : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
-                }`}>
+                <span key={i} className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border ${i === 0
+                    ? 'bg-blue-100 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/30'
+                    : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+                    }`}>
                     {f}
                 </span>
             ))}
@@ -249,9 +248,8 @@ const WeekByWeekVisual = () => (
                 return (
                     <div key={i} className="flex flex-col items-center gap-1">
                         <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500">{d}</span>
-                        <div className={`w-full aspect-square rounded-lg flex items-center justify-center ${
-                            w ? 'bg-slate-100 dark:bg-slate-800 ring-1 ring-slate-200 dark:ring-slate-700' : ''
-                        }`}>
+                        <div className={`w-full aspect-square rounded-lg flex items-center justify-center ${w ? 'bg-slate-100 dark:bg-slate-800 ring-1 ring-slate-200 dark:ring-slate-700' : ''
+                            }`}>
                             {w ? (
                                 <div className="flex flex-col items-center gap-0.5">
                                     <div className={`w-2 h-2 rounded-full ${w.color}`} />
@@ -430,7 +428,7 @@ const STEPS: TutorialStep[] = [
         visual: <WeekByWeekVisual />,
         instructions: [
             { icon: Plus, text: 'Survolez le résumé de semaine → cliquez + → ajustez vos disponibilités → "Générer la semaine"' },
-            { icon: Sparkles, text: 'Activez le mode IA (icône étoile) sur un jour pour laisser l\'IA choisir sport et durée' },
+            { icon: Sparkles, text: 'Activez le mode libre (icône étoile) pour laisser l\'IA choisir les sports et les durées' },
             { icon: Clock, text: 'Chaque semaine affiche le TSS réalisé vs planifié, les heures et les séances complétées' },
         ],
     },
@@ -462,7 +460,7 @@ const STEPS: TutorialStep[] = [
         accentColor: 'indigo',
         tag: 'Étape 7',
         title: 'Votre Coach IA',
-        description: 'Accessible depuis la barre de navigation, le Coach IA répond à toutes vos questions en langage naturel.',
+        description: 'Accessible depuis la barre de navigation, le Coach IA répond à toutes vos questions.',
         visual: <CoachVisual />,
         instructions: [
             { icon: Bot, text: 'Posez des questions libres : nutrition, récupération, technique, adaptation du plan…' },
@@ -648,11 +646,10 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete }) 
                                 <button
                                     key={i}
                                     onClick={() => i !== currentStep && goTo(i, i > currentStep ? 'next' : 'prev')}
-                                    className={`h-2 rounded-full transition-all duration-300 ${
-                                        i === currentStep ? `w-6 ${a.dot}`
+                                    className={`h-2 rounded-full transition-all duration-300 ${i === currentStep ? `w-6 ${a.dot}`
                                         : i < currentStep ? `w-2 ${a.dot} opacity-40`
-                                        : 'w-2 bg-slate-300 dark:bg-slate-600'
-                                    }`}
+                                            : 'w-2 bg-slate-300 dark:bg-slate-600'
+                                        }`}
                                     aria-label={`Étape ${i + 1}`}
                                 />
                             ))}
