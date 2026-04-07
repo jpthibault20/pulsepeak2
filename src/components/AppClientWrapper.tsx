@@ -38,6 +38,8 @@ import { Nav, View } from '@/components/layout/nav';
 import { ChatView } from '@/components/features/chat/ChatView';
 import { PlanView } from '@/components/features/plan/PlanView';
 import { GenerationProgressModal, type GenProgressState } from '@/components/features/calendar/GenerationProgressModal';
+import { TutorialOverlay, hasTutorialBeenCompleted } from '@/components/features/tutorial/TutorialOverlay';
+import { WelcomeScreen } from '@/components/features/tutorial/WelcomeScreen';
 import { Card } from '@/components/ui';
 import { createCompletedData } from '@/lib/utils';
 import { Profile, Schedule } from '@/lib/data/DatabaseTypes';
@@ -64,7 +66,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
     }, [initialProfile.theme, setThemeFromProfile]);
 
     // --- State Management ---
-    const startView: View = initialProfile.firstName ? 'dashboard' : 'onboarding';
+    const startView: View = initialProfile.firstName ? 'dashboard' : 'welcome';
     const [view, setView] = useState<View>(startView);
 
     const [profile, setProfile] = useState<Profile>(initialProfile);
@@ -85,10 +87,20 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
     const [genProgress, setGenProgress] = useState<GenProgressState | null>(null);
     const genProgressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    // Tutorial state — show after onboarding completes (first time only)
+    const [showTutorial, setShowTutorial] = useState(false);
+
     useEffect(() => {
         return () => {
             if (genProgressTimerRef.current) clearTimeout(genProgressTimerRef.current);
         };
+    }, []);
+
+    // Listen for tutorial replay request from settings
+    useEffect(() => {
+        const handler = () => setShowTutorial(true);
+        window.addEventListener('pulsepeak:show-tutorial', handler);
+        return () => window.removeEventListener('pulsepeak:show-tutorial', handler);
     }, []);
 
     // --- Re-Fetch des données ---
@@ -146,6 +158,20 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
         }
         setView(view);
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, []);
+
+    // --- Onboarding → Tutorial transition ---
+    // Track that we came from onboarding (first-time user flow)
+    const cameFromOnboarding = useRef(startView === 'welcome');
+
+    const handleOnboardingSuccess = useCallback(() => {
+        setView('dashboard');
+        setSelectedWorkout(null);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Always show tutorial after first onboarding
+        if (cameFromOnboarding.current) {
+            setShowTutorial(true);
+        }
     }, []);
 
     const handleViewWorkout = useCallback((workout: Workout) => {
@@ -394,7 +420,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
     }, []);
 
     // --- Render Logic ---
-    const showNav = view !== 'onboarding';
+    const showNav = view !== 'onboarding' && view !== 'welcome';
 
     if (!profile || !schedule) {
         return <div className="text-slate-900 dark:text-white p-10">Erreur critique : Données manquantes.</div>;
@@ -454,12 +480,16 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
                         </div>
                     )}
 
+                    {view === 'welcome' && (
+                        <WelcomeScreen onContinue={() => setView('onboarding')} />
+                    )}
+
                     {view === 'onboarding' && (
                         <div className="max-w-2xl mx-auto py-4 sm:py-8">
                             <ProfileForm
                                 initialData={profile}
                                 onSave={handleSaveProfile}
-                                onSuccess={() => handleViewChange('dashboard')}
+                                onSuccess={handleOnboardingSuccess}
                                 onCancel={() => handleViewChange('dashboard')}
                                 objectives={objectives}
                                 onSaveObjective={handleSaveObjective}
@@ -574,6 +604,10 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
                     onMinimize={() => setGenProgress(prev => prev ? { ...prev, minimized: true } : null)}
                     onRestore={() => setGenProgress(prev => prev ? { ...prev, minimized: false } : null)}
                 />
+            )}
+
+            {showTutorial && (
+                <TutorialOverlay onComplete={() => setShowTutorial(false)} />
             )}
 
         </SubscriptionProvider>

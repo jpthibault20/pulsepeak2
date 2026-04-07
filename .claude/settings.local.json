@@ -21,7 +21,9 @@
       "WebFetch(domain:supabase.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(gh api:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(wc:*)",
+      "Bash(ls:*)"
     ]
   }
 }
