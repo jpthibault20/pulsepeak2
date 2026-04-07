@@ -67,7 +67,7 @@ interface ProfileFormProps {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, objectives = [], onSaveObjective, onDeleteObjective }) => {
+export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, onSuccess, objectives = [], onSaveObjective, onDeleteObjective }) => {
     const [activeSection, setActiveSection] = useState<SectionId>('identity');
     const [isSaving, setIsSaving] = useState(false);
     const [saved, setSaved] = useState(false);
@@ -197,7 +197,11 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
         try {
             await onSave(formData);
             setSaved(true);
-            setTimeout(() => setSaved(false), 2500);
+            if (onSuccess) {
+                onSuccess();
+            } else {
+                setTimeout(() => setSaved(false), 2500);
+            }
         } catch (e) {
             console.error(e);
         } finally {

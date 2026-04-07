@@ -12,7 +12,7 @@ import Image from 'next/image';
 import { ThemeToggle } from '@/components/ThemeProvider';
 import { useSubscription } from '@/lib/subscription/context';
 
-export type View = 'dashboard' | 'plan' | 'settings' | 'stats' | 'workout-detail' | 'onboarding' | 'loading' | 'chat';
+export type View = 'dashboard' | 'plan' | 'settings' | 'stats' | 'workout-detail' | 'onboarding' | 'welcome' | 'loading' | 'chat';
 
 interface NavProps {
     onViewChange: (view: View) => void;

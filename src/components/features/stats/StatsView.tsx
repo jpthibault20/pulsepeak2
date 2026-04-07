@@ -607,7 +607,7 @@ function ObjectiveCard({ obj }: { obj: Objective }) {
 
 export const StatsView: React.FC<StatsViewProps> = ({ scheduleData, profile, objectives = [] }) => {
     const { theme } = useTheme();
-    const [period, setPeriod] = useState<PeriodId>('30d');
+    const [period, setPeriod] = useState<PeriodId>('season');
     const [customRange, setCustomRange] = useState(() => {
         const end = new Date();
         end.setDate(end.getDate() + 7);

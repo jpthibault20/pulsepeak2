@@ -182,7 +182,7 @@ export async function mapStravaToCompletedData(activity: StravaActivityInput): P
 
 
 // Define le style de la signature
-const BRANDING_SUFFIX = "\n──────────────\n⚡ Powered by PulsePeak";
+const BRANDING_SUFFIX = "\n⚡ Powered by PulsePeak";
 
 /**
  * Met à jour la description sur Strava via leur API
@@ -208,7 +208,7 @@ export async function tagStravaActivity(
     if (stats?.tss && stats.tss > 0) {
         // On remplace le footer standard par une version avec stats
         // Rendu: "TSS: 120 • ⚡ Powered by PulsePeak"
-        footer = `\n\n──────────────\nTSS: ${stats.tss} • ⚡ PulsePeak`;
+        footer = `\nTSS: ${stats.tss} • ⚡ PulsePeak`;
     }
 
     const newDescription = description + footer;

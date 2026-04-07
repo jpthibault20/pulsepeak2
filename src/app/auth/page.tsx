@@ -132,18 +132,16 @@ export default function AuthPage() {
             setIsLoading(false);
             return;
         }
-        // Créer le profil en DB dès que l'userId est disponible.
-        // Si confirmation email désactivée : session déjà active, profil créé immédiatement.
-        // Si confirmation email requise : profil créé ici en avance, callback n'a rien à faire.
-        if (data.user) {
+        // Si session immédiate (pas de confirmation email), créer le profil puis rediriger.
+        // La session existe → le cookie est propagé → le serveur peut vérifier l'auth.
+        if (data.session && data.user) {
             await createInitialProfile(data.user.id, firstName, lastName, registerEmail);
-        }
-        // Si session immédiate (pas de confirmation email), rediriger directement.
-        if (data.session) {
             router.push('/');
             router.refresh();
             return;
         }
+        // Confirmation email requise → pas de session, le profil sera créé
+        // dans le callback /auth/callback après exchangeCodeForSession.
         setSuccess('Compte créé ! Vérifiez votre boîte mail pour confirmer votre adresse (pensez à vérifier vos spams).');
         setIsLoading(false);
     };

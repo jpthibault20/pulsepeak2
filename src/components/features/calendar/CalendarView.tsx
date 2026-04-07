@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Info, X, Target, Home, Dumbbell, Trophy, Zap, CalendarPlus } from 'lucide-react';
 import type { Workout, Profile, Objective } from '@/lib/data/DatabaseTypes';
 import type { SportType } from '@/lib/data/type';
@@ -73,6 +73,12 @@ export function CalendarView({
     const [showRecalcPrompt, setShowRecalcPrompt] = useState(false);
     const [editingObjective, setEditingObjective] = useState<Objective | null>(null);
     const [easterEgg, setEasterEgg] = useState(false);
+
+    // Defer strava connection check to client only to avoid SSR/client mismatch
+    const [isStravaConnected, setIsStravaConnected] = useState(true);
+    useEffect(() => {
+        setIsStravaConnected(!!profile.strava?.athleteId);
+    }, [profile.strava?.athleteId]);
     const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const { year, month, weekRows } = useCalendarDays(selectedDate);
@@ -221,17 +227,22 @@ export function CalendarView({
                             </button>
                         </div>
 
-                        {onSyncStrava && (
-                            <button
-                                onClick={onSyncStrava}
-                                disabled={isSyncing}
-                                className={`
-                flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all
-                border border-orange-500/30 text-orange-600 dark:text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/60
-                ${isSyncing ? 'opacity-50 cursor-not-allowed' : ''}
-            `}
-                                title="Synchroniser avec Strava"
-                            >
+                        <button
+                            onClick={() => {
+                                if (isStravaConnected) {
+                                    onSyncStrava?.();
+                                } else {
+                                    window.location.href = '/api/strava/login';
+                                }
+                            }}
+                            disabled={isStravaConnected && isSyncing}
+                            className={isStravaConnected
+                                ? `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all border border-orange-500/30 text-orange-600 dark:text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/60 ${isSyncing ? 'opacity-50 cursor-not-allowed' : ''}`
+                                : 'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all border border-orange-500/30 text-white bg-[#FC4C02] hover:bg-[#e04400] hover:border-orange-500/60'
+                            }
+                            title={isStravaConnected ? 'Synchroniser avec Strava' : 'Connecter Strava'}
+                        >
+                            {isStravaConnected ? (
                                 <svg
                                     className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`}
                                     fill="none"
@@ -240,11 +251,15 @@ export function CalendarView({
                                 >
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                 </svg>
-                                <span className="hidden sm:inline">
-                                    {isSyncing ? 'Synchro...' : 'Strava'}
-                                </span>
-                            </button>
-                        )}
+                            ) : (
+                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
+                                </svg>
+                            )}
+                            <span className="hidden sm:inline">
+                                {isStravaConnected ? (isSyncing ? 'Synchro...' : 'Strava') : 'Connecter Strava'}
+                            </span>
+                        </button>
                     </div>
 
                     {scheduleData.summary && (
