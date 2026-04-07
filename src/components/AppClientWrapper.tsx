@@ -122,6 +122,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
 
     // --- Strava Sync Handler ---
     const handleSyncStrava = useCallback(async () => {
+        if (!profile.strava?.athleteId) return;
         try {
             setIsSyncing(true);
             setError(null);
@@ -140,16 +141,17 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
         } finally {
             setIsSyncing(false);
         }
-    }, [refreshData]);
+    }, [refreshData, profile.strava?.athleteId]);
 
     React.useEffect(() => {
         if (!initialProfile?.firstName) return;
+        if (!initialProfile?.strava?.athleteId) return;
         let cancelled = false;
         handleSyncStrava().finally(() => {
             if (cancelled) return; // component unmounted
         });
         return () => { cancelled = true; };
-    }, [handleSyncStrava, initialProfile?.firstName]);
+    }, [handleSyncStrava, initialProfile?.firstName, initialProfile?.strava?.athleteId]);
 
     // --- Navigation Handler ---
     const handleViewChange = useCallback((view: View) => {
