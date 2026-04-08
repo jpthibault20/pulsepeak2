@@ -175,6 +175,13 @@ export function AccountSettings() {
                     {isLoggingOut ? 'Déconnexion...' : 'Se déconnecter'}
                 </button>
             </div>
+
+            <div className="border-t border-slate-200 dark:border-slate-800" />
+
+            {/* ── Version ── */}
+            <p className="text-center text-xs text-slate-400 dark:text-slate-500">
+                PulsePeak v{process.env.NEXT_PUBLIC_APP_VERSION}
+            </p>
         </div>
     );
 }

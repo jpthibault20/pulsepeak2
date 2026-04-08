@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Activity, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Activity, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, ArrowRight, Mail, RefreshCw } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { createInitialProfile } from '@/app/actions/auth';
 import Image from 'next/image';
@@ -47,6 +47,8 @@ function InputField({ label, type, placeholder, value, onChange, isPassword }: F
     );
 }
 
+const RESEND_COOLDOWN = 60; // secondes
+
 export default function AuthPage() {
     const router = useRouter();
     const supabase = createClient();
@@ -67,36 +69,78 @@ export default function AuthPage() {
     const [registerPassword, setRegisterPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
 
+    // Resend email state
+    const [showResend, setShowResend] = useState(false);
+    const [resendEmail, setResendEmail] = useState('');
+    const [resendCooldown, setResendCooldown] = useState(0);
+    const [isResending, setIsResending] = useState(false);
+
     // Lire l'erreur depuis les query params (ex: après un callback raté)
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         if (params.get('error')) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setError('Une erreur est survenue. Veuillez réessayer.');
         }
     }, []);
+
+    // Countdown timer
+    useEffect(() => {
+        if (resendCooldown <= 0) return;
+        const timer = setTimeout(() => setResendCooldown(c => c - 1), 1000);
+        return () => clearTimeout(timer);
+    }, [resendCooldown]);
 
     const resetMessages = () => {
         setError(null);
         setSuccess(null);
     };
 
+    const handleResendEmail = useCallback(async (email: string) => {
+        if (resendCooldown > 0 || !email) return;
+        setIsResending(true);
+        setError(null);
+        const { error } = await supabase.auth.resend({ type: 'signup', email });
+        setIsResending(false);
+        if (error) {
+            setError(error.message);
+            return;
+        }
+        setResendCooldown(RESEND_COOLDOWN);
+        setSuccess('Un nouveau mail de vérification a été envoyé ! Pensez à vérifier vos spams.');
+    }, [resendCooldown, supabase.auth]);
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         resetMessages();
+        setShowResend(false);
         if (!loginEmail || !loginPassword) {
             setError('Veuillez remplir tous les champs.');
             return;
         }
         setIsLoading(true);
-        const { error } = await supabase.auth.signInWithPassword({
+        const { error, data } = await supabase.auth.signInWithPassword({
             email: loginEmail,
             password: loginPassword,
         });
         if (error) {
-            setError(error.message === 'Invalid login credentials'
-                ? 'Email ou mot de passe incorrect.'
-                : error.message);
+            // Supabase renvoie cette erreur si l'email n'est pas confirmé
+            if (error.message.toLowerCase().includes('email not confirmed')) {
+                setError('Votre adresse email n\'a pas encore été vérifiée.');
+                setResendEmail(loginEmail);
+                setShowResend(true);
+            } else {
+                setError(error.message === 'Invalid login credentials'
+                    ? 'Email ou mot de passe incorrect.'
+                    : error.message);
+            }
+            setIsLoading(false);
+            return;
+        }
+        // Vérifier si l'email est confirmé (cas où Supabase laisse se connecter sans confirmation)
+        if (data.user && !data.user.email_confirmed_at) {
+            setError('Votre adresse email n\'a pas encore été vérifiée.');
+            setResendEmail(loginEmail);
+            setShowResend(true);
             setIsLoading(false);
             return;
         }
@@ -107,6 +151,7 @@ export default function AuthPage() {
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         resetMessages();
+        setShowResend(false);
         if (!firstName || !lastName || !registerEmail || !registerPassword || !confirmPassword) {
             setError('Veuillez remplir tous les champs.');
             return;
@@ -133,16 +178,17 @@ export default function AuthPage() {
             return;
         }
         // Si session immédiate (pas de confirmation email), créer le profil puis rediriger.
-        // La session existe → le cookie est propagé → le serveur peut vérifier l'auth.
         if (data.session && data.user) {
             await createInitialProfile(data.user.id, firstName, lastName, registerEmail);
             router.push('/');
             router.refresh();
             return;
         }
-        // Confirmation email requise → pas de session, le profil sera créé
-        // dans le callback /auth/callback après exchangeCodeForSession.
-        setSuccess('Compte créé ! Vérifiez votre boîte mail pour confirmer votre adresse (pensez à vérifier vos spams).');
+        // Confirmation email requise → afficher le message + option de renvoi après le cooldown
+        setResendEmail(registerEmail);
+        setResendCooldown(RESEND_COOLDOWN);
+        setShowResend(true);
+        setSuccess('Compte créé ! Vérifiez votre boîte mail pour confirmer votre adresse.');
         setIsLoading(false);
     };
 
@@ -181,7 +227,7 @@ export default function AuthPage() {
                         {(['login', 'register'] as Tab[]).map(t => (
                             <button
                                 key={t}
-                                onClick={() => { setTab(t); resetMessages(); }}
+                                onClick={() => { setTab(t); resetMessages(); setShowResend(false); }}
                                 className={`flex-1 py-3.5 text-sm font-semibold transition-colors ${tab === t
                                     ? 'text-slate-900 dark:text-white border-b-2 border-blue-500 bg-blue-600/5'
                                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
@@ -207,6 +253,32 @@ export default function AuthPage() {
                             <div className="flex items-start gap-2 bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-4 py-3 mb-5 text-emerald-600 dark:text-emerald-400 text-sm">
                                 <CheckCircle2 size={15} className="shrink-0 mt-0.5" />
                                 {success}
+                            </div>
+                        )}
+
+                        {/* Bloc renvoyer le mail de vérification */}
+                        {showResend && (
+                            <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl px-4 py-3.5 mb-5">
+                                <div className="flex items-start gap-2 text-amber-700 dark:text-amber-400 text-sm">
+                                    <Mail size={15} className="shrink-0 mt-0.5" />
+                                    <div>
+                                        <p>Pensez à vérifier votre dossier <strong>spam / courrier indésirable</strong> avant de demander un nouveau mail.</p>
+                                        <button
+                                            type="button"
+                                            disabled={resendCooldown > 0 || isResending}
+                                            onClick={() => handleResendEmail(resendEmail)}
+                                            className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300 hover:text-amber-800 dark:hover:text-amber-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            {isResending ? (
+                                                <><Loader2 size={12} className="animate-spin" /> Envoi en cours...</>
+                                            ) : resendCooldown > 0 ? (
+                                                <><RefreshCw size={12} /> Renvoyer dans {resendCooldown}s</>
+                                            ) : (
+                                                <><RefreshCw size={12} /> Renvoyer le mail de vérification</>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         )}
 

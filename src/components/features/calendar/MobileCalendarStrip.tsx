@@ -24,25 +24,25 @@ function getDayLabel(date: Date): string {
 }
 
 const SPORT_DOT: Record<string, string> = {
-    cycling:  'bg-sky-500',
-    running:  'bg-orange-500',
-    swimming: 'bg-cyan-500',
+    cycling: 'bg-purple-400',
+    running: 'bg-orange-500',
+    swimming: 'bg-sky-500',
     strength: 'bg-purple-500',
-    default:  'bg-slate-400',
+    default: 'bg-slate-400',
 };
 
 function getDotColor(workout: Workout): string {
     if (workout.status === 'completed') return 'bg-emerald-500';
-    if (workout.status === 'missed')    return 'bg-red-500';
+    if (workout.status === 'missed') return 'bg-red-500';
     return SPORT_DOT[workout.sportType?.toLowerCase()] ?? SPORT_DOT.default;
 }
 
 const SPORT_LABELS: Record<string, string> = {
-    cycling:   'Vélo',
-    running:   'Course',
-    swimming:  'Natation',
+    cycling: 'Vélo',
+    running: 'Course',
+    swimming: 'Natation',
     triathlon: 'Triathlon',
-    duathlon:  'Duathlon',
+    duathlon: 'Duathlon',
 };
 
 function generateMonthDays(year: number, month: number): Date[] {
@@ -140,8 +140,8 @@ export function MobileCalendarStrip({
     onVisibleMonthChange,
 }: MobileCalendarStripProps) {
     const { scheduleData, profile, objectives, onViewWorkout, onEditObjective, onRefresh, onOpenGenModal } = useCalendarContext();
-    const scrollRef  = useRef<HTMLDivElement>(null);
-    const todayKey   = useMemo(() => formatDateKey(new Date()), []);
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const todayKey = useMemo(() => formatDateKey(new Date()), []);
     const selectedKey = formatDateKey(selectedDay);
     const lastReportedMonth = useRef<string>('');
     const initialScrollDone = useRef(false);
@@ -167,10 +167,10 @@ export function MobileCalendarStrip({
 
     // ── Dynamic month range: start with prev/current/next ──
     const [monthRange, setMonthRange] = useState({ min: -1, max: 1 });
-    const anchorRef = useRef({ year: currentYear, month: currentMonth });
+    const [anchor] = useState(() => ({ year: currentYear, month: currentMonth }));
 
     const allDays = useMemo(() => {
-        const { year: aY, month: aM } = anchorRef.current;
+        const { year: aY, month: aM } = anchor;
         const days: Date[] = [];
         for (let offset = monthRange.min; offset <= monthRange.max; offset++) {
             const m = new Date(aY, aM + offset, 1);
@@ -291,7 +291,7 @@ export function MobileCalendarStrip({
             plannedTSS: 0, plannedDuration: 0, actualDuration: 0, distance: 0,
             completed: 0, completedTSS: 0, total: 0,
             sportBreakdown: { cycling: 0, running: 0, swimming: 0, other: 0 },
-            sportDuration:  { cycling: 0, running: 0, swimming: 0, other: 0 },
+            sportDuration: { cycling: 0, running: 0, swimming: 0, other: 0 },
         };
         const dates = new Set(
             selectedWeek.filter((d): d is Date => d !== null).map(d => formatDateKey(d))
@@ -422,15 +422,13 @@ export function MobileCalendarStrip({
                             <div
                                 key={obj.id}
                                 onClick={() => onEditObjective(obj)}
-                                className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition-colors ${
-                                    isPrimary
-                                        ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-500/40'
-                                        : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-500/30'
-                                }`}
+                                className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition-colors ${isPrimary
+                                    ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-500/40'
+                                    : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-500/30'
+                                    }`}
                             >
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                                    isPrimary ? 'bg-rose-100 dark:bg-rose-600/20 border border-rose-200 dark:border-rose-500/30' : 'bg-amber-100 dark:bg-amber-600/20 border border-amber-200 dark:border-amber-500/30'
-                                }`}>
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isPrimary ? 'bg-rose-100 dark:bg-rose-600/20 border border-rose-200 dark:border-rose-500/30' : 'bg-amber-100 dark:bg-amber-600/20 border border-amber-200 dark:border-amber-500/30'
+                                    }`}>
                                     {isPrimary
                                         ? <Trophy size={13} className="text-rose-600 dark:text-rose-400" />
                                         : <Target size={13} className="text-amber-600 dark:text-amber-400" />
@@ -439,11 +437,10 @@ export function MobileCalendarStrip({
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5 flex-wrap">
                                         <span className="text-slate-900 dark:text-white text-sm font-semibold truncate">{obj.name}</span>
-                                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${
-                                            isPrimary
-                                                ? 'text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30'
-                                                : 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30'
-                                        }`}>
+                                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${isPrimary
+                                            ? 'text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30'
+                                            : 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30'
+                                            }`}>
                                             {isPrimary ? 'Principal' : 'Secondaire'}
                                         </span>
                                     </div>
