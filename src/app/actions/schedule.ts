@@ -2242,12 +2242,11 @@ export async function syncStravaActivities() {
             newItemsCount++;
         }
 
-        // 6b. Marquer les séances passées (avant hier) sans completedData comme "missed"
-        const now = new Date();
-        const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-        const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+        // 6b. Marquer les séances planifiées passées (avant aujourd'hui, fuseau Europe/Paris) non réalisées comme "missed"
+        const todayParis = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
+        const todayStr = `${todayParis.getFullYear()}-${String(todayParis.getMonth() + 1).padStart(2, '0')}-${String(todayParis.getDate()).padStart(2, '0')}`;
         for (const w of workouts) {
-            if (w.status === 'pending' && !w.completedData && w.date < yesterdayStr) {
+            if (w.status === 'pending' && !w.completedData && w.date < todayStr) {
                 w.status = 'missed';
                 newItemsCount++;
             }
