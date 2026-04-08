@@ -13,7 +13,7 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
-    theme: 'dark',
+    theme: 'light',
     toggleTheme: () => {},
     setThemeFromProfile: () => {},
 });
@@ -27,7 +27,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         const saved = localStorage.getItem('theme') as Theme | null;
-        const initial = saved ?? 'dark';
+        const initial = saved ?? 'light';
         setTheme(initial);
         document.documentElement.setAttribute('data-theme', initial);
     }, []);
