@@ -267,7 +267,7 @@ export async function saveProfile(profile: Profile): Promise<void> {
             aiPlanCallsResetDate:   profile.aiPlanCallsResetDate   ?? null,
             aiWorkoutCallsCount:    profile.aiWorkoutCallsCount    ?? 0,
             aiWorkoutCallsResetDate:profile.aiWorkoutCallsResetDate ?? null,
-            theme:                  profile.theme ?? 'dark',
+            theme:                  profile.theme ?? 'light',
         })
         .onConflictDoUpdate({
             target: profiles.id,
@@ -297,7 +297,6 @@ export async function saveProfile(profile: Profile): Promise<void> {
                 aiPlanCallsResetDate:   profile.aiPlanCallsResetDate   ?? null,
                 aiWorkoutCallsCount:    profile.aiWorkoutCallsCount    ?? 0,
                 aiWorkoutCallsResetDate:profile.aiWorkoutCallsResetDate ?? null,
-                theme:                  profile.theme ?? 'dark',
             },
         });
 }

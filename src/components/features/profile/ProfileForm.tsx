@@ -66,7 +66,7 @@ interface ProfileFormProps {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, onSuccess, objectives = [], onSaveObjective, onDeleteObjective }) => {
+export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, onSuccess, isSettings = false, objectives = [], onSaveObjective, onDeleteObjective }) => {
     const [activeSection, setActiveSection] = useState<SectionId>('identity');
     const [isSaving, setIsSaving] = useState(false);
     const [saved, setSaved] = useState(false);
@@ -185,6 +185,23 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
     const isDirty = activeSection !== 'abonnement' && JSON.stringify(formData) !== JSON.stringify(initialFormData);
     const completion = getCompletionPercent(formData);
 
+    // ── Auto-save on unmount (settings mode) ──
+    const formDataRef = useRef(formData);
+    const initialFormDataRef = useRef(initialFormData);
+    const onSaveRef = useRef(onSave);
+    formDataRef.current = formData;
+    initialFormDataRef.current = initialFormData;
+    onSaveRef.current = onSave;
+
+    useEffect(() => {
+        if (!isSettings) return;
+        return () => {
+            if (JSON.stringify(formDataRef.current) !== JSON.stringify(initialFormDataRef.current)) {
+                onSaveRef.current(formDataRef.current).catch(console.error);
+            }
+        };
+    }, [isSettings]);
+
     // Scroll active tab into view on mobile
     useEffect(() => {
         const el = tabsRef.current?.querySelector('[data-active="true"]') as HTMLElement | null;
@@ -258,25 +275,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
                     </div>
                 </div>
 
-                {/* Save button desktop */}
-                <div className="hidden md:block shrink-0">
-                    <button
-                        onClick={handleSave}
-                        disabled={isSaving || (!isDirty && !saved)}
-                        className={`
-                            flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all
-                            ${saved
-                                ? 'bg-emerald-600/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
-                                : isDirty
-                                    ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/30'
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-500 cursor-not-allowed border border-slate-300 dark:border-slate-700'
-                            }
-                        `}
-                    >
-                        {saved ? <CheckCircle2 size={15} /> : <Save size={15} />}
-                        {isSaving ? 'Enregistrement...' : saved ? 'Sauvegardé !' : 'Enregistrer'}
-                    </button>
-                </div>
             </div>
 
             {/* ── Layout ──────────────────────────────────────────────────── */}
@@ -371,65 +369,69 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
                     </div>
 
                     {/* Section navigation footer */}
-                    <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
-                        <button
-                            onClick={() => {
-                                const idx = SECTIONS.findIndex(s => s.id === activeSection);
-                                if (idx > 0) setActiveSection(SECTIONS[idx - 1].id);
-                            }}
-                            disabled={activeSection === SECTIONS[0].id}
-                            className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white disabled:opacity-0 transition-all"
-                        >
-                            <ChevronRight size={14} className="rotate-180" />
-                            {SECTIONS[Math.max(0, SECTIONS.findIndex(s => s.id === activeSection) - 1)].label}
-                        </button>
-
-                        <div className="flex gap-1">
-                            {SECTIONS.map((s) => (
+                    {(() => {
+                        const currentIdx = SECTIONS.findIndex(s => s.id === activeSection);
+                        const isFirst = currentIdx === 0;
+                        const isLast = currentIdx === SECTIONS.length - 1;
+                        return (
+                            <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
                                 <button
-                                    key={s.id}
-                                    onClick={() => setActiveSection(s.id)}
-                                    className={`w-1.5 h-1.5 rounded-full transition-all ${s.id === activeSection ? 'bg-blue-600 dark:text-blue-400 w-4' : 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-500'
-                                        }`}
-                                />
-                            ))}
-                        </div>
+                                    onClick={() => { if (!isFirst) setActiveSection(SECTIONS[currentIdx - 1].id); }}
+                                    disabled={isFirst}
+                                    className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white disabled:opacity-0 transition-all"
+                                >
+                                    <ChevronRight size={14} className="rotate-180" />
+                                    {!isFirst && SECTIONS[currentIdx - 1].label}
+                                </button>
 
-                        <button
-                            onClick={() => {
-                                const idx = SECTIONS.findIndex(s => s.id === activeSection);
-                                if (idx < SECTIONS.length - 1) setActiveSection(SECTIONS[idx + 1].id);
-                            }}
-                            disabled={activeSection === SECTIONS[SECTIONS.length - 1].id}
-                            className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white disabled:opacity-0 transition-all"
-                        >
-                            {SECTIONS[Math.min(SECTIONS.length - 1, SECTIONS.findIndex(s => s.id === activeSection) + 1)].label}
-                            <ChevronRight size={14} />
-                        </button>
-                    </div>
+                                <div className="flex gap-1">
+                                    {SECTIONS.map((s) => (
+                                        <button
+                                            key={s.id}
+                                            onClick={() => setActiveSection(s.id)}
+                                            className={`w-1.5 h-1.5 rounded-full transition-all ${s.id === activeSection ? 'bg-blue-600 dark:text-blue-400 w-4' : 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-500'
+                                                }`}
+                                        />
+                                    ))}
+                                </div>
+
+                                {/* Onboarding: CTA "Suivant" / "Terminer" — Settings: lien texte */}
+                                {!isSettings && isLast ? (
+                                    <button
+                                        onClick={handleSave}
+                                        disabled={isSaving}
+                                        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-colors shadow-lg shadow-emerald-900/30"
+                                    >
+                                        {isSaving ? (
+                                            <><Save size={14} className="animate-spin" /> Enregistrement...</>
+                                        ) : (
+                                            <><CheckCircle2 size={14} /> Terminer</>
+                                        )}
+                                    </button>
+                                ) : !isSettings ? (
+                                    <button
+                                        onClick={() => { if (!isLast) setActiveSection(SECTIONS[currentIdx + 1].id); }}
+                                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-colors shadow-lg shadow-blue-900/30"
+                                    >
+                                        {SECTIONS[currentIdx + 1].label}
+                                        <ChevronRight size={14} />
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => { if (!isLast) setActiveSection(SECTIONS[currentIdx + 1].id); }}
+                                        disabled={isLast}
+                                        className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white disabled:opacity-0 transition-all"
+                                    >
+                                        {!isLast && SECTIONS[currentIdx + 1].label}
+                                        <ChevronRight size={14} />
+                                    </button>
+                                )}
+                            </div>
+                        );
+                    })()}
                 </div>
             </div>
 
-            {/* ── Mobile sticky save bar ────────────────────────────────── */}
-            <div className={`
-                md:hidden fixed bottom-20 left-0 right-0 z-50 transition-all duration-300
-                ${isDirty ? 'translate-y-0 opacity-100 pointer-events-auto' : 'translate-y-full opacity-0 pointer-events-none'}
-            `}>
-                <div className="mx-4 mb-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl p-3 shadow-2xl shadow-black/10 dark:shadow-black/50 flex items-center gap-3">
-                    <div className="flex-1">
-                        <p className="text-slate-900 dark:text-white text-sm font-semibold">Modifications non sauvegardées</p>
-                        <p className="text-slate-500 dark:text-slate-500 text-xs">Appuyez pour enregistrer votre profil</p>
-                    </div>
-                    <button
-                        onClick={handleSave}
-                        disabled={isSaving}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition-colors shrink-0 shadow-lg shadow-blue-900/30"
-                    >
-                        {saved ? <CheckCircle2 size={15} /> : <Save size={15} />}
-                        {isSaving ? 'Enregistrement...' : saved ? 'Sauvegardé !' : 'Enregistrer'}
-                    </button>
-                </div>
-            </div>
         </div>
     );
 };
