@@ -3,7 +3,7 @@
 import { Card, Button } from '@/components/ui';
 import type { SportType } from '@/lib/data/type';
 import {
-    CalendarPlus, Calendar, Bike, Waves, User, Mountain, AlignLeft, Timer,
+    CalendarPlus, Calendar, Bike, Waves, Footprints, Mountain, AlignLeft, Timer,
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { ProgressModal, type ProgressState, type ProgressModalConfig } from '../calendar/ProgressModal';
@@ -16,7 +16,7 @@ interface CreatePlannedWorkoutModalProps {
 
 const sportIcons: Record<SportType, React.ReactNode> = {
     cycling: <Bike size={16} />,
-    running: <User size={16} />,
+    running: <Footprints size={16} />,
     swimming: <Waves size={16} />,
     other: <Mountain size={16} />,
 };

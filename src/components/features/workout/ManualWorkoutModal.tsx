@@ -3,7 +3,7 @@ import type { SportType, CompletedData } from "@/lib/data/type";
 import type { Workout } from "@/lib/data/DatabaseTypes";
 import {
     Plus, Calendar, Activity, Timer, TrendingUp,
-    AlignLeft, Bike, Waves, User, Mountain
+    AlignLeft, Bike, Waves, Footprints, Mountain
 } from "lucide-react";
 import { useState } from "react";
 
@@ -140,7 +140,7 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
 
     const sportIcons: Record<SportType, React.ReactNode> = {
         cycling: <Bike size={16} />,
-        running: <User size={16} />,
+        running: <Footprints size={16} />,
         swimming: <Waves size={16} />,
         other: <Mountain size={16} />,
     };

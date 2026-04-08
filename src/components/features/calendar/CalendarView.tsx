@@ -435,8 +435,8 @@ export function CalendarView({
                                     <CalendarPlus size={16} className="text-emerald-600 dark:text-emerald-400" />
                                 </div>
                                 <div>
-                                    <p className="text-slate-900 dark:text-white text-sm font-medium">Planifier une séance</p>
-                                    <p className="text-slate-500 text-xs">Créer une séance à faire</p>
+                                    <p className="text-slate-900 dark:text-white text-sm font-medium">Générer un entraînement IA</p>
+                                    <p className="text-slate-500 text-xs">L&apos;IA crée une séance adaptée à ton plan</p>
                                 </div>
                             </button>
                             <button
@@ -447,8 +447,8 @@ export function CalendarView({
                                     <Dumbbell size={16} className="text-blue-600 dark:text-blue-400" />
                                 </div>
                                 <div>
-                                    <p className="text-slate-900 dark:text-white text-sm font-medium">Ajouter une activité</p>
-                                    <p className="text-slate-500 text-xs">Enregistrer une séance réalisée</p>
+                                    <p className="text-slate-900 dark:text-white text-sm font-medium">Enregistrer une activité</p>
+                                    <p className="text-slate-500 text-xs">Ajouter manuellement une séance déjà réalisée</p>
                                 </div>
                             </button>
                             <button
