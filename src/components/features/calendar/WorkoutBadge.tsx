@@ -44,8 +44,9 @@ export function WorkoutBadge({ workout, onClick, isCompact = false }: WorkoutBad
     } else if (isMissed) {
         containerStyle = "border-l-2 border-red-500 bg-red-50 dark:bg-red-950/10 hover:bg-red-100 dark:hover:bg-red-950/20";
     } else {
-        // En attente : on utlise la couleur du sport pour la bordure gauche
-        containerStyle = `border-l-2 border-blue-500 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750`;
+        // En attente : on utilise la couleur du sport pour la bordure gauche
+        const sportBorder = config.bg.replace('bg-', 'border-');
+        containerStyle = `border-l-2 ${sportBorder} bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750`;
     }
 
     return (
