@@ -52,7 +52,6 @@ export function CalendarGrid({
                     // Stats planifiées (toujours comptées)
                     stats.total++;
                     stats.plannedTSS += workout.plannedData?.plannedTSS ?? 0;
-                    stats.completedTSS += workout.completedData?.metrics.cycling?.tss ?? 0;
                     stats.plannedDuration += workout.plannedData?.durationMinutes ?? 0;
 
                     // Comptage des séances par sport
@@ -70,6 +69,14 @@ export function CalendarGrid({
                         const actualMinutes = workout.completedData.actualDurationMinutes ?? 0;
                         stats.actualDuration += actualMinutes;
                         stats.distance += workout.completedData.distanceKm ?? 0;
+
+                        // TSS réalisé
+                        const cd = workout.completedData;
+                        const tss =
+                            (cd.metrics?.cycling?.tss ?? 0) > 0 ? cd.metrics!.cycling!.tss! :
+                            (cd.calculatedTSS ?? 0) > 0 ? cd.calculatedTSS! :
+                            workout.plannedData?.plannedTSS ?? 0;
+                        stats.completedTSS += tss;
 
                         // Durée par sport
                         if (stats.sportDuration[sport] !== undefined) {

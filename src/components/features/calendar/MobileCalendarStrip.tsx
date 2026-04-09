@@ -315,10 +315,6 @@ export function MobileCalendarStrip({
                 if (stats.sportDuration[sport] !== undefined) {
                     stats.sportDuration[sport] += cd.actualDurationMinutes;
                 }
-            } else {
-                if (stats.sportDuration[sport] !== undefined) {
-                    stats.sportDuration[sport] += w.plannedData?.durationMinutes ?? 0;
-                }
             }
         });
         return stats;

@@ -30,7 +30,9 @@ export function WorkoutBadge({ workout, onClick, isCompact = false }: WorkoutBad
     const isMissed = workout.status === 'missed';
 
     const duration = workout.completedData?.actualDurationMinutes || workout.plannedData?.durationMinutes || 0;
-    const tss = workout.plannedData?.plannedTSS;
+    const tss = isCompleted && workout.completedData
+        ? (workout.completedData.metrics?.cycling?.tss ?? workout.completedData.calculatedTSS ?? workout.plannedData?.plannedTSS ?? 0)
+        : (workout.plannedData?.plannedTSS ?? 0);
 
     // --- Style dynamique du conteneur ---
     // Si manqué : fond rougeatre très léger + bordure rouge
