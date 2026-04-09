@@ -116,11 +116,9 @@ const DayButton = React.memo(function DayButton({
                     {date.getDate()}
                 </span>
                 <div className="flex gap-[3px] mt-1.5 h-[5px] items-center">
-                    {hasPrimary && <div className="w-[5px] h-[5px] rounded-full bg-rose-400" />}
-                    {hasSecondary && <div className="w-[5px] h-[5px] rounded-full bg-amber-400" />}
-                    {workouts.length === 0 && !hasPrimary && !hasSecondary
+                    {workouts.length === 0
                         ? <div className="w-[5px] h-[5px] rounded-full bg-transparent" />
-                        : workouts.slice(0, hasPrimary || hasSecondary ? 2 : 3).map((w, i) => (
+                        : workouts.slice(0, 3).map((w, i) => (
                             <div key={i} className={`w-[5px] h-[5px] rounded-full ${getDotColor(w)}`} />
                         ))
                     }
