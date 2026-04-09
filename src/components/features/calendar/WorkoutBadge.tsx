@@ -13,7 +13,7 @@ interface WorkoutBadgeProps {
 
 // 1. Configuration des styles par Sport (Couleur + Icone)
 const SPORT_CONFIG: Record<string, { icon: React.ElementType, color: string, bg: string }> = {
-    cycling: { icon: Bike, color: 'text-sky-400', bg: 'bg-sky-500' },
+    cycling: { icon: Bike, color: 'text-purple-400', bg: 'bg-purple-500' },
     running: { icon: Footprints, color: 'text-orange-400', bg: 'bg-orange-500' },
     swimming: { icon: Waves, color: 'text-cyan-400', bg: 'bg-cyan-500' },
     strength: { icon: Dumbbell, color: 'text-purple-400', bg: 'bg-purple-500' },

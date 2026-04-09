@@ -16,7 +16,7 @@ type ExtendedWeekStats = WeekStats & {
 type SportType = 'cycling' | 'running' | 'swimming' | 'strength' | 'default';
 
 const SPORT_CONFIG: Record<SportType, { label: string, icon: React.ElementType, color: string }> = {
-    cycling: { label: 'Vélo', icon: Bike, color: 'text-blue-600 dark:text-blue-400' },
+    cycling: { label: 'Vélo', icon: Bike, color: 'text-purple-600 dark:text-purple-400' },
     running: { label: 'Course', icon: Footprints, color: 'text-orange-600 dark:text-orange-400' }, // Orange pour le running (standard)
     swimming: { label: 'Natation', icon: Waves, color: 'text-cyan-600 dark:text-cyan-400' },
     strength: { label: 'Muscu', icon: Dumbbell, color: 'text-purple-600 dark:text-purple-400' },

@@ -32,7 +32,7 @@ const SPORT_ICON: Record<string, React.ElementType> = {
 };
 
 const SPORT_COLOR: Record<string, string> = {
-    cycling: 'text-blue-500', running: 'text-orange-500', swimming: 'text-cyan-500', other: 'text-slate-400',
+    cycling: 'text-purple-500', running: 'text-orange-500', swimming: 'text-sky-500', other: 'text-slate-400',
 };
 
 // ─── Main Component ──────────────────────────────────────────────────────────
