@@ -307,8 +307,9 @@ export function MobileCalendarStrip({
                 stats.completed++;
                 stats.actualDuration += w.completedData.actualDurationMinutes;
                 stats.distance += w.completedData.distanceKm ?? 0;
+                // TSS réalisé : calculatedTSS (tous sports) > cycling.tss > plannedTSS
                 const cd = w.completedData;
-                const tss = cd.metrics?.cycling?.tss ?? cd.calculatedTSS ?? w.plannedData?.plannedTSS ?? 0;
+                const tss = cd.calculatedTSS ?? cd.metrics?.cycling?.tss ?? w.plannedData?.plannedTSS ?? 0;
                 stats.completedTSS += tss;
                 if (stats.sportDuration[sport] !== undefined) {
                     stats.sportDuration[sport] += cd.actualDurationMinutes;

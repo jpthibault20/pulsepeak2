@@ -70,12 +70,9 @@ export function CalendarGrid({
                         stats.actualDuration += actualMinutes;
                         stats.distance += workout.completedData.distanceKm ?? 0;
 
-                        // TSS réalisé
+                        // TSS réalisé : calculatedTSS (tous sports) > cycling.tss > plannedTSS
                         const cd = workout.completedData;
-                        const tss =
-                            (cd.metrics?.cycling?.tss ?? 0) > 0 ? cd.metrics!.cycling!.tss! :
-                            (cd.calculatedTSS ?? 0) > 0 ? cd.calculatedTSS! :
-                            workout.plannedData?.plannedTSS ?? 0;
+                        const tss = cd.calculatedTSS ?? cd.metrics?.cycling?.tss ?? workout.plannedData?.plannedTSS ?? 0;
                         stats.completedTSS += tss;
 
                         // Durée par sport

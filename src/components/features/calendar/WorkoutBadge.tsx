@@ -31,7 +31,7 @@ export function WorkoutBadge({ workout, onClick, isCompact = false }: WorkoutBad
 
     const duration = workout.completedData?.actualDurationMinutes || workout.plannedData?.durationMinutes || 0;
     const tss = isCompleted && workout.completedData
-        ? (workout.completedData.metrics?.cycling?.tss ?? workout.completedData.calculatedTSS ?? workout.plannedData?.plannedTSS ?? 0)
+        ? (workout.completedData.calculatedTSS ?? workout.completedData.metrics?.cycling?.tss ?? workout.plannedData?.plannedTSS ?? 0)
         : (workout.plannedData?.plannedTSS ?? 0);
 
     // --- Style dynamique du conteneur ---
