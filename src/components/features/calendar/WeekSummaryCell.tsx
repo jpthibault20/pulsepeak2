@@ -428,7 +428,7 @@ export function WeekSummaryCell({
                                                 {activeSports.cycling && (
                                                     <th className="py-2 w-20 text-center">
                                                         <div className="flex justify-center">
-                                                            <div className="p-1.5 bg-orange-100 dark:bg-orange-500/10 rounded-md text-orange-600 dark:text-orange-400">
+                                                            <div className="p-1.5 bg-purple-100 dark:bg-purple-500/10 rounded-md text-purple-600 dark:text-purple-400">
                                                                 <Bike size={16} />
                                                             </div>
                                                         </div>

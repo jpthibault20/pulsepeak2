@@ -248,7 +248,7 @@ export function MobileWeekBar({
                     {/* Sport breakdown badges */}
                     <div className="flex flex-wrap gap-1.5">
                         {stats.sportDuration.cycling > 0 && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/10 border-sky-200 dark:border-sky-500/20">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/20">
                                 <Bike size={10} />
                                 {formatDuration(stats.sportDuration.cycling)}
                             </span>
@@ -422,7 +422,7 @@ export function MobileWeekBar({
                                             {activeSports.cycling && (
                                                 <th className="py-1.5 w-16 text-center">
                                                     <div className="flex justify-center">
-                                                        <div className="p-1 bg-orange-50 dark:bg-orange-500/10 rounded text-orange-600 dark:text-orange-400">
+                                                        <div className="p-1 bg-purple-50 dark:bg-purple-500/10 rounded text-purple-600 dark:text-purple-400">
                                                             <Bike size={14} />
                                                         </div>
                                                     </div>

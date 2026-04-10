@@ -35,7 +35,7 @@ type SportFilter = 'all' | 'cycling' | 'running' | 'swimming';
 
 const SPORT_COLORS: Record<SportFilter, string> = {
     all: '#8b5cf6',
-    cycling: '#3b82f6',
+    cycling: '#a855f7',
     running: '#10b981',
     swimming: '#06b6d4',
 };
@@ -1213,7 +1213,7 @@ function SportSpecificStats({ workouts, sport, profile }: {
 
     return (
         <div className="space-y-2">
-            {bySport.cycling > 0 && <StatRow label="Séances vélo" value={`${bySport.cycling}`} color="#3b82f6" icon={<Bike size={12} />} />}
+            {bySport.cycling > 0 && <StatRow label="Séances vélo" value={`${bySport.cycling}`} color="#a855f7" icon={<Bike size={12} />} />}
             {bySport.running > 0 && <StatRow label="Séances course" value={`${bySport.running}`} color="#10b981" icon={<Footprints size={12} />} />}
             {bySport.swimming > 0 && <StatRow label="Séances natation" value={`${bySport.swimming}`} color="#06b6d4" icon={<Waves size={12} />} />}
             <StatRow label="Total séances" value={`${completed.length}`} />

@@ -116,11 +116,9 @@ const DayButton = React.memo(function DayButton({
                     {date.getDate()}
                 </span>
                 <div className="flex gap-[3px] mt-1.5 h-[5px] items-center">
-                    {hasPrimary && <div className="w-[5px] h-[5px] rounded-full bg-rose-400" />}
-                    {hasSecondary && <div className="w-[5px] h-[5px] rounded-full bg-amber-400" />}
-                    {workouts.length === 0 && !hasPrimary && !hasSecondary
+                    {workouts.length === 0
                         ? <div className="w-[5px] h-[5px] rounded-full bg-transparent" />
-                        : workouts.slice(0, hasPrimary || hasSecondary ? 2 : 3).map((w, i) => (
+                        : workouts.slice(0, 3).map((w, i) => (
                             <div key={i} className={`w-[5px] h-[5px] rounded-full ${getDotColor(w)}`} />
                         ))
                     }
@@ -309,15 +307,12 @@ export function MobileCalendarStrip({
                 stats.completed++;
                 stats.actualDuration += w.completedData.actualDurationMinutes;
                 stats.distance += w.completedData.distanceKm ?? 0;
+                // TSS réalisé : calculatedTSS (tous sports) > cycling.tss > plannedTSS
                 const cd = w.completedData;
-                const tss = cd.metrics?.cycling?.tss ?? cd.calculatedTSS ?? w.plannedData?.plannedTSS ?? 0;
+                const tss = cd.calculatedTSS ?? cd.metrics?.cycling?.tss ?? w.plannedData?.plannedTSS ?? 0;
                 stats.completedTSS += tss;
                 if (stats.sportDuration[sport] !== undefined) {
                     stats.sportDuration[sport] += cd.actualDurationMinutes;
-                }
-            } else {
-                if (stats.sportDuration[sport] !== undefined) {
-                    stats.sportDuration[sport] += w.plannedData?.durationMinutes ?? 0;
                 }
             }
         });

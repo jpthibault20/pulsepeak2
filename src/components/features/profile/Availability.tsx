@@ -188,7 +188,7 @@ export const Availability: React.FC<AvailabilityProps> = ({ formData, setFormDat
 
     const activeSportList = [
         formData.activeSports.swimming && { key: 'swimming' as const, icon: Waves, color: 'text-cyan-600 dark:text-cyan-400', ring: 'focus:ring-cyan-500/50 focus:text-cyan-600 dark:focus:text-cyan-300', accent: 'bg-cyan-100 dark:bg-cyan-500/10' },
-        formData.activeSports.cycling  && { key: 'cycling'  as const, icon: Bike,  color: 'text-orange-600 dark:text-orange-400', ring: 'focus:ring-orange-500/50 focus:text-orange-600 dark:focus:text-orange-300', accent: 'bg-orange-100 dark:bg-orange-500/10' },
+        formData.activeSports.cycling  && { key: 'cycling'  as const, icon: Bike,  color: 'text-purple-600 dark:text-purple-400', ring: 'focus:ring-purple-500/50 focus:text-purple-600 dark:focus:text-purple-300', accent: 'bg-purple-100 dark:bg-purple-500/10' },
         formData.activeSports.running  && { key: 'running'  as const, icon: Footprints, color: 'text-emerald-600 dark:text-emerald-400', ring: 'focus:ring-emerald-500/50 focus:text-emerald-600 dark:focus:text-emerald-300', accent: 'bg-emerald-100 dark:bg-emerald-500/10' },
     ].filter(Boolean) as { key: 'swimming'|'cycling'|'running'; icon: React.ElementType; color: string; ring: string; accent: string }[];
 
