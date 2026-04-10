@@ -13,7 +13,7 @@ interface WorkoutBadgeProps {
 
 // 1. Configuration des styles par Sport (Couleur + Icone)
 const SPORT_CONFIG: Record<string, { icon: React.ElementType, color: string, bg: string }> = {
-    cycling: { icon: Bike, color: 'text-sky-400', bg: 'bg-sky-500' },
+    cycling: { icon: Bike, color: 'text-purple-400', bg: 'bg-purple-500' },
     running: { icon: Footprints, color: 'text-orange-400', bg: 'bg-orange-500' },
     swimming: { icon: Waves, color: 'text-cyan-400', bg: 'bg-cyan-500' },
     strength: { icon: Dumbbell, color: 'text-purple-400', bg: 'bg-purple-500' },
@@ -30,7 +30,9 @@ export function WorkoutBadge({ workout, onClick, isCompact = false }: WorkoutBad
     const isMissed = workout.status === 'missed';
 
     const duration = workout.completedData?.actualDurationMinutes || workout.plannedData?.durationMinutes || 0;
-    const tss = workout.plannedData?.plannedTSS;
+    const tss = isCompleted && workout.completedData
+        ? (workout.completedData.calculatedTSS ?? workout.completedData.metrics?.cycling?.tss ?? workout.plannedData?.plannedTSS ?? 0)
+        : (workout.plannedData?.plannedTSS ?? 0);
 
     // --- Style dynamique du conteneur ---
     // Si manqué : fond rougeatre très léger + bordure rouge
@@ -42,8 +44,9 @@ export function WorkoutBadge({ workout, onClick, isCompact = false }: WorkoutBad
     } else if (isMissed) {
         containerStyle = "border-l-2 border-red-500 bg-red-50 dark:bg-red-950/10 hover:bg-red-100 dark:hover:bg-red-950/20";
     } else {
-        // En attente : on utlise la couleur du sport pour la bordure gauche
-        containerStyle = `border-l-2 border-blue-500 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750`;
+        // En attente : on utilise la couleur du sport pour la bordure gauche
+        const sportBorder = config.bg.replace('bg-', 'border-');
+        containerStyle = `border-l-2 ${sportBorder} bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750`;
     }
 
     return (

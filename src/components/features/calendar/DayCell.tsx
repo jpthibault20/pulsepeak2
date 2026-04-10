@@ -127,7 +127,7 @@ export function DayCell({
                             `}
                         >
                             <div className="flex items-center gap-2 mb-2">
-                                <div className="p-1 bg-indigo-100 dark:bg-indigo-500/20 rounded text-indigo-600 dark:text-indigo-400">
+                                <div className={`p-1 rounded ${getMultiCardStyle(workouts)}`}>
                                     <Layers size={14} />
                                 </div>
                                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
@@ -164,11 +164,22 @@ export function DayCell({
     );
 }
 
+// Couleur de la carte multi-séances basée sur le sport dominant
+function getMultiCardStyle(workouts: Workout[]) {
+    const hasCycling = workouts.some(w => w.sportType?.toLowerCase().includes('cycl'));
+    if (hasCycling) return 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400';
+    const hasRunning = workouts.some(w => w.sportType?.toLowerCase().includes('run'));
+    if (hasRunning) return 'bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400';
+    const hasSwimming = workouts.some(w => w.sportType?.toLowerCase().includes('swim'));
+    if (hasSwimming) return 'bg-sky-100 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400';
+    return 'bg-slate-100 dark:bg-slate-500/20 text-slate-600 dark:text-slate-400';
+}
+
 // Fonction utilitaire locale pour les petites barres de couleur
 function getSportColorLine(sportType?: string) {
     const type = (sportType || '').toLowerCase();
     if (type.includes('run') || type.includes('course')) return 'bg-orange-500';
-    if (type.includes('cycl') || type.includes('vélo')) return 'bg-blue-500';
+    if (type.includes('cycl') || type.includes('vélo')) return 'bg-purple-500';
     if (type.includes('swim') || type.includes('nat')) return 'bg-cyan-400';
     if (type.includes('muscu') || type.includes('strength')) return 'bg-purple-500';
     return 'bg-slate-400';

@@ -43,7 +43,7 @@ const SPORT_CONFIG: Record<SportType, {
     bgLight: string;
     label: string;
 }> = {
-    cycling:  { icon: Bike,     color: 'text-blue-600 dark:text-blue-400',    bgLight: 'bg-blue-50 dark:bg-blue-500/10',    label: 'Vélo' },
+    cycling:  { icon: Bike,     color: 'text-purple-600 dark:text-purple-400',    bgLight: 'bg-purple-50 dark:bg-purple-500/10',    label: 'Vélo' },
     running:  { icon: Running,  color: 'text-orange-600 dark:text-orange-400', bgLight: 'bg-orange-50 dark:bg-orange-500/10', label: 'Course' },
     swimming: { icon: Waves,    color: 'text-cyan-600 dark:text-cyan-400',    bgLight: 'bg-cyan-50 dark:bg-cyan-500/10',    label: 'Natation' },
     other:    { icon: Mountain, color: 'text-emerald-600 dark:text-emerald-400', bgLight: 'bg-emerald-50 dark:bg-emerald-500/10', label: 'Autre' },

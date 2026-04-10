@@ -56,12 +56,9 @@ export function useWeekStats(
                 stats.actualDuration += workout.completedData.actualDurationMinutes;
                 stats.distance += workout.completedData.distanceKm ?? 0;
 
-                // TSS réalisé : priorité aux métriques cyclisme, sinon TSS calculé, sinon TSS planifié
+                // TSS réalisé : calculatedTSS (tous sports) > cycling.tss > plannedTSS
                 const cd = workout.completedData;
-                const tss =
-                    (cd.metrics?.cycling?.tss ?? 0) > 0 ? cd.metrics!.cycling!.tss! :
-                    (cd.calculatedTSS ?? 0) > 0 ? cd.calculatedTSS! :
-                    workout.plannedData?.plannedTSS ?? 0;
+                const tss = cd.calculatedTSS ?? cd.metrics?.cycling?.tss ?? workout.plannedData?.plannedTSS ?? 0;
                 stats.completedTSS += tss;
 
                 if (stats.sportDuration[workout.sportType] !== undefined) {
