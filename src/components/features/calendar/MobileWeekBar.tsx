@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { Sparkles, Sparkle, Zap, ChevronDown, ChevronUp, Bike, Waves, Footprints, Bot, Loader2, AlertCircle, Plus, Target, Calendar, X, MessageSquare } from 'lucide-react';
 import { WeekGenerationProgressModal, type WeekGenProgressState } from './WeekGenerationProgressModal';
+import { AvailabilityTable } from './AvailabilityTable';
 import type { WeekStats } from '@/hooks/useWeekStats';
 import type { AvailabilitySlot } from '@/lib/data/type';
 import { getWeekContextForDate, generateWeekWorkoutsFromDate, getWeekPendingCount, type WeekContext } from '@/app/actions/schedule';
@@ -398,148 +399,13 @@ export function MobileWeekBar({
                             <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
                                 Disponibilités
                             </label>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm border-collapse">
-                                    <thead>
-                                        <tr className="border-b border-slate-200 dark:border-slate-800">
-                                            <th className="text-left py-1.5 font-medium text-slate-400 dark:text-slate-500 w-16 pl-1 text-xs">Jour</th>
-                                            <th className="py-1.5 w-10 text-center">
-                                                <div className="flex justify-center">
-                                                    <div className="p-1 bg-violet-50 dark:bg-violet-500/10 rounded text-violet-600 dark:text-violet-400">
-                                                        <Sparkle size={14} />
-                                                    </div>
-                                                </div>
-                                            </th>
-                                            {activeSports.swimming && (
-                                                <th className="py-1.5 w-16 text-center">
-                                                    <div className="flex justify-center">
-                                                        <div className="p-1 bg-cyan-50 dark:bg-cyan-500/10 rounded text-cyan-600 dark:text-cyan-400">
-                                                            <Waves size={14} />
-                                                        </div>
-                                                    </div>
-                                                </th>
-                                            )}
-                                            {activeSports.cycling && (
-                                                <th className="py-1.5 w-16 text-center">
-                                                    <div className="flex justify-center">
-                                                        <div className="p-1 bg-purple-50 dark:bg-purple-500/10 rounded text-purple-600 dark:text-purple-400">
-                                                            <Bike size={14} />
-                                                        </div>
-                                                    </div>
-                                                </th>
-                                            )}
-                                            {activeSports.running && (
-                                                <th className="py-1.5 w-16 text-center">
-                                                    <div className="flex justify-center">
-                                                        <div className="p-1 bg-emerald-50 dark:bg-emerald-500/10 rounded text-emerald-600 dark:text-emerald-400">
-                                                            <Footprints size={14} />
-                                                        </div>
-                                                    </div>
-                                                </th>
-                                            )}
-                                            <th className="py-1.5 text-center">
-                                                <div className="flex justify-center">
-                                                    <div className="p-1 bg-slate-50 dark:bg-slate-500/10 rounded text-slate-500 dark:text-slate-400">
-                                                        <MessageSquare size={14} />
-                                                    </div>
-                                                </div>
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
-                                        {DAYS_FR.map(day => {
-                                            const slot = availability[day] ?? { swimming: 0, cycling: 0, running: 0, comment: '', aiChoice: false };
-                                            const isAiChoice = slot.aiChoice ?? false;
-                                            return (
-                                                <tr key={day} className={isAiChoice ? 'bg-violet-50/50 dark:bg-violet-500/5' : ''}>
-                                                    <td className="py-1 pl-1 text-slate-500 dark:text-slate-400 font-medium capitalize text-[11px]">
-                                                        {day.slice(0, 3)}
-                                                    </td>
-                                                    <td className="p-0.5 text-center">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => updateAiChoice(day, !isAiChoice)}
-                                                            className={`p-1 rounded transition-all ${
-                                                                isAiChoice
-                                                                    ? 'bg-violet-100 dark:bg-violet-500/15 text-violet-600 dark:text-violet-400 ring-1 ring-violet-300 dark:ring-violet-500/40'
-                                                                    : 'text-slate-300 dark:text-slate-700 hover:text-slate-400 dark:hover:text-slate-600'
-                                                            }`}
-                                                        >
-                                                            <Sparkle size={12} />
-                                                        </button>
-                                                    </td>
-                                                    {activeSports.swimming && (
-                                                        <td className="p-0.5">
-                                                            {isAiChoice ? (
-                                                                <div className="w-full h-9 flex items-center justify-center">
-                                                                    <span className="text-[9px] text-violet-400 dark:text-violet-500 font-medium">auto</span>
-                                                                </div>
-                                                            ) : (
-                                                                <DurationInput
-                                                                    value={slot.swimming}
-                                                                    onChange={val => updateSlot(day, 'swimming', val)}
-                                                                    placeholder="-"
-                                                                    className="focus:text-cyan-400 focus:ring-cyan-500/50"
-                                                                />
-                                                            )}
-                                                        </td>
-                                                    )}
-                                                    {activeSports.cycling && (
-                                                        <td className="p-0.5">
-                                                            {isAiChoice ? (
-                                                                <div className="w-full h-9 flex items-center justify-center">
-                                                                    <span className="text-[9px] text-violet-400 dark:text-violet-500 font-medium">auto</span>
-                                                                </div>
-                                                            ) : (
-                                                                <DurationInput
-                                                                    value={slot.cycling}
-                                                                    onChange={val => updateSlot(day, 'cycling', val)}
-                                                                    placeholder="-"
-                                                                    className="focus:text-orange-400 focus:ring-orange-500/50"
-                                                                />
-                                                            )}
-                                                        </td>
-                                                    )}
-                                                    {activeSports.running && (
-                                                        <td className="p-0.5">
-                                                            {isAiChoice ? (
-                                                                <div className="w-full h-9 flex items-center justify-center">
-                                                                    <span className="text-[9px] text-violet-400 dark:text-violet-500 font-medium">auto</span>
-                                                                </div>
-                                                            ) : (
-                                                                <DurationInput
-                                                                    value={slot.running}
-                                                                    onChange={val => updateSlot(day, 'running', val)}
-                                                                    placeholder="-"
-                                                                    className="focus:text-emerald-400 focus:ring-emerald-500/50"
-                                                                />
-                                                            )}
-                                                        </td>
-                                                    )}
-                                                    <td className="p-0.5">
-                                                        <input
-                                                            type="text"
-                                                            value={slot.comment || ''}
-                                                            onChange={e => updateDayComment(day, e.target.value)}
-                                                            placeholder={isAiChoice ? "vacances..." : "note..."}
-                                                            className="w-full min-w-[70px] bg-transparent border border-slate-200 dark:border-slate-700 rounded px-1.5 py-0.5 text-[11px] text-slate-600 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-slate-400 dark:focus:border-slate-500 focus:ring-1 focus:ring-slate-400/30 transition-colors"
-                                                        />
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                                <div className="flex items-center justify-between mt-1">
-                                    <div className="flex items-center gap-1 text-[9px] text-violet-500 dark:text-violet-400/70 italic">
-                                        <Sparkle size={8} />
-                                        <span>= IA choisit</span>
-                                    </div>
-                                    <p className="text-[9px] text-slate-400 dark:text-slate-600 italic">
-                                        &quot;1h30&quot;, &quot;90&quot;, &quot;1:30&quot; ou &quot;1.5&quot;
-                                    </p>
-                                </div>
-                            </div>
+                            <AvailabilityTable
+                                availability={availability}
+                                activeSports={activeSports}
+                                onSlotChange={updateSlot}
+                                onCommentChange={updateDayComment}
+                                onAiChoiceChange={updateAiChoice}
+                            />
                         </div>
 
                         {/* Error */}

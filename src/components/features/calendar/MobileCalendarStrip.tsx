@@ -86,7 +86,9 @@ const DayButton = React.memo(function DayButton({
             <button
                 data-selected={isSelected ? 'true' : 'false'}
                 data-month={monthKey}
+                data-datekey={dateKey}
                 onClick={() => onSelect(date)}
+                style={{ scrollSnapAlign: 'center' }}
                 className={`
                     flex-shrink-0 flex flex-col items-center
                     w-[46px] pt-2.5 pb-2.5 rounded-2xl
@@ -140,7 +142,24 @@ export function MobileCalendarStrip({
     const { scheduleData, profile, objectives, onViewWorkout, onEditObjective, onRefresh, onOpenGenModal } = useCalendarContext();
     const scrollRef = useRef<HTMLDivElement>(null);
     const todayKey = useMemo(() => formatDateKey(new Date()), []);
-    const selectedKey = formatDateKey(selectedDay);
+    const parentSelectedKey = formatDateKey(selectedDay);
+    // Local key that updates instantly during scroll, synced with parent otherwise
+    const [localSelectedKey, setLocalSelectedKey] = useState(parentSelectedKey);
+    const selectedKey = localSelectedKey;
+    // Counter to force auto-scroll even when parentSelectedKey string is the same
+    const parentChangeCount = useRef(0);
+    const [scrollTrigger, setScrollTrigger] = useState(0);
+    const prevParentDay = useRef(selectedDay);
+    // Sync local state when parent changes (e.g. click from outside, home button)
+    useEffect(() => {
+        // Detect parent change even if the key string is the same (new Date object)
+        if (selectedDay !== prevParentDay.current) {
+            prevParentDay.current = selectedDay;
+            setLocalSelectedKey(parentSelectedKey);
+            parentChangeCount.current++;
+            setScrollTrigger(parentChangeCount.current);
+        }
+    }, [selectedDay, parentSelectedKey]);
     const lastReportedMonth = useRef<string>('');
     const initialScrollDone = useRef(false);
 
@@ -177,22 +196,48 @@ export function MobileCalendarStrip({
         return days;
     }, [monthRange]);
 
+    // O(1) lookup: dateKey → Date (avoid linear search in scroll handler)
+    const daysByKey = useMemo(() => {
+        const map = new Map<string, Date>();
+        for (const d of allDays) map.set(formatDateKey(d), d);
+        return map;
+    }, [allDays]);
+
     // Workouts & objectives for selected day (used below the strip)
     const dayWorkouts = useMemo(() => workoutsByDate.get(selectedKey) ?? [], [selectedKey, workoutsByDate]);
     const dayObjectives = useMemo(() => objectivesByDate.get(selectedKey) ?? [], [selectedKey, objectivesByDate]);
 
-    // ── Auto-scroll to today on mount (instant), then smooth on day change ──
+    // Track whether the selection came from scrolling (skip auto-scroll)
+    const selectedFromScroll = useRef(false);
+    const isProgrammaticScroll = useRef(false);
+    const scrollEndTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+    // Refs to avoid stale closures in scroll handler
+    const selectedKeyRef = useRef(selectedKey);
+    selectedKeyRef.current = selectedKey;
+    const daysByKeyRef = useRef(daysByKey);
+    daysByKeyRef.current = daysByKey;
+    const onSelectDayRef = useRef(onSelectDay);
+    onSelectDayRef.current = onSelectDay;
+
+    // ── Auto-scroll to selected day (only on click or mount, not on scroll-selection) ──
     useEffect(() => {
+        if (selectedFromScroll.current) {
+            selectedFromScroll.current = false;
+            return;
+        }
         const el = scrollRef.current?.querySelector<HTMLElement>('[data-selected="true"]');
         if (el) {
+            isProgrammaticScroll.current = true;
             el.scrollIntoView({
                 behavior: initialScrollDone.current ? 'smooth' : 'auto',
                 block: 'nearest',
                 inline: 'center',
             });
             initialScrollDone.current = true;
+            clearTimeout(scrollEndTimer.current);
+            scrollEndTimer.current = setTimeout(() => { isProgrammaticScroll.current = false; }, 350);
         }
-    }, [selectedKey]);
+    }, [scrollTrigger]);
 
     // ── Expand range when approaching edges + detect visible month ──
     const expandMonth = useCallback((direction: 'prev' | 'next') => {
@@ -210,6 +255,47 @@ export function MobileCalendarStrip({
         } else {
             setMonthRange(prev => ({ ...prev, max: prev.max + 1 }));
         }
+    }, []);
+
+    // Cache button positions to avoid querySelectorAll on every scroll frame
+    const btnCacheRef = useRef<{ el: HTMLElement; center: number; dk: string; month: string }[]>([]);
+    const btnCacheDirty = useRef(true);
+    // Invalidate cache when days change (month expansion)
+    useEffect(() => { btnCacheDirty.current = true; }, [allDays]);
+
+    const rebuildBtnCache = useCallback(() => {
+        const container = scrollRef.current;
+        if (!container) return;
+        const btns = container.querySelectorAll<HTMLElement>('[data-datekey]');
+        const cache: typeof btnCacheRef.current = [];
+        btns.forEach(btn => {
+            cache.push({
+                el: btn,
+                center: btn.offsetLeft + btn.offsetWidth / 2,
+                dk: btn.dataset.datekey!,
+                month: btn.dataset.month!,
+            });
+        });
+        btnCacheRef.current = cache;
+        btnCacheDirty.current = false;
+    }, []);
+
+    // Binary search for the closest button to centerX
+    const findClosest = useCallback((centerX: number) => {
+        const cache = btnCacheRef.current;
+        if (cache.length === 0) return null;
+        let lo = 0, hi = cache.length - 1;
+        while (lo < hi) {
+            const mid = (lo + hi) >> 1;
+            if (cache[mid].center < centerX) lo = mid + 1; else hi = mid;
+        }
+        // Check lo and lo-1 for the actual closest
+        const candidate = cache[lo];
+        const prev = lo > 0 ? cache[lo - 1] : null;
+        if (prev && Math.abs(prev.center - centerX) < Math.abs(candidate.center - centerX)) {
+            return prev;
+        }
+        return candidate;
     }, []);
 
     useEffect(() => {
@@ -232,28 +318,42 @@ export function MobileCalendarStrip({
                     expandMonth('next');
                 }
 
+                // Rebuild cache if invalidated (month expansion, first scroll)
+                if (btnCacheDirty.current) rebuildBtnCache();
+
                 const centerX = container.scrollLeft + container.clientWidth / 2;
-                const buttons = container.querySelectorAll<HTMLElement>('[data-month]');
-                let closest: HTMLElement | null = null;
-                let minDist = Infinity;
-                buttons.forEach(btn => {
-                    const dist = Math.abs(btn.offsetLeft + btn.offsetWidth / 2 - centerX);
-                    if (dist < minDist) { minDist = dist; closest = btn; }
-                });
+                const closest = findClosest(centerX);
+
                 if (closest) {
-                    const m = (closest as HTMLElement).dataset.month!;
-                    if (m !== lastReportedMonth.current) {
-                        lastReportedMonth.current = m;
-                        const [y, mo] = m.split('-').map(Number);
+                    // Report visible month
+                    if (closest.month !== lastReportedMonth.current) {
+                        lastReportedMonth.current = closest.month;
+                        const [y, mo] = closest.month.split('-').map(Number);
                         onVisibleMonthChange?.(y, mo);
+                    }
+
+                    // Select the centered day in real-time while scrolling
+                    if (!isProgrammaticScroll.current && closest.dk !== selectedKeyRef.current) {
+                        selectedKeyRef.current = closest.dk;
+                        setLocalSelectedKey(closest.dk);
+                        // Debounce the parent update
+                        clearTimeout(scrollEndTimer.current);
+                        scrollEndTimer.current = setTimeout(() => {
+                            selectedFromScroll.current = true;
+                            const dayDate = daysByKeyRef.current.get(closest.dk);
+                            if (dayDate) onSelectDayRef.current(dayDate);
+                        }, 150);
                     }
                 }
             });
         };
 
         container.addEventListener('scroll', handleScroll, { passive: true });
-        return () => container.removeEventListener('scroll', handleScroll);
-    }, [expandMonth, onVisibleMonthChange]);
+        return () => {
+            container.removeEventListener('scroll', handleScroll);
+            clearTimeout(scrollEndTimer.current);
+        };
+    }, [expandMonth, onVisibleMonthChange, rebuildBtnCache, findClosest]);
 
     // ── Week stats for the selected day ──
     const selectedWeek = useMemo(() => {
@@ -341,8 +441,14 @@ export function MobileCalendarStrip({
             {/* ── Horizontal Day Strip (multi-month, lazy-loaded) ── */}
             <div
                 ref={scrollRef}
-                className="flex gap-1 overflow-x-auto px-0.5 pb-1 items-end"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                className="flex gap-1 overflow-x-auto pb-1 items-end"
+                style={{
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                    scrollSnapType: 'x mandatory',
+                    paddingLeft: 'calc(50% - 23px)',
+                    paddingRight: 'calc(50% - 23px)',
+                }}
             >
                 {allDays.map((date, idx) => {
                     const key = formatDateKey(date);
@@ -386,7 +492,10 @@ export function MobileCalendarStrip({
             <div className="flex items-center justify-between px-1">
                 <div>
                     <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        {getDayLabel(selectedDay)} {selectedDay.getDate()} {MONTH_NAMES[selectedDay.getMonth()]}
+                        {(() => {
+                            const d = daysByKey.get(selectedKey) ?? selectedDay;
+                            return `${getDayLabel(d)} ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
+                        })()}
                     </p>
                     <p className="text-xs text-slate-500 mt-0.5">
                         {dayWorkouts.length > 0
@@ -400,7 +509,7 @@ export function MobileCalendarStrip({
                     </p>
                 </div>
                 <button
-                    onClick={e => onOpenManualModal(e, selectedDay)}
+                    onClick={e => onOpenManualModal(e, daysByKey.get(selectedKey) ?? selectedDay)}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:bg-slate-200 dark:active:bg-slate-700 rounded-xl text-slate-600 dark:text-slate-300 text-sm font-medium transition-colors border border-slate-200/60 dark:border-slate-700/60"
                 >
                     <Plus size={14} />

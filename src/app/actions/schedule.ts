@@ -58,7 +58,8 @@ export async function CreateAdvancedPlan(
     customTheme: string | null,
     startDate: string,
     numWeeks: number,
-    userID: string
+    userID: string,
+    weeklyAvailability?: { [key: string]: AvailabilitySlot }
 ) {
     // Validation
     if (numWeeks <= 0)      return { state: ReturnCode.RC_Error, error: "Nombre de semaines invalide" };
@@ -108,7 +109,7 @@ export async function CreateAdvancedPlan(
         o.status === 'upcoming' && o.date >= todayStr
         && parseISO(o.date) >= firstWeekStart && parseISO(o.date) <= firstWeekEnd
     );
-    const firstWeekWorkouts = await CreateWorkoutForWeek(profile, newPlan, firstBlock, firstWeek, null, realCompletion, profile.weeklyAvailability, firstWeekObjectives);
+    const firstWeekWorkouts = await CreateWorkoutForWeek(profile, newPlan, firstBlock, firstWeek, null, realCompletion, weeklyAvailability ?? profile.weeklyAvailability, firstWeekObjectives);
 
     const newWorkouts: Workout[] = [...firstWeekWorkouts];
     const updatedWeeks = newWeeks.map((week) =>
@@ -143,7 +144,7 @@ export async function CreateAdvancedPlan(
  * - { state: RC_OK }               en cas de succès
  * - { state: RC_Error, error }     en cas d'erreur
  ******************************************************************************/
-export async function CreatePlanToObjective(userID: string, planStartDate: string) {
+export async function CreatePlanToObjective(userID: string, planStartDate: string, weeklyAvailability?: { [key: string]: AvailabilitySlot }) {
     if (userID.length < 3) return { state: ReturnCode.RC_Error, error: 'ID utilisateur invalide' };
 
     try { await checkAndIncrementAICallLimit('plan'); }
@@ -228,7 +229,7 @@ export async function CreatePlanToObjective(userID: string, planStartDate: strin
     const existingAllWorkouts2 = await getWorkout();
     const existingAllWeeks2 = await getWeek();
     const realCompletion2 = computeAvgCompletion(existingAllWorkouts2 ?? [], existingAllWeeks2 ?? [], firstWeek.id);
-    const firstWeekWorkouts = await CreateWorkoutForWeek(profile, newPlan, firstBlock, firstWeek, null, realCompletion2, profile.weeklyAvailability, relevantObjectives);
+    const firstWeekWorkouts = await CreateWorkoutForWeek(profile, newPlan, firstBlock, firstWeek, null, realCompletion2, weeklyAvailability ?? profile.weeklyAvailability, relevantObjectives);
 
     const newWorkouts: Workout[] = [...firstWeekWorkouts];
     const weeksWithWorkouts = finalWeeks.map(w =>
@@ -2525,7 +2526,7 @@ export async function getPlanOverview(): Promise<PlanOverviewData | null> {
                 id: week.id,
                 weekNumber: week.weekNumber,
                 type: week.type,
-                targetTSS: week.targetTSS || plannedTSS,
+                targetTSS: plannedTSS || week.targetTSS,
                 actualTSS,
                 startDate: weekStartStr,
                 completedCount: completed,

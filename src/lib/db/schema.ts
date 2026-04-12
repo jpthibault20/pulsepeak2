@@ -8,6 +8,7 @@ import {
     real,
     integer,
     jsonb,
+    boolean,
     pgEnum,
     index,
 } from 'drizzle-orm/pg-core';
@@ -95,6 +96,7 @@ export const profiles = pgTable('profiles', {
     aiPersonality: aiPersonalityEnum('ai_personality').default('Analytique').notNull(),
     plan:          subscriptionPlanEnum('plan').default('free').notNull(),
     strava:        jsonb('strava').$type<StravaConfig>(),
+    stravaWriteBack: boolean('strava_write_back').default(true),
 
     goal:          text('goal').default('').notNull(),
     objectiveDate: date('objective_date'),

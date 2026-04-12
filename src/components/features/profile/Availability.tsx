@@ -71,9 +71,9 @@ export const DurationInput = ({
             // Cas "90", "120" ou "2"
             const num = parseFloat(text);
             if (!isNaN(num)) {
-                // Si < 8, on assume que ce sont des heures (2 -> 2h)
+                // Si <= 12, on assume que ce sont des heures (2 -> 2h, 8 -> 8h)
                 // Sinon des minutes (90 -> 1h30)
-                totalMinutes = num < 8 ? num * 60 : num;
+                totalMinutes = num <= 12 ? Math.round(num * 60) : Math.round(num);
             }
         }
 
@@ -139,15 +139,16 @@ const AiChoiceToggle = ({
 // --- 2. COMPOSANT PRINCIPAL ---
 export const Availability: React.FC<AvailabilityProps> = ({ formData, setFormData }) => {
 
+    const toMinutes = (v: number) => v <= 0 ? 0 : v <= 12 ? Math.round(v * 60) : Math.round(v);
+
     const getTotalHours = () => {
         let totalMin = 0;
         Object.values(formData.weeklyAvailability).forEach(slot => {
-            if (slot.aiChoice) return; // Don't count AI choice days in total
-            if (formData.activeSports.swimming) totalMin += slot.swimming || 0;
-            if (formData.activeSports.running) totalMin += slot.running || 0;
-            if (formData.activeSports.cycling) totalMin += slot.cycling || 0;
+            if (slot.aiChoice) return;
+            if (formData.activeSports.swimming) totalMin += toMinutes(slot.swimming || 0);
+            if (formData.activeSports.running) totalMin += toMinutes(slot.running || 0);
+            if (formData.activeSports.cycling) totalMin += toMinutes(slot.cycling || 0);
         });
-        // Affichage joli du header (ex: 5h30)
         const h = Math.floor(totalMin / 60);
         const m = totalMin % 60;
         return m > 0 ? `${h}h${m}` : `${h}h`;

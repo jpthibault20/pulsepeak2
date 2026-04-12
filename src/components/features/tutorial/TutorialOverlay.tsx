@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
     Sparkles,
@@ -526,6 +526,7 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete }) 
     const [direction, setDirection] = useState<'next' | 'prev'>('next');
     const [isAnimating, setIsAnimating] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => { setMounted(true); }, []);
 
@@ -541,6 +542,7 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete }) 
         setTimeout(() => {
             setCurrentStep(next);
             setIsAnimating(false);
+            scrollRef.current?.scrollTo({ top: 0 });
         }, 200);
     }, [isAnimating]);
 
@@ -594,7 +596,7 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete }) 
                 <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-slate-700/60 shadow-2xl shadow-black/20 overflow-hidden max-h-[90dvh] flex flex-col">
 
                     {/* Scrollable content */}
-                    <div className="overflow-y-auto flex-1">
+                    <div ref={scrollRef} className="overflow-y-auto flex-1">
                         <div className={`transition-all duration-200 ease-out ${animClass}`}>
 
                             {/* Accent bar */}

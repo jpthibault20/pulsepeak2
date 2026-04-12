@@ -1,12 +1,12 @@
 'use client';
 
-import { Bot, Send, Loader2, Zap } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Bot, Send, Loader2, Zap, RotateCcw } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Profile, Schedule } from "@/lib/data/DatabaseTypes";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface Message {
+export interface Message {
     role: 'user' | 'ai';
     text: string;
     streaming?: boolean;
@@ -15,6 +15,8 @@ interface Message {
 interface ChatViewProps {
     profile?: Profile;
     schedule?: Schedule;
+    messages: Message[];
+    onMessagesChange: (messages: Message[]) => void;
 }
 // ─── Context builder ──────────────────────────────────────────────────────────
 
@@ -56,27 +58,34 @@ function getSportLabels(profile?: Profile): string {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function ChatView({ profile, schedule }: ChatViewProps) {
+export function ChatView({ profile, schedule, messages, onMessagesChange }: ChatViewProps) {
     const welcomeText = `Bonjour\u00a0${profile?.firstName ?? ''}\u00a0! Je suis votre Coach IA PulsePeak. Posez-moi vos questions sur l'entraînement, la récupération ou votre plan.`;
 
-    const [messages, setMessages] = useState<Message[]>([
-        { role: 'ai', text: welcomeText },
-    ]);
+    const messagesRef = useRef(messages);
+    messagesRef.current = messages;
+    const setMessages = useCallback((update: Message[] | ((prev: Message[]) => Message[])) => {
+        if (typeof update === 'function') {
+            onMessagesChange(update(messagesRef.current));
+        } else {
+            onMessagesChange(update);
+        }
+    }, [onMessagesChange]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
+    const handleReset = () => {
+        if (loading) return;
+        setMessages([{ role: 'ai', text: welcomeText }]);
+    };
 
     // Update welcome message if profile loads after mount
     useEffect(() => {
         if (profile?.firstName) {
-            setMessages(prev => {
-                if (prev.length === 1 && prev[0].role === 'ai') {
-                    return [{ role: 'ai', text: welcomeText }];
-                }
-                return prev;
-            });
+            if (messages.length === 1 && messages[0].role === 'ai') {
+                setMessages([{ role: 'ai', text: welcomeText }]);
+            }
         }
     }, [profile?.firstName, welcomeText]);
 
@@ -160,7 +169,7 @@ export function ChatView({ profile, schedule }: ChatViewProps) {
 
             {/* ── Context pill ── */}
             {profile && (
-                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-200 dark:border-slate-800/60">
+                <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-slate-200 dark:border-slate-800/60">
                     <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                             {profile.firstName} {profile.lastName}
@@ -187,6 +196,14 @@ export function ChatView({ profile, schedule }: ChatViewProps) {
                             </>
                         )}
                     </div>
+                    <button
+                        onClick={handleReset}
+                        disabled={loading || messages.length <= 1}
+                        title="Nouvelle conversation"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0"
+                    >
+                        <RotateCcw size={14} />
+                    </button>
                 </div>
             )}
 

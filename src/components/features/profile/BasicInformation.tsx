@@ -74,10 +74,10 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({ formData, se
                         />
                     </Field>
 
-                    <Field label="Email" hint="non modifiable ici">
+                    <Field label="Email" hint="non modifiable ici" cls="sm:col-span-2">
                         <input
                             type="email"
-                            className={`${inputCls} sm:col-span-2 opacity-60 cursor-not-allowed`}
+                            className={`${inputCls} opacity-60 cursor-not-allowed`}
                             value={formData.email}
                             readOnly
                         />

@@ -65,6 +65,7 @@ export interface Profile {
     plan?: 'free' | 'dev' | 'pro';
 
     strava?: StravaConfig;
+    stravaWriteBack?: boolean;
 
     goal: string;
     objectiveDate: string | null;

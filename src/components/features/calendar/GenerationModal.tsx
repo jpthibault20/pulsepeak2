@@ -1,20 +1,26 @@
 'use client';
 
 import React, { useState } from 'react';
-import { BrainCircuit, Calendar, Sliders, Target, Trophy, ChevronRight, MapPin, Mountain } from 'lucide-react';
+import { BrainCircuit, Calendar, Sliders, Target, Trophy, ChevronRight, MapPin, Mountain, ChevronLeft, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modale';
-import type { Objective } from '@/lib/data/DatabaseTypes';
+import { AvailabilityTable } from './AvailabilityTable';
+import type { Objective, Profile } from '@/lib/data/DatabaseTypes';
+import type { AvailabilitySlot } from '@/lib/data/type';
 
 type Mode = 'block' | 'objective';
+type Step = 'config' | 'availability';
+
+const DAYS_FR = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'] as const;
 
 interface GenerationModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onGenerate: (blockFocus: string, customTheme: string | null, startDate: string, numWeeks: number) => Promise<void>;
-    onGenerateToObjective: (planStartDate: string) => Promise<void>;
+    onGenerate: (blockFocus: string, customTheme: string | null, startDate: string, numWeeks: number, availability: { [key: string]: AvailabilitySlot }) => Promise<void>;
+    onGenerateToObjective: (planStartDate: string, availability: { [key: string]: AvailabilitySlot }) => Promise<void>;
     isGenerating: boolean;
     objectives: Objective[];
+    profile: Profile;
 }
 
 const SPORT_LABELS: Record<string, string> = {
@@ -32,8 +38,10 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
     onGenerateToObjective,
     isGenerating,
     objectives,
+    profile,
 }) => {
     const [mode, setMode] = useState<Mode>('objective');
+    const [step, setStep] = useState<Step>('config');
     const [blockFocus, setBlockFocus] = useState('Endurance');
     const [customTheme, setCustomTheme] = useState('');
     const [numWeeks, setNumWeeks] = useState(4);
@@ -43,6 +51,15 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
         return tomorrow.toISOString().split('T')[0];
     });
     const [planStartDate, setPlanStartDate] = useState(() => new Date().toISOString().split('T')[0]);
+
+    // Availability state for first week
+    const [availability, setAvailability] = useState<{ [key: string]: AvailabilitySlot }>(() => {
+        const avail: { [key: string]: AvailabilitySlot } = {};
+        DAYS_FR.forEach(day => {
+            avail[day] = profile.weeklyAvailability?.[day] ?? { swimming: 0, cycling: 0, running: 0, comment: '', aiChoice: false };
+        });
+        return avail;
+    });
 
     const themes = [
         'Endurance', 'PMA', 'Seuil', 'Fartlek',
@@ -62,20 +79,58 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
         )
         : [];
 
-    const handleGenerateBlock = async () => {
-        const durationToSend = blockFocus === 'Personnalisé' ? numWeeks : 4;
-        onClose();
-        await onGenerate(blockFocus, blockFocus === 'Personnalisé' ? customTheme : null, startDate, durationToSend);
+    const goToAvailability = () => {
+        // Reset availability from profile defaults
+        const avail: { [key: string]: AvailabilitySlot } = {};
+        DAYS_FR.forEach(day => {
+            avail[day] = profile.weeklyAvailability?.[day] ?? { swimming: 0, cycling: 0, running: 0, comment: '', aiChoice: false };
+        });
+        setAvailability(avail);
+        setStep('availability');
     };
 
-    const handleGenerateObjective = async () => {
+    const handleConfirmGenerate = async () => {
         onClose();
-        await onGenerateToObjective(planStartDate);
+        setStep('config');
+        if (mode === 'block') {
+            const durationToSend = blockFocus === 'Personnalisé' ? numWeeks : 4;
+            await onGenerate(blockFocus, blockFocus === 'Personnalisé' ? customTheme : null, startDate, durationToSend, availability);
+        } else {
+            await onGenerateToObjective(planStartDate, availability);
+        }
+    };
+
+    const handleClose = () => {
+        setStep('config');
+        onClose();
+    };
+
+    const updateSlot = (day: string, sport: keyof Omit<AvailabilitySlot, 'comment'>, value: number) => {
+        setAvailability(prev => ({
+            ...prev,
+            [day]: { ...prev[day], [sport]: Math.max(0, value) },
+        }));
+    };
+
+    const updateDayComment = (day: string, value: string) => {
+        setAvailability(prev => ({
+            ...prev,
+            [day]: { ...prev[day], comment: value },
+        }));
+    };
+
+    const updateAiChoice = (day: string, value: boolean) => {
+        setAvailability(prev => ({
+            ...prev,
+            [day]: { ...prev[day], aiChoice: value },
+        }));
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Créer un Nouveau Plan">
+        <Modal isOpen={isOpen} onClose={handleClose} title={step === 'availability' ? 'Confirmer vos disponibilités' : 'Créer un Nouveau Plan'}>
             <div className="space-y-5 sm:space-y-6">
+
+                {step === 'config' && (<>
 
                 {/* ── Mode selector ── */}
                 <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl">
@@ -180,22 +235,17 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
                         )}
 
                         <div className="flex gap-3 pt-2 sm:pt-4 border-t border-slate-200 dark:border-slate-800">
-                            <Button variant="outline" className="flex-1 h-11" onClick={onClose} disabled={isGenerating}>
+                            <Button variant="outline" className="flex-1 h-11" onClick={handleClose} disabled={isGenerating}>
                                 Annuler
                             </Button>
                             <Button
                                 variant="primary"
                                 className="flex-1 h-11 font-semibold shadow-lg shadow-blue-500/20 dark:shadow-blue-900/20"
-                                icon={isGenerating ? undefined : BrainCircuit}
-                                onClick={handleGenerateBlock}
-                                disabled={isGenerating || (blockFocus === 'Personnalisé' && customTheme.length < 3)}
+                                icon={ChevronRight}
+                                onClick={goToAvailability}
+                                disabled={blockFocus === 'Personnalisé' && customTheme.length < 3}
                             >
-                                {isGenerating ? (
-                                    <span className="flex items-center gap-2">
-                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        Création...
-                                    </span>
-                                ) : 'Générer le Bloc'}
+                                Suivant
                             </Button>
                         </div>
                     </div>
@@ -296,22 +346,60 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
                         )}
 
                         <div className="flex gap-3 pt-2 sm:pt-4 border-t border-slate-200 dark:border-slate-800">
-                            <Button variant="outline" className="flex-1 h-11" onClick={onClose} disabled={isGenerating}>
+                            <Button variant="outline" className="flex-1 h-11" onClick={handleClose} disabled={isGenerating}>
                                 Annuler
                             </Button>
                             <Button
                                 variant="primary"
                                 className="flex-1 h-11 font-semibold shadow-lg shadow-rose-500/20 dark:shadow-rose-900/20 bg-rose-600 hover:bg-rose-500 border-rose-500"
-                                icon={isGenerating ? undefined : Trophy}
-                                onClick={handleGenerateObjective}
-                                disabled={isGenerating || !upcomingPrimary}
+                                icon={ChevronRight}
+                                onClick={goToAvailability}
+                                disabled={!upcomingPrimary}
+                            >
+                                Suivant
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                </>)}
+
+                {/* ── AVAILABILITY STEP ── */}
+                {step === 'availability' && (
+                    <div className="space-y-4">
+                        <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-500/20 p-3 rounded-lg flex gap-3 items-start">
+                            <Clock className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" size={18} />
+                            <p className="text-blue-700 dark:text-blue-200/80 text-xs sm:text-sm leading-relaxed">
+                                Confirmez vos disponibilités pour la première semaine. L&apos;IA adaptera les séances en conséquence.
+                            </p>
+                        </div>
+
+                        <AvailabilityTable
+                            availability={availability}
+                            activeSports={profile.activeSports}
+                            onSlotChange={updateSlot}
+                            onCommentChange={updateDayComment}
+                            onAiChoiceChange={updateAiChoice}
+                        />
+
+                        <div className="flex gap-3 pt-2 border-t border-slate-200 dark:border-slate-800">
+                            <Button variant="outline" className="flex-1 h-11" onClick={() => setStep('config')}>
+                                <ChevronLeft size={16} className="mr-1" />
+                                Retour
+                            </Button>
+                            <Button
+                                variant="primary"
+                                className={`flex-1 h-11 font-semibold shadow-lg ${mode === 'objective' ? 'bg-rose-600 hover:bg-rose-500 border-rose-500 shadow-rose-500/20' : 'shadow-blue-500/20'}`}
+                                icon={isGenerating ? undefined : BrainCircuit}
+                                onClick={handleConfirmGenerate}
+                                disabled={isGenerating}
                             >
                                 {isGenerating ? (
                                     <span className="flex items-center gap-2">
                                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                         Création...
                                     </span>
-                                ) : 'Générer le Plan Complet'}
+                                ) : mode === 'objective' ? 'Générer le Plan' : 'Générer le Bloc'}
                             </Button>
                         </div>
                     </div>

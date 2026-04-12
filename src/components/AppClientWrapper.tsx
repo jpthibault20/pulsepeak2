@@ -35,7 +35,7 @@ import { ProfileForm } from '@/components/features/profile/ProfileForm';
 import { StatsView } from '@/components/features/stats/StatsView';
 import { WorkoutDetailView } from '@/components/features/workout/WorkoutDetailView';
 import { Nav, View } from '@/components/layout/nav';
-import { ChatView } from '@/components/features/chat/ChatView';
+import { ChatView, type Message as ChatMessage } from '@/components/features/chat/ChatView';
 import { PlanView } from '@/components/features/plan/PlanView';
 import { GenerationProgressModal, type GenProgressState } from '@/components/features/calendar/GenerationProgressModal';
 import { TutorialOverlay, hasTutorialBeenCompleted } from '@/components/features/tutorial/TutorialOverlay';
@@ -73,10 +73,16 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
     const [schedule, setSchedule] = useState<Schedule | null>(initialSchedule);
     const [objectives, setObjectives] = useState<Objective[]>(initialObjectives);
     const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
+    const [previousView, setPreviousView] = useState<View>('dashboard');
 
     // Calendrier — persist le mois sélectionné entre les changements de vue
     const [calendarDate, setCalendarDate] = useState(new Date());
     const [calendarMobileDay, setCalendarMobileDay] = useState(new Date());
+
+    // Chat — persist messages while app is open
+    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+        { role: 'ai', text: `Bonjour\u00a0${initialProfile?.firstName ?? ''}\u00a0! Je suis votre Coach IA PulsePeak. Posez-moi vos questions sur l'entraînement, la récupération ou votre plan.` },
+    ]);
 
     // Etats UI
     const [error, setError] = useState<string | null>(null);
@@ -181,8 +187,11 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
     }, []);
 
     const handleViewWorkout = useCallback((workout: Workout) => {
+        setView(current => {
+            setPreviousView(current);
+            return 'workout-detail';
+        });
         setSelectedWorkout(workout);
-        setView('workout-detail');
     }, []);
 
     // --- Plan Generation Handlers ---
@@ -190,7 +199,8 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
         blockFocus: string,
         customTheme: string | null,
         startDate: string,
-        numWeeks: number
+        numWeeks: number,
+        weeklyAvailability: { [key: string]: import('@/lib/data/type').AvailabilitySlot }
     ) => {
         const sports = [
             profile.activeSports.cycling ? 'Cyclisme' : '',
@@ -213,7 +223,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
 
         try {
             setIsRefreshing(true);
-            await CreateAdvancedPlan(blockFocus, customTheme, startDate, numWeeks, profile.id);
+            await CreateAdvancedPlan(blockFocus, customTheme, startDate, numWeeks, profile.id, weeklyAvailability);
             await refreshData();
             setGenProgress(prev => prev ? { ...prev, done: true, minimized: false } : null);
             if (genProgressTimerRef.current) clearTimeout(genProgressTimerRef.current);
@@ -227,7 +237,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
         }
     }, [profile, refreshData]);
 
-    const handleGenerateToObjective = useCallback(async (planStartDate: string) => {
+    const handleGenerateToObjective = useCallback(async (planStartDate: string, weeklyAvailability: { [key: string]: import('@/lib/data/type').AvailabilitySlot }) => {
         const sports = [
             profile.activeSports.cycling ? 'Cyclisme' : '',
             profile.activeSports.running ? 'Course à pied' : '',
@@ -249,7 +259,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
 
         try {
             setIsRefreshing(true);
-            const result = await CreatePlanToObjective(profile.id, planStartDate);
+            const result = await CreatePlanToObjective(profile.id, planStartDate, weeklyAvailability);
             if ('error' in result && result.error) {
                 setGenProgress(null);
                 setError(result.error);
@@ -550,7 +560,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
                                 onRefresh={refreshData}
                                 onViewWorkout={(workoutId) => {
                                     const w = schedule.workouts.find(wo => wo.id === workoutId);
-                                    if (w) { setSelectedWorkout(w); setView('workout-detail'); }
+                                    if (w) { setSelectedWorkout(w); setPreviousView('plan'); setView('workout-detail'); }
                                 }}
                             />
                         </div>
@@ -567,7 +577,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
                                     w.sportType === selectedWorkout.sportType
                                 ) ?? []}
                                 profile={profile}
-                                onClose={() => handleViewChange('dashboard')}
+                                onClose={() => handleViewChange(previousView)}
                                 onUpdate={handleUpdateStatus}
                                 onToggleMode={handleToggleMode}
                                 onMoveWorkout={handleMoveWorkout}
@@ -597,6 +607,8 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
                                 <ChatView
                                     profile={profile}
                                     schedule={schedule ?? undefined}
+                                    messages={chatMessages}
+                                    onMessagesChange={setChatMessages}
                                 />
                             </FreePlanGate>
                         </div>
