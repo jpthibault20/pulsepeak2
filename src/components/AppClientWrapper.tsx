@@ -35,7 +35,7 @@ import { ProfileForm } from '@/components/features/profile/ProfileForm';
 import { StatsView } from '@/components/features/stats/StatsView';
 import { WorkoutDetailView } from '@/components/features/workout/WorkoutDetailView';
 import { Nav, View } from '@/components/layout/nav';
-import { ChatView } from '@/components/features/chat/ChatView';
+import { ChatView, type Message as ChatMessage } from '@/components/features/chat/ChatView';
 import { PlanView } from '@/components/features/plan/PlanView';
 import { GenerationProgressModal, type GenProgressState } from '@/components/features/calendar/GenerationProgressModal';
 import { TutorialOverlay, hasTutorialBeenCompleted } from '@/components/features/tutorial/TutorialOverlay';
@@ -77,6 +77,11 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
     // Calendrier — persist le mois sélectionné entre les changements de vue
     const [calendarDate, setCalendarDate] = useState(new Date());
     const [calendarMobileDay, setCalendarMobileDay] = useState(new Date());
+
+    // Chat — persist messages while app is open
+    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+        { role: 'ai', text: `Bonjour\u00a0${initialProfile?.firstName ?? ''}\u00a0! Je suis votre Coach IA PulsePeak. Posez-moi vos questions sur l'entraînement, la récupération ou votre plan.` },
+    ]);
 
     // Etats UI
     const [error, setError] = useState<string | null>(null);
@@ -597,6 +602,8 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
                                 <ChatView
                                     profile={profile}
                                     schedule={schedule ?? undefined}
+                                    messages={chatMessages}
+                                    onMessagesChange={setChatMessages}
                                 />
                             </FreePlanGate>
                         </div>
