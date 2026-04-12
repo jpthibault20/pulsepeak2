@@ -2525,7 +2525,7 @@ export async function getPlanOverview(): Promise<PlanOverviewData | null> {
                 id: week.id,
                 weekNumber: week.weekNumber,
                 type: week.type,
-                targetTSS: week.targetTSS || plannedTSS,
+                targetTSS: plannedTSS || week.targetTSS,
                 actualTSS,
                 startDate: weekStartStr,
                 completedCount: completed,
