@@ -65,8 +65,14 @@ export async function GET(request: NextRequest) {
     // 3. Sauvegarder dans profile.json
     await updateProfileStravaData(stravaData);
 
-    // 4. Rediriger l'utilisateur
-    return NextResponse.redirect(new URL('/', request.url)); 
+    // 4. Rediriger l'utilisateur via une page HTML intermédiaire
+    //    Un NextResponse.redirect après un OAuth externe peut casser le viewport
+    //    sur mobile. Un redirect côté client force un chargement propre.
+    const baseUrl = new URL('/', request.url).toString();
+    return new NextResponse(
+      `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script>window.location.replace("${baseUrl}");</script></head><body></body></html>`,
+      { headers: { 'Content-Type': 'text/html; charset=utf-8' } },
+    );
 
   } catch (err: unknown) {
     // Gestion type-safe de l'erreur
