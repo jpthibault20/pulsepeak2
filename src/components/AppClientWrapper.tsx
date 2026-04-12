@@ -73,6 +73,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
     const [schedule, setSchedule] = useState<Schedule | null>(initialSchedule);
     const [objectives, setObjectives] = useState<Objective[]>(initialObjectives);
     const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
+    const [previousView, setPreviousView] = useState<View>('dashboard');
 
     // Calendrier — persist le mois sélectionné entre les changements de vue
     const [calendarDate, setCalendarDate] = useState(new Date());
@@ -186,8 +187,11 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
     }, []);
 
     const handleViewWorkout = useCallback((workout: Workout) => {
+        setView(current => {
+            setPreviousView(current);
+            return 'workout-detail';
+        });
         setSelectedWorkout(workout);
-        setView('workout-detail');
     }, []);
 
     // --- Plan Generation Handlers ---
@@ -555,7 +559,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
                                 onRefresh={refreshData}
                                 onViewWorkout={(workoutId) => {
                                     const w = schedule.workouts.find(wo => wo.id === workoutId);
-                                    if (w) { setSelectedWorkout(w); setView('workout-detail'); }
+                                    if (w) { setSelectedWorkout(w); setPreviousView('plan'); setView('workout-detail'); }
                                 }}
                             />
                         </div>
@@ -572,7 +576,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
                                     w.sportType === selectedWorkout.sportType
                                 ) ?? []}
                                 profile={profile}
-                                onClose={() => handleViewChange('dashboard')}
+                                onClose={() => handleViewChange(previousView)}
                                 onUpdate={handleUpdateStatus}
                                 onToggleMode={handleToggleMode}
                                 onMoveWorkout={handleMoveWorkout}
