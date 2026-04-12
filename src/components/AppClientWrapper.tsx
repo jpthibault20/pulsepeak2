@@ -199,7 +199,8 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
         blockFocus: string,
         customTheme: string | null,
         startDate: string,
-        numWeeks: number
+        numWeeks: number,
+        weeklyAvailability: { [key: string]: import('@/lib/data/type').AvailabilitySlot }
     ) => {
         const sports = [
             profile.activeSports.cycling ? 'Cyclisme' : '',
@@ -222,7 +223,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
 
         try {
             setIsRefreshing(true);
-            await CreateAdvancedPlan(blockFocus, customTheme, startDate, numWeeks, profile.id);
+            await CreateAdvancedPlan(blockFocus, customTheme, startDate, numWeeks, profile.id, weeklyAvailability);
             await refreshData();
             setGenProgress(prev => prev ? { ...prev, done: true, minimized: false } : null);
             if (genProgressTimerRef.current) clearTimeout(genProgressTimerRef.current);
@@ -236,7 +237,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
         }
     }, [profile, refreshData]);
 
-    const handleGenerateToObjective = useCallback(async (planStartDate: string) => {
+    const handleGenerateToObjective = useCallback(async (planStartDate: string, weeklyAvailability: { [key: string]: import('@/lib/data/type').AvailabilitySlot }) => {
         const sports = [
             profile.activeSports.cycling ? 'Cyclisme' : '',
             profile.activeSports.running ? 'Course à pied' : '',
@@ -258,7 +259,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
 
         try {
             setIsRefreshing(true);
-            const result = await CreatePlanToObjective(profile.id, planStartDate);
+            const result = await CreatePlanToObjective(profile.id, planStartDate, weeklyAvailability);
             if ('error' in result && result.error) {
                 setGenProgress(null);
                 setError(result.error);

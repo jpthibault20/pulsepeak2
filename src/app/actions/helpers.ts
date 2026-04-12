@@ -115,6 +115,21 @@ export const getActiveSports = (activeSports: Profile['activeSports']): string[]
 // Mapping dayOffset (0=Lundi … 6=Dimanche) → clé française
 const DAY_OFFSET_TO_FR = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'] as const;
 
+/** Normalise une valeur de dispo : <= 12 = heures (ancien format), > 12 = minutes (DurationInput) */
+function toMinutes(value: number): number {
+    if (value <= 0) return 0;
+    return value <= 12 ? Math.round(value * 60) : Math.round(value);
+}
+
+function formatDuration(value: number): string {
+    const mins = toMinutes(value);
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if (h > 0 && m > 0) return `${h}h${m < 10 ? '0' : ''}${m}`;
+    if (h > 0) return `${h}h`;
+    return `${m}min`;
+}
+
 export const formatAvailability = (availability: { [key: string]: AvailabilitySlot }): string => {
     return Object.entries(availability)
         .map(([day, slot]) => {
@@ -124,9 +139,9 @@ export const formatAvailability = (availability: { [key: string]: AvailabilitySl
             }
 
             const sports = [
-                slot.swimming > 0 ? `natation ${slot.swimming}h` : null,
-                slot.cycling   > 0 ? `vélo ${slot.cycling}h`     : null,
-                slot.running   > 0 ? `course ${slot.running}h`   : null,
+                slot.swimming > 0 ? `natation ${formatDuration(slot.swimming)}` : null,
+                slot.cycling   > 0 ? `vélo ${formatDuration(slot.cycling)}`     : null,
+                slot.running   > 0 ? `course ${formatDuration(slot.running)}`   : null,
             ].filter(Boolean).join(", ");
 
             // Aucun sport prévu → jour de repos (même s'il y a un commentaire)
@@ -161,9 +176,9 @@ export const buildAllowedSlots = (
             // IA libre : tous les sports actifs autorisés, pas de plafond dur
             activeSports.forEach(s => sports.add(s));
         } else {
-            if (slot.swimming > 0) { sports.add('swimming'); maxMinutes['swimming'] = slot.swimming * 60; }
-            if (slot.cycling > 0)  { sports.add('cycling');  maxMinutes['cycling']  = slot.cycling * 60; }
-            if (slot.running > 0)  { sports.add('running');  maxMinutes['running']  = slot.running * 60; }
+            if (slot.swimming > 0) { sports.add('swimming'); maxMinutes['swimming'] = toMinutes(slot.swimming); }
+            if (slot.cycling > 0)  { sports.add('cycling');  maxMinutes['cycling']  = toMinutes(slot.cycling); }
+            if (slot.running > 0)  { sports.add('running');  maxMinutes['running']  = toMinutes(slot.running); }
         }
 
         if (sports.size > 0) {
