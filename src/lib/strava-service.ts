@@ -140,12 +140,15 @@ export async function getStravaActivityById(id: number) {
 
   const completedData = await mapStravaToCompletedData(x);
 
-  await tagStravaActivity(
-    accessToken,
-    x.id,
-    x.description,
-    { tss: completedData.metrics.cycling?.tss ?? completedData.calculatedTSS ?? null }
-  );
+  const profile = await getProfile();
+  if (profile.stravaWriteBack !== false) {
+    await tagStravaActivity(
+      accessToken,
+      x.id,
+      x.description,
+      { tss: completedData.metrics.cycling?.tss ?? completedData.calculatedTSS ?? null }
+    );
+  }
 
   return x;
 }

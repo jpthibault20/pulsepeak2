@@ -80,6 +80,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
         activeSports: { swimming: false, cycling: true, running: false },
         aiPersonality: 'Analytique',
         strava: undefined,
+        stravaWriteBack: true,
         currentATL: 0, currentCTL: 0,
         weeklyAvailability: {
             'Lundi': { swimming: 0, cycling: 0, running: 0, comment: '', aiChoice: false },
@@ -343,7 +344,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
                             <BasicInformation formData={formData} setFormData={setFormData} />
                         )}
                         {activeSection === 'sports' && (
-                            <SportsAndAppLink formData={formData} setFormData={setFormData} />
+                            <SportsAndAppLink formData={formData} setFormData={setFormData} isPro={plan === 'pro'} />
                         )}
                         {activeSection === 'planning' && (
                             <Availability formData={formData} setFormData={setFormData} />
@@ -364,7 +365,12 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
                             <SubscriptionTab />
                         )}
                         {activeSection === 'compte' && (
-                            <AccountSettings />
+                            <AccountSettings
+                                stravaWriteBack={formData.stravaWriteBack ?? true}
+                                onStravaWriteBackChange={(value) => setFormData(prev => ({ ...prev, stravaWriteBack: value }))}
+                                isPro={plan === 'pro'}
+                                hasStrava={!!formData.strava?.athleteId}
+                            />
                         )}
                     </div>
 

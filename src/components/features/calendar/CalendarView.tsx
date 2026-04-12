@@ -26,8 +26,8 @@ interface CalendarViewProps {
     userID: string;
     objectives: Objective[];
     onViewWorkout: (workout: Workout) => void;
-    onGenerate: (blockFocus: string, customTheme: string | null, startDate: string, numWeeks: number) => void;
-    onGenerateToObjective: (planStartDate: string) => Promise<void>;
+    onGenerate: (blockFocus: string, customTheme: string | null, startDate: string, numWeeks: number, availability: { [key: string]: import('@/lib/data/type').AvailabilitySlot }) => void;
+    onGenerateToObjective: (planStartDate: string, availability: { [key: string]: import('@/lib/data/type').AvailabilitySlot }) => Promise<void>;
     onAddManualWorkout: (workout: Workout) => void;
     onCreatePlannedWorkoutAI: (dateStr: string, sportType: SportType, duration: number, comment: string) => Promise<void>;
     onSaveObjective: (obj: Objective) => Promise<void>;
@@ -92,11 +92,12 @@ export function CalendarView({
         blockFocus: string,
         customTheme: string | null,
         startDate: string,
-        numWeeks: number
+        numWeeks: number,
+        availability: { [key: string]: import('@/lib/data/type').AvailabilitySlot }
     ) => {
         setIsGenerating(true);
         try {
-            onGenerate(blockFocus, customTheme, startDate, numWeeks);
+            onGenerate(blockFocus, customTheme, startDate, numWeeks, availability);
         } finally {
             setIsGenerating(false);
         }
@@ -518,6 +519,7 @@ export function CalendarView({
                     onGenerateToObjective={onGenerateToObjective}
                     isGenerating={isGenerating}
                     objectives={objectives}
+                    profile={profile}
                 />
             )}
 

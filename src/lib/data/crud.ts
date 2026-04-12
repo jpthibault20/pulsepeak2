@@ -67,6 +67,7 @@ function toProfile(row: typeof profiles.$inferSelect): Profile {
         aiPersonality:      row.aiPersonality,
         plan:               (row.plan ?? 'free') as 'free' | 'dev' | 'pro',
         strava:             row.strava       ?? undefined,
+        stravaWriteBack:    row.stravaWriteBack ?? true,
         goal:               row.goal,
         objectiveDate:      row.objectiveDate ?? null,
         weaknesses:         row.weaknesses,
@@ -129,7 +130,12 @@ function toWeek(row: typeof weeksTable.$inferSelect, workoutIds: string[]): Week
 // ─── GET ──────────────────────────────────────────────────────────────────────
 
 export async function getProfile(): Promise<Profile> {
-    const userId = await getCurrentUserId();
+    const supabase = await createClient();
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) throw new Error('Utilisateur non authentifié');
+
+    const userId = user.id;
+    const authEmail = user.email ?? '';
 
     const row = await db.query.profiles.findFirst({
         where: eq(profiles.id, userId),
@@ -144,7 +150,7 @@ export async function getProfile(): Promise<Profile> {
             lastLoginAt:        null,
             firstName:          '',
             lastName:           '',
-            email:              '',
+            email:              authEmail,
             birthDate:          null,
             experience:         null,
             currentCTL:         0,
@@ -160,7 +166,10 @@ export async function getProfile(): Promise<Profile> {
         };
     }
 
-    return toProfile(row);
+    const profile = toProfile(row);
+    // L'email de Supabase Auth est la source de vérité
+    profile.email = authEmail || profile.email;
+    return profile;
 }
 
 export async function getSchedule(): Promise<Schedule> {
@@ -260,6 +269,7 @@ export async function saveProfile(profile: Profile): Promise<void> {
             aiPersonality:      profile.aiPersonality      ?? 'Analytique',
             plan:               profile.plan               ?? 'free',
             strava:             profile.strava             ?? null,
+            stravaWriteBack:    profile.stravaWriteBack    ?? true,
             goal:               profile.goal               ?? '',
             objectiveDate:      profile.objectiveDate || null,
             weaknesses:         profile.weaknesses         ?? '',
@@ -290,6 +300,7 @@ export async function saveProfile(profile: Profile): Promise<void> {
                 swimming:           profile.swimming           ?? null,
                 aiPersonality:      profile.aiPersonality      ?? 'Analytique',
                 strava:             profile.strava             ?? null,
+                stravaWriteBack:    profile.stravaWriteBack    ?? true,
                 goal:               profile.goal               ?? '',
                 objectiveDate:      profile.objectiveDate || null,
                 weaknesses:         profile.weaknesses         ?? '',

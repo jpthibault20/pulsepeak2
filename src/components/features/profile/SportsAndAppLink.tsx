@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/Card";
-import { Bike, Check, Footprints, Link2, Waves, Unlink } from "lucide-react";
+import { Bike, Check, Footprints, Link2, Waves, Unlink, PenOff, Lock } from "lucide-react";
 import React, { Dispatch, SetStateAction } from "react";
 import { SportType } from "@/lib/data/type";
 import { Profile } from "@/lib/data/DatabaseTypes";
@@ -7,6 +7,7 @@ import { Profile } from "@/lib/data/DatabaseTypes";
 interface SportsAndLinkAppProps {
     formData: Profile;
     setFormData: Dispatch<SetStateAction<Profile>>;
+    isPro?: boolean;
 }
 
 const SPORTS = [
@@ -42,7 +43,7 @@ const SPORTS = [
     },
 ];
 
-export const SportsAndAppLink: React.FC<SportsAndLinkAppProps> = ({ formData, setFormData }) => {
+export const SportsAndAppLink: React.FC<SportsAndLinkAppProps> = ({ formData, setFormData, isPro = false }) => {
 
     const toggleSport = (sport: keyof typeof formData.activeSports) => {
         setFormData(prev => ({
@@ -135,6 +136,40 @@ export const SportsAndAppLink: React.FC<SportsAndLinkAppProps> = ({ formData, se
                                         <Unlink size={11} />
                                         Déconnecter
                                     </a>
+                                </div>
+
+                                {/* Strava write-back toggle */}
+                                <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (!isPro) return;
+                                            setFormData(prev => ({ ...prev, stravaWriteBack: !(prev.stravaWriteBack ?? true) }));
+                                        }}
+                                        className={`flex items-center justify-between w-full gap-3 text-left ${!isPro ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <PenOff size={13} className="text-slate-400 shrink-0" />
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                                    Écrire le TSS sur Strava
+                                                    {!isPro && <Lock size={10} className="text-slate-400" />}
+                                                </p>
+                                                <p className="text-[10px] text-slate-500 dark:text-slate-500 mt-0.5">
+                                                    {isPro ? 'Ajoute le TSS calculé dans la description de vos activités' : 'Disponible avec le plan Pro'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className={`
+                                            w-9 h-5 rounded-full transition-all relative shrink-0
+                                            ${(formData.stravaWriteBack ?? true) ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'}
+                                        `}>
+                                            <div className={`
+                                                absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all
+                                                ${(formData.stravaWriteBack ?? true) ? 'left-[18px]' : 'left-0.5'}
+                                            `} />
+                                        </div>
+                                    </button>
                                 </div>
                             </>
                         ) : (
