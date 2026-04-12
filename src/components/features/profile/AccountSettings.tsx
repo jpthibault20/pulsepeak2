@@ -2,11 +2,18 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Lock, LogOut, CheckCircle2, AlertCircle, Loader2, BookOpen } from 'lucide-react';
+import { Eye, EyeOff, Lock, LogOut, CheckCircle2, AlertCircle, Loader2, BookOpen, PenOff } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { resetTutorial } from '@/components/features/tutorial/TutorialOverlay';
 
-export function AccountSettings() {
+interface AccountSettingsProps {
+    stravaWriteBack?: boolean;
+    onStravaWriteBackChange?: (value: boolean) => void;
+    isPro?: boolean;
+    hasStrava?: boolean;
+}
+
+export function AccountSettings({ stravaWriteBack = true, onStravaWriteBackChange, isPro = false, hasStrava = false }: AccountSettingsProps) {
     const router = useRouter();
     const supabase = createClient();
 
@@ -133,6 +140,43 @@ export function AccountSettings() {
                     )}
                 </button>
             </form>
+
+            {/* ── Strava write-back ── */}
+            {hasStrava && (
+                <>
+                    <div className="border-t border-slate-200 dark:border-slate-800" />
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                                Écrire le TSS sur Strava
+                                {!isPro && <Lock size={12} className="text-slate-400" />}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                {isPro ? 'Ajoute le TSS calculé dans la description de vos activités Strava' : 'Disponible avec le plan Pro'}
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (!isPro) return;
+                                onStravaWriteBackChange?.(!stravaWriteBack);
+                            }}
+                            className={`shrink-0 ${!isPro ? 'cursor-not-allowed' : ''}`}
+                        >
+                            <div className={`
+                                w-11 h-6 rounded-full transition-all relative
+                                ${stravaWriteBack ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'}
+                                ${!isPro ? 'opacity-50' : ''}
+                            `}>
+                                <div className={`
+                                    absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-all
+                                    ${stravaWriteBack ? 'left-[22px]' : 'left-0.5'}
+                                `} />
+                            </div>
+                        </button>
+                    </div>
+                </>
+            )}
 
             <div className="border-t border-slate-200 dark:border-slate-800" />
 
