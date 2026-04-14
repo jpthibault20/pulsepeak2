@@ -327,6 +327,7 @@ function BlockCard({ block, isFirst, expanded, onToggle, onRegenerate, onViewWor
                             <WeekRow
                                 key={week.id}
                                 week={week}
+                                blockType={block.type}
                                 blockStartDate={block.startDate}
                                 onRegenerate={() => onRegenerate(week.id)}
                                 onViewWorkout={onViewWorkout}
@@ -354,13 +355,15 @@ function BlockCard({ block, isFirst, expanded, onToggle, onRegenerate, onViewWor
 
 interface WeekRowProps {
     week: PlanOverviewWeek;
+    blockType: string;
     blockStartDate: string;
     onRegenerate: () => void;
     onViewWorkout?: (workoutId: string) => void;
 }
 
-function WeekRow({ week, onRegenerate, onViewWorkout }: WeekRowProps) {
-    const badge = WEEK_TYPE_BADGE[week.type] ?? WEEK_TYPE_BADGE.Load;
+function WeekRow({ week, blockType, onRegenerate, onViewWorkout }: WeekRowProps) {
+    const effectiveType = (week.type === 'Load' && blockType === 'Taper') ? 'Taper' : week.type;
+    const badge = WEEK_TYPE_BADGE[effectiveType] ?? WEEK_TYPE_BADGE.Load;
     const todayStr = new Date().toISOString().slice(0, 10);
     const weekEnd = new Date(week.startDate);
     weekEnd.setDate(weekEnd.getDate() + 6);
