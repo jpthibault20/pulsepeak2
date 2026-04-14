@@ -6,7 +6,7 @@ import { ReturnCode } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
 import type { AvailabilitySlot, CompletedData, CompletedDataFeedback, SportType } from '@/lib/data/type';
 import { getStravaActivitiesAllPages, getStravaActivityById } from '@/lib/strava-service';
-import { mapStravaToCompletedData, mapStravaSport } from '@/lib/strava-mapper';
+import { mapStravaSport } from '@/lib/strava-mapper';
 import { Block, Objective, Plan, Profile, Schedule, Week, Workout } from '@/lib/data/DatabaseTypes';
 import { randomUUID } from 'crypto';
 import {
@@ -2157,8 +2157,7 @@ export async function syncStravaActivities() {
                 continue;
             }
 
-            const detail = result.value;
-            const completedData = await mapStravaToCompletedData(detail);
+            const { raw: detail, completedData } = result.value;
             const activityDate = summary.start_date.split('T')[0];
             const stravaSport = mapStravaSport(String(summary.type ?? detail.type ?? ''));
 

@@ -13,6 +13,13 @@ interface StravaLapInput {
   max_heartrate?: number;
   average_cadence?: number;
   average_speed?: number; // m/s
+  start_index: number;
+  end_index: number;
+}
+
+export interface StravaStream {
+  watts?: { data: number[] };
+  time?: { data: number[] };
 }
 
 // Représente uniquement les champs Strava que nous utilisons ici
@@ -48,6 +55,30 @@ interface StravaActivityInput {
 
 // --- LOGIQUE ---
 
+/**
+ * Calcule le Normalized Power à partir d'un tableau de watts (1 valeur/seconde).
+ * Algorithme : rolling average 30s → puissance 4 → moyenne → racine 4e.
+ */
+function calculateNP(watts: number[]): number | null {
+  if (watts.length < 30) return null;
+
+  // Rolling average 30s
+  const rolling: number[] = [];
+  let sum = 0;
+  for (let i = 0; i < watts.length; i++) {
+    sum += watts[i];
+    if (i >= 30) sum -= watts[i - 30];
+    if (i >= 29) rolling.push(sum / 30);
+  }
+
+  if (rolling.length === 0) return null;
+
+  // Moyenne des puissances 4e
+  let sum4 = 0;
+  for (const v of rolling) sum4 += v * v * v * v;
+  return Math.round(Math.pow(sum4 / rolling.length, 0.25));
+}
+
 // Fonction utilitaire pour mapper le sport Strava -> Notre Sport
 export function mapStravaSport(stravaType: string): SportType {
   switch (stravaType) {
@@ -65,7 +96,8 @@ export function mapStravaSport(stravaType: string): SportType {
 }
 
 // Transforme l'objet API Strava TYPÉ en notre objet CompletedData
-export async function mapStravaToCompletedData(activity: StravaActivityInput): Promise<CompletedData> {
+export async function mapStravaToCompletedData(activity: StravaActivityInput, streams?: StravaStream | null): Promise<CompletedData> {
+  const powerData = streams?.watts?.data ?? null;
   const sport = mapStravaSport(activity.type);
   let calculatedTSS: number | null = null;
 
@@ -127,18 +159,25 @@ export async function mapStravaToCompletedData(activity: StravaActivityInput): P
       stravaId: activity.id,
     },
     map: { polyline: activity.map?.summary_polyline || null },
-    laps: (activity.laps ?? []).map((lap) => ({
-      index: lap.lap_index,
-      name: lap.name || `Lap ${lap.lap_index}`,
-      durationSeconds: lap.moving_time,
-      distanceMeters: Math.round(lap.distance),
-      avgPower: lap.average_watts ?? null,
-      normalizedPower: null,
-      avgHeartRate: lap.average_heartrate ?? null,
-      maxHeartRate: lap.max_heartrate ?? null,
-      avgCadence: lap.average_cadence ?? null,
-      avgSpeedKmh: lap.average_speed ? parseFloat((lap.average_speed * 3.6).toFixed(1)) : null,
-    })),
+    laps: (activity.laps ?? []).map((lap) => {
+      let lapNP: number | null = null;
+      if (powerData && lap.start_index != null && lap.end_index != null) {
+        const lapWatts = powerData.slice(lap.start_index, lap.end_index + 1);
+        lapNP = calculateNP(lapWatts);
+      }
+      return {
+        index: lap.lap_index,
+        name: lap.name || `Lap ${lap.lap_index}`,
+        durationSeconds: lap.moving_time,
+        distanceMeters: Math.round(lap.distance),
+        avgPower: lap.average_watts ?? null,
+        normalizedPower: lapNP,
+        avgHeartRate: lap.average_heartrate ?? null,
+        maxHeartRate: lap.max_heartrate ?? null,
+        avgCadence: lap.average_cadence ?? null,
+        avgSpeedKmh: lap.average_speed ? parseFloat((lap.average_speed * 3.6).toFixed(1)) : null,
+      };
+    }),
     heartRate: {
       avgBPM: activity.average_heartrate || null,
       maxBPM: activity.max_heartrate || null,
