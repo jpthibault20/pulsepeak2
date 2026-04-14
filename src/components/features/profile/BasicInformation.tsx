@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/Card";
-import { User, Ruler, Weight, CalendarDays, GraduationCap } from "lucide-react";
+import { User, Ruler, GraduationCap } from "lucide-react";
 import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import { Profile } from "@/lib/data/DatabaseTypes";
 
@@ -9,9 +9,9 @@ interface BasicInformationProps {
 }
 
 const EXPERIENCE_LEVELS = [
-    { value: 'Débutant',       label: 'Débutant',       desc: '< 1 an' },
-    { value: 'Intermédiaire',  label: 'Intermédiaire',  desc: '1–4 ans' },
-    { value: 'Avancé',         label: 'Avancé',         desc: '5+ ans' },
+    { value: 'Débutant', label: 'Débutant', desc: '< 1 an' },
+    { value: 'Intermédiaire', label: 'Intermédiaire', desc: '1–4 ans' },
+    { value: 'Avancé', label: 'Avancé', desc: '5+ ans' },
 ] as const;
 
 function Field({

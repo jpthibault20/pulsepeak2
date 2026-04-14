@@ -20,21 +20,21 @@ interface GoalsProps {
 }
 
 const SPORT_LABELS: Record<string, string> = {
-    cycling:   'Vélo',
-    running:   'Course',
-    swimming:  'Natation',
+    cycling: 'Vélo',
+    running: 'Course',
+    swimming: 'Natation',
     triathlon: 'Triathlon',
-    duathlon:  'Duathlon',
+    duathlon: 'Duathlon',
 };
 
 const STATUS_LABELS: Record<Objective['status'], { label: string; color: string }> = {
-    upcoming:  { label: 'À venir',   color: 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30' },
-    completed: { label: 'Terminé',   color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30' },
-    missed:    { label: 'Manqué',    color: 'text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-700/50 border-slate-300 dark:border-slate-600/30' },
-    passed:    { label: 'Passé',     color: 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30' },
+    upcoming: { label: 'À venir', color: 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30' },
+    completed: { label: 'Terminé', color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30' },
+    missed: { label: 'Manqué', color: 'text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-700/50 border-slate-300 dark:border-slate-600/30' },
+    passed: { label: 'Passé', color: 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30' },
 };
 
-export const Goals: React.FC<GoalsProps> = ({ formData: _formData, setFormData: _setFormData, objectives, onSaveObjective, onDeleteObjective }) => {
+export const Goals: React.FC<GoalsProps> = ({ objectives, onSaveObjective, onDeleteObjective }) => {
     const [showObjectiveModal, setShowObjectiveModal] = useState(false);
     const [editingObjective, setEditingObjective] = useState<Objective | null>(null);
     const [isSavingObj, setIsSavingObj] = useState(false);
@@ -180,15 +180,13 @@ function ObjectiveCard({ obj, onEdit, onDelete, isDeleting, isPast }: ObjectiveC
     const isPrimary = obj.priority === 'principale';
 
     return (
-        <div className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all ${
-            isPrimary
+        <div className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all ${isPrimary
                 ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-500/30'
                 : 'bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50'
-        } ${isPast ? 'opacity-60' : ''}`}>
+            } ${isPast ? 'opacity-60' : ''}`}>
             {/* Icon */}
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                isPrimary ? 'bg-rose-100 dark:bg-rose-600/20 border border-rose-200 dark:border-rose-500/30' : 'bg-slate-200 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600/30'
-            }`}>
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isPrimary ? 'bg-rose-100 dark:bg-rose-600/20 border border-rose-200 dark:border-rose-500/30' : 'bg-slate-200 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600/30'
+                }`}>
                 {isPrimary
                     ? <Trophy size={15} className="text-rose-600 dark:text-rose-400" />
                     : <Target size={15} className="text-amber-600 dark:text-amber-400" />
@@ -199,9 +197,8 @@ function ObjectiveCard({ obj, onEdit, onDelete, isDeleting, isPast }: ObjectiveC
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-slate-900 dark:text-white text-sm font-semibold truncate">{obj.name}</span>
-                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${
-                        isPrimary ? 'text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30' : 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30'
-                    }`}>
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${isPrimary ? 'text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30' : 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30'
+                        }`}>
                         {isPrimary ? 'Principal' : 'Secondaire'}
                     </span>
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${statusInfo.color}`}>

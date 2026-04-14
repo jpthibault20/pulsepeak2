@@ -69,7 +69,6 @@ interface ProfileFormProps {
 export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, onSuccess, isSettings = false, objectives = [], onSaveObjective, onDeleteObjective }) => {
     const [activeSection, setActiveSection] = useState<SectionId>('identity');
     const [isSaving, setIsSaving] = useState(false);
-    const [saved, setSaved] = useState(false);
     const tabsRef = useRef<HTMLDivElement>(null);
 
     const { plan, status } = useSubscription();
@@ -183,7 +182,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
         }
     }, [initialFormData]);
 
-    const isDirty = activeSection !== 'abonnement' && JSON.stringify(formData) !== JSON.stringify(initialFormData);
     const completion = getCompletionPercent(formData);
 
     // ── Auto-save on unmount (settings mode) ──
@@ -213,11 +211,8 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
         setIsSaving(true);
         try {
             await onSave(formData);
-            setSaved(true);
             if (onSuccess) {
                 onSuccess();
-            } else {
-                setTimeout(() => setSaved(false), 2500);
             }
         } catch (e) {
             console.error(e);

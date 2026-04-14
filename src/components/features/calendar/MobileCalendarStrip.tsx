@@ -76,7 +76,7 @@ const DayButton = React.memo(function DayButton({
     return (
         <>
             {isFirstOfMonth && showSeparator && (
-                <div className="flex-shrink-0 flex flex-col items-center justify-end px-1 pb-1">
+                <div className="shrink-0 flex flex-col items-center justify-end px-1 pb-1">
                     <span className="text-[10px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wide whitespace-nowrap">
                         {MONTH_NAMES[date.getMonth()].slice(0, 4)}
                     </span>
@@ -90,7 +90,7 @@ const DayButton = React.memo(function DayButton({
                 onClick={() => onSelect(date)}
                 style={{ scrollSnapAlign: 'center' }}
                 className={`
-                    flex-shrink-0 flex flex-col items-center
+                    shrink-0 flex flex-col items-center
                     w-[46px] pt-2.5 pb-2.5 rounded-2xl
                     focus:outline-none
                     ${isSelected
@@ -194,6 +194,7 @@ export function MobileCalendarStrip({
             days.push(...generateMonthDays(m.getFullYear(), m.getMonth()));
         }
         return days;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [monthRange]);
 
     // O(1) lookup: dateKey → Date (avoid linear search in scroll handler)

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState, useSyncExternalStore } from 'react';
 import { Sun, Moon } from 'lucide-react';
 import { saveThemePreference } from '@/app/actions/schedule';
 
@@ -22,31 +22,41 @@ export function useTheme() {
     return useContext(ThemeContext);
 }
 
+function getInitialTheme(): Theme {
+    if (typeof window === 'undefined') return 'light';
+    return (localStorage.getItem('theme') as Theme | null) ?? 'light';
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-    const [theme, setTheme] = useState<Theme>('dark');
+    const initialTheme = useSyncExternalStore(
+        () => () => {},
+        getInitialTheme,
+        () => 'light' as Theme,
+    );
+    const [theme, setTheme] = useState(initialTheme);
 
+    // Sync DOM attribute on first client render
     useEffect(() => {
-        const saved = localStorage.getItem('theme') as Theme | null;
-        const initial = saved ?? 'light';
-        setTheme(initial);
-        document.documentElement.setAttribute('data-theme', initial);
-    }, []);
+        document.documentElement.setAttribute('data-theme', theme);
+    }, [theme]);
 
-    const applyTheme = (next: Theme) => {
+    const applyTheme = useCallback((next: Theme) => {
         setTheme(next);
         localStorage.setItem('theme', next);
-        document.documentElement.setAttribute('data-theme', next);
-    };
+    }, []);
 
-    const toggleTheme = () => {
-        const next: Theme = theme === 'dark' ? 'light' : 'dark';
-        applyTheme(next);
-        saveThemePreference(next).catch(console.error);
-    };
+    const toggleTheme = useCallback(() => {
+        setTheme(prev => {
+            const next: Theme = prev === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('theme', next);
+            saveThemePreference(next).catch(console.error);
+            return next;
+        });
+    }, []);
 
-    const setThemeFromProfile = (profileTheme: Theme) => {
+    const setThemeFromProfile = useCallback((profileTheme: Theme) => {
         applyTheme(profileTheme);
-    };
+    }, [applyTheme]);
 
     return (
         <ThemeContext.Provider value={{ theme, toggleTheme, setThemeFromProfile }}>

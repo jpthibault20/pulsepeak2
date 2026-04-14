@@ -38,7 +38,7 @@ import { Nav, View } from '@/components/layout/nav';
 import { ChatView, type Message as ChatMessage } from '@/components/features/chat/ChatView';
 import { PlanView } from '@/components/features/plan/PlanView';
 import { GenerationProgressModal, type GenProgressState } from '@/components/features/calendar/GenerationProgressModal';
-import { TutorialOverlay, hasTutorialBeenCompleted } from '@/components/features/tutorial/TutorialOverlay';
+import { TutorialOverlay } from '@/components/features/tutorial/TutorialOverlay';
 import { WelcomeScreen } from '@/components/features/tutorial/WelcomeScreen';
 import { Card } from '@/components/ui';
 import { createCompletedData } from '@/lib/utils';
@@ -488,8 +488,8 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
 
                     {syncResult && !isSyncing && !isRefreshing && (
                         <div className={`fixed top-[5px] right-2 md:top-20 md:right-4 z-40 px-2 py-1 md:px-4 md:py-2 rounded-full md:rounded-lg shadow-lg flex items-center gap-1.5 md:gap-2 animate-in slide-in-from-top-2 pointer-events-none ${syncResult.type === 'success'
-                                ? 'bg-emerald-500/90 text-white'
-                                : 'bg-slate-600/90 text-white'
+                            ? 'bg-emerald-500/90 text-white'
+                            : 'bg-slate-600/90 text-white'
                             }`}>
                             <span className="text-xs md:text-sm">{syncResult.type === 'success' ? '✓' : '—'}</span>
                             <span className="text-xs md:text-sm font-medium">{syncResult.message}</span>

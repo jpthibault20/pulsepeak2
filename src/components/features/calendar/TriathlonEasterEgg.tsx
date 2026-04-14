@@ -225,17 +225,19 @@ export function TriathlonEasterEgg({ active, onDone }: { active: boolean; onDone
     const [scale, setScale] = useState(1);
     const [isMobile, setIsMobile] = useState(false);
     const [rotation, setRotation] = useState(0);
+    const [prevActive, setPrevActive] = useState(active);
     const rafRef = useRef(0);
     const startRef = useRef(0);
     const waypointsRef = useRef<number[]>([]);
 
-    useEffect(() => {
-        if (active && !running) {
-            setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-            setRunning(true);
-            startRef.current = 0;
-        }
-    }, [active, running]);
+    // Démarre quand active passe à true
+    if (active && !prevActive) {
+        setPrevActive(true);
+        setIsMobile(typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT);
+        setRunning(true);
+    } else if (!active && prevActive) {
+        setPrevActive(false);
+    }
 
     useEffect(() => {
         if (!running) return;

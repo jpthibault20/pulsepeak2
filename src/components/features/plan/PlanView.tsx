@@ -14,17 +14,17 @@ import { FeatureGate } from '@/components/features/billing/FeatureGate';
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const BLOCK_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-    Base:    { label: 'Base',    color: 'text-blue-600 dark:text-blue-400',    bg: 'bg-blue-500',    border: 'border-blue-500' },
-    Build:   { label: 'Build',   color: 'text-amber-600 dark:text-amber-400',  bg: 'bg-amber-500',   border: 'border-amber-500' },
-    Peak:    { label: 'Peak',    color: 'text-red-600 dark:text-red-400',      bg: 'bg-red-500',     border: 'border-red-500' },
-    Taper:   { label: 'Taper',   color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500', border: 'border-emerald-500' },
-    General: { label: 'Général', color: 'text-slate-600 dark:text-slate-400',  bg: 'bg-slate-500',   border: 'border-slate-500' },
+    Base: { label: 'Base', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500', border: 'border-blue-500' },
+    Build: { label: 'Build', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-500', border: 'border-amber-500' },
+    Peak: { label: 'Peak', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-500', border: 'border-red-500' },
+    Taper: { label: 'Taper', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500', border: 'border-emerald-500' },
+    General: { label: 'Général', color: 'text-slate-600 dark:text-slate-400', bg: 'bg-slate-500', border: 'border-slate-500' },
 };
 
 const WEEK_TYPE_BADGE: Record<string, { label: string; class: string }> = {
-    Load:     { label: 'Charge',       class: 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/30' },
+    Load: { label: 'Charge', class: 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/30' },
     Recovery: { label: 'Récupération', class: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30' },
-    Taper:    { label: 'Affûtage',     class: 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/30' },
+    Taper: { label: 'Affûtage', class: 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/30' },
 };
 
 const SPORT_ICON: Record<string, React.ElementType> = {
@@ -115,7 +115,7 @@ export function PlanView({ profile, onRefresh, onViewWorkout }: PlanViewProps) {
                     </div>
                     <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div
-                            className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-700"
+                            className="h-full bg-linear-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-700"
                             style={{ width: `${Math.min(totalCompletion, 100)}%` }}
                         />
                     </div>
@@ -259,7 +259,7 @@ interface BlockCardProps {
     profile: Profile;
 }
 
-function BlockCard({ block, isFirst, isLast, expanded, onToggle, onRegenerate, onViewWorkout, profile }: BlockCardProps) {
+function BlockCard({ block, isFirst, expanded, onToggle, onRegenerate, onViewWorkout }: BlockCardProps) {
     const config = BLOCK_TYPE_CONFIG[block.type] ?? BLOCK_TYPE_CONFIG.General;
     const completionPct = block.totalCount > 0 ? Math.round((block.completedCount / block.totalCount) * 100) : 0;
     const tssRatio = block.totalPlannedTSS > 0 ? Math.round((block.totalActualTSS / block.totalPlannedTSS) * 100) : 0;
@@ -271,7 +271,7 @@ function BlockCard({ block, isFirst, isLast, expanded, onToggle, onRegenerate, o
         `}>
             {/* Timeline connector */}
             {!isFirst && (
-                <div className="absolute left-5 -top-0 w-0.5 h-0 bg-slate-200 dark:bg-slate-700 hidden md:block" />
+                <div className="absolute left-5 top-0 w-0.5 h-0 bg-slate-200 dark:bg-slate-700 hidden md:block" />
             )}
 
             <div className={`
@@ -359,7 +359,7 @@ interface WeekRowProps {
     onViewWorkout?: (workoutId: string) => void;
 }
 
-function WeekRow({ week, blockStartDate, onRegenerate, onViewWorkout }: WeekRowProps) {
+function WeekRow({ week, onRegenerate, onViewWorkout }: WeekRowProps) {
     const badge = WEEK_TYPE_BADGE[week.type] ?? WEEK_TYPE_BADGE.Load;
     const todayStr = new Date().toISOString().slice(0, 10);
     const weekEnd = new Date(week.startDate);
@@ -396,9 +396,8 @@ function WeekRow({ week, blockStartDate, onRegenerate, onViewWorkout }: WeekRowP
             {/* TSS progress bar */}
             <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-2">
                 <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                        tssRatio >= 90 ? 'bg-emerald-500' : tssRatio >= 50 ? 'bg-blue-500' : 'bg-amber-500'
-                    }`}
+                    className={`h-full rounded-full transition-all duration-500 ${tssRatio >= 90 ? 'bg-emerald-500' : tssRatio >= 50 ? 'bg-blue-500' : 'bg-amber-500'
+                        }`}
                     style={{ width: `${tssRatio}%` }}
                 />
             </div>
@@ -426,7 +425,7 @@ function WeekRow({ week, blockStartDate, onRegenerate, onViewWorkout }: WeekRowP
                                 title={w.title}
                             >
                                 <SportIcon size={10} className={sportColor} />
-                                <span className="max-w-[80px] truncate">{w.title}</span>
+                                <span className="max-w-20 truncate">{w.title}</span>
                             </button>
                         );
                     })}
@@ -483,7 +482,7 @@ interface RegenSheetProps {
     onSetProgress: React.Dispatch<React.SetStateAction<WeekGenProgressState>>;
 }
 
-function RegenSheet({ block, weekId, profile, onClose, onDone, onSetProgress }: RegenSheetProps) {
+function RegenSheet({ block, weekId, profile, onClose, onSetProgress }: RegenSheetProps) {
     const [comment, setComment] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);

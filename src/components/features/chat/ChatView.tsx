@@ -87,6 +87,7 @@ export function ChatView({ profile, schedule, messages, onMessagesChange }: Chat
                 setMessages([{ role: 'ai', text: welcomeText }]);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [profile?.firstName, welcomeText]);
 
     // Auto-scroll to bottom on new messages

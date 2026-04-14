@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/Card";
 import { SectionHeader } from "./SessionHeader";
-import { Activity, Calculator, Heart, Timer, TrendingUp, Wind, Zap, ChevronRight } from "lucide-react";
+import { Activity, Calculator, Heart, Timer, TrendingUp, Wind, Zap } from "lucide-react";
 import { TabButton } from "./TabButton";
 import { Dispatch, SetStateAction, useState } from "react";
 import { CyclingTest, Zones } from "@/lib/data/type";
@@ -239,28 +239,28 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
 
     const POWER_ZONES = [
         { label: 'Z1', name: 'Récupération', accent: 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300', color: 'text-slate-500 dark:text-slate-400' },
-        { label: 'Z2', name: 'Endurance',    accent: 'bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400', color: 'text-green-600 dark:text-green-400' },
-        { label: 'Z3', name: 'Tempo',        accent: 'bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400', color: 'text-blue-600 dark:text-blue-400' },
-        { label: 'Z4', name: 'Seuil',        accent: 'bg-yellow-100 dark:bg-yellow-500/15 text-yellow-700 dark:text-yellow-400', color: 'text-yellow-600 dark:text-yellow-400' },
-        { label: 'Z5', name: 'PMA',          accent: 'bg-orange-100 dark:bg-orange-500/15 text-orange-700 dark:text-orange-400', color: 'text-orange-600 dark:text-orange-400' },
-        { label: 'Z6', name: 'Anaérobie',    accent: 'bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-400', color: 'text-red-600 dark:text-red-400' },
-        { label: 'Z7', name: 'Neuromusc.',   accent: 'bg-purple-100 dark:bg-purple-500/15 text-purple-700 dark:text-purple-400', color: 'text-purple-600 dark:text-purple-400' },
+        { label: 'Z2', name: 'Endurance', accent: 'bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400', color: 'text-green-600 dark:text-green-400' },
+        { label: 'Z3', name: 'Tempo', accent: 'bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400', color: 'text-blue-600 dark:text-blue-400' },
+        { label: 'Z4', name: 'Seuil', accent: 'bg-yellow-100 dark:bg-yellow-500/15 text-yellow-700 dark:text-yellow-400', color: 'text-yellow-600 dark:text-yellow-400' },
+        { label: 'Z5', name: 'PMA', accent: 'bg-orange-100 dark:bg-orange-500/15 text-orange-700 dark:text-orange-400', color: 'text-orange-600 dark:text-orange-400' },
+        { label: 'Z6', name: 'Anaérobie', accent: 'bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-400', color: 'text-red-600 dark:text-red-400' },
+        { label: 'Z7', name: 'Neuromusc.', accent: 'bg-purple-100 dark:bg-purple-500/15 text-purple-700 dark:text-purple-400', color: 'text-purple-600 dark:text-purple-400' },
     ];
 
     const HR_ZONES = [
         { label: 'Z1', name: 'Récupération', accent: 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300', color: 'text-slate-500 dark:text-slate-400' },
-        { label: 'Z2', name: 'Endurance',    accent: 'bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400', color: 'text-green-600 dark:text-green-400' },
-        { label: 'Z3', name: 'Tempo',        accent: 'bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400', color: 'text-blue-600 dark:text-blue-400' },
-        { label: 'Z4', name: 'Seuil',        accent: 'bg-yellow-100 dark:bg-yellow-500/15 text-yellow-700 dark:text-yellow-400', color: 'text-yellow-600 dark:text-yellow-400' },
-        { label: 'Z5', name: 'Max',          accent: 'bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-400', color: 'text-red-600 dark:text-red-400' },
+        { label: 'Z2', name: 'Endurance', accent: 'bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400', color: 'text-green-600 dark:text-green-400' },
+        { label: 'Z3', name: 'Tempo', accent: 'bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400', color: 'text-blue-600 dark:text-blue-400' },
+        { label: 'Z4', name: 'Seuil', accent: 'bg-yellow-100 dark:bg-yellow-500/15 text-yellow-700 dark:text-yellow-400', color: 'text-yellow-600 dark:text-yellow-400' },
+        { label: 'Z5', name: 'Max', accent: 'bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-400', color: 'text-red-600 dark:text-red-400' },
     ];
 
     const PACE_ZONES = [
         { label: 'Z1', name: 'Endu. fond.', accent: 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400', color: 'text-emerald-600 dark:text-emerald-400' },
         { label: 'Z2', name: 'Endu. active', accent: 'bg-cyan-100 dark:bg-cyan-500/15 text-cyan-700 dark:text-cyan-400', color: 'text-cyan-600 dark:text-cyan-400' },
-        { label: 'Z3', name: 'Tempo',        accent: 'bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400', color: 'text-blue-600 dark:text-blue-400' },
-        { label: 'Z4', name: 'Seuil',        accent: 'bg-orange-100 dark:bg-orange-500/15 text-orange-700 dark:text-orange-400', color: 'text-orange-600 dark:text-orange-400' },
-        { label: 'Z5', name: 'VMA',          accent: 'bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-400', color: 'text-red-600 dark:text-red-400' },
+        { label: 'Z3', name: 'Tempo', accent: 'bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400', color: 'text-blue-600 dark:text-blue-400' },
+        { label: 'Z4', name: 'Seuil', accent: 'bg-orange-100 dark:bg-orange-500/15 text-orange-700 dark:text-orange-400', color: 'text-orange-600 dark:text-orange-400' },
+        { label: 'Z5', name: 'VMA', accent: 'bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-400', color: 'text-red-600 dark:text-red-400' },
     ];
 
     // ── Render helpers ──────────────────────────────────────────────────────
@@ -320,106 +320,105 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
                     const precisionColor = { low: 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/15', medium: 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-500/15', high: 'text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/15' }[precision.level];
 
                     return (
-                    <div className="space-y-5 animate-in fade-in slide-in-from-left-4">
-                        <div>
-                            <div className="flex items-center justify-between mb-3">
-                                <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                    <Zap size={15} className="text-yellow-500" /> Tests de puissance
-                                </h4>
-                                {formData.cycling?.Test?.ftp != null && formData.cycling.Test.ftp > 0 && (
-                                    <span className="text-xs font-bold bg-yellow-100 dark:bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 px-2.5 py-1 rounded-full">
-                                        FTP {formData.cycling.Test.ftp} W
-                                    </span>
-                                )}
-                            </div>
-
-                            <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-3">
-                                Remplissez les tests dont vous disposez. Plus vous en renseignez, plus le calcul est précis.
-                            </p>
-
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-                                {([
-                                    { label: '5 min (PMA)', key: 'p5min' as const },
-                                    { label: '8 min', key: 'p8min' as const },
-                                    { label: '15 min', key: 'p15min' as const },
-                                    { label: '20 min (FTP)', key: 'p20min' as const, highlight: true }
-                                ]).map(test => (
-                                    <Field
-                                        key={test.key}
-                                        label={test.label}
-                                        value={formData.cycling?.Test?.[test.key] || ''}
-                                        onChange={val => handleTestChange(test.key, val)}
-                                        placeholder="---"
-                                        unit="W"
-                                        highlight={test.highlight}
-                                    />
-                                ))}
-                            </div>
-
-                            {/* FTP directe + indicateur précision */}
-                            <div className="flex items-end gap-3">
-                                <div className="w-40">
-                                    <Field
-                                        label="ou FTP connue"
-                                        value={formData.cycling?.Test?.ftp || ''}
-                                        onChange={val => handleTestChange('ftp', val)}
-                                        placeholder="ex: 250"
-                                        unit="W"
-                                    />
-                                </div>
-                                {precision.count > 0 && (
-                                    <div className={`flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg mb-0.5 ${precisionColor}`}>
-                                        <div className="flex gap-0.5">
-                                            {[1, 2, 3].map(i => (
-                                                <div key={i} className={`w-1.5 h-3 rounded-sm ${
-                                                    i <= (precision.level === 'high' ? 3 : precision.level === 'medium' ? 2 : 1)
-                                                        ? 'bg-current opacity-100' : 'bg-current opacity-20'
-                                                }`} />
-                                            ))}
-                                        </div>
-                                        {precisionLabel} ({precision.count} test{precision.count > 1 ? 's' : ''})
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <Button variant="secondary" onClick={handlecalculateFtp} className="w-full h-10 text-sm" icon={Calculator}>
-                            Calculer FTP & Zones
-                        </Button>
-
-                        {/* Results */}
-                        {formData.cycling?.Test?.ftp && powerZoneValues && (
-                            <div className="space-y-3 animate-in fade-in slide-in-from-top-2 pt-4 border-t border-slate-200 dark:border-slate-800">
-                                <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
-                                    <span className="text-sm text-slate-500">FTP <span className="text-lg font-bold text-slate-900 dark:text-white">{formData.cycling.Test.ftp} W</span></span>
-                                    {formData.weight && (
-                                        <span className="text-sm text-slate-500">Ratio <span className="font-bold text-emerald-600 dark:text-emerald-400">{(formData.cycling.Test.ftp / formData.weight).toFixed(2)} W/kg</span></span>
-                                    )}
-                                    {(formData.cycling?.Test?.seasonData?.wPrime || 0) > 0 && (
-                                        <span className="text-sm text-slate-500 flex items-center gap-1">
-                                            <TrendingUp size={12} className="text-orange-500" />
-                                            W&apos; <span className="font-mono font-bold text-orange-600 dark:text-orange-400">{formData.cycling.Test.seasonData!.wPrime} J</span>
+                        <div className="space-y-5 animate-in fade-in slide-in-from-left-4">
+                            <div>
+                                <div className="flex items-center justify-between mb-3">
+                                    <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                        <Zap size={15} className="text-yellow-500" /> Tests de puissance
+                                    </h4>
+                                    {formData.cycling?.Test?.ftp != null && formData.cycling.Test.ftp > 0 && (
+                                        <span className="text-xs font-bold bg-yellow-100 dark:bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 px-2.5 py-1 rounded-full">
+                                            FTP {formData.cycling.Test.ftp} W
                                         </span>
                                     )}
                                 </div>
 
-                                {formData.cycling?.Test?.seasonData?.method && (
-                                    <p className="text-[10px] text-slate-400 italic">
-                                        {formData.cycling.Test.seasonData.method === 'Critical Power Regression'
-                                            ? `Régression puissance critique (${formData.cycling.Test.seasonData.sourceTests?.join(' + ')})`
-                                            : `Estimation depuis ${formData.cycling.Test.seasonData.sourceTests?.join(', ') || 'FTP'}`
-                                        }
-                                    </p>
-                                )}
+                                <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-3">
+                                    Remplissez les tests dont vous disposez. Plus vous en renseignez, plus le calcul est précis.
+                                </p>
 
-                                <div className="space-y-1.5">
-                                    {POWER_ZONES.map((zone, idx) => (
-                                        <ZoneBar key={zone.label} {...zone} value={getPowerZoneValue(idx)} />
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                                    {([
+                                        { label: '5 min (PMA)', key: 'p5min' as const },
+                                        { label: '8 min', key: 'p8min' as const },
+                                        { label: '15 min', key: 'p15min' as const },
+                                        { label: '20 min (FTP)', key: 'p20min' as const, highlight: true }
+                                    ]).map(test => (
+                                        <Field
+                                            key={test.key}
+                                            label={test.label}
+                                            value={formData.cycling?.Test?.[test.key] || ''}
+                                            onChange={val => handleTestChange(test.key, val)}
+                                            placeholder="---"
+                                            unit="W"
+                                            highlight={test.highlight}
+                                        />
                                     ))}
                                 </div>
+
+                                {/* FTP directe + indicateur précision */}
+                                <div className="flex items-end gap-3">
+                                    <div className="w-40">
+                                        <Field
+                                            label="ou FTP connue"
+                                            value={formData.cycling?.Test?.ftp || ''}
+                                            onChange={val => handleTestChange('ftp', val)}
+                                            placeholder="ex: 250"
+                                            unit="W"
+                                        />
+                                    </div>
+                                    {precision.count > 0 && (
+                                        <div className={`flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg mb-0.5 ${precisionColor}`}>
+                                            <div className="flex gap-0.5">
+                                                {[1, 2, 3].map(i => (
+                                                    <div key={i} className={`w-1.5 h-3 rounded-sm ${i <= (precision.level === 'high' ? 3 : precision.level === 'medium' ? 2 : 1)
+                                                            ? 'bg-current opacity-100' : 'bg-current opacity-20'
+                                                        }`} />
+                                                ))}
+                                            </div>
+                                            {precisionLabel} ({precision.count} test{precision.count > 1 ? 's' : ''})
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        )}
-                    </div>
+
+                            <Button variant="secondary" onClick={handlecalculateFtp} className="w-full h-10 text-sm" icon={Calculator}>
+                                Calculer FTP & Zones
+                            </Button>
+
+                            {/* Results */}
+                            {formData.cycling?.Test?.ftp && powerZoneValues && (
+                                <div className="space-y-3 animate-in fade-in slide-in-from-top-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+                                    <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
+                                        <span className="text-sm text-slate-500">FTP <span className="text-lg font-bold text-slate-900 dark:text-white">{formData.cycling.Test.ftp} W</span></span>
+                                        {formData.weight && (
+                                            <span className="text-sm text-slate-500">Ratio <span className="font-bold text-emerald-600 dark:text-emerald-400">{(formData.cycling.Test.ftp / formData.weight).toFixed(2)} W/kg</span></span>
+                                        )}
+                                        {(formData.cycling?.Test?.seasonData?.wPrime || 0) > 0 && (
+                                            <span className="text-sm text-slate-500 flex items-center gap-1">
+                                                <TrendingUp size={12} className="text-orange-500" />
+                                                W&apos; <span className="font-mono font-bold text-orange-600 dark:text-orange-400">{formData.cycling.Test.seasonData!.wPrime} J</span>
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {formData.cycling?.Test?.seasonData?.method && (
+                                        <p className="text-[10px] text-slate-400 italic">
+                                            {formData.cycling.Test.seasonData.method === 'Critical Power Regression'
+                                                ? `Régression puissance critique (${formData.cycling.Test.seasonData.sourceTests?.join(' + ')})`
+                                                : `Estimation depuis ${formData.cycling.Test.seasonData.sourceTests?.join(', ') || 'FTP'}`
+                                            }
+                                        </p>
+                                    )}
+
+                                    <div className="space-y-1.5">
+                                        {POWER_ZONES.map((zone, idx) => (
+                                            <ZoneBar key={zone.label} {...zone} value={getPowerZoneValue(idx)} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     );
                 })()}
 
@@ -484,21 +483,19 @@ export const CalibrationTest: React.FC<CalibrationTestProps> = ({ formData, setF
                             <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg mb-4">
                                 <button
                                     onClick={() => setRunInputMode('vma')}
-                                    className={`flex-1 text-xs font-medium py-2 rounded-md transition-all ${
-                                        runInputMode === 'vma'
+                                    className={`flex-1 text-xs font-medium py-2 rounded-md transition-all ${runInputMode === 'vma'
                                             ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
                                             : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                                    }`}
+                                        }`}
                                 >
                                     VMA directe
                                 </button>
                                 <button
                                     onClick={() => setRunInputMode('race')}
-                                    className={`flex-1 text-xs font-medium py-2 rounded-md transition-all ${
-                                        runInputMode === 'race'
+                                    className={`flex-1 text-xs font-medium py-2 rounded-md transition-all ${runInputMode === 'race'
                                             ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
                                             : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                                    }`}
+                                        }`}
                                 >
                                     Depuis une course
                                 </button>
