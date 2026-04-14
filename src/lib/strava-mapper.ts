@@ -4,10 +4,15 @@ import { getProfile } from "./data/crud";
 // --- DÉFINITION DES TYPES ENTRANTS (STRAVA) ---
 
 interface StravaLapInput {
+  lap_index: number;
+  name: string;
   moving_time: number;
   distance: number;
   average_watts?: number;
   average_heartrate?: number;
+  max_heartrate?: number;
+  average_cadence?: number;
+  average_speed?: number; // m/s
 }
 
 // Représente uniquement les champs Strava que nous utilisons ici
@@ -122,7 +127,18 @@ export async function mapStravaToCompletedData(activity: StravaActivityInput): P
       stravaId: activity.id,
     },
     map: { polyline: activity.map?.summary_polyline || null },
-    laps: [],
+    laps: (activity.laps ?? []).map((lap) => ({
+      index: lap.lap_index,
+      name: lap.name || `Lap ${lap.lap_index}`,
+      durationSeconds: lap.moving_time,
+      distanceMeters: Math.round(lap.distance),
+      avgPower: lap.average_watts ?? null,
+      normalizedPower: null,
+      avgHeartRate: lap.average_heartrate ?? null,
+      maxHeartRate: lap.max_heartrate ?? null,
+      avgCadence: lap.average_cadence ?? null,
+      avgSpeedKmh: lap.average_speed ? parseFloat((lap.average_speed * 3.6).toFixed(1)) : null,
+    })),
     heartRate: {
       avgBPM: activity.average_heartrate || null,
       maxBPM: activity.max_heartrate || null,
