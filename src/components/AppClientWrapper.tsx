@@ -584,6 +584,7 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
                                 onUnlinkStrava={handleUnlinkStrava}
                                 onDelete={handleDeleteWorkout}
                                 onRegenerate={handleRegenerateWorkout}
+                                onRefresh={refreshData}
                             />
                         </div>
                     )}
