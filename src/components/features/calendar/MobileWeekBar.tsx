@@ -1,21 +1,20 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { Sparkles, Sparkle, Zap, ChevronDown, ChevronUp, Bike, Waves, Footprints, Bot, Loader2, AlertCircle, Plus, Target, Calendar, X, MessageSquare } from 'lucide-react';
+import { Sparkles, Zap, ChevronDown, ChevronUp, Bike, Waves, Footprints, Bot, Loader2, AlertCircle, Plus, Target, Calendar, X } from 'lucide-react';
 import { WeekGenerationProgressModal, type WeekGenProgressState } from './WeekGenerationProgressModal';
 import { AvailabilityTable } from './AvailabilityTable';
 import type { WeekStats } from '@/hooks/useWeekStats';
 import type { AvailabilitySlot } from '@/lib/data/type';
 import { getWeekContextForDate, generateWeekWorkoutsFromDate, getWeekPendingCount, type WeekContext } from '@/app/actions/schedule';
 import { FeatureGate } from '@/components/features/billing/FeatureGate';
-import { DurationInput } from '@/components/features/profile/Availability';
 
 const DAYS_FR = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'] as const;
 
 const WEEK_TYPE_LABELS: Record<string, { label: string; color: string }> = {
-    Load:     { label: 'Charge',       color: 'text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/20' },
+    Load: { label: 'Charge', color: 'text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/20' },
     Recovery: { label: 'Récupération', color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20' },
-    Taper:    { label: 'Affûtage',     color: 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/20' },
+    Taper: { label: 'Affûtage', color: 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/20' },
 };
 
 interface MobileWeekBarProps {
@@ -220,11 +219,10 @@ export function MobileWeekBar({
             {/* Progress bar */}
             <div className="mt-2 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                 <div
-                    className={`h-full rounded-full transition-all duration-500 ease-out ${
-                        durationPercentage >= 100
+                    className={`h-full rounded-full transition-all duration-500 ease-out ${durationPercentage >= 100
                             ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]'
-                            : 'bg-gradient-to-r from-blue-600 to-blue-400'
-                    }`}
+                            : 'bg-linear-to-r from-blue-600 to-blue-400'
+                        }`}
                     style={{ width: `${durationPercentage}%` }}
                 />
             </div>
@@ -441,9 +439,8 @@ export function MobileWeekBar({
                             <button
                                 onClick={handleGenerate}
                                 disabled={isGenerating || !weekStartDate || (!isLoadingContext && !weekContext)}
-                                className={`flex-1 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                                    confirmOverwrite ? 'bg-orange-600 hover:bg-orange-500' : 'bg-blue-600 hover:bg-blue-500'
-                                }`}
+                                className={`flex-1 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 rounded-xl text-sm font-semibold transition-colors ${confirmOverwrite ? 'bg-orange-600 hover:bg-orange-500' : 'bg-blue-600 hover:bg-blue-500'
+                                    }`}
                             >
                                 {isGenerating ? (
                                     <>

@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface ModalProps {
-    isOpen:    boolean;
-    onClose:   () => void;
-    title?:    string;
-    children:  React.ReactNode;
+    isOpen: boolean;
+    onClose: () => void;
+    title?: string;
+    children: React.ReactNode;
     className?: string;
 }
 
@@ -20,8 +20,7 @@ export const Modal: React.FC<ModalProps> = ({
     className = 'max-w-lg',
 }) => {
     // Nécessaire pour éviter un rendu SSR de document.body
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => { setMounted(true); }, []);
+    const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -43,7 +42,7 @@ export const Modal: React.FC<ModalProps> = ({
     // (backdrop-blur, transform, etc.) ne peut plus piéger le positionnement fixed.
     return createPortal(
         <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm"
+            className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm"
             onClick={onClose}
         >
             <div

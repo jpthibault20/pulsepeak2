@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { BarChart3, Bot, Plus, Sparkles, Zap, X, Loader2, AlertCircle, Target, Calendar, Bike, Waves, Footprints, MessageSquare, Sparkle } from 'lucide-react';
+import { BarChart3, Bot, Plus, Sparkles, Zap, X, Loader2, AlertCircle, Target, Calendar } from 'lucide-react';
 import { WeekGenerationProgressModal, type WeekGenProgressState } from './WeekGenerationProgressModal';
 import { AvailabilityTable } from './AvailabilityTable';
-import { DurationInput } from '@/components/features/profile/Availability';
 import { WeekStatsPopover } from './WeekStatsPopover';
 import type { WeekStats } from '@/hooks/useWeekStats';
 import type { AvailabilitySlot } from '@/lib/data/type';

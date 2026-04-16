@@ -8,23 +8,25 @@ import {
 } from 'lucide-react';
 import { getPlanOverview, generateWeekWorkoutsFromDate, type PlanOverviewData, type PlanOverviewBlock, type PlanOverviewWeek } from '@/app/actions/schedule';
 import { WeekGenerationProgressModal, type WeekGenProgressState } from '@/components/features/calendar/WeekGenerationProgressModal';
-import type { Profile } from '@/lib/data/DatabaseTypes';
+import { GenerationModal } from '@/components/features/calendar/GenerationModal';
+import type { Objective, Profile } from '@/lib/data/DatabaseTypes';
+import type { AvailabilitySlot } from '@/lib/data/type';
 import { FeatureGate } from '@/components/features/billing/FeatureGate';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const BLOCK_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-    Base:    { label: 'Base',    color: 'text-blue-600 dark:text-blue-400',    bg: 'bg-blue-500',    border: 'border-blue-500' },
-    Build:   { label: 'Build',   color: 'text-amber-600 dark:text-amber-400',  bg: 'bg-amber-500',   border: 'border-amber-500' },
-    Peak:    { label: 'Peak',    color: 'text-red-600 dark:text-red-400',      bg: 'bg-red-500',     border: 'border-red-500' },
-    Taper:   { label: 'Taper',   color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500', border: 'border-emerald-500' },
-    General: { label: 'Général', color: 'text-slate-600 dark:text-slate-400',  bg: 'bg-slate-500',   border: 'border-slate-500' },
+    Base: { label: 'Base', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500', border: 'border-blue-500' },
+    Build: { label: 'Build', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-500', border: 'border-amber-500' },
+    Peak: { label: 'Peak', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-500', border: 'border-red-500' },
+    Taper: { label: 'Taper', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500', border: 'border-emerald-500' },
+    General: { label: 'Général', color: 'text-slate-600 dark:text-slate-400', bg: 'bg-slate-500', border: 'border-slate-500' },
 };
 
 const WEEK_TYPE_BADGE: Record<string, { label: string; class: string }> = {
-    Load:     { label: 'Charge',       class: 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/30' },
+    Load: { label: 'Charge', class: 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/30' },
     Recovery: { label: 'Récupération', class: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30' },
-    Taper:    { label: 'Affûtage',     class: 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/30' },
+    Taper: { label: 'Affûtage', class: 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/30' },
 };
 
 const SPORT_ICON: Record<string, React.ElementType> = {
@@ -39,11 +41,14 @@ const SPORT_COLOR: Record<string, string> = {
 
 interface PlanViewProps {
     profile: Profile;
+    objectives: Objective[];
     onRefresh: () => void;
     onViewWorkout?: (workoutId: string) => void;
+    onGenerate: (blockFocus: string, customTheme: string | null, startDate: string, numWeeks: number, availability: { [key: string]: AvailabilitySlot }) => Promise<void>;
+    onGenerateToObjective: (planStartDate: string, availability: { [key: string]: AvailabilitySlot }) => Promise<void>;
 }
 
-export function PlanView({ profile, onRefresh, onViewWorkout }: PlanViewProps) {
+export function PlanView({ profile, objectives: userObjectives, onRefresh, onViewWorkout, onGenerate, onGenerateToObjective }: PlanViewProps) {
     const [data, setData] = useState<PlanOverviewData | null>(null);
     const [loading, setLoading] = useState(true);
     const [expandedBlock, setExpandedBlock] = useState<string | null>(null);
@@ -78,11 +83,16 @@ export function PlanView({ profile, onRefresh, onViewWorkout }: PlanViewProps) {
     }
 
     if (!data) {
-        return <EmptyPlan />;
+        return <EmptyPlan
+            profile={profile}
+            objectives={userObjectives}
+            onGenerate={onGenerate}
+            onGenerateToObjective={onGenerateToObjective}
+        />;
     }
 
-    const { plan, blocks, objectives, totalCompletion, totalPlannedTSS, totalActualTSS, currentWeekIndex, totalWeeks } = data;
-    const primaryObj = objectives.find(o => o.priority === 'principale');
+    const { plan, blocks, objectives: planObjectives, totalCompletion, totalPlannedTSS, totalActualTSS, currentWeekIndex, totalWeeks } = data;
+    const primaryObj = planObjectives.find(o => o.priority === 'principale');
     const daysToGoal = primaryObj ? Math.max(0, Math.ceil((new Date(primaryObj.date).getTime() - Date.now()) / 86400000)) : null;
 
     return (
@@ -115,7 +125,7 @@ export function PlanView({ profile, onRefresh, onViewWorkout }: PlanViewProps) {
                     </div>
                     <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div
-                            className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-700"
+                            className="h-full bg-linear-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-700"
                             style={{ width: `${Math.min(totalCompletion, 100)}%` }}
                         />
                     </div>
@@ -130,11 +140,11 @@ export function PlanView({ profile, onRefresh, onViewWorkout }: PlanViewProps) {
             </div>
 
             {/* ── Objectives ────────────────────────────────── */}
-            {objectives.length > 0 && (
+            {planObjectives.length > 0 && (
                 <div className="space-y-2">
                     <h2 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-1">Objectifs</h2>
                     <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-                        {objectives.map(obj => {
+                        {planObjectives.map(obj => {
                             const days = Math.max(0, Math.ceil((new Date(obj.date).getTime() - Date.now()) / 86400000));
                             const isPrimary = obj.priority === 'principale';
                             return (
@@ -217,16 +227,53 @@ export function PlanView({ profile, onRefresh, onViewWorkout }: PlanViewProps) {
 
 // ─── Empty State ──────────────────────────────────────────────────────────────
 
-function EmptyPlan() {
+function EmptyPlan({ profile, objectives, onGenerate, onGenerateToObjective }: {
+    profile: Profile;
+    objectives: Objective[];
+    onGenerate: PlanViewProps['onGenerate'];
+    onGenerateToObjective: PlanViewProps['onGenerateToObjective'];
+}) {
+    const [showModal, setShowModal] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    const handleGenerate = async (...args: Parameters<PlanViewProps['onGenerate']>) => {
+        setIsGenerating(true);
+        try { await onGenerate(...args); }
+        finally { setIsGenerating(false); setShowModal(false); }
+    };
+
+    const handleGenerateToObjective = async (...args: Parameters<PlanViewProps['onGenerateToObjective']>) => {
+        setIsGenerating(true);
+        try { await onGenerateToObjective(...args); }
+        finally { setIsGenerating(false); setShowModal(false); }
+    };
+
     return (
         <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center mb-4">
                 <Calendar size={24} className="text-slate-400" />
             </div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Aucun plan actif</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs">
-                Créez un plan d&apos;entraînement depuis l&apos;agenda pour voir votre progression ici.
+            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs mb-5">
+                Crée ton premier plan d&apos;entraînement pour suivre ta progression ici.
             </p>
+            <button
+                onClick={() => setShowModal(true)}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400 transition-colors shadow-sm"
+            >
+                <Sparkles size={16} />
+                Créer un plan
+            </button>
+
+            <GenerationModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                onGenerate={handleGenerate}
+                onGenerateToObjective={handleGenerateToObjective}
+                isGenerating={isGenerating}
+                objectives={objectives}
+                profile={profile}
+            />
         </div>
     );
 }
@@ -259,7 +306,7 @@ interface BlockCardProps {
     profile: Profile;
 }
 
-function BlockCard({ block, isFirst, isLast, expanded, onToggle, onRegenerate, onViewWorkout, profile }: BlockCardProps) {
+function BlockCard({ block, isFirst, expanded, onToggle, onRegenerate, onViewWorkout }: BlockCardProps) {
     const config = BLOCK_TYPE_CONFIG[block.type] ?? BLOCK_TYPE_CONFIG.General;
     const completionPct = block.totalCount > 0 ? Math.round((block.completedCount / block.totalCount) * 100) : 0;
     const tssRatio = block.totalPlannedTSS > 0 ? Math.round((block.totalActualTSS / block.totalPlannedTSS) * 100) : 0;
@@ -271,7 +318,7 @@ function BlockCard({ block, isFirst, isLast, expanded, onToggle, onRegenerate, o
         `}>
             {/* Timeline connector */}
             {!isFirst && (
-                <div className="absolute left-5 -top-0 w-0.5 h-0 bg-slate-200 dark:bg-slate-700 hidden md:block" />
+                <div className="absolute left-5 top-0 w-0.5 h-0 bg-slate-200 dark:bg-slate-700 hidden md:block" />
             )}
 
             <div className={`
@@ -327,6 +374,7 @@ function BlockCard({ block, isFirst, isLast, expanded, onToggle, onRegenerate, o
                             <WeekRow
                                 key={week.id}
                                 week={week}
+                                blockType={block.type}
                                 blockStartDate={block.startDate}
                                 onRegenerate={() => onRegenerate(week.id)}
                                 onViewWorkout={onViewWorkout}
@@ -354,13 +402,15 @@ function BlockCard({ block, isFirst, isLast, expanded, onToggle, onRegenerate, o
 
 interface WeekRowProps {
     week: PlanOverviewWeek;
+    blockType: string;
     blockStartDate: string;
     onRegenerate: () => void;
     onViewWorkout?: (workoutId: string) => void;
 }
 
-function WeekRow({ week, blockStartDate, onRegenerate, onViewWorkout }: WeekRowProps) {
-    const badge = WEEK_TYPE_BADGE[week.type] ?? WEEK_TYPE_BADGE.Load;
+function WeekRow({ week, blockType, onRegenerate, onViewWorkout }: WeekRowProps) {
+    const effectiveType = (week.type === 'Load' && blockType === 'Taper') ? 'Taper' : week.type;
+    const badge = WEEK_TYPE_BADGE[effectiveType] ?? WEEK_TYPE_BADGE.Load;
     const todayStr = new Date().toISOString().slice(0, 10);
     const weekEnd = new Date(week.startDate);
     weekEnd.setDate(weekEnd.getDate() + 6);
@@ -396,9 +446,8 @@ function WeekRow({ week, blockStartDate, onRegenerate, onViewWorkout }: WeekRowP
             {/* TSS progress bar */}
             <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-2">
                 <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                        tssRatio >= 90 ? 'bg-emerald-500' : tssRatio >= 50 ? 'bg-blue-500' : 'bg-amber-500'
-                    }`}
+                    className={`h-full rounded-full transition-all duration-500 ${tssRatio >= 90 ? 'bg-emerald-500' : tssRatio >= 50 ? 'bg-blue-500' : 'bg-amber-500'
+                        }`}
                     style={{ width: `${tssRatio}%` }}
                 />
             </div>
@@ -426,7 +475,7 @@ function WeekRow({ week, blockStartDate, onRegenerate, onViewWorkout }: WeekRowP
                                 title={w.title}
                             >
                                 <SportIcon size={10} className={sportColor} />
-                                <span className="max-w-[80px] truncate">{w.title}</span>
+                                <span className="max-w-20 truncate">{w.title}</span>
                             </button>
                         );
                     })}
@@ -483,7 +532,7 @@ interface RegenSheetProps {
     onSetProgress: React.Dispatch<React.SetStateAction<WeekGenProgressState>>;
 }
 
-function RegenSheet({ block, weekId, profile, onClose, onDone, onSetProgress }: RegenSheetProps) {
+function RegenSheet({ block, weekId, profile, onClose, onSetProgress }: RegenSheetProps) {
     const [comment, setComment] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);

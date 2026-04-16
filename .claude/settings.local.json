@@ -23,7 +23,8 @@
       "Bash(gh api:*)",
       "WebFetch(domain:github.com)",
       "Bash(wc:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }

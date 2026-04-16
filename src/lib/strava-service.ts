@@ -1,6 +1,6 @@
 // src/lib/strava-service.ts
 import { getProfile, updateProfileStravaData } from './profile-db';
-import { mapStravaToCompletedData, tagStravaActivity } from './strava-mapper';
+import { mapStravaToCompletedData, tagStravaActivity, StravaStream } from './strava-mapper';
 
 const STRAVA_CLIENT_ID = process.env.STRAVA_CLIENT_ID;
 const STRAVA_CLIENT_SECRET = process.env.STRAVA_CLIENT_SECRET;
@@ -121,15 +121,40 @@ export async function getStravaActivitiesAllPages(after: number): Promise<Strava
   return all;
 }
 
-export async function getStravaActivityById(id: number) {
-  const accessToken = await getValidAccessToken(); // Assure-toi d'utiliser ta fonction de token existante
+/**
+ * Récupère les streams (watts, time) d'une activité Strava.
+ * Retourne null si pas de capteur de puissance ou erreur.
+ */
+async function getStravaStreams(accessToken: string, activityId: number): Promise<StravaStream | null> {
+  try {
+    const res = await fetch(
+      `https://www.strava.com/api/v3/activities/${activityId}/streams?keys=watts,time&key_type=time`,
+      { headers: { Authorization: `Bearer ${accessToken}` }, next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return null;
 
-  const res = await fetch(`https://www.strava.com/api/v3/activities/${id}`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-    next: { revalidate: 3600 }, // Cache d'une heure
-  });
+    const streams: { type: string; data: number[] }[] = await res.json();
+    const result: StravaStream = {};
+    for (const s of streams) {
+      if (s.type === 'watts') result.watts = { data: s.data };
+      if (s.type === 'time') result.time = { data: s.data };
+    }
+    return result.watts ? result : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function getStravaActivityById(id: number) {
+  const accessToken = await getValidAccessToken();
+
+  const [res, streams] = await Promise.all([
+    fetch(`https://www.strava.com/api/v3/activities/${id}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      next: { revalidate: 3600 },
+    }),
+    getStravaStreams(accessToken, id),
+  ]);
 
   if (!res.ok) {
     console.error(`Erreur fetch detail activity ${id}:`, res.statusText);
@@ -138,7 +163,7 @@ export async function getStravaActivityById(id: number) {
 
   const x = await res.json();
 
-  const completedData = await mapStravaToCompletedData(x);
+  const completedData = await mapStravaToCompletedData(x, streams);
 
   const profile = await getProfile();
   if (profile.stravaWriteBack !== false) {
@@ -150,5 +175,5 @@ export async function getStravaActivityById(id: number) {
     );
   }
 
-  return x;
+  return { raw: x, completedData };
 }

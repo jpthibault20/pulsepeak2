@@ -1,7 +1,6 @@
 import { Card } from "@/components/ui/Card";
 import { Bike, Check, Footprints, Link2, Waves, Unlink, PenOff, Lock } from "lucide-react";
 import React, { Dispatch, SetStateAction } from "react";
-import { SportType } from "@/lib/data/type";
 import { Profile } from "@/lib/data/DatabaseTypes";
 
 interface SportsAndLinkAppProps {
@@ -53,7 +52,6 @@ export const SportsAndAppLink: React.FC<SportsAndLinkAppProps> = ({ formData, se
     };
 
     const activeSports = SPORTS.filter(s => formData.activeSports[s.key]);
-    const inactiveSports = SPORTS.filter(s => !formData.activeSports[s.key]);
 
     return (
         <div className="space-y-4">

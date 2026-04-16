@@ -36,22 +36,22 @@ const workoutTypes: Record<SportType, string[]> = {
 };
 
 const PROGRESS_CONFIG: ProgressModalConfig = {
-    icon:             <CalendarPlus size={18} className="text-blue-600 dark:text-blue-400" />,
-    label:            '',
-    titleLoading:     'Création en cours…',
-    titleDone:        'Séance créée !',
-    titleError:       'Erreur de création',
-    subtitleLoading:  'L\'IA génère votre séance',
-    subtitleDone:     'Votre séance est prête',
+    icon: <CalendarPlus size={18} className="text-blue-600 dark:text-blue-400" />,
+    label: '',
+    titleLoading: 'Création en cours…',
+    titleDone: 'Séance créée !',
+    titleError: 'Erreur de création',
+    subtitleLoading: 'L\'IA génère votre séance',
+    subtitleDone: 'Votre séance est prête',
     miniLabelLoading: 'Création…',
-    miniLabelDone:    'Séance prête !',
-    durationMs:       10_000,
+    miniLabelDone: 'Séance prête !',
+    durationMs: 10_000,
     stages: [
-        { label: 'Analyse du profil',          progressAt: 10 },
-        { label: 'Contexte de la semaine',     progressAt: 30 },
-        { label: 'Génération de la séance',    progressAt: 55 },
-        { label: 'Ajustement de la charge',    progressAt: 80 },
-        { label: 'Sauvegarde',                 progressAt: 95 },
+        { label: 'Analyse du profil', progressAt: 10 },
+        { label: 'Contexte de la semaine', progressAt: 30 },
+        { label: 'Génération de la séance', progressAt: 55 },
+        { label: 'Ajustement de la charge', progressAt: 80 },
+        { label: 'Sauvegarde', progressAt: 95 },
     ],
 };
 
@@ -187,7 +187,7 @@ export const CreatePlannedWorkoutModal: React.FC<CreatePlannedWorkoutModalProps>
 
                     {/* Durée */}
                     <div>
-                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-2 flex items-center gap-1.5">
+                        <label className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-2 flex items-center gap-1.5">
                             <Timer size={13} /> Durée (minutes)
                         </label>
                         <input
@@ -202,7 +202,7 @@ export const CreatePlannedWorkoutModal: React.FC<CreatePlannedWorkoutModalProps>
 
                     {/* Description / commentaire */}
                     <div>
-                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-2 flex items-center gap-1.5">
+                        <label className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-2 flex items-center gap-1.5">
                             <AlignLeft size={13} /> Commentaire (optionnel)
                         </label>
                         <textarea
@@ -224,7 +224,7 @@ export const CreatePlannedWorkoutModal: React.FC<CreatePlannedWorkoutModalProps>
                         variant="primary"
                         onClick={handleCreate}
                         disabled={duration < 10}
-                        className="flex-1 !bg-emerald-600 hover:!bg-emerald-500"
+                        className="flex-1 bg-emerald-600! hover:bg-emerald-500!"
                     >
                         Planifier
                     </Button>

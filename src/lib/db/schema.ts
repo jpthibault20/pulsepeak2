@@ -18,6 +18,7 @@ import type {
     PlannedData,
     CompletedData,
     CyclingTest,
+    DeviationMetrics,
     StravaConfig,
     Zones,
 } from '@/lib/data/type';
@@ -194,6 +195,8 @@ export const workouts = pgTable('workouts', {
 
     plannedData:   jsonb('planned_data').$type<PlannedData>(),
     completedData: jsonb('completed_data').$type<CompletedData>(),
+    aiSummary:     text('ai_summary'),
+    aiDeviationCache: jsonb('ai_deviation_cache').$type<DeviationMetrics>(),
 }, (t) => [
     index('workouts_user_id_idx').on(t.userId),
     index('workouts_date_idx').on(t.date),

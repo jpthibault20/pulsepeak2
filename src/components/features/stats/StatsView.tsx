@@ -143,19 +143,53 @@ function InfoTooltip({ title, content }: { title: string; content: string }) {
 // ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
 
 // Coach recommendation based on TSB, ramp rate, and next objective
-function getCoachAdvice(tsb: number, rampRate: number, daysToObj: number | null): { text: string; icon: string } {
-    // Ramp rate alert overrides everything
+function getCoachAdvice(tsb: number, rampRate: number, daysToObj: number | null, priority: string | null = null): { text: string; icon: string } {
     if (rampRate > 1.5) return { text: 'Ta fatigue monte trop vite. Allège les 2-3 prochains jours pour éviter la blessure.', icon: '🛑' };
 
-    // Context with objective proximity
-    if (daysToObj !== null && daysToObj <= 14 && daysToObj > 0) {
-        if (tsb > 10) return { text: `À J-${daysToObj} de ta course, tu es frais. Maintiens l'intensité légère.`, icon: '✅' };
-        if (tsb > 0) return { text: `À J-${daysToObj}, ta forme est bonne. Dernières séances de rappel puis repos.`, icon: '👍' };
-        if (tsb > -10) return { text: `À J-${daysToObj}, tu es chargé. Réduis le volume maintenant pour arriver frais.`, icon: '⚠️' };
-        return { text: `À J-${daysToObj}, tu es très fatigué. Coupe tout sauf du très léger pour récupérer.`, icon: '🔴' };
+    if (daysToObj !== null && daysToObj > 0 && priority === 'secondaire') {
+        // ── Objectif SECONDAIRE : mini-taper, on ne casse pas le plan ──
+        if (daysToObj <= 3) {
+            if (tsb >= 0) return { text: `J-${daysToObj} obj. secondaire — Tu es frais, parfait. Rappel léger et tu es prêt.`, icon: '✅' };
+            if (tsb >= -10) return { text: `J-${daysToObj} obj. secondaire — Allège un peu, pas besoin de couper complètement.`, icon: '👍' };
+            return { text: `J-${daysToObj} obj. secondaire — Tu es fatigué. Journée facile, tu ne viseras pas le pic de forme.`, icon: '⚠️' };
+        }
+        if (daysToObj <= 7) {
+            if (tsb >= -5) return { text: `J-${daysToObj} obj. secondaire — Continue normalement, allège juste la veille et l'avant-veille.`, icon: '✅' };
+            if (tsb >= -15) return { text: `J-${daysToObj} obj. secondaire — Réduis un peu le volume sans couper l'intensité.`, icon: '👍' };
+            return { text: `J-${daysToObj} obj. secondaire — Fatigue élevée. Allège cette semaine pour être correct le jour J.`, icon: '⚠️' };
+        }
+        if (tsb >= -10) return { text: `J-${daysToObj} obj. secondaire — Pas de changement de plan. Continue ta préparation normalement.`, icon: '✅' };
+        if (tsb >= -25) return { text: `J-${daysToObj} obj. secondaire — Charge normale, le plan prévoit un allègement avant l'objectif.`, icon: '👀' };
+        return { text: `J-${daysToObj} obj. secondaire — Fatigue importante. Prévois une récup pour être en forme.`, icon: '😴' };
     }
 
-    // General advice
+    if (daysToObj !== null && daysToObj > 0) {
+        // ── Objectif PRINCIPAL : full taper et peaking ──
+        if (daysToObj <= 7) {
+            if (tsb >= 10) return { text: `J-${daysToObj} — Tu es frais et affûté. Séances très courtes de rappel, tu es prêt.`, icon: '✅' };
+            if (tsb >= 0) return { text: `J-${daysToObj} — Forme correcte. Plus que du très léger et des rappels courts.`, icon: '👍' };
+            if (tsb >= -10) return { text: `J-${daysToObj} — Encore chargé. Coupe le volume, garde juste 1-2 rappels courts.`, icon: '⚠️' };
+            return { text: `J-${daysToObj} — Fatigue élevée, c'est serré. Repos complet sauf activation légère la veille.`, icon: '🔴' };
+        }
+        if (daysToObj <= 14) {
+            if (tsb >= 5) return { text: `J-${daysToObj} — Bonne trajectoire de taper. Réduis le volume, maintiens des rappels d'intensité tous les 2-3 jours.`, icon: '✅' };
+            if (tsb >= -5) return { text: `J-${daysToObj} — Le taper fait son effet. Continue de baisser le volume, la fraîcheur monte.`, icon: '👍' };
+            if (tsb >= -15) return { text: `J-${daysToObj} — Encore beaucoup de fatigue. Réduis le volume de 50% minimum.`, icon: '⚠️' };
+            return { text: `J-${daysToObj} — Fatigue très élevée pour un taper. Allège immédiatement, priorise le sommeil.`, icon: '🔴' };
+        }
+        if (daysToObj <= 28) {
+            if (tsb >= 0) return { text: `J-${daysToObj} — Tu es frais. Place tes dernières séances intenses, taper dans ${daysToObj - 14} jours.`, icon: '💪' };
+            if (tsb >= -15) return { text: `J-${daysToObj} — Bonne charge de pré-taper. Le taper absorbera bientôt cette fatigue.`, icon: '✅' };
+            if (tsb >= -25) return { text: `J-${daysToObj} — Charge élevée, normal en pré-taper. Surveille la récupération.`, icon: '👀' };
+            return { text: `J-${daysToObj} — Fatigue excessive. Allège cette semaine, tu as le temps de récupérer avant le taper.`, icon: '⚠️' };
+        }
+        if (tsb >= 5) return { text: `J-${daysToObj} — Tu es frais avec du temps devant toi. Place un gros bloc pour construire ta forme.`, icon: '🚀' };
+        if (tsb >= -10) return { text: `J-${daysToObj} — Bonne zone de charge. Continue à construire ta forme régulièrement.`, icon: '✅' };
+        if (tsb >= -25) return { text: `J-${daysToObj} — Charge soutenue. Prévois une semaine de récup bientôt.`, icon: '👀' };
+        return { text: `J-${daysToObj} — Fatigue accumulée importante. Place une semaine allégée pour repartir.`, icon: '😴' };
+    }
+
+    // ── Pas d'objectif : conseils généraux ──
     if (tsb > 15) return { text: 'Tu es très frais. C\'est le moment de placer une grosse séance ou un bloc intense.', icon: '🚀' };
     if (tsb > 5) return { text: 'Bonne fraîcheur. Tu peux pousser aujourd\'hui, les jambes sont là.', icon: '💪' };
     if (tsb > -5) return { text: 'Zone optimale d\'entraînement. Continue sur cette lancée.', icon: '✅' };
@@ -269,7 +303,7 @@ function PMCSnapshot({ ctl, atl, nextObjective, theme }: {
     const rampRate = ctl > 0 ? Math.round((atl / ctl) * 100) / 100 : 0;
 
     const daysToObj = nextObjective ? daysUntil(nextObjective.date) : null;
-    const advice = getCoachAdvice(tsb, rampRate, daysToObj);
+    const advice = getCoachAdvice(tsb, rampRate, daysToObj, nextObjective?.priority ?? null);
 
     return (
         <Card className="p-4 md:p-6 border-l-4" style={{ borderLeftColor: status.color }}>
@@ -351,7 +385,21 @@ function PMCSnapshot({ ctl, atl, nextObjective, theme }: {
                 <div className="flex items-center gap-2 mt-3 px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg">
                     <Target size={14} className={nextObjective.priority === 'principale' ? 'text-amber-400 shrink-0' : 'text-violet-400 shrink-0'} />
                     <p className="text-[11px] text-slate-600 dark:text-slate-300">
-                        <strong>{nextObjective.name}</strong> dans {daysToObj}j — {tsb > 5 ? 'tu es dans les clous' : tsb > -5 ? 'commence à alléger' : 'il faut couper maintenant'}
+                        <strong>{nextObjective.name}</strong> dans {daysToObj}j — {
+                            nextObjective.priority === 'secondaire'
+                                ? (daysToObj <= 3
+                                    ? (tsb >= 0 ? 'frais, rappel léger et c\'est bon' : 'allège un peu la veille')
+                                    : daysToObj <= 7
+                                        ? (tsb >= -5 ? 'continue normalement' : 'réduis un peu le volume')
+                                        : 'pas de changement, reste sur le plan')
+                                : (daysToObj <= 7
+                                    ? (tsb >= 10 ? 'affûtage parfait, garde le cap' : tsb >= 0 ? 'rappels légers et repos' : 'coupe tout, priorité récupération')
+                                    : daysToObj <= 14
+                                        ? (tsb >= 0 ? 'taper en bonne voie' : tsb >= -10 ? 'réduis le volume maintenant' : 'allège immédiatement')
+                                        : daysToObj <= 28
+                                            ? (tsb >= -15 ? 'bonne charge pré-taper' : 'attention à la fatigue avant le taper')
+                                            : (tsb >= -10 ? 'construction en cours' : 'pense à récupérer bientôt'))
+                        }
                     </p>
                 </div>
             )}
