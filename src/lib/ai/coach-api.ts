@@ -349,7 +349,7 @@ export async function generateSingleWorkoutFromAI(
     oldWorkout?: Workout,
     currentBlockFocus: string = "General Fitness",
     userInstruction?: string
-): Promise<Omit<Workout, 'userId' | 'weekId'>> {
+): Promise<{ workout: Omit<Workout, 'userId' | 'weekId'>; tokensUsed: number }> {
 
     // Le type de sport est forcé à vélo pour l'instant
     const currentSport: SportType = 'cycling'; // TODO: Passer le sport en paramètre si on supporte la course à pied plus tard
@@ -420,28 +420,31 @@ export async function generateSingleWorkoutFromAI(
         generationConfig: { responseMimeType: "application/json", responseSchema: responseSchema, temperature: 0.7 },
     };
 
-    const { data: resultData } = await callGeminiAPI(payload);
+    const { data: resultData, tokensUsed } = await callGeminiAPI(payload);
     const w = (resultData as { workout: Omit<RawAIWorkout, 'date'> }).workout;
 
     // Transformation vers la nouvelle structure
     return {
-        id: oldWorkout?.id || generateWorkoutId(date, currentSport),
-        date: date,
-        sportType: currentSport,
-        title: w.title,
-        workoutType: w.type,
-        mode: w.mode,
-        status: 'pending',
-        plannedData: {
-            durationMinutes: w.duration,
-            plannedTSS: w.tss ?? null,
-            targetPowerWatts: null,
-            targetPaceMinPerKm: null,
-            targetHeartRateBPM: null,
-            distanceKm: null,
-            description: w.description_outdoor ?? w.description_indoor ?? null,
+        workout: {
+            id: oldWorkout?.id || generateWorkoutId(date, currentSport),
+            date: date,
+            sportType: currentSport,
+            title: w.title,
+            workoutType: w.type,
+            mode: w.mode,
+            status: 'pending' as const,
+            plannedData: {
+                durationMinutes: w.duration,
+                plannedTSS: w.tss ?? null,
+                targetPowerWatts: null,
+                targetPaceMinPerKm: null,
+                targetHeartRateBPM: null,
+                distanceKm: null,
+                description: w.description_outdoor ?? w.description_indoor ?? null,
+            },
+            completedData: null,
         },
-        completedData: null,
+        tokensUsed,
     };
 }
 
@@ -453,9 +456,9 @@ export async function generateSingleWorkoutFromAI(
 export async function generateWorkoutSummary(
     profile: Profile,
     workout: Workout
-): Promise<string> {
+): Promise<{ summary: string; tokensUsed: number }> {
     if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set.");
-    if (!workout.completedData) return "";
+    if (!workout.completedData) return { summary: "", tokensUsed: 0 };
 
     const cd = workout.completedData;
     const planned = workout.plannedData;
@@ -625,9 +628,9 @@ RÉALISÉ: ${metricsStr}${zonesStr}${stabilityStr}${advancedStr}${lapsStr}${plan
         generationConfig: { responseMimeType: "application/json", responseSchema, temperature: 0.6, maxOutputTokens: 200 },
     };
 
-    const { data } = await callGeminiAPI(payload);
+    const { data, tokensUsed } = await callGeminiAPI(payload);
     const raw = (data as { summary: string }).summary ?? "";
     // Strip any HTML tags that Gemini might sneak in
-    return raw.replace(/<[^>]*>/g, '').trim();
+    return { summary: raw.replace(/<[^>]*>/g, '').trim(), tokensUsed };
 }
 

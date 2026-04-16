@@ -1571,7 +1571,7 @@ export async function createPlannedWorkoutAI(
     ].filter(Boolean).join('. ');
 
     try {
-        const newWorkoutData = await generateSingleWorkoutFromAI(
+        const { workout: newWorkoutData, tokensUsed: tkCreate } = await generateSingleWorkoutFromAI(
             existingProfile,
             history,
             dateStr,
@@ -1580,6 +1580,7 @@ export async function createPlannedWorkoutAI(
             "General Fitness",
             instruction,
         );
+        if (tkCreate > 0) await atomicIncrementTokenCount(tkCreate);
 
         const workout: Workout = {
             ...newWorkoutData,
@@ -1627,7 +1628,7 @@ export async function regenerateWorkout(workoutIdOrDate: string, instruction?: s
     const blockFocus = "General Fitness"; // TODO: Stocker le focus actuel dans le Schedule si nécessaire
 
     try {
-        const newWorkoutData = await generateSingleWorkoutFromAI(
+        const { workout: newWorkoutData, tokensUsed: tkRegen } = await generateSingleWorkoutFromAI(
             existingProfile,
             history,
             dateKey,
@@ -1636,6 +1637,7 @@ export async function regenerateWorkout(workoutIdOrDate: string, instruction?: s
             blockFocus,
             instruction
         );
+        if (tkRegen > 0) await atomicIncrementTokenCount(tkRegen);
 
         // Remplacement dans le tableau en préservant les clés relationnelles
         existingSchedule.workouts[targetIndex] = {
@@ -2074,10 +2076,14 @@ export async function getWorkoutAISummary(workout: Workout): Promise<string> {
     const profile = await getProfile();
     if (!profile || !workout.completedData) return "";
     try {
-        const summary = await generateWorkoutSummary(profile, workout);
+        const { summary, tokensUsed } = await generateWorkoutSummary(profile, workout);
         // Persister en DB pour ne plus recalculer
         if (summary) {
             await updateWorkoutById(workout.id, { aiSummary: summary });
+        }
+        // Comptabiliser les tokens
+        if (tokensUsed > 0) {
+            await atomicIncrementTokenCount(tokensUsed);
         }
         return summary;
     } catch (e) {
@@ -2178,7 +2184,7 @@ NIVEAU: ${levelInstruction[adaptationLevel]}
 SIGNAUX: ${deviation.details.join('; ')}
 Score déviation: ${deviation.score}`;
 
-            const newWorkout = await generateSingleWorkoutFromAI(
+            const { workout: newWorkout, tokensUsed: tkAdapt } = await generateSingleWorkoutFromAI(
                 profile,
                 null,
                 pendingWorkout.date,
@@ -2187,6 +2193,7 @@ Score déviation: ${deviation.score}`;
                 currentBlockFocus,
                 adaptInstruction
             );
+            if (tkAdapt > 0) await atomicIncrementTokenCount(tkAdapt);
 
             await updateWorkoutById(pendingWorkout.id, {
                 title: newWorkout.title,
