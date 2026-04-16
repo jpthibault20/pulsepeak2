@@ -8,7 +8,9 @@ import {
 } from 'lucide-react';
 import { getPlanOverview, generateWeekWorkoutsFromDate, type PlanOverviewData, type PlanOverviewBlock, type PlanOverviewWeek } from '@/app/actions/schedule';
 import { WeekGenerationProgressModal, type WeekGenProgressState } from '@/components/features/calendar/WeekGenerationProgressModal';
-import type { Profile } from '@/lib/data/DatabaseTypes';
+import { GenerationModal } from '@/components/features/calendar/GenerationModal';
+import type { Objective, Profile } from '@/lib/data/DatabaseTypes';
+import type { AvailabilitySlot } from '@/lib/data/type';
 import { FeatureGate } from '@/components/features/billing/FeatureGate';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -39,11 +41,14 @@ const SPORT_COLOR: Record<string, string> = {
 
 interface PlanViewProps {
     profile: Profile;
+    objectives: Objective[];
     onRefresh: () => void;
     onViewWorkout?: (workoutId: string) => void;
+    onGenerate: (blockFocus: string, customTheme: string | null, startDate: string, numWeeks: number, availability: { [key: string]: AvailabilitySlot }) => Promise<void>;
+    onGenerateToObjective: (planStartDate: string, availability: { [key: string]: AvailabilitySlot }) => Promise<void>;
 }
 
-export function PlanView({ profile, onRefresh, onViewWorkout }: PlanViewProps) {
+export function PlanView({ profile, objectives: userObjectives, onRefresh, onViewWorkout, onGenerate, onGenerateToObjective }: PlanViewProps) {
     const [data, setData] = useState<PlanOverviewData | null>(null);
     const [loading, setLoading] = useState(true);
     const [expandedBlock, setExpandedBlock] = useState<string | null>(null);
@@ -78,11 +83,16 @@ export function PlanView({ profile, onRefresh, onViewWorkout }: PlanViewProps) {
     }
 
     if (!data) {
-        return <EmptyPlan />;
+        return <EmptyPlan
+            profile={profile}
+            objectives={userObjectives}
+            onGenerate={onGenerate}
+            onGenerateToObjective={onGenerateToObjective}
+        />;
     }
 
-    const { plan, blocks, objectives, totalCompletion, totalPlannedTSS, totalActualTSS, currentWeekIndex, totalWeeks } = data;
-    const primaryObj = objectives.find(o => o.priority === 'principale');
+    const { plan, blocks, objectives: planObjectives, totalCompletion, totalPlannedTSS, totalActualTSS, currentWeekIndex, totalWeeks } = data;
+    const primaryObj = planObjectives.find(o => o.priority === 'principale');
     const daysToGoal = primaryObj ? Math.max(0, Math.ceil((new Date(primaryObj.date).getTime() - Date.now()) / 86400000)) : null;
 
     return (
@@ -130,11 +140,11 @@ export function PlanView({ profile, onRefresh, onViewWorkout }: PlanViewProps) {
             </div>
 
             {/* ── Objectives ────────────────────────────────── */}
-            {objectives.length > 0 && (
+            {planObjectives.length > 0 && (
                 <div className="space-y-2">
                     <h2 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-1">Objectifs</h2>
                     <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-                        {objectives.map(obj => {
+                        {planObjectives.map(obj => {
                             const days = Math.max(0, Math.ceil((new Date(obj.date).getTime() - Date.now()) / 86400000));
                             const isPrimary = obj.priority === 'principale';
                             return (
@@ -217,16 +227,53 @@ export function PlanView({ profile, onRefresh, onViewWorkout }: PlanViewProps) {
 
 // ─── Empty State ──────────────────────────────────────────────────────────────
 
-function EmptyPlan() {
+function EmptyPlan({ profile, objectives, onGenerate, onGenerateToObjective }: {
+    profile: Profile;
+    objectives: Objective[];
+    onGenerate: PlanViewProps['onGenerate'];
+    onGenerateToObjective: PlanViewProps['onGenerateToObjective'];
+}) {
+    const [showModal, setShowModal] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    const handleGenerate = async (...args: Parameters<PlanViewProps['onGenerate']>) => {
+        setIsGenerating(true);
+        try { await onGenerate(...args); }
+        finally { setIsGenerating(false); setShowModal(false); }
+    };
+
+    const handleGenerateToObjective = async (...args: Parameters<PlanViewProps['onGenerateToObjective']>) => {
+        setIsGenerating(true);
+        try { await onGenerateToObjective(...args); }
+        finally { setIsGenerating(false); setShowModal(false); }
+    };
+
     return (
         <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center mb-4">
                 <Calendar size={24} className="text-slate-400" />
             </div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Aucun plan actif</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs">
-                Créez un plan d&apos;entraînement depuis l&apos;agenda pour voir votre progression ici.
+            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs mb-5">
+                Crée ton premier plan d&apos;entraînement pour suivre ta progression ici.
             </p>
+            <button
+                onClick={() => setShowModal(true)}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400 transition-colors shadow-sm"
+            >
+                <Sparkles size={16} />
+                Créer un plan
+            </button>
+
+            <GenerationModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                onGenerate={handleGenerate}
+                onGenerateToObjective={handleGenerateToObjective}
+                isGenerating={isGenerating}
+                objectives={objectives}
+                profile={profile}
+            />
         </div>
     );
 }

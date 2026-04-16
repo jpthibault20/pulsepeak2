@@ -557,11 +557,14 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
                         <div className="max-w-2xl mx-auto animate-in fade-in duration-300">
                             <PlanView
                                 profile={profile}
+                                objectives={objectives}
                                 onRefresh={refreshData}
                                 onViewWorkout={(workoutId) => {
                                     const w = schedule.workouts.find(wo => wo.id === workoutId);
                                     if (w) { setSelectedWorkout(w); setPreviousView('plan'); setView('workout-detail'); }
                                 }}
+                                onGenerate={handleGenerate}
+                                onGenerateToObjective={handleGenerateToObjective}
                             />
                         </div>
                     )}
