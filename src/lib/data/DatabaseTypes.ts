@@ -1,4 +1,4 @@
-import { aiPersonality, AvailabilitySlot, CompletedData, CyclingTest, PlannedData, SportType, StravaConfig, Zones } from "./type";
+import { aiPersonality, AvailabilitySlot, CompletedData, CyclingTest, DeviationMetrics, PlannedData, SportType, StravaConfig, Zones } from "./type";
 
 
 export interface Profile {
@@ -159,4 +159,7 @@ export interface Workout {
 
     plannedData: PlannedData;
     completedData: CompletedData | null;
+
+    aiSummary?: string | null;         // Résumé IA mis en cache (généré une seule fois)
+    aiDeviationCache?: DeviationMetrics | null; // Déviation mise en cache
 }

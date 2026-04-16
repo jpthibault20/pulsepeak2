@@ -65,6 +65,38 @@ export interface CompletedData {
   calculatedTSS?: number; // Calculé par TON code (pas Strava) avec le FTP du profil
   intensityFactor?: number; // IF (Normalised Power / FTP)
   variabilityIndex?: number; // VI (NP / Avg Power) - utile pour voir si la séance était stable
+
+  // Métriques de déviation planifié vs réalisé
+  deviation?: DeviationMetrics;
+}
+
+// ______________________________________________________
+// --- Deviation Metrics (analyse planifié vs réalisé) ---
+// ______________________________________________________
+export type DeviationSignal = 'fatigue' | 'superform' | 'normal';
+export type DeviationSeverity = 'info' | 'alert' | 'critical';
+
+export interface DeviationMetrics {
+  signal: DeviationSignal;
+  severity: DeviationSeverity;
+  score: number;                     // -100 (sous-perf max) à +100 (sur-perf max)
+  convergingSignals: number;         // Nombre de signaux convergents (min 2 pour alerter)
+
+  // Écarts individuels (en %)
+  durationDelta: number | null;      // (réalisé - planifié) / planifié * 100
+  tssDelta: number | null;
+  powerDelta: number | null;         // NP ou avg vs target
+  hrDelta: number | null;            // FC à même puissance vs baseline
+
+  // Métriques avancées
+  fadeRate: number | null;            // % de baisse entre 1er et dernier intervalle
+  aerobicDecoupling: number | null;  // Drift FC/Puissance en 2e moitié (%)
+  cardiacCost: number | null;        // bpm par watt (efficience cardiaque)
+
+  // Résumé pour l'UI
+  headline: string;                  // Phrase courte ex: "Fatigue détectée — 2 signaux convergents"
+  details: string[];                 // Liste de constats détaillés
+  adaptationReason: string;          // Raison de l'adaptation proposée
 }
 
 

@@ -8,84 +8,84 @@ import type { Plan } from '@/lib/subscription/context';
 // ─── Données statiques ───────────────────────────────────────────────────────
 
 const plans: {
-    id:          Plan;
-    name:        string;
-    price:       string;
+    id: Plan;
+    name: string;
+    price: string;
     priceDetail: string;
-    badge:       string | null;
-    badgeColor:  string;
+    badge: string | null;
+    badgeColor: string;
     description: string;
-    features:    { label: string; included: boolean }[];
-    cta:         string | null;
-    ctaHref:     string | null;
-    available:   boolean;
+    features: { label: string; included: boolean }[];
+    cta: string | null;
+    ctaHref: string | null;
+    available: boolean;
     highlighted: boolean;
 }[] = [
-    {
-        id:          'free',
-        name:        'Gratuit',
-        price:       '0€',
-        priceDetail: 'Pour toujours',
-        badge:       null,
-        badgeColor:  '',
-        description: 'Créez votre compte et explorez l\'interface.',
-        features: [
-            { label: 'Création de compte',          included: true  },
-            { label: 'Consultation du profil',       included: true  },
-            { label: 'Génération de plans IA',       included: false },
-            { label: 'Coach IA',                     included: false },
-            { label: 'Calendrier d\'entraînement',   included: false },
-            { label: 'Stats & analyse',              included: false },
-            { label: 'Synchronisation Strava',       included: false },
-        ],
-        cta:         null,
-        ctaHref:     null,
-        available:   false,
-        highlighted: false,
-    },
-    {
-        id:          'dev',
-        name:        'Développeur',
-        price:       '5€',
-        priceDetail: '/mois · Offre de lancement',
-        badge:       'BÊTA',
-        badgeColor:  'bg-amber-500/20 text-amber-600 dark:text-amber-300 border-amber-500/30',
-        description: 'Accès complet pendant la phase de développement. Prix réduit car l\'app évolue encore.',
-        features: [
-            { label: 'Tout le plan Gratuit',                    included: true },
-            { label: 'Génération de plans IA',                  included: true },
-            { label: 'Coach IA illimité',                       included: true },
-            { label: 'Calendrier d\'entraînement complet',      included: true },
-            { label: 'Stats avancées & analyse de performance', included: true },
-            { label: 'Synchronisation Strava',                  included: true },
-            { label: 'Objectifs & courses',                     included: true },
-        ],
-        cta:         'Souscrire — 5€/mois',
-        ctaHref:     '/checkout?plan=dev',
-        available:   true,
-        highlighted: true,
-    },
-    {
-        id:          'pro',
-        name:        'Pro',
-        price:       '20€',
-        priceDetail: '/mois · Version finale',
-        badge:       'BIENTÔT',
-        badgeColor:  'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-500/30',
-        description: 'L\'abonnement définitif avec toutes les fonctionnalités finalisées et optimisées.',
-        features: [
-            { label: 'Tout le plan Développeur',                   included: true  },
-            { label: 'Fonctionnalités finalisées & optimisées',    included: true  },
-            { label: 'Support prioritaire',                        included: true  },
-            { label: 'Nouvelles features en avant-première',       included: true  },
-            { label: 'Garantie de stabilité & performances',       included: true  },
-        ],
-        cta:         'Bientôt disponible',
-        ctaHref:     null,
-        available:   false,
-        highlighted: false,
-    },
-];
+        {
+            id: 'free',
+            name: 'Gratuit',
+            price: '0€',
+            priceDetail: 'Pour toujours',
+            badge: null,
+            badgeColor: '',
+            description: 'Créez votre compte et explorez l\'interface.',
+            features: [
+                { label: 'Création de compte', included: true },
+                { label: 'Consultation du profil', included: true },
+                { label: 'Génération de plans IA', included: false },
+                { label: 'Coach IA', included: false },
+                { label: 'Calendrier d\'entraînement', included: false },
+                { label: 'Stats & analyse', included: false },
+                { label: 'Synchronisation Strava', included: false },
+            ],
+            cta: null,
+            ctaHref: null,
+            available: false,
+            highlighted: false,
+        },
+        {
+            id: 'dev',
+            name: 'Développeur',
+            price: '5€',
+            priceDetail: '/mois · Offre de lancement',
+            badge: 'BÊTA',
+            badgeColor: 'bg-amber-500/20 text-amber-600 dark:text-amber-300 border-amber-500/30',
+            description: 'Accès complet pendant la phase de développement. Prix réduit car l\'app évolue encore.',
+            features: [
+                { label: 'Tout le plan Gratuit', included: true },
+                { label: 'Génération de plans IA', included: true },
+                { label: 'Coach IA illimité', included: true },
+                { label: 'Calendrier d\'entraînement complet', included: true },
+                { label: 'Stats avancées & analyse de performance', included: true },
+                { label: 'Synchronisation Strava', included: true },
+                { label: 'Objectifs & courses', included: true },
+            ],
+            cta: 'Souscrire — 5€/mois',
+            ctaHref: '/checkout?plan=dev',
+            available: true,
+            highlighted: true,
+        },
+        {
+            id: 'pro',
+            name: 'Pro',
+            price: '20€',
+            priceDetail: '/mois · Version finale',
+            badge: 'BIENTÔT',
+            badgeColor: 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-500/30',
+            description: 'L\'abonnement définitif avec toutes les fonctionnalités finalisées et optimisées.',
+            features: [
+                { label: 'Tout le plan Développeur', included: true },
+                { label: 'Fonctionnalités finalisées & optimisées', included: true },
+                { label: 'Support prioritaire', included: true },
+                { label: 'Nouvelles features en avant-première', included: true },
+                { label: 'Garantie de stabilité & performances', included: true },
+            ],
+            cta: 'Bientôt disponible',
+            ctaHref: null,
+            available: false,
+            highlighted: false,
+        },
+    ];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -135,9 +135,9 @@ export function PricingContent({ currentPlan = 'free' }: { currentPlan?: Plan })
                                 className={`
                                     relative rounded-2xl border p-6 flex flex-col
                                     ${isCurrent
-                                        ? 'border-emerald-400 dark:border-emerald-500/50 bg-gradient-to-b from-emerald-500/5 to-white dark:to-slate-900 shadow-xl shadow-emerald-900/10'
+                                        ? 'border-emerald-400 dark:border-emerald-500/50 bg-linear-to-b from-emerald-500/5 to-white dark:to-slate-900 shadow-xl shadow-emerald-900/10'
                                         : plan.highlighted
-                                            ? 'border-amber-500/40 bg-gradient-to-b from-amber-500/5 to-white dark:to-slate-900 shadow-xl shadow-amber-900/10'
+                                            ? 'border-amber-500/40 bg-linear-to-b from-amber-500/5 to-white dark:to-slate-900 shadow-xl shadow-amber-900/10'
                                             : 'border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60'
                                     }
                                     ${!plan.available && plan.id !== 'free' ? 'opacity-70' : ''}
@@ -242,9 +242,9 @@ export function PricingContent({ currentPlan = 'free' }: { currentPlan?: Plan })
                 {/* Garanties */}
                 <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
                     {[
-                        { icon: Shield,  label: 'Sans engagement',    desc: 'Résiliez à tout moment depuis votre profil' },
-                        { icon: Zap,     label: 'Accès immédiat',      desc: 'Disponible dès la confirmation du paiement' },
-                        { icon: Crown,   label: 'Prix bêta garanti',   desc: 'Tarif 5€ maintenu pendant toute la bêta' },
+                        { icon: Shield, label: 'Sans engagement', desc: 'Résiliez à tout moment depuis votre profil' },
+                        { icon: Zap, label: 'Accès immédiat', desc: 'Disponible dès la confirmation du paiement' },
+                        { icon: Crown, label: 'Prix bêta garanti', desc: 'Tarif 5€ maintenu pendant toute la bêta' },
                     ].map(g => {
                         const Icon = g.icon;
                         return (

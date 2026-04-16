@@ -6,7 +6,7 @@ import { ReturnCode } from '@/lib/data/type';
 import { revalidatePath } from 'next/cache';
 import type { AvailabilitySlot, CompletedData, CompletedDataFeedback, SportType } from '@/lib/data/type';
 import { getStravaActivitiesAllPages, getStravaActivityById } from '@/lib/strava-service';
-import { mapStravaToCompletedData, mapStravaSport } from '@/lib/strava-mapper';
+import { mapStravaSport } from '@/lib/strava-mapper';
 import { Block, Objective, Plan, Profile, Schedule, Week, Workout } from '@/lib/data/DatabaseTypes';
 import { randomUUID } from 'crypto';
 import {
@@ -1571,7 +1571,7 @@ export async function createPlannedWorkoutAI(
     ].filter(Boolean).join('. ');
 
     try {
-        const newWorkoutData = await generateSingleWorkoutFromAI(
+        const { workout: newWorkoutData, tokensUsed: tkCreate } = await generateSingleWorkoutFromAI(
             existingProfile,
             history,
             dateStr,
@@ -1580,6 +1580,7 @@ export async function createPlannedWorkoutAI(
             "General Fitness",
             instruction,
         );
+        if (tkCreate > 0) await atomicIncrementTokenCount(tkCreate);
 
         const workout: Workout = {
             ...newWorkoutData,
@@ -1627,7 +1628,7 @@ export async function regenerateWorkout(workoutIdOrDate: string, instruction?: s
     const blockFocus = "General Fitness"; // TODO: Stocker le focus actuel dans le Schedule si nécessaire
 
     try {
-        const newWorkoutData = await generateSingleWorkoutFromAI(
+        const { workout: newWorkoutData, tokensUsed: tkRegen } = await generateSingleWorkoutFromAI(
             existingProfile,
             history,
             dateKey,
@@ -1636,6 +1637,7 @@ export async function regenerateWorkout(workoutIdOrDate: string, instruction?: s
             blockFocus,
             instruction
         );
+        if (tkRegen > 0) await atomicIncrementTokenCount(tkRegen);
 
         // Remplacement dans le tableau en préservant les clés relationnelles
         existingSchedule.workouts[targetIndex] = {
@@ -1877,7 +1879,8 @@ export async function updateWorkoutStatus(
         : null;
 
     // Atomic per-row update — pas de read-modify-write sur tout le schedule
-    await updateWorkoutById(workout.id, { status, completedData });
+    // Invalider les caches IA quand les données changent
+    await updateWorkoutById(workout.id, { status, completedData, aiSummary: null, aiDeviationCache: null });
 
     // Recalcul CTL/ATL après tout changement de statut
     await recalculateFitnessMetrics();
@@ -2042,6 +2045,175 @@ export async function deleteWorkout(workoutIdOrDate: string) {
     revalidatePath('/');
 }
 
+/**
+ * Met à jour le RPE d'une séance complétée (ex: après sync Strava sans RPE).
+ * Invalide les caches IA pour recalculer avec le nouveau RPE.
+ */
+export async function updateWorkoutRPE(workoutId: string, rpe: number): Promise<void> {
+    const schedule = await getSchedule();
+    const workout = schedule.workouts.find(w => w.id === workoutId);
+    if (!workout || !workout.completedData) throw new Error("Séance non trouvée ou pas complétée");
+
+    const updatedCompletedData: CompletedData = {
+        ...workout.completedData,
+        perceivedEffort: rpe,
+    };
+
+    await updateWorkoutById(workoutId, {
+        completedData: updatedCompletedData,
+        aiSummary: null,
+        aiDeviationCache: null,
+    });
+
+    revalidatePath('/');
+}
+
+export async function getWorkoutAISummary(workout: Workout): Promise<string> {
+    // Cache hit → retourner directement
+    if (workout.aiSummary) return workout.aiSummary;
+
+    const { generateWorkoutSummary } = await import('@/lib/ai/coach-api');
+    const profile = await getProfile();
+    if (!profile || !workout.completedData) return "";
+    try {
+        const { summary, tokensUsed } = await generateWorkoutSummary(profile, workout);
+        // Persister en DB pour ne plus recalculer
+        if (summary) {
+            await updateWorkoutById(workout.id, { aiSummary: summary });
+        }
+        // Comptabiliser les tokens
+        if (tokensUsed > 0) {
+            await atomicIncrementTokenCount(tokensUsed);
+        }
+        return summary;
+    } catch (e) {
+        console.error("AI Summary error:", e);
+        return "";
+    }
+}
+
+/**
+ * Calcule les métriques de déviation planifié vs réalisé pour une séance.
+ * Résultat mis en cache en DB.
+ */
+export async function getWorkoutDeviation(workout: Workout) {
+    // Cache hit → retourner directement
+    if (workout.aiDeviationCache) return workout.aiDeviationCache;
+
+    const { computeDeviationMetrics } = await import('@/lib/stats/computeDeviation');
+    const profile = await getProfile();
+    if (!profile || !workout.completedData) return null;
+
+    const deviation = computeDeviationMetrics(workout, profile);
+    // Persister en DB
+    if (deviation) {
+        await updateWorkoutById(workout.id, { aiDeviationCache: deviation });
+    }
+    return deviation;
+}
+
+/**
+ * Régénère le reste de la semaine suite à une déviation détectée.
+ * adaptationLevel: 'conservative' | 'recommended' | 'ambitious'
+ */
+export async function regenerateWeekFromDeviation(
+    workoutId: string,
+    adaptationLevel: 'conservative' | 'recommended' | 'ambitious'
+): Promise<{ updatedCount: number }> {
+    const [profile, allWorkouts] = await Promise.all([getProfile(), getWorkout()]);
+    if (!profile || !allWorkouts) throw new Error("Données manquantes");
+
+    const { computeDeviationMetrics } = await import('@/lib/stats/computeDeviation');
+
+    const triggerWorkout = allWorkouts.find(w => w.id === workoutId);
+    if (!triggerWorkout || !triggerWorkout.completedData) {
+        throw new Error("Séance non trouvée ou pas complétée");
+    }
+
+    const deviation = computeDeviationMetrics(triggerWorkout, profile);
+    if (!deviation || deviation.signal === 'normal') {
+        return { updatedCount: 0 };
+    }
+
+    // Trouver les séances futures de la même semaine (pending uniquement)
+    const triggerDate = parseISO(triggerWorkout.date);
+    const weekStart = startOfISOWeek(triggerDate);
+    const weekEnd = endOfISOWeek(triggerDate);
+
+    const pendingThisWeek = allWorkouts.filter(w => {
+        const d = parseISO(w.date);
+        return w.status === 'pending'
+            && d > triggerDate
+            && d >= weekStart
+            && d <= weekEnd;
+    }).sort((a, b) => a.date.localeCompare(b.date));
+
+    if (pendingThisWeek.length === 0) return { updatedCount: 0 };
+
+    // Construire le contexte semaine pour l'IA
+    const weekWorkouts = allWorkouts.filter(w => {
+        const d = parseISO(w.date);
+        return d >= weekStart && d <= weekEnd;
+    }).sort((a, b) => a.date.localeCompare(b.date));
+
+    const surroundingContext: Record<string, string> = {};
+    for (const w of weekWorkouts) {
+        const status = w.status === 'completed' ? '(FAIT)' : w.status === 'missed' ? '(RATÉ)' : '(prévu)';
+        surroundingContext[w.date] = `${w.title} ${w.workoutType} ${w.plannedData?.durationMinutes ?? '?'}min ${status}`;
+    }
+
+    // Déterminer le modificateur selon le niveau d'adaptation
+    const levelInstruction: Record<string, string> = {
+        conservative: 'Ajustement léger (-10/+10%). Garde la structure globale, baisse légèrement les intensités ou le volume.',
+        recommended: deviation.signal === 'fatigue'
+            ? 'Adaptation modérée. Remplace les intervalles haute intensité par du sweet spot ou Z2. Réduis le volume de 15-20% si fatigue centrale. Si une séance clé a été ratée, reprogramme-la en supprimant une séance secondaire.'
+            : 'Adaptation modérée. Augmente légèrement l\'intensité (+3-5%) des séances qualité sans toucher au volume. Ne jamais augmenter volume ET intensité en même temps.',
+        ambitious: deviation.signal === 'fatigue'
+            ? 'Adaptation forte. Réduis le volume de 25-30%, transforme les séances qualité restantes en endurance Z2, ajoute une journée de repos si possible.'
+            : 'Adaptation ambitieuse. Augmente l\'intensité des séances qualité (+5-8%). Garde le volume stable. Attention au surentraînement.',
+    };
+
+    // Régénérer chaque séance pending
+    const currentBlockFocus = triggerWorkout.workoutType || "General Fitness";
+    let updatedCount = 0;
+
+    for (const pendingWorkout of pendingThisWeek) {
+        try {
+            const adaptInstruction = `CONTEXTE ADAPTATION: ${deviation.headline}. ${deviation.adaptationReason}
+NIVEAU: ${levelInstruction[adaptationLevel]}
+SIGNAUX: ${deviation.details.join('; ')}
+Score déviation: ${deviation.score}`;
+
+            const { workout: newWorkout, tokensUsed: tkAdapt } = await generateSingleWorkoutFromAI(
+                profile,
+                null,
+                pendingWorkout.date,
+                surroundingContext,
+                pendingWorkout,
+                currentBlockFocus,
+                adaptInstruction
+            );
+            if (tkAdapt > 0) await atomicIncrementTokenCount(tkAdapt);
+
+            await updateWorkoutById(pendingWorkout.id, {
+                title: newWorkout.title,
+                workoutType: newWorkout.workoutType,
+                mode: newWorkout.mode,
+                plannedData: newWorkout.plannedData,
+            });
+
+            // Mettre à jour le contexte pour la prochaine séance
+            surroundingContext[pendingWorkout.date] = `${newWorkout.title} ${newWorkout.workoutType} ${newWorkout.plannedData?.durationMinutes ?? '?'}min (ADAPTÉ)`;
+            updatedCount++;
+        } catch (e) {
+            console.error(`Erreur régénération adaptative pour ${pendingWorkout.date}:`, e);
+        }
+    }
+
+    revalidatePath('/');
+    return { updatedCount };
+}
+
 export async function syncStravaActivities() {
     console.log("⚡ Début Sync Strava...");
 
@@ -2157,8 +2329,7 @@ export async function syncStravaActivities() {
                 continue;
             }
 
-            const detail = result.value;
-            const completedData = await mapStravaToCompletedData(detail);
+            const { raw: detail, completedData } = result.value;
             const activityDate = summary.start_date.split('T')[0];
             const stravaSport = mapStravaSport(String(summary.type ?? detail.type ?? ''));
 

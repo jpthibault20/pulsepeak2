@@ -349,7 +349,7 @@ export async function generateSingleWorkoutFromAI(
     oldWorkout?: Workout,
     currentBlockFocus: string = "General Fitness",
     userInstruction?: string
-): Promise<Omit<Workout, 'userId' | 'weekId'>> {
+): Promise<{ workout: Omit<Workout, 'userId' | 'weekId'>; tokensUsed: number }> {
 
     // Le type de sport est forcé à vélo pour l'instant
     const currentSport: SportType = 'cycling'; // TODO: Passer le sport en paramètre si on supporte la course à pied plus tard
@@ -420,28 +420,217 @@ export async function generateSingleWorkoutFromAI(
         generationConfig: { responseMimeType: "application/json", responseSchema: responseSchema, temperature: 0.7 },
     };
 
-    const { data: resultData } = await callGeminiAPI(payload);
+    const { data: resultData, tokensUsed } = await callGeminiAPI(payload);
     const w = (resultData as { workout: Omit<RawAIWorkout, 'date'> }).workout;
 
     // Transformation vers la nouvelle structure
     return {
-        id: oldWorkout?.id || generateWorkoutId(date, currentSport),
-        date: date,
-        sportType: currentSport,
-        title: w.title,
-        workoutType: w.type,
-        mode: w.mode,
-        status: 'pending',
-        plannedData: {
-            durationMinutes: w.duration,
-            plannedTSS: w.tss ?? null,
-            targetPowerWatts: null,
-            targetPaceMinPerKm: null,
-            targetHeartRateBPM: null,
-            distanceKm: null,
-            description: w.description_outdoor ?? w.description_indoor ?? null,
+        workout: {
+            id: oldWorkout?.id || generateWorkoutId(date, currentSport),
+            date: date,
+            sportType: currentSport,
+            title: w.title,
+            workoutType: w.type,
+            mode: w.mode,
+            status: 'pending' as const,
+            plannedData: {
+                durationMinutes: w.duration,
+                plannedTSS: w.tss ?? null,
+                targetPowerWatts: null,
+                targetPaceMinPerKm: null,
+                targetHeartRateBPM: null,
+                distanceKm: null,
+                description: w.description_outdoor ?? w.description_indoor ?? null,
+            },
+            completedData: null,
         },
-        completedData: null,
+        tokensUsed,
     };
+}
+
+
+/**
+ * Génère une analyse post-séance à vraie valeur ajoutée.
+ * Adapte le contenu au niveau du sportif et au type de séance (libre vs planifiée).
+ */
+export async function generateWorkoutSummary(
+    profile: Profile,
+    workout: Workout
+): Promise<{ summary: string; tokensUsed: number }> {
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set.");
+    if (!workout.completedData) return { summary: "", tokensUsed: 0 };
+
+    const cd = workout.completedData;
+    const planned = workout.plannedData;
+    const sport = workout.sportType;
+    const ftp = profile.cycling?.Test?.ftp;
+    const experience = profile.experience ?? 'Intermédiaire';
+    const hasPlanned = planned && (planned.durationMinutes || planned.plannedTSS || planned.targetPowerWatts);
+
+    // ── Métriques de base ──────────────────────────────────
+    let metricsStr = `Durée: ${cd.actualDurationMinutes}min, Distance: ${cd.distanceKm}km`;
+    if (cd.heartRate?.avgBPM) metricsStr += `, FC moy: ${cd.heartRate.avgBPM}bpm`;
+    if (cd.heartRate?.maxBPM) metricsStr += `, FC max: ${cd.heartRate.maxBPM}bpm`;
+    if (cd.perceivedEffort != null) metricsStr += `, RPE: ${cd.perceivedEffort}/10`;
+
+    if (sport === 'cycling' && cd.metrics?.cycling) {
+        const c = cd.metrics.cycling;
+        if (c.avgPowerWatts) metricsStr += `, Puissance moy: ${c.avgPowerWatts}W`;
+        if (c.normalizedPowerWatts) metricsStr += `, NP: ${c.normalizedPowerWatts}W`;
+        if (c.tss) metricsStr += `, TSS: ${c.tss}`;
+        if (c.elevationGainMeters) metricsStr += `, D+: ${c.elevationGainMeters}m`;
+    }
+    if (sport === 'running' && cd.metrics?.running) {
+        const r = cd.metrics.running;
+        if (r.avgPaceMinPerKm) metricsStr += `, Allure: ${r.avgPaceMinPerKm}/km`;
+        if (r.elevationGainMeters) metricsStr += `, D+: ${r.elevationGainMeters}m`;
+    }
+
+    // ── Distribution zones FC (quel stimulus réel) ─────────
+    let zonesStr = "";
+    if (cd.heartRate?.zoneDistribution && cd.heartRate.zoneDistribution.length >= 3) {
+        const z = cd.heartRate.zoneDistribution;
+        const zoneNames = ['Z1 Récup', 'Z2 Endurance', 'Z3 Tempo', 'Z4 Seuil', 'Z5 VO2max'];
+        zonesStr = "\nDISTRIBUTION ZONES FC: " + z.slice(0, 5).map((pct, i) =>
+            `${zoneNames[i] ?? `Z${i + 1}`}: ${Math.round(pct)}%`
+        ).join(', ');
+    }
+
+    // ── Variabilité (régularité de l'effort) ───────────────
+    let stabilityStr = "";
+    if (cd.variabilityIndex != null) {
+        stabilityStr = `\nINDICE VARIABILITÉ: ${cd.variabilityIndex.toFixed(2)} (1.0 = effort parfaitement stable, >1.15 = effort en yoyo)`;
+    }
+
+    // ── Analyse laps : fade rate + découplage ──────────────
+    let advancedStr = "";
+    if (cd.laps && cd.laps.length > 0) {
+        const powerLaps = cd.laps.filter(l => l.avgPower != null && l.avgPower! > 0);
+        if (powerLaps.length >= 3) {
+            const first = powerLaps[0].avgPower!;
+            const last = powerLaps[powerLaps.length - 1].avgPower!;
+            const fade = ((first - last) / first) * 100;
+            if (Math.abs(fade) > 3) {
+                advancedStr += `\nFADE RATE: ${fade.toFixed(1)}% (1er intervalle ${first}W → dernier ${last}W)`;
+            }
+        }
+
+        const validLaps = cd.laps.filter(l => l.avgPower && l.avgPower > 0 && l.avgHeartRate && l.avgHeartRate > 0);
+        if (validLaps.length >= 4) {
+            const mid = Math.floor(validLaps.length / 2);
+            const ratioHalf = (half: typeof validLaps) => {
+                const dur = half.reduce((s, l) => s + l.durationSeconds, 0);
+                if (dur === 0) return 0;
+                const pw = half.reduce((s, l) => s + l.avgPower! * l.durationSeconds, 0) / dur;
+                const hr = half.reduce((s, l) => s + l.avgHeartRate! * l.durationSeconds, 0) / dur;
+                return hr > 0 ? pw / hr : 0;
+            };
+            const r1 = ratioHalf(validLaps.slice(0, mid));
+            const r2 = ratioHalf(validLaps.slice(mid));
+            if (r1 > 0) {
+                const decoupling = ((r1 - r2) / r1) * 100;
+                if (Math.abs(decoupling) > 2) {
+                    advancedStr += `\nDÉCOUPLAGE AÉROBIE: ${decoupling.toFixed(1)}%`;
+                }
+            }
+        }
+    }
+
+    // ── Laps résumé compact ────────────────────────────────
+    let lapsStr = "";
+    if (cd.laps && cd.laps.length > 0) {
+        // Max 6 laps pour limiter les tokens
+        const lapsToShow = cd.laps.length > 6 ? cd.laps.slice(0, 6) : cd.laps;
+        lapsStr = `\nLAPS (${cd.laps.length}):\n` + lapsToShow.map(l => {
+            let s = `- ${l.name}: ${Math.round(l.durationSeconds / 60)}min`;
+            if (l.avgPower) s += `, ${l.avgPower}W`;
+            if (l.avgHeartRate) s += `, ${l.avgHeartRate}bpm`;
+            return s;
+        }).join('\n');
+    }
+
+    // ── Contexte planifié ──────────────────────────────────
+    let plannedStr = "";
+    if (hasPlanned) {
+        plannedStr = `\nPLANIFIÉ: ${planned!.durationMinutes}min`;
+        if (planned!.plannedTSS) plannedStr += `, TSS cible: ${planned!.plannedTSS}`;
+        if (planned!.targetPowerWatts) plannedStr += `, Puissance cible: ${planned!.targetPowerWatts}W`;
+        if (planned!.description) plannedStr += `\nConsigne: ${planned!.description.substring(0, 200)}`;
+    }
+
+    // ── System prompt adapté au niveau et au type ──────────
+    const levelInstructions: Record<string, string> = {
+        'Débutant': `NIVEAU SPORTIF: DÉBUTANT — Le sportif ne maîtrise pas ses données.
+- Traduis TOUT en sensations physiques ("le moment où tu avais du mal à parler, c'est ta zone rouge")
+- UNE seule info actionnable, pas de jargon (pas de NP, IF, TSS, découplage)
+- Explique à quoi sert ce type de séance dans sa progression
+- Si les zones FC sont dispo, dis-lui simplement combien de temps il a passé "facile" vs "dur"`,
+
+        'Intermédiaire': `NIVEAU SPORTIF: INTERMÉDIAIRE — Le sportif lit ses données mais ne voit pas les liens.
+- Connecte la séance au reste de sa semaine ou à ses habitudes
+- Mentionne la variabilité (effort en yoyo vs stable) si pertinent
+- Utilise les termes simples (puissance, zones) mais pas le jargon poussé
+- Donne un conseil concret pour la prochaine séance similaire`,
+
+        'Avancé': `NIVEAU SPORTIF: AVANCÉ — Le sportif connaît ses métriques.
+- Va droit aux détails qui font la différence (fade rate, découplage, gestion du pacing)
+- Mentionne la qualité d'exécution, pas juste les moyennes
+- Si les récups entre intervalles semblent mal gérées (puissance haute dans les repos), dis-le
+- Utilise le vocabulaire technique quand il apporte de la précision`,
+    };
+
+    const workoutTypeInstructions = hasPlanned
+        ? `TYPE: SÉANCE PLANIFIÉE avec cibles.
+Ce qui compte : la QUALITÉ D'EXÉCUTION, pas juste "tu as fait X vs Y".
+- Régularité des intervalles (fade rate = baisse du 1er au dernier)
+- Gestion des récupérations entre efforts
+- Couplage puissance/FC (si la FC dérive alors que les watts sont stables, l'effort réel était plus dur)
+- Si RPE bas et métriques sous les cibles : l'athlète a choisi de rouler facile, ne dis pas "fatigue"
+- Si RPE élevé et métriques sous les cibles : vraie difficulté, quelque chose a limité la perf`
+        : `TYPE: SORTIE LIBRE (pas de cibles planifiées).
+Ce qui compte : identifier le STIMULUS RÉEL de la sortie — ce que le sportif a travaillé, même sans le savoir.
+- Utilise la distribution des zones FC pour dire quel système a été sollicité (endurance, tempo, seuil...)
+- Si le sportif pensait rouler "tranquille" mais a passé du temps en Z3+, dis-le — c'est de la charge non prévue
+- Identifie un pattern dans les laps si visible (départs trop forts en côte, effort en yoyo sur le plat)
+- Indique si cette sortie était plutôt un stimulus d'endurance, de tempo, ou un mix`;
+
+    const systemPrompt = `Tu t'adresses directement au sportif (tutoiement). Texte brut, sans HTML ni markdown.
+
+TON: Toujours positif et encourageant. Chaque séance faite est une bonne séance. Valorise l'effort et ce qui a été bien fait. Tu as le droit de donner UN conseil pour progresser, mais toujours formulé positivement ("la prochaine fois tu peux essayer..." et pas "tu n'as pas réussi à...").
+
+RÈGLE D'OR: Ne reformule JAMAIS les chiffres que le sportif peut lire lui-même. Révèle ce qu'il ne peut PAS voir seul : les liens cachés, la qualité derrière les moyennes, le stimulus réel de sa sortie.
+
+${levelInstructions[experience] ?? levelInstructions['Intermédiaire']}
+
+${workoutTypeInstructions}
+
+FORMAT STRICT:
+- 2-3 phrases, 3-4 lignes max à l'écran. C'est affiché sur mobile.
+- Texte brut UNIQUEMENT. AUCUN HTML (<b>, <br>, <strong>), aucun markdown (**, ##)
+- Pas de bullet points, pas de listes — un texte fluide
+- Ne répète pas les métriques brutes que le sportif peut lire au-dessus
+- Réponds en français`;
+
+    const userPrompt = `SÉANCE: ${workout.title} (${sport}, ${workout.workoutType})
+DATE: ${workout.date}
+${ftp ? `FTP: ${ftp}W` : ''}
+RÉALISÉ: ${metricsStr}${zonesStr}${stabilityStr}${advancedStr}${lapsStr}${plannedStr}`;
+
+    const responseSchema = {
+        type: "OBJECT",
+        properties: { summary: { type: "STRING" } },
+        required: ["summary"]
+    };
+
+    const payload = {
+        contents: [{ parts: [{ text: userPrompt }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        generationConfig: { responseMimeType: "application/json", responseSchema, temperature: 0.6, maxOutputTokens: 200 },
+    };
+
+    const { data, tokensUsed } = await callGeminiAPI(payload);
+    const raw = (data as { summary: string }).summary ?? "";
+    // Strip any HTML tags that Gemini might sneak in
+    return { summary: raw.replace(/<[^>]*>/g, '').trim(), tokensUsed };
 }
 

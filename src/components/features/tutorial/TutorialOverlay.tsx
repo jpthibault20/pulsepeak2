@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import {
     Sparkles,
@@ -525,10 +525,8 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete }) 
     const [currentStep, setCurrentStep] = useState(0);
     const [direction, setDirection] = useState<'next' | 'prev'>('next');
     const [isAnimating, setIsAnimating] = useState(false);
-    const [mounted, setMounted] = useState(false);
+    const mounted = useSyncExternalStore(() => () => { }, () => true, () => false);
     const scrollRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => { setMounted(true); }, []);
 
     const step = STEPS[currentStep];
     const a = ACCENT[step.accentColor] || ACCENT.blue;
@@ -581,7 +579,7 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete }) 
         : 'opacity-100 translate-x-0';
 
     return createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/70 dark:bg-slate-950/85 backdrop-blur-sm">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center bg-slate-900/70 dark:bg-slate-950/85 backdrop-blur-sm">
             <div className="relative w-full max-w-md mx-3 sm:mx-4">
 
                 {/* Skip */}

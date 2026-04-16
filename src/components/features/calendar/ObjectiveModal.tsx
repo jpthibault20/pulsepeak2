@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Trophy, Calendar, MapPin, Mountain, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modale';
@@ -32,9 +32,11 @@ export function ObjectiveModal({ isOpen, onClose, onSave, initialDate, initial, 
     const [elevationGainM, setElevationGainM] = useState('');
     const [priority, setPriority] = useState<Objective['priority']>('secondaire');
     const [comment, setComment] = useState('');
+    const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
 
-    useEffect(() => {
-        if (!isOpen) return;
+    // Reset le formulaire quand la modale s'ouvre
+    if (isOpen && !prevIsOpen) {
+        setPrevIsOpen(true);
         if (initial) {
             setName(initial.name);
             setDate(initial.date);
@@ -52,7 +54,9 @@ export function ObjectiveModal({ isOpen, onClose, onSave, initialDate, initial, 
             setPriority('secondaire');
             setComment('');
         }
-    }, [isOpen, initial, initialDate]);
+    } else if (!isOpen && prevIsOpen) {
+        setPrevIsOpen(false);
+    }
 
     const canSave = name.trim().length >= 2 && date.length === 10;
 

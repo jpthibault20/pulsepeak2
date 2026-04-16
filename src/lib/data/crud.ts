@@ -14,7 +14,7 @@ import {
 import { eq, and, ne, notInArray, gte, lte, sql } from 'drizzle-orm';
 import { createClient } from '@/lib/supabase/server';
 import { Block, Objective, Plan, Profile, Schedule, Week, Workout } from './DatabaseTypes';
-import type { PlannedData, CompletedData } from './type';
+import type { PlannedData, CompletedData, DeviationMetrics } from './type';
 
 // ─── Auth helper ──────────────────────────────────────────────────────────────
 
@@ -40,6 +40,8 @@ function toWorkout(row: typeof workoutsTable.$inferSelect): Workout {
         status:        row.status,
         plannedData:   row.plannedData   as PlannedData,
         completedData: row.completedData as CompletedData | null,
+        aiSummary:     row.aiSummary ?? null,
+        aiDeviationCache: row.aiDeviationCache as DeviationMetrics | null ?? null,
     };
 }
 
@@ -548,7 +550,7 @@ export async function atomicIncrementTokenCount(tokens: number): Promise<void> {
 
 export async function updateWorkoutById(
     workoutId: string,
-    data: Partial<Pick<Workout, 'date' | 'status' | 'completedData' | 'title' | 'sportType' | 'weekId' | 'plannedData' | 'workoutType' | 'mode'>>,
+    data: Partial<Pick<Workout, 'date' | 'status' | 'completedData' | 'title' | 'sportType' | 'weekId' | 'plannedData' | 'workoutType' | 'mode' | 'aiSummary' | 'aiDeviationCache'>>,
 ): Promise<void> {
     const userId = await getCurrentUserId();
     await db

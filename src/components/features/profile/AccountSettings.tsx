@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Lock, LogOut, CheckCircle2, AlertCircle, Loader2, BookOpen, PenOff } from 'lucide-react';
+import { Eye, EyeOff, Lock, LogOut, CheckCircle2, AlertCircle, Loader2, BookOpen } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { resetTutorial } from '@/components/features/tutorial/TutorialOverlay';
 
