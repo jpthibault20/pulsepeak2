@@ -24,7 +24,9 @@
       "WebFetch(domain:github.com)",
       "Bash(wc:*)",
       "Bash(ls:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(python -c ' *)"
     ]
   }
 }

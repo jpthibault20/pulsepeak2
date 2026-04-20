@@ -1579,6 +1579,7 @@ export async function createPlannedWorkoutAI(
             undefined,
             "General Fitness",
             instruction,
+            sportType,
         );
         if (tkCreate > 0) await atomicIncrementTokenCount(tkCreate);
 
@@ -1635,17 +1636,19 @@ export async function regenerateWorkout(workoutIdOrDate: string, instruction?: s
             surroundingWorkouts,
             oldWorkout,
             blockFocus,
-            instruction
+            instruction,
+            oldWorkout.sportType,
         );
         if (tkRegen > 0) await atomicIncrementTokenCount(tkRegen);
 
-        // Remplacement dans le tableau en préservant les clés relationnelles
+        // Remplacement dans le tableau en préservant les clés relationnelles et le sport d'origine
         existingSchedule.workouts[targetIndex] = {
             ...newWorkoutData,
             id: oldWorkout.id,
             userId: oldWorkout.userId,
             weekId: oldWorkout.weekId,
             date: dateKey,
+            sportType: oldWorkout.sportType,
             status: 'pending',
             completedData: null,
         };
@@ -1676,7 +1679,7 @@ function getSurroundingWorkouts(schedule: Schedule, targetDate: string) {
 
     schedule.workouts.forEach(w => {
         if (surroundingDates.has(w.date)) {
-            context[w.date] = `${w.workoutType} - ${w.title}`;
+            context[w.date] = `[${w.sportType}] ${w.workoutType} - ${w.title}`;
         }
     });
 
@@ -2191,7 +2194,8 @@ Score déviation: ${deviation.score}`;
                 surroundingContext,
                 pendingWorkout,
                 currentBlockFocus,
-                adaptInstruction
+                adaptInstruction,
+                pendingWorkout.sportType,
             );
             if (tkAdapt > 0) await atomicIncrementTokenCount(tkAdapt);
 
