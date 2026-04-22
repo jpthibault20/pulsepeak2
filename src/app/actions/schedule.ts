@@ -2351,10 +2351,11 @@ export async function syncStravaActivities() {
             } else {
                 console.log(`   ➕ Activité libre ajoutée : ${activityDate} (${stravaSport})`);
 
-                const sportType = stravaSport !== 'other' ? stravaSport
+                const sportType: SportType = stravaSport !== 'other' ? stravaSport
                     : completedData.metrics.swimming ? 'swimming'
                     : completedData.metrics.running ? 'running'
-                    : 'cycling';
+                    : completedData.metrics.cycling ? 'cycling'
+                    : 'other';
 
                 // Trouver la semaine du bloc actif correspondant à cette date
                 let activeWeekID = '';
