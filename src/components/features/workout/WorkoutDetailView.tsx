@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/Button';
 import { FeatureGate } from '@/components/features/billing/FeatureGate';
 import { formatDate } from '@/lib/utils';
 import { FeedbackForm } from './FeedbackForm';
+import { PlannedStructureView } from './PlannedStructureView';
 import { Profile } from '@/lib/data/DatabaseTypes';
 import { getWorkoutAISummary, getWorkoutDeviation, regenerateWeekFromDeviation, updateWorkoutRPE } from '@/app/actions/schedule';
 import { BatteryLow, ArrowUpRight, Loader2 } from 'lucide-react';
@@ -592,24 +593,15 @@ const LapsSection: React.FC<{ laps: CompletedLap[]; sport: SportType }> = ({ lap
 };
 
 // =====================================================
-// Planned Description
+// Planned Description — délégué à PlannedStructureView
+// (affichage visuel structuré si `structure` présente, sinon fallback texte)
 // =====================================================
-const PlannedStructure: React.FC<{ workout: Workout }> = ({ workout }) => {
-    const description = workout.plannedData?.description;
-    if (!description) return null;
-
-    return (
-        <div className="mb-5 p-4 rounded-2xl bg-white dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/50">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-                <Target size={15} className="text-slate-400" />
-                Programme
-            </h3>
-            <div className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed">
-                {description}
-            </div>
-        </div>
-    );
-};
+const PlannedStructure: React.FC<{ workout: Workout }> = ({ workout }) => (
+    <PlannedStructureView
+        description={workout.plannedData?.description}
+        structure={workout.plannedData?.structure}
+    />
+);
 
 
 // =====================================================

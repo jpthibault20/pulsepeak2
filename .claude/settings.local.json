@@ -24,7 +24,13 @@
       "WebFetch(domain:github.com)",
       "Bash(wc:*)",
       "Bash(ls:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(echo \"EXIT_CODE=$?\")",
+      "Bash(npx eslint *)",
+      "Bash(echo \"TSC_EXIT=$?\")",
+      "Bash(echo \"LINT_EXIT=$?\")",
+      "Bash(git log *)",
+      "Bash(echo \"EXIT=$?\")"
     ]
   }
 }

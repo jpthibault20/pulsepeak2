@@ -19,6 +19,7 @@ import {
     parseISO,
 } from 'date-fns';
 import { callGeminiAPI } from '@/lib/ai/coach-api';
+import { structureSessionDescription } from '@/lib/ai/structure-session';
 import { CTL_PROGRESSION, CTL_LEVEL_MULTIPLIER, TAPER_CTL_DROP_PERCENT, RECOVERY_WEEK_THRESHOLD, RECOVERY_TSS_RATIO, RESIDUAL_EFFECTS_DAYS } from './constants';
 import { computeBlockSkeletons, computeWeeklyTSS, formatAvailability, buildAllowedSlots, getActiveSports } from './helpers';
 
@@ -349,6 +350,9 @@ Retourner un tableau JSON. Chaque objet contient exactement :
 - "index" (number) : numéro du bloc
 - "type" (string) : l'un de ["Base", "Build", "Peak", "Taper"]
 - "theme" (string) : focus spécifique en 3 à 6 mots (PAS juste "Build" ou "Préparation" — sois PRÉCIS sur le contenu : PMA, seuil, force, endurance musculaire, spécificité, etc.)
+
+## LANGUE
+Le champ "theme" doit être rédigé en FRANÇAIS UNIQUEMENT. Termes techniques (PMA, FTP, TSS, VO2max) autorisés.
 `;
 
     const { data: rawBlocks, tokensUsed: tokensBlocks } = await callGeminiAPI({
@@ -592,6 +596,9 @@ Chaque objet contient exactement :
 - "index" (number) : numéro du bloc
 - "type" (string) : l'un de ["Base", "Build", "Peak", "Taper"]
 - "theme" (string) : focus spécifique en 3 à 6 mots
+
+## LANGUE
+Le champ "theme" doit être rédigé en FRANÇAIS UNIQUEMENT. Termes techniques (PMA, FTP, TSS, VO2max) autorisés.
 `;
 
     const { data: rawAiResponse, tokensUsed: tokensWeeks } = await callGeminiAPI({
@@ -808,6 +815,9 @@ ${profile.heartRate.resting ? `- FC Repos : ${profile.heartRate.resting} bpm` : 
    const aiPrompt = `
 Tu es un coach certifié, spécialisé en ${activeSports.join(", ")}, avec 15 ans d'expérience. Tu génères la semaine ${week.weekNumber} d'un bloc de ${block.weekCount} semaines.
 
+## LANGUE — IMPÉRATIF
+**Tous les textes (title, workoutType, description) doivent être rédigés en FRANÇAIS UNIQUEMENT.** Pas d'anglais, pas de mots anglais sauf termes techniques sans équivalent français (FTP, TSS, RPE, VO2max, Z1-Z7).
+
 ## PROFIL ATHLÈTE
 - Niveau : ${profile.experience ?? "Intermédiaire"}
 - CTL actuelle : ${profile.currentCTL}
@@ -965,7 +975,35 @@ ${profile.experience === 'Débutant' ? `⚠️ DÉBUTANT — Appliquer impérati
    Métrique PRIORITAIRE par sport :
    - VÉLO : WATTS/zones de puissance en priorité. Fallback : FC. Dernier recours : RPE.
    - COURSE : ALLURES (min/km) en priorité. Fallback : FC. Dernier recours : RPE.
-   - NATATION : FC/zones en priorité. Fallback : RPE.
+   - NATATION : distance (mètres) + allure /100m. Fallback : FC. Dernier recours : RPE.
+
+10. **NATATION — RÈGLES SPÉCIFIQUES (IMPÉRATIVES)** :
+    a) **Volume en MÈTRES, pas en minutes.** Exprime toujours les séries sous forme "NxDm" (ex: "8x50m", "4x200m"). Indique le volume total de la séance en mètres dans la description.
+    b) **Nage obligatoire** pour chaque série : précise la nage principale — crawl / dos / brasse / papillon / 4 nages / mixte.
+    c) **Matériel obligatoire quand pertinent** : planche, pull-buoy, palmes, plaquettes, tuba frontal, élastique. Ne mets pas de matériel si non pertinent.
+    d) **Récup natation** : toujours exprimée en secondes de repos au bord (ex: "10'' R" = 10 secondes récup entre deux répétitions), PAS en minutes ou en mètres.
+    e) **ÉDUCATIFS / TECHNIQUE — INTERDIT D'ÊTRE VAGUE** : si tu programmes du travail technique, tu DOIS nommer explicitement les éducatifs. "Exercice technique", "travail technique", "drills" seuls sont INTERDITS. Utilise le vocabulaire de la natation :
+       · Rattrapage (crawl — main avant attend que l'autre la rejoigne)
+       · 6 temps / 3 temps (crawl — respiration tous les N coups)
+       · Manchot (1 bras, l'autre le long du corps)
+       · Catch-up (équivalent rattrapage en anglais)
+       · Zip-up / Fermeture éclair (main remonte le long du corps)
+       · Polo crawl (tête hors de l'eau)
+       · Profil / Side kick (jambes sur le côté, 1 bras tendu)
+       · Superman (2 bras tendus devant, jambes seules)
+       · Sculls / Godillage (mouvement horizontal des mains, appuis)
+       · Poings fermés (forcer l'appui avant-bras)
+       · Jambes avec planche, jambes sans planche (position hydrodynamique)
+       · Éducatif dos : rotation épaules, 6 battements 1 bras, etc.
+       · Éducatif brasse : 2 coulées 1 bras, brasse jambes planche, etc.
+    f) **Structure type natation** : Échauffement 300-600m varié (mixte, souvent crawl + dos + brasse) → éventuellement bloc technique avec éducatifs NOMMÉS → corps principal (série avec intensité et récups explicites) → Retour au calme 100-300m souple.
+    g) **Exemple de description BIEN rédigée** :
+       "Échauffement 400m : 200m crawl souple + 4x50m (25m poings fermés / 25m normal) crawl, 10'' R.
+        Technique 8x50m éducatifs, 15'' R : 2x50m Rattrapage + 2x50m 6 temps + 2x50m Manchot (1 bras droit, 1 bras gauche) + 2x50m crawl normal sensation de glisse.
+        Série principale 6x100m crawl à allure seuil (1'40''/100m), 20'' R.
+        Retour au calme 200m dos souple."
+    h) **Exemple de description MAUVAISE (à éviter)** :
+       "400m échauffement. Exercice technique 400m. 6x100m crawl. 200m cool." ← trop vague sur la technique, pas de matériel, pas de récup explicite.
 
 ## FORMAT DE RÉPONSE
 Réponds UNIQUEMENT avec un tableau JSON valide — sans markdown, sans explication.
@@ -1021,14 +1059,30 @@ Chaque objet contient exactement :
     await atomicIncrementTokenCount(tokensWorkouts);
     if (!Array.isArray(rawWorkouts)) throw new Error('Réponse IA invalide : tableau attendu.');
 
+    console.log(`[CreateWorkoutForWeek] 📥 ${rawWorkouts.length} séance(s) reçue(s) de l'IA (semaine ${week.weekNumber})`);
+    (rawWorkouts as AIWorkout[]).forEach((w, i) => {
+        const descPreview = (w.description ?? '').slice(0, 120).replace(/\n/g, ' ');
+        const isNA = !w.description || /^\s*(N\/?A|—|-+)\s*$/i.test(w.description);
+        console.log(
+            `  [${i}] day=${w.dayOffset} sport=${w.sportType} dur=${w.durationMinutes}min type=${w.workoutType}` +
+            `${isNA ? ' ⚠️ DESCRIPTION VIDE/N/A' : ''}\n     desc: "${descPreview}${(w.description ?? '').length > 120 ? '…' : ''}"`
+        );
+    });
+
     // ── Validation post-IA : filtrer / capper les séances hors programme ──
     const allowedSlots = buildAllowedSlots(weeklyAvailability, activeSports);
     const aiResponse = (rawWorkouts as AIWorkout[]).filter((w) => {
         const dayRule = allowedSlots.get(w.dayOffset);
         // Jour non autorisé → supprimer la séance
-        if (!dayRule) return false;
+        if (!dayRule) {
+            console.log(`[CreateWorkoutForWeek] 🚫 filtrée (jour ${w.dayOffset} non autorisé)`);
+            return false;
+        }
         // Sport non prévu ce jour → supprimer
-        if (!dayRule.sports.has(w.sportType)) return false;
+        if (!dayRule.sports.has(w.sportType)) {
+            console.log(`[CreateWorkoutForWeek] 🚫 filtrée (sport ${w.sportType} non prévu jour ${w.dayOffset})`);
+            return false;
+        }
         // Capper la durée au maximum autorisé (si défini)
         const maxMin = dayRule.maxMinutes[w.sportType];
         if (maxMin != null && w.durationMinutes > maxMin) {
@@ -1037,33 +1091,51 @@ Chaque objet contient exactement :
         return true;
     });
 
-    return aiResponse.map((w) => {
-    const workoutDate = addDays(weekStartDate, w.dayOffset);
+    console.log(`[CreateWorkoutForWeek] ✂️ ${aiResponse.length} séance(s) conservée(s) après filtrage`);
 
-    const wId = randomUUID();
-    return {
-        id:          wId,
-        userId:      profile.id,
-        weekId:      week.id,
-        date:        format(workoutDate, 'yyyy-MM-dd'),
-        sportType:   w.sportType as SportType,
-        title:       w.title,
-        workoutType: w.workoutType,
-        mode:        'Outdoor',
-        status:      'pending',
-        plannedData: {
-            durationMinutes:    w.durationMinutes,
-            targetPowerWatts:   null,
-            targetPaceMinPerKm: null,
-            targetHeartRateBPM: null,
-            distanceKm:         null,
-            plannedTSS:         w.plannedTSS,
-            description:        w.description,
-            structure:          [],
-        },
-        completedData: null,
-    } satisfies Workout;
-});
+    // Structuration en parallèle des descriptions via un second appel IA.
+    // Échec individuel → structure: [] (la séance reste utilisable avec sa description).
+    const structuredWorkouts = await Promise.all(
+        aiResponse.map(async (w) => {
+            const { structure, tokensUsed } = await structureSessionDescription({
+                description: w.description,
+                sportType: w.sportType,
+                durationMinutes: w.durationMinutes,
+                profile,
+            });
+            return { w, structure, tokensUsed };
+        })
+    );
+
+    const totalStructureTokens = structuredWorkouts.reduce((s, x) => s + x.tokensUsed, 0);
+    if (totalStructureTokens > 0) await atomicIncrementTokenCount(totalStructureTokens);
+
+    return structuredWorkouts.map(({ w, structure }) => {
+        const workoutDate = addDays(weekStartDate, w.dayOffset);
+        const wId = randomUUID();
+        return {
+            id:          wId,
+            userId:      profile.id,
+            weekId:      week.id,
+            date:        format(workoutDate, 'yyyy-MM-dd'),
+            sportType:   w.sportType as SportType,
+            title:       w.title,
+            workoutType: w.workoutType,
+            mode:        'Outdoor',
+            status:      'pending',
+            plannedData: {
+                durationMinutes:    w.durationMinutes,
+                targetPowerWatts:   null,
+                targetPaceMinPerKm: null,
+                targetHeartRateBPM: null,
+                distanceKm:         null,
+                plannedTSS:         w.plannedTSS,
+                description:        w.description,
+                structure,
+            },
+            completedData: null,
+        } satisfies Workout;
+    });
 }
 
 
@@ -1575,6 +1647,7 @@ export async function createPlannedWorkoutAI(
             existingProfile,
             history,
             dateStr,
+            sportType,
             surroundingWorkouts,
             undefined,
             "General Fitness",
@@ -1632,6 +1705,7 @@ export async function regenerateWorkout(workoutIdOrDate: string, instruction?: s
             existingProfile,
             history,
             dateKey,
+            oldWorkout.sportType,
             surroundingWorkouts,
             oldWorkout,
             blockFocus,
@@ -2188,6 +2262,7 @@ Score déviation: ${deviation.score}`;
                 profile,
                 null,
                 pendingWorkout.date,
+                pendingWorkout.sportType,
                 surroundingContext,
                 pendingWorkout,
                 currentBlockFocus,
