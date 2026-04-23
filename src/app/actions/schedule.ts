@@ -21,7 +21,7 @@ import {
 import { callGeminiAPI } from '@/lib/ai/coach-api';
 import { structureSessionDescription } from '@/lib/ai/structure-session';
 import { CTL_PROGRESSION, CTL_LEVEL_MULTIPLIER, TAPER_CTL_DROP_PERCENT, RECOVERY_WEEK_THRESHOLD, RECOVERY_TSS_RATIO, RESIDUAL_EFFECTS_DAYS } from './constants';
-import { computeBlockSkeletons, computeWeeklyTSS, formatAvailability, buildAllowedSlots, getActiveSports } from './helpers';
+import { computeBlockSkeletons, computeWeeklyTSS, formatAvailability, buildAllowedSlots, getActiveSports, buildTaperPlan } from './helpers';
 
 
 
@@ -212,8 +212,8 @@ export async function CreatePlanToObjective(userID: string, planStartDate: strin
         })
     );
 
-    // Appliquer mini-taper sur les semaines des objectifs secondaires
-    const finalWeeks = applySecondaryObjectiveTaper(newWeeks, updatedBlocks, secondaryObjectives);
+    // Appliquer le taper par J-x (principal J-7 + secondaires J-4)
+    const finalWeeks = applyTaperToWeeks(newWeeks, updatedBlocks, [primaryObjective, ...secondaryObjectives]);
 
     // Générer séances pour la première semaine uniquement
     const firstWeek = finalWeeks[0];
@@ -405,50 +405,45 @@ Le champ "theme" doit être rédigé en FRANÇAIS UNIQUEMENT. Termes techniques 
 
 /******************************************************************************
  * @access Private
- * @function applySecondaryObjectiveTaper
- * @brief Pour chaque objectif secondaire, trouve la semaine correspondante
- *        et la transforme en semaine Taper (TSS réduit de 30%).
+ * @function applyTaperToWeeks
+ * @brief Marque comme Taper toute semaine qui contient au moins un jour dans
+ *        la fenêtre d'affûtage d'un objectif (principal : J-7, secondaire : J-4).
+ *        Ajuste `targetTSS` en remplaçant le TSS des jours tapés par une
+ *        fraction (ratio) du TSS journalier moyen de la semaine.
+ *
+ *        Les règles détaillées par J-x sont dans `constants.ts`
+ *        (`TAPER_RULES_PRINCIPAL` / `TAPER_RULES_SECONDARY`).
  ******************************************************************************/
-function applySecondaryObjectiveTaper(
+function applyTaperToWeeks(
     weeks: Week[],
     blocks: Block[],
-    secondaryObjectives: Objective[]
+    objectives: Objective[],
 ): Week[] {
-    if (secondaryObjectives.length === 0) return weeks;
+    if (objectives.length === 0) return weeks;
 
     const blockMap = new Map(blocks.map(b => [b.id, b]));
 
-    // Calculer les plages de chaque semaine
-    const weekRanges = weeks.map(week => {
-        const block = blockMap.get(week.blockId);
-        if (!block) return { week, start: '', end: '' };
-        const weekStart = addDays(parseISO(block.startDate), (week.weekNumber - 1) * 7);
-        const weekEnd   = addDays(weekStart, 6);
-        return { week, start: format(weekStart, 'yyyy-MM-dd'), end: format(weekEnd, 'yyyy-MM-dd') };
-    });
-
-    // Identifier les semaines qui contiennent un objectif OU qui précèdent une semaine avec objectif
-    const taperWeekIds = new Set<string>();
-
-    for (let i = 0; i < weekRanges.length; i++) {
-        const { week, start, end } = weekRanges[i];
-        if (!start) continue;
-
-        const hasObj = secondaryObjectives.some(o => o.date >= start && o.date <= end);
-        if (hasObj) {
-            // La semaine de la course → Taper
-            taperWeekIds.add(week.id);
-            // La semaine précédente → aussi Taper (pré-course)
-            if (i > 0) taperWeekIds.add(weekRanges[i - 1].week.id);
-        }
-    }
-
     return weeks.map(week => {
-        if (!taperWeekIds.has(week.id)) return week;
+        const block = blockMap.get(week.blockId);
+        if (!block) return week;
+
+        const weekStart = addDays(parseISO(block.startDate), (week.weekNumber - 1) * 7);
+        const taperPlan = buildTaperPlan(weekStart, objectives);
+        if (taperPlan.size === 0) return week;
+
+        // Recompose le TSS cible : jours normaux gardent leur quote-part,
+        // jours tapés reçoivent `dailyAvg × rule.tssRatio`.
+        const dailyAvg = week.targetTSS / 7;
+        let newTSS = 0;
+        for (let d = 0; d <= 6; d++) {
+            const info = taperPlan.get(d);
+            newTSS += info ? dailyAvg * info.rule.tssRatio : dailyAvg;
+        }
+
         return {
             ...week,
             type: 'Taper' as const,
-            targetTSS: Math.round(week.targetTSS * 0.7),
+            targetTSS: Math.round(newTSS),
         };
     });
 }
@@ -735,6 +730,11 @@ export async function CreateWorkoutForWeek(
     const activeSports = getActiveSports(profile.activeSports);
     const formattedAvailability = formatAvailability(weeklyAvailability);
 
+    // Plan de taper jour par jour : utilisé à la fois dans le prompt (règles J-x)
+    // et après l'appel IA (pour whitelister les séances "déblocage obligatoire"
+    // même si le jour n'est pas dans les dispos).
+    const taperPlan = buildTaperPlan(weekStartDate, weekObjectives ?? []);
+
     // Récupérer le contexte de la semaine précédente pour la continuité
     const [allWorkouts, allWeeks, allBlocks] = await Promise.all([
         getWorkout(),
@@ -886,64 +886,63 @@ PROGRESSION DE CHARGE (semaine de type ${week.type}) :
 ${(() => {
     if (!weekObjectives || weekObjectives.length === 0) return '';
 
-    // Calculer les dates de la semaine (lundi=0 ... dimanche=6)
-    const weekStartStr = format(weekStartDate, 'yyyy-MM-dd');
-    const weekEndStr = format(addDays(weekStartDate, 6), 'yyyy-MM-dd');
-    const nextMondayStr = format(addDays(weekStartDate, 7), 'yyyy-MM-dd');
-    const nextWednesdayStr = format(addDays(weekStartDate, 9), 'yyyy-MM-dd');
+    // Principal : fenêtre J-7 / Secondaire : fenêtre J-4.
+    // Pour chaque jour (0=Lundi...6=Dimanche) qui tombe dans une fenêtre, on a
+    // une règle précise (intensité, volume, déblocage obligatoire, etc.).
+    if (taperPlan.size === 0) {
+        // Objectifs présents mais tous hors fenêtre J-x : juste mentionner pour l'IA
+        const lines: string[] = [];
+        lines.push('## 🏁 COURSES À VENIR (hors fenêtre de taper cette semaine — pas d\'affûtage actif)');
+        lines.push(weekObjectives.map(o =>
+            `- ${o.name} le ${o.date} (${o.sport}, priorité : ${o.priority})`
+        ).join('\n'));
+        return lines.join('\n');
+    }
 
-    // Classer les objectifs
-    const objThisWeek = weekObjectives.filter(o => o.date >= weekStartStr && o.date <= weekEndStr);
-    // Course en début de semaine suivante (lun-mer) → la semaine actuelle doit être allégée
-    const objEarlyNextWeek = weekObjectives.filter(o => o.date >= nextMondayStr && o.date <= nextWednesdayStr);
+    const dayNamesFR = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+
+    // Objectifs uniques présents dans la fenêtre (pour les annoncer en tête)
+    const objectivesInWindow = new Map<string, { name: string; date: string; sport: string; priority: string }>();
+    for (const info of taperPlan.values()) {
+        if (!objectivesInWindow.has(info.objectiveName + info.objectiveDate)) {
+            objectivesInWindow.set(info.objectiveName + info.objectiveDate, {
+                name:     info.objectiveName,
+                date:     info.objectiveDate,
+                sport:    info.objectiveSport,
+                priority: info.priority,
+            });
+        }
+    }
+
+    const hasMandatory = Array.from(taperPlan.values()).some(i => i.rule.mandatory);
 
     const lines: string[] = [];
-    lines.push('## ⚠️ COURSES / OBJECTIFS À PROXIMITÉ — PRIORITÉ ABSOLUE');
-    lines.push(weekObjectives.map(o =>
-        `- 🏁 ${o.name} le ${o.date} (${o.sport}${o.distanceKm ? ', ' + o.distanceKm + ' km' : ''}${o.elevationGainM ? ', D+ ' + o.elevationGainM + ' m' : ''}) — Priorité : ${o.priority}`
-    ).join('\n'));
+    lines.push('## ⚠️ AFFÛTAGE PRÉ-COURSE (J-x) — RÈGLES IMPÉRATIVES, PRIORITÉ ABSOLUE');
     lines.push('');
-
-    if (objThisWeek.length > 0) {
-        const raceDays = objThisWeek.map(o => {
-            const d = parseISO(o.date);
-            const dayIdx = Math.round((d.getTime() - weekStartDate.getTime()) / (1000*60*60*24));
-            return { ...o, dayIdx };
-        });
-        const earliestRaceDay = Math.min(...raceDays.map(r => r.dayIdx));
-
-        lines.push('RÈGLES IMPÉRATIVES — COURSE CETTE SEMAINE :');
-        lines.push(`- Le jour de la course (dayOffset=${earliestRaceDay}) : NE PAS planifier de séance. La course EST l'entraînement.`);
-
-        if (earliestRaceDay === 0) {
-            lines.push('- La course est LUNDI. MARDI : repos ou Recovery très léger (20-30 min Z1 max).');
-            lines.push('- Reste de la semaine : reprise progressive.');
-        } else if (earliestRaceDay === 1) {
-            lines.push('- LUNDI : DÉBLOCAGE court (20-30 min) avec accélérations brèves.');
-            lines.push('- Après la course : Recovery mercredi, reprise progressive jeudi+.');
-            lines.push('- Volume global réduit de 30%.');
-        } else {
-            lines.push(`- Jours AVANT la course (dayOffset 0 à ${earliestRaceDay - 1}) : séances courtes (30-45 min max), Z1-Z2 déblocage.`);
-            lines.push(`- VEILLE (dayOffset=${earliestRaceDay - 1}) : openers 20-30 min avec accélérations brèves.`);
-            lines.push('- Aucune séance longue ni haute intensité AVANT la course.');
-        }
-        if (earliestRaceDay < 6) {
-            lines.push(`- Après la course : Recovery très légère le lendemain (30 min max Z1).`);
-        }
-        lines.push('- Volume global réduit de 30-50%.');
-    } else if (objEarlyNextWeek.length > 0) {
-        const raceDay = objEarlyNextWeek[0];
-        const daysUntilRace = Math.round((parseISO(raceDay.date).getTime() - weekStartDate.getTime()) / (1000*60*60*24));
-        lines.push(`RÈGLES IMPÉRATIVES — COURSE EN DÉBUT DE SEMAINE PROCHAINE (${raceDay.name} le ${raceDay.date}, dans ${daysUntilRace} jours) :`);
-        lines.push('- Semaine ALLÉGÉE (pré-course). Volume réduit de 30-40%. Max 60-75 min par séance.');
-        lines.push('- Pas de haute intensité après mercredi (dayOffset=2).');
-        lines.push('- DIMANCHE (dayOffset=6) : OPENERS 20-30 min avec 3-4x30s accélérations pour activer les jambes.');
-        lines.push('- Vendredi-Samedi : repos ou Recovery très léger uniquement.');
-        lines.push('- Pas de sortie longue cette semaine.');
-    } else {
-        lines.push('RÈGLES — COURSE À PROXIMITÉ :');
-        lines.push('- Réduire progressivement le volume. Séances courtes et dynamiques.');
+    lines.push('COURSES DANS LA FENÊTRE DE TAPER :');
+    for (const o of objectivesInWindow.values()) {
+        lines.push(`- 🏁 ${o.name} le ${o.date} (${o.sport}) — priorité : ${o.priority}`);
     }
+    lines.push('');
+    lines.push('PRINCIPE GÉNÉRAL DU TAPER (Mujika / Friel / Coggan) :');
+    lines.push('- On réduit le VOLUME.');
+    lines.push('- On GARDE l\'intensité sur des séances COURTES pour conserver le rythme et le neuromusculaire.');
+    lines.push('- On garde la fréquence (nombre de séances) si possible.');
+    lines.push('- Aucune sortie longue dans la fenêtre de taper. Aucune séance épuisante.');
+    lines.push('');
+    lines.push('RÈGLES JOUR PAR JOUR (ces règles ÉCRASENT toute autre logique de progression pour les jours concernés) :');
+    for (let d = 0; d <= 6; d++) {
+        const info = taperPlan.get(d);
+        if (!info) continue;
+        const mark = info.rule.mandatory ? ' [OBLIGATOIRE]' : '';
+        lines.push(`- **${dayNamesFR[d]} (dayOffset=${d}) — ${info.rule.label}${mark}** — ${info.rule.promptInstruction} Durée max ${info.rule.maxDurationMin} min. Course cible : ${info.objectiveName} (${info.objectiveSport}).`);
+    }
+    lines.push('');
+    if (hasMandatory) {
+        lines.push('⚠️ JOUR(S) OBLIGATOIRE(S) : la ou les séances marquées [OBLIGATOIRE] DOIVENT être incluses dans la réponse JSON, MÊME SI le jour n\'apparaît pas dans les disponibilités de l\'athlète ou est marqué "repos". Le sport à utiliser est celui de la course cible indiquée pour ce jour.');
+        lines.push('');
+    }
+    lines.push('Les autres jours de la semaine (ceux hors fenêtre de taper, s\'il y en a) suivent les règles normales de la semaine mais sans ajouter de charge lourde.');
 
     return lines.join('\n');
 })()}
@@ -1072,6 +1071,16 @@ Chaque objet contient exactement :
     // ── Validation post-IA : filtrer / capper les séances hors programme ──
     const allowedSlots = buildAllowedSlots(weeklyAvailability, activeSports);
     const aiResponse = (rawWorkouts as AIWorkout[]).filter((w) => {
+        const taperInfo = taperPlan.get(w.dayOffset);
+        // Exception "déblocage obligatoire" : on laisse passer quel que soit le
+        // programme de dispo, à condition que le sport corresponde à la course.
+        if (taperInfo?.rule.mandatory && w.sportType === taperInfo.objectiveSport) {
+            if (w.durationMinutes > taperInfo.rule.maxDurationMin) {
+                w.durationMinutes = taperInfo.rule.maxDurationMin;
+            }
+            return true;
+        }
+
         const dayRule = allowedSlots.get(w.dayOffset);
         // Jour non autorisé → supprimer la séance
         if (!dayRule) {
@@ -1087,6 +1096,10 @@ Chaque objet contient exactement :
         const maxMin = dayRule.maxMinutes[w.sportType];
         if (maxMin != null && w.durationMinutes > maxMin) {
             w.durationMinutes = maxMin;
+        }
+        // Cap supplémentaire si le jour est dans la fenêtre de taper (non-mandatory)
+        if (taperInfo && w.durationMinutes > taperInfo.rule.maxDurationMin) {
+            w.durationMinutes = taperInfo.rule.maxDurationMin;
         }
         return true;
     });

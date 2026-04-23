@@ -30,7 +30,8 @@
       "Bash(echo \"TSC_EXIT=$?\")",
       "Bash(echo \"LINT_EXIT=$?\")",
       "Bash(git log *)",
-      "Bash(echo \"EXIT=$?\")"
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(git stash *)"
     ]
   }
 }
