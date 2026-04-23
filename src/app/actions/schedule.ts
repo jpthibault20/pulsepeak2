@@ -2656,15 +2656,20 @@ export async function generateWeekWorkoutsFromDate(
         throw new Error("L'IA n'a retourné aucune séance. Les séances existantes sont conservées.");
     }
 
-    // Supprimer les séances pending de cette semaine uniquement si la génération a réussi
+    // On n'écrase QUE les séances non-complétées (pending + missed) de la semaine
+    // pour éviter la pollution de régénérations successives. Les séances complétées
+    // (réellement faites par l'athlète) sont préservées.
     const keptWorkouts = (existingWorkouts ?? []).filter(
-        w => !(w.weekId === week.id && w.status === 'pending')
+        w => !(w.weekId === week.id && w.status !== 'completed')
     );
+    const keptWeekWorkoutIds = keptWorkouts
+        .filter(w => w.weekId === week.id)
+        .map(w => w.id);
 
-    // Mettre à jour workoutsId de la semaine
+    // Mettre à jour workoutsId de la semaine (conserver les IDs complétés + ajouter les nouveaux)
     const updatedWeeks = weeks.map(w =>
         w.id === week.id
-            ? { ...w, workoutsId: newWorkouts.map(wo => wo.id) }
+            ? { ...w, workoutsId: [...keptWeekWorkoutIds, ...newWorkouts.map(wo => wo.id)] }
             : w
     );
 

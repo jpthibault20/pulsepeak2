@@ -225,24 +225,29 @@ TYPES DE BLOCS :
 - "Repeat" : encapsule UNE phase active + UNE phase de récupération, exécutées N fois (voir règle RÉPÉTITIONS).
 
 CHAMPS :
-- "durationActifSecondes" : durée (en secondes) du bloc (pour un Repeat : durée de la phase active UNE répétition). Peut être null pour la natation si le volume est exprimé en mètres (voir section NATATION).
+- "durationActifSecondes" : durée (en secondes) du bloc (pour un Repeat : durée de la phase active UNE répétition). OBLIGATOIRE pour cycling / running / other (endurance ou renfo temporisé) — ne renvoie JAMAIS null pour ces sports. Convertis systématiquement : "3 min" → 180, "30 sec" → 30, "1h" → 3600. Peut être null UNIQUEMENT pour la natation quand le volume est exprimé en mètres (voir section NATATION) ou pour du renfo basé uniquement sur reps/sets.
 - targetPowerWatts / targetPaceMinPerKm / targetPaceMinPer100m / targetHeartRateBPM / targetRPE : cibles de la phase active (ou du bloc simple).
 - Champs "Recup*" (durationRecupSecondes, targetRecupPowerWatts, etc.) : UNIQUEMENT pour type="Repeat". Définissent la phase de récupération ENTRE deux répétitions.
+- "durationRecupSecondes" : OBLIGATOIRE pour tout bloc Repeat cycling / running dès qu'une récupération est mentionnée (ex: "récup 2 min", "2 min entre", "r=90\""). null UNIQUEMENT si la description ne mentionne vraiment aucune pause entre répétitions, ou pour la natation où la pause est au bord (exprimée en secondes comme "15'' R").
 - distanceMeters / strokeType / equipment : SPÉCIFIQUES NATATION (voir section dédiée).
-- Peut être null : durationActifSecondes pour du renfo basé sur reps/sets, ou pour la natation quand la distance suffit.
 
-RÉPÉTITIONS — économie de tokens :
-- Dès qu'un motif "N x (Active X, Récup Y)" apparaît, utilise UN seul bloc "Repeat" avec :
+RÉPÉTITIONS — PRÉFÉRER "Repeat" DÈS QUE POSSIBLE :
+- Règle d'or : utilise TOUJOURS un bloc "Repeat" plutôt qu'une suite de blocs "Active" + "Rest" dès qu'un motif identique (même durée/distance + même cible active + même récup) se répète ≥ 2 fois. Même si la description d'origine n'emploie pas la notation "NxY", tu DOIS détecter le motif et le compresser en Repeat.
+- Dès qu'un motif "N x (Active X, Récup Y)" apparaît (explicitement "5x3 min" OU implicitement "3 min Z4, 2 min récup, 3 min Z4, 2 min récup, 3 min Z4"), utilise UN seul bloc "Repeat" avec :
   · repeat = N
   · durationActifSecondes + targetXxx = phase active
   · durationRecupSecondes + targetRecupXxx = phase récupération
+- Détection implicite : si tu vois 2+ blocs consécutifs avec la même durée active + même cible + même récup, fusionne-les en UN Repeat. Ne génère pas "Active, Rest, Active, Rest, Active, Rest" — génère un Repeat repeat=3.
+- Même raisonnement pour les sprints en échauffement : "3 sprints de 15s en Z5 avec X récup" → bloc Repeat repeat=3 (imbriqué dans l'échauffement si besoin : émets un Warmup simple pour la partie continue, puis un Repeat pour les sprints, puis éventuellement un Cooldown si la description enchaîne).
 - Exemples :
   · "2x15min Z3 avec 5min récup Z2" → UN bloc Repeat : repeat=2, durationActifSecondes=900, targetPowerWatts=<milieu Z3>, durationRecupSecondes=300, targetRecupPowerWatts=<milieu Z2>.
+  · "5x3 min Z4 (228-263 W), récup 2 min Z1 (<138 W)" → UN bloc Repeat : repeat=5, durationActifSecondes=180, targetPowerWatts=245, durationRecupSecondes=120, targetRecupPowerWatts=130. Les durées NE DOIVENT PAS être null.
   · "3x(1min Z5, 1min Z2)" → UN bloc Repeat : repeat=3, durationActifSecondes=60, targetPowerWatts=<milieu Z5>, durationRecupSecondes=60, targetRecupPowerWatts=<milieu Z2>.
   · "4x30s sprint / 1min récup" → UN bloc Repeat : repeat=4, durationActifSecondes=30, targetRPE=9, durationRecupSecondes=60, targetRecupRPE=3.
+  · "3 sprints de 15 sec en Z5 (265-300 W)" (sans récup précisée) → UN bloc Repeat : repeat=3, durationActifSecondes=15, targetPowerWatts=282, durationRecupSecondes=null (ou durée de récup réaliste estimée si contexte l'impose).
   · NATATION "8x50m crawl 15'' R" → UN bloc Repeat : repeat=8, distanceMeters=50, strokeType="crawl", durationRecupSecondes=15.
-- Pour une série NON identique (ex: pyramide 1-2-3-2-1 min, ou 3 phases distinctes par rep) : N'utilise PAS Repeat. Liste chaque bloc individuellement avec type "Active" / "Rest".
-- Si pas de récupération définie entre les reps (ex: effort continu sans pause), laisse les champs Recup* à null.
+- Pour une série VRAIMENT NON identique (ex: pyramide 1-2-3-2-1 min, ou 3 phases distinctes par rep) : N'utilise PAS Repeat. Liste chaque bloc individuellement avec type "Active" / "Rest". Mais avant d'y renoncer, vérifie qu'il n'y a vraiment aucun sous-motif répétable.
+- Si pas de récupération définie entre les reps (ex: effort continu sans pause), laisse les champs Recup* à null mais utilise quand même Repeat.
 
 CIBLES PAR SPORT — remplis UNIQUEMENT les champs pertinents, laisse les autres à null :
 - cycling : targetPowerWatts (et targetRecupPowerWatts) en priorité, fallback targetHeartRateBPM, dernier recours targetRPE
@@ -320,6 +325,20 @@ ${description}`;
         );
 
         const structure: StructureBlock[] = (data as RawBlock[]).map(normalizeBlock);
+
+        if (sportType !== 'swimming') {
+            const missingDurations = structure
+                .map((b, i) => ({ b, i }))
+                .filter(({ b }) =>
+                    (b.type === 'Repeat' && (b.durationActifSecondes == null || b.durationActifSecondes <= 0)) ||
+                    (b.type !== 'Repeat' && (b.durationActifSecondes == null || b.durationActifSecondes <= 0))
+                );
+            if (missingDurations.length > 0) {
+                console.warn(
+                    `[structureSessionDescription] ⚠️ ${sportType} : ${missingDurations.length} bloc(s) sans durationActifSecondes — UI affichera "—". Indexes: ${missingDurations.map(x => x.i).join(',')}`
+                );
+            }
+        }
 
         return { structure, tokensUsed };
     } catch (err) {
