@@ -34,7 +34,7 @@ async function checkAndIncrementAICallLimit(type: 'plan' | 'workout'): Promise<v
     const today = format(new Date(), 'yyyy-MM-dd');
     const profile = await getProfile();
     const isPro = profile?.plan === 'pro' || profile?.plan === 'dev'
-               || profile?.role === 'admin' || profile?.role === 'freeUse';
+               || profile?.role === 'admin';
     const limits = isPro ? AI_DAILY_LIMITS_PRO : AI_DAILY_LIMITS_FREE;
     await atomicIncrementAICallCount(type, today, limits[type]);
 }
@@ -2329,8 +2329,7 @@ export async function syncStravaActivities() {
         const FREE_STRAVA_LIMIT = 5;
         const isFreePlan =
             (profile?.plan ?? 'free') === 'free' &&
-            profile?.role !== 'admin' &&
-            profile?.role !== 'freeUse';
+            profile?.role !== 'admin';
 
         // 2. Compter les activités Strava existantes (pour la limite free)
         const stravaWorkouts = workouts.filter(w =>

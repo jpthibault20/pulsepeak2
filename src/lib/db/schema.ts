@@ -30,6 +30,7 @@ import type {
 export const experienceEnum         = pgEnum('experience',          ['Débutant', 'Intermédiaire', 'Avancé']);
 export const aiPersonalityEnum      = pgEnum('ai_personality',      ['Strict', 'Encourageant', 'Analytique']);
 export const subscriptionPlanEnum   = pgEnum('subscription_plan',   ['free', 'dev', 'pro']);
+export const userRoleEnum           = pgEnum('user_role',           ['user', 'admin']);
 export const planStatusEnum         = pgEnum('plan_status',         ['active', 'archived']);
 export const weekTypeEnum           = pgEnum('week_type',           ['Load', 'Recovery', 'Taper']);
 export const workoutStatusEnum      = pgEnum('workout_status',      ['pending', 'completed', 'missed']);
@@ -96,6 +97,7 @@ export const profiles = pgTable('profiles', {
 
     aiPersonality: aiPersonalityEnum('ai_personality').default('Analytique').notNull(),
     plan:          subscriptionPlanEnum('plan').default('free').notNull(),
+    role:          userRoleEnum('role').default('user').notNull(),
     strava:        jsonb('strava').$type<StravaConfig>(),
     stravaWriteBack: boolean('strava_write_back').default(true),
 

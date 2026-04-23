@@ -3,6 +3,7 @@ import AppClientWrapper from '@/components/AppClientWrapper';
 import { getObjectives, getProfile, getSchedule } from '@/lib/data/crud';
 import { createClient } from '@/lib/supabase/server';
 import { recalculateFitnessMetrics } from '@/app/actions/schedule';
+import { touchLastLogin } from '@/app/actions/auth';
 
 export default async function Home() {
   const supabase = await createClient();
@@ -11,6 +12,8 @@ export default async function Home() {
   if (!user) {
     redirect('/auth');
   }
+
+  try { await touchLastLogin(); } catch { /* non bloquant */ }
 
   // Mise à jour CTL/ATL avant chargement du profil :
   // recalculateFitnessMetrics itère jour par jour jusqu'à aujourd'hui,
