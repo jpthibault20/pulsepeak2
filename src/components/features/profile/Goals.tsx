@@ -10,6 +10,7 @@ import { Dispatch, SetStateAction } from 'react';
 import { SectionHeader } from './SessionHeader';
 import { Objective, Profile } from '@/lib/data/DatabaseTypes';
 import { ObjectiveModal } from '@/components/features/calendar/ObjectiveModal';
+import { parseLocalDate } from '@/lib/utils';
 
 interface GoalsProps {
     formData: Profile;
@@ -209,7 +210,7 @@ function ObjectiveCard({ obj, onEdit, onDelete, isDeleting, isPast }: ObjectiveC
                 <div className="flex flex-wrap gap-3 mt-1.5">
                     <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                         <Calendar size={10} />
-                        {new Date(obj.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        {parseLocalDate(obj.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                     </span>
                     {obj.distanceKm && (
                         <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">

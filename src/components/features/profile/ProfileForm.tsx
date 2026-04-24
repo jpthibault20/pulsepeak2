@@ -18,7 +18,7 @@ import { useSubscription } from '@/lib/subscription/context';
 
 // ─── Sections ─────────────────────────────────────────────────────────────────
 
-const SECTIONS = [
+const ALL_SECTIONS = [
     { id: 'identity', label: 'Identité', icon: User, color: 'text-blue-400 dark:text-blue-400', accent: 'bg-blue-500' },
     { id: 'sports', label: 'Sports', icon: Activity, color: 'text-emerald-600 dark:text-emerald-400', accent: 'bg-emerald-500' },
     { id: 'planning', label: 'Planning', icon: Calendar, color: 'text-purple-600 dark:text-purple-400', accent: 'bg-purple-500' },
@@ -28,7 +28,10 @@ const SECTIONS = [
     { id: 'compte', label: 'Compte', icon: Shield, color: 'text-slate-500 dark:text-slate-400', accent: 'bg-slate-500' },
 ] as const;
 
-type SectionId = typeof SECTIONS[number]['id'];
+type SectionId = typeof ALL_SECTIONS[number]['id'];
+
+// Onboarding s'arrête à "objectifs" — Abonnement et Compte sont réservés aux paramètres.
+const ONBOARDING_SECTION_IDS: readonly SectionId[] = ['identity', 'sports', 'planning', 'physio', 'objectifs'] as const;
 
 // ─── Profile completion ────────────────────────────────────────────────────────
 
@@ -70,6 +73,11 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
     const [activeSection, setActiveSection] = useState<SectionId>('identity');
     const [isSaving, setIsSaving] = useState(false);
     const tabsRef = useRef<HTMLDivElement>(null);
+
+    const SECTIONS = useMemo(
+        () => (isSettings ? ALL_SECTIONS : ALL_SECTIONS.filter(s => ONBOARDING_SECTION_IDS.includes(s.id))),
+        [isSettings]
+    );
 
     const { plan, status } = useSubscription();
 
@@ -339,7 +347,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
                             <BasicInformation formData={formData} setFormData={setFormData} />
                         )}
                         {activeSection === 'sports' && (
-                            <SportsAndAppLink formData={formData} setFormData={setFormData} isPro={plan === 'pro'} />
+                            <SportsAndAppLink formData={formData} setFormData={setFormData} isPro={plan === 'pro'} showStrava={isSettings} />
                         )}
                         {activeSection === 'planning' && (
                             <Availability formData={formData} setFormData={setFormData} />

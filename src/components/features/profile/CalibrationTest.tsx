@@ -5,7 +5,7 @@ import { TabButton } from "./TabButton";
 import { Dispatch, SetStateAction, useState } from "react";
 import { CyclingTest, Zones } from "@/lib/data/type";
 import { Button } from "@/components/ui/Button";
-import { saveAthleteProfile } from "@/app/actions/schedule";
+import { saveAthleteProfile } from "@/app/actions/schedule/profile";
 import { calculateFtp, validatePowerTests, getTestPrecision } from "@/lib/ftp-calculator";
 import { Profile } from "@/lib/data/DatabaseTypes";
 

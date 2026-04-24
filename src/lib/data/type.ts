@@ -22,17 +22,92 @@ export interface PlannedData {
   distanceKm: number | null;
   plannedTSS: number | null;
   description: string | null;
-structure?: {
-        type:               'Warmup' | 'Active' | 'Rest' | 'Cooldown';
-        durationActifSecondes:      number;
-        targetPowerWatts:   number | null;
-        targetPaceMinPerKm: string | null;
-        targetHeartRateBPM: number | null;
-        distanceKm:         number | null;
-        plannedTSS:         number | null;
-        description:        string;
-    }[];
+  structure?: StructureBlock[];
 }
+
+/**
+ * Types de nage (natation).
+ */
+export type SwimStrokeType =
+  | 'crawl'       // freestyle
+  | 'dos'         // backstroke
+  | 'brasse'      // breaststroke
+  | 'papillon'    // butterfly
+  | '4_nages'     // IM
+  | 'mixte';      // mélange (échauffement varié, etc.)
+
+/**
+ * Bloc "simple" (non répétable). Utilisé au top-level et à l'intérieur d'un Repeat.
+ */
+export interface StructureSimpleBlock {
+  type: 'Warmup' | 'Active' | 'Rest' | 'Cooldown';
+  durationActifSecondes: number | null;
+
+  // Cibles multi-sports (toutes nullable — l'IA remplit celles pertinentes au sport)
+  targetPowerWatts: number | null;        // cyclisme
+  targetPaceMinPerKm: string | null;      // course à pied ("5:30")
+  targetPaceMinPer100m: string | null;    // natation ("1:45")
+  targetHeartRateBPM: number | null;      // tous sports
+  targetRPE: number | null;               // 1-10, tous sports
+
+  distanceKm: number | null;              // vélo / course (distance en km)
+  plannedTSS: number | null;
+
+  // Natation (nullable hors natation)
+  distanceMeters: number | null;          // distance par répétition (ex: 50, 100, 200)
+  strokeType: SwimStrokeType | null;      // nage principale du bloc
+  equipment: string[] | null;             // matériel (ex: ['planche'], ['pull-buoy', 'palmes'])
+
+  // Renforcement musculaire (nullable pour les sports d'endurance)
+  reps: number | null;
+  sets: number | null;
+  loadKg: number | null;
+
+  description: string;
+}
+
+/**
+ * Bloc "répétition" : une phase active + une phase de récupération, exécutées N fois.
+ * Exemple : 2x(15min Z3, 5min Z2) →
+ *   { type: 'Repeat', repeat: 2,
+ *     durationActifSecondes: 900, targetPowerWatts: 220,     // actif
+ *     durationRecupSecondes: 300, targetRecupPowerWatts: 150 // récup
+ *   }
+ * Pour des patterns plus complexes (>2 phases par rep), développe en blocs simples individuels sans utiliser Repeat.
+ */
+export interface StructureRepeatBlock {
+  type: 'Repeat';
+  repeat: number;
+
+  // Phase ACTIVE (travail)
+  durationActifSecondes: number | null;
+  targetPowerWatts: number | null;
+  targetPaceMinPerKm: string | null;
+  targetPaceMinPer100m: string | null;
+  targetHeartRateBPM: number | null;
+  targetRPE: number | null;
+
+  // Natation — phase active (nullable hors natation)
+  distanceMeters: number | null;          // distance par répétition (ex: 50, 100)
+  strokeType: SwimStrokeType | null;
+  equipment: string[] | null;
+
+  // Phase RÉCUPÉRATION (entre deux répétitions)
+  durationRecupSecondes: number | null;
+  targetRecupPowerWatts: number | null;
+  targetRecupPaceMinPerKm: string | null;
+  targetRecupPaceMinPer100m: string | null;
+  targetRecupHeartRateBPM: number | null;
+  targetRecupRPE: number | null;
+
+  description: string;
+}
+
+/**
+ * Item au top-level de PlannedData.structure : soit un bloc simple, soit un bloc de répétition.
+ * Pas de récursion : un Repeat ne peut pas contenir un autre Repeat.
+ */
+export type StructureBlock = StructureSimpleBlock | StructureRepeatBlock;
 
 export interface CompletedData {
   // --- Données Globales ---

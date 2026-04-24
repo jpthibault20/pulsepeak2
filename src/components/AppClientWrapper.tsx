@@ -2,22 +2,19 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 
-// Import des Server Actions
+// Import des Server Actions (par sous-module schedule)
+import { saveAthleteProfile, loadInitialData } from '@/app/actions/schedule/profile';
+import { CreateAdvancedPlan, CreatePlanToObjective } from '@/app/actions/schedule/plan-creation';
 import {
-    saveAthleteProfile,
-    CreateAdvancedPlan,
     updateWorkoutStatus,
     toggleWorkoutMode,
     moveWorkout,
-    loadInitialData,
     addManualWorkout,
     deleteWorkout,
-    regenerateWorkout,
-    syncStravaActivities,
-    CreatePlanToObjective,
     unlinkStravaWorkout,
-    createPlannedWorkoutAI,
-} from '@/app/actions/schedule';
+} from '@/app/actions/schedule/workout-actions';
+import { regenerateWorkout, createPlannedWorkoutAI } from '@/app/actions/schedule/workout-ai';
+import { syncStravaActivities } from '@/app/actions/schedule/strava-sync';
 import {
     saveObjectiveAction,
     deleteObjectiveAction,

@@ -6,7 +6,7 @@ import { WeekGenerationProgressModal, type WeekGenProgressState } from './WeekGe
 import { AvailabilityTable } from './AvailabilityTable';
 import type { WeekStats } from '@/hooks/useWeekStats';
 import type { AvailabilitySlot } from '@/lib/data/type';
-import { getWeekContextForDate, generateWeekWorkoutsFromDate, getWeekPendingCount, type WeekContext } from '@/app/actions/schedule';
+import { getWeekContextForDate, generateWeekWorkoutsFromDate, getWeekPendingCount, type WeekContext } from '@/app/actions/schedule/week-actions';
 import { FeatureGate } from '@/components/features/billing/FeatureGate';
 
 const DAYS_FR = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'] as const;

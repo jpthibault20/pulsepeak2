@@ -78,3 +78,134 @@ export const RESIDUAL_EFFECTS_DAYS: Record<string, number> = {
     'Sprint':     8,   // Anaérobie / neuromusculaire : 5-12 jours
     'Strength':   20,  // Force : 15-25 jours
 };
+
+
+// ---- Taper par J-x (affûtage pré-course basé sur la distance à l'objectif) --
+
+/**
+ * Durée de la fenêtre de taper (en jours avant la course) selon la priorité.
+ * Principe Mujika/Friel : garder l'intensité, réduire le volume.
+ * - Principale : J-7 à J-1 (7 jours d'affûtage)
+ * - Secondaire : J-4 à J-1 (4 jours d'affûtage, "mini-taper")
+ */
+export const TAPER_WINDOW_DAYS: Record<'principale' | 'secondaire', number> = {
+    principale: 7,
+    secondaire: 4,
+};
+
+/**
+ * Règle appliquée à UN jour dans la fenêtre de taper.
+ */
+export type TaperDayRule = {
+    label:             string;   // étiquette courte (ex: "J-5 · Intensité courte")
+    tssRatio:          number;   // 0..1 — ratio du TSS qu'une journée moyenne de la semaine aurait
+    maxDurationMin:    number;   // durée max acceptable pour ce jour
+    mandatory:         boolean;  // true = séance forcée même si le jour n'est pas dans les dispos
+    promptInstruction: string;   // consigne textuelle injectée dans le prompt IA pour ce jour
+};
+
+/**
+ * Règles J-x pour un objectif PRINCIPAL (fenêtre 7 jours).
+ * Basé sur : Mujika (taper volume -40 à -60%, intensité maintenue), Friel (openers veille),
+ * Coggan (TSB positif le jour J). J-1 = déblocage OBLIGATOIRE, J-2 = récup.
+ */
+export const TAPER_RULES_PRINCIPAL: Record<number, TaperDayRule> = {
+    7: {
+        label:             'J-7 · Dernière sortie longue écourtée',
+        tssRatio:          0.70,
+        maxDurationMin:    150,
+        mandatory:         false,
+        promptInstruction: "Dernière sortie longue avant la course : la RACCOURCIR de 30 à 40 % par rapport à la sortie longue de la semaine précédente. Intensité Z2 majoritaire. Pas d'intervalles durs.",
+    },
+    6: {
+        label:             'J-6 · Endurance courte',
+        tssRatio:          0.55,
+        maxDurationMin:    75,
+        mandatory:         false,
+        promptInstruction: "Endurance courte Z2 uniquement, 60-75 min max. Aucune intensité au-dessus de Z2.",
+    },
+    5: {
+        label:             'J-5 · Intensité courte (rappel)',
+        tssRatio:          0.65,
+        maxDurationMin:    75,
+        mandatory:         false,
+        promptInstruction: "Une séance d'intensité COURTE pour garder les sensations et la stimulation neuromusculaire. Ex : 4×4' VO2max / 5×3' seuil / 6×2' Z5. Durée totale 45-75 min max, échauffement court. Pas de volume inutile autour.",
+    },
+    4: {
+        label:             'J-4 · Endurance très courte',
+        tssRatio:          0.45,
+        maxDurationMin:    60,
+        mandatory:         false,
+        promptInstruction: "Endurance très courte Z1-Z2 (45-60 min max). Aucune intensité.",
+    },
+    3: {
+        label:             'J-3 · Tempo court',
+        tssRatio:          0.50,
+        maxDurationMin:    50,
+        mandatory:         false,
+        promptInstruction: "Tempo court, 30-45 min avec 2×5' en Z3 intégrés pour maintenir le rythme. Pas plus.",
+    },
+    2: {
+        label:             'J-2 · Récupération',
+        tssRatio:          0.30,
+        maxDurationMin:    45,
+        mandatory:         false,
+        promptInstruction: "RÉCUPÉRATION active Z1-Z2 très léger, 30-45 min max. Aucune intensité. Repos complet accepté si l'athlète se sent fatigué — précise-le dans la description.",
+    },
+    1: {
+        label:             'J-1 · DÉBLOCAGE OBLIGATOIRE (veille de course)',
+        tssRatio:          0.25,
+        maxDurationMin:    30,
+        mandatory:         true,
+        promptInstruction: "DÉBLOCAGE / OPENERS OBLIGATOIRES, 20-30 min. Structure impérative : 10-15' Z1 easy + 3×1' Z4 à allure course (récup 1' Z1) + 5-10' retour au calme. Sport = celui de la course. Cette séance EST à planifier même si l'athlète ne l'a pas indiqué dans ses dispos.",
+    },
+    0: {
+        label:             'J-0 · Jour de course',
+        tssRatio:          0,
+        maxDurationMin:    0,
+        mandatory:         false,
+        promptInstruction: "JOUR DE COURSE. Aucune séance à planifier — la course EST l'entraînement du jour.",
+    },
+};
+
+/**
+ * Règles J-x pour un objectif SECONDAIRE (fenêtre 4 jours).
+ * Mini-taper : on ne sacrifie pas le bloc d'entraînement en cours.
+ */
+export const TAPER_RULES_SECONDARY: Record<number, TaperDayRule> = {
+    4: {
+        label:             'J-4 · Intensité courte (rappel)',
+        tssRatio:          0.60,
+        maxDurationMin:    60,
+        mandatory:         false,
+        promptInstruction: "Dernier rappel d'intensité avant la course secondaire : séance COURTE. Ex : 3×4' seuil ou 5×2' Z4. Durée 45-60 min max.",
+    },
+    3: {
+        label:             'J-3 · Endurance courte',
+        tssRatio:          0.50,
+        maxDurationMin:    60,
+        mandatory:         false,
+        promptInstruction: "Endurance courte Z2, 45-60 min. Aucune intensité au-dessus de Z2.",
+    },
+    2: {
+        label:             'J-2 · Récupération',
+        tssRatio:          0.25,
+        maxDurationMin:    30,
+        mandatory:         false,
+        promptInstruction: "RÉCUPÉRATION active Z1, 20-30 min max. Aucune intensité. Repos complet accepté si fatigué.",
+    },
+    1: {
+        label:             'J-1 · DÉBLOCAGE OBLIGATOIRE (veille de course)',
+        tssRatio:          0.20,
+        maxDurationMin:    25,
+        mandatory:         true,
+        promptInstruction: "DÉBLOCAGE / OPENERS OBLIGATOIRES, 15-20 min. Structure impérative : 8-10' Z1 easy + 3×30\" Z4 à allure course (récup 1' Z1) + 5' retour au calme. Sport = celui de la course. Cette séance EST à planifier même si l'athlète ne l'a pas indiqué dans ses dispos.",
+    },
+    0: {
+        label:             'J-0 · Jour de course',
+        tssRatio:          0,
+        maxDurationMin:    0,
+        mandatory:         false,
+        promptInstruction: "JOUR DE COURSE. Aucune séance à planifier — la course EST l'entraînement du jour.",
+    },
+};

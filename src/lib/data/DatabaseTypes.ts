@@ -61,7 +61,7 @@ export interface Profile {
 
     aiPersonality: aiPersonality;
 
-    role?: 'user' | 'freeUse' | 'admin';
+    role: 'user' | 'admin';
     plan?: 'free' | 'dev' | 'pro';
 
     strava?: StravaConfig;

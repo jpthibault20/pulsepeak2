@@ -2,7 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useState, useSyncExternalStore } from 'react';
 import { Sun, Moon } from 'lucide-react';
-import { saveThemePreference } from '@/app/actions/schedule';
+import { saveThemePreference } from '@/app/actions/schedule/profile';
 
 type Theme = 'dark' | 'light';
 
@@ -46,13 +46,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const toggleTheme = useCallback(() => {
-        setTheme(prev => {
-            const next: Theme = prev === 'dark' ? 'light' : 'dark';
-            localStorage.setItem('theme', next);
-            saveThemePreference(next).catch(console.error);
-            return next;
-        });
-    }, []);
+        const next: Theme = theme === 'dark' ? 'light' : 'dark';
+        setTheme(next);
+        localStorage.setItem('theme', next);
+        saveThemePreference(next).catch(console.error);
+    }, [theme]);
 
     const setThemeFromProfile = useCallback((profileTheme: Theme) => {
         applyTheme(profileTheme);
