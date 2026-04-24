@@ -33,7 +33,8 @@
       "Bash(echo \"EXIT=$?\")",
       "Bash(git stash *)",
       "Bash(sed -i 's/parseISO\\(/parseLocalDate\\(/g' src/app/actions/schedule.ts)",
-      "Read(//c/c/Users/tjean/OneDrive/Documents/github/pulsepeak2/src/app/actions/**)"
+      "Read(//c/c/Users/tjean/OneDrive/Documents/github/pulsepeak2/src/app/actions/**)",
+      "Bash(npm run *)"
     ]
   }
 }

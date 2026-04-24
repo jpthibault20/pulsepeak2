@@ -9,7 +9,7 @@ import {
     Bike, FootprintsIcon as Running, Waves, Heart,
     Timer, Gauge, TrendingUp, Unlink,
     Sparkles, ChevronDown, ChevronUp,
-    Flame, Target, Route
+    Flame, Target, Route, Plus, Minus
 } from 'lucide-react';
 import type { SportType, CompletedDataFeedback, CompletedLap, DeviationMetrics } from '@/lib/data/type';
 import type { Workout } from '@/lib/data/DatabaseTypes';
@@ -188,8 +188,26 @@ const RPEQuickInput: React.FC<{
             <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">Comment as-tu ressenti cette séance ?</p>
             <div className="flex items-center gap-3">
                 <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">Facile</span>
+                <button
+                    type="button"
+                    onClick={() => setRpe((r) => Math.max(1, r - 1))}
+                    disabled={rpe <= 1}
+                    aria-label="Diminuer le RPE"
+                    className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                    <Minus size={12} />
+                </button>
                 <input type="range" min={1} max={10} step={1} value={rpe} onChange={(e) => setRpe(Number(e.target.value))}
                     className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer accent-slate-600 dark:accent-slate-400 bg-slate-200 dark:bg-slate-700" />
+                <button
+                    type="button"
+                    onClick={() => setRpe((r) => Math.min(10, r + 1))}
+                    disabled={rpe >= 10}
+                    aria-label="Augmenter le RPE"
+                    className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                    <Plus size={12} />
+                </button>
                 <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">Difficile</span>
                 <span className={`w-2 h-2 rounded-full shrink-0 ${RPE_COLORS[rpe]}`} />
                 <span className="text-xs font-bold font-mono text-slate-900 dark:text-white w-8 text-right">{rpe}<span className="text-[9px] font-normal text-slate-400">/10</span></span>
