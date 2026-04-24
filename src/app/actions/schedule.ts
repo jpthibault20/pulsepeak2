@@ -16,8 +16,8 @@ import {
     startOfISOWeek,
     endOfISOWeek,
     format,
-    parseISO,
 } from 'date-fns';
+import { parseLocalDate } from '@/lib/utils';
 import { callGeminiAPI } from '@/lib/ai/coach-api';
 import { structureSessionDescription } from '@/lib/ai/structure-session';
 import { CTL_PROGRESSION, CTL_LEVEL_MULTIPLIER, TAPER_CTL_DROP_PERCENT, RECOVERY_WEEK_THRESHOLD, RECOVERY_TSS_RATIO, RESIDUAL_EFFECTS_DAYS } from './constants';
@@ -103,12 +103,12 @@ export async function CreateAdvancedPlan(
         getWorkout(), getWeek(), getObjectives(),
     ]);
     const realCompletion = computeAvgCompletion(existingAllWorkouts ?? [], existingAllWeeks ?? [], firstWeek.id);
-    const firstWeekStart = parseISO(firstBlock.startDate);
+    const firstWeekStart = parseLocalDate(firstBlock.startDate);
     const firstWeekEnd = addDays(firstWeekStart, 13); // cette semaine + semaine suivante
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     const firstWeekObjectives = existingObjectives.filter(o =>
         o.status === 'upcoming' && o.date >= todayStr
-        && parseISO(o.date) >= firstWeekStart && parseISO(o.date) <= firstWeekEnd
+        && parseLocalDate(o.date) >= firstWeekStart && parseLocalDate(o.date) <= firstWeekEnd
     );
     const firstWeekWorkouts = await CreateWorkoutForWeek(profile, newPlan, firstBlock, firstWeek, null, realCompletion, weeklyAvailability ?? profile.weeklyAvailability, firstWeekObjectives);
 
@@ -169,7 +169,7 @@ export async function CreatePlanToObjective(userID: string, planStartDate: strin
 
     const startDate = planStartDate >= todayStr ? planStartDate : todayStr;
 
-    const totalWeeks = differenceInWeeks(parseISO(primaryObjective.date), parseISO(startDate));
+    const totalWeeks = differenceInWeeks(parseLocalDate(primaryObjective.date), parseLocalDate(startDate));
     if (totalWeeks < 1) {
         return { state: ReturnCode.RC_Error, error: "L'objectif est trop proche (moins d'une semaine)." };
     }
@@ -220,10 +220,10 @@ export async function CreatePlanToObjective(userID: string, planStartDate: strin
     const firstBlock = updatedBlocks.find(b => b.id === firstWeek.blockId) ?? updatedBlocks[0];
 
     // Trouver les objectifs de cette semaine et la suivante
-    const firstWeekStart = parseISO(firstBlock.startDate);
+    const firstWeekStart = parseLocalDate(firstBlock.startDate);
     const firstWeekEnd = addDays(firstWeekStart, 13); // cette semaine + semaine suivante
     const relevantObjectives = [...secondaryObjectives, primaryObjective].filter(o => {
-        const objDate = parseISO(o.date);
+        const objDate = parseLocalDate(o.date);
         return objDate >= firstWeekStart && objDate <= firstWeekEnd;
     });
 
@@ -265,8 +265,8 @@ async function CreateBlocksToObjective(
     primaryObj: Objective,
     secondaryObjs: Objective[]
 ): Promise<Block[]> {
-    const start = startOfISOWeek(parseISO(plan.startDate));
-    const goal  = endOfISOWeek(parseISO(plan.goalDate));
+    const start = startOfISOWeek(parseLocalDate(plan.startDate));
+    const goal  = endOfISOWeek(parseLocalDate(plan.goalDate));
     const totalWeeks = differenceInWeeks(goal, start) + 1;
 
     if (totalWeeks < 1) throw new Error('Le plan est trop court !');
@@ -427,7 +427,7 @@ function applyTaperToWeeks(
         const block = blockMap.get(week.blockId);
         if (!block) return week;
 
-        const weekStart = addDays(parseISO(block.startDate), (week.weekNumber - 1) * 7);
+        const weekStart = addDays(parseLocalDate(block.startDate), (week.weekNumber - 1) * 7);
         const taperPlan = buildTaperPlan(weekStart, objectives);
         if (taperPlan.size === 0) return week;
 
@@ -501,8 +501,8 @@ function CreatePlan(
  *             (weeksId vide, sera rempli par CreateWeeks)
  ******************************************************************************/
 async function CreateBlocks(plan: Plan, profile: Profile): Promise<Block[]> {
-    const start = startOfISOWeek(parseISO(plan.startDate));
-    const goal  = endOfISOWeek(parseISO(plan.goalDate));
+    const start = startOfISOWeek(parseLocalDate(plan.startDate));
+    const goal  = endOfISOWeek(parseLocalDate(plan.goalDate));
     const totalWeeks = differenceInWeeks(goal, start) + 1;
 
     if (totalWeeks < 1) throw new Error("Le plan est trop court !");
@@ -726,7 +726,7 @@ export async function CreateWorkoutForWeek(
     weekObjectives?: Objective[],
 ): Promise<Workout[]>
 {
-    const weekStartDate = addDays(parseISO(block.startDate), (week.weekNumber - 1) * 7);
+    const weekStartDate = addDays(parseLocalDate(block.startDate), (week.weekNumber - 1) * 7);
     const activeSports = getActiveSports(profile.activeSports);
     const formattedAvailability = formatAvailability(weeklyAvailability);
 
@@ -1058,53 +1058,41 @@ Chaque objet contient exactement :
     await atomicIncrementTokenCount(tokensWorkouts);
     if (!Array.isArray(rawWorkouts)) throw new Error('Réponse IA invalide : tableau attendu.');
 
-    console.log(`[CreateWorkoutForWeek] 📥 ${rawWorkouts.length} séance(s) reçue(s) de l'IA (semaine ${week.weekNumber})`);
-    (rawWorkouts as AIWorkout[]).forEach((w, i) => {
-        const descPreview = (w.description ?? '').slice(0, 120).replace(/\n/g, ' ');
-        const isNA = !w.description || /^\s*(N\/?A|—|-+)\s*$/i.test(w.description);
-        console.log(
-            `  [${i}] day=${w.dayOffset} sport=${w.sportType} dur=${w.durationMinutes}min type=${w.workoutType}` +
-            `${isNA ? ' ⚠️ DESCRIPTION VIDE/N/A' : ''}\n     desc: "${descPreview}${(w.description ?? '').length > 120 ? '…' : ''}"`
-        );
-    });
-
     // ── Validation post-IA : filtrer / capper les séances hors programme ──
     const allowedSlots = buildAllowedSlots(weeklyAvailability, activeSports);
     const aiResponse = (rawWorkouts as AIWorkout[]).filter((w) => {
         const taperInfo = taperPlan.get(w.dayOffset);
         // Exception "déblocage obligatoire" : on laisse passer quel que soit le
         // programme de dispo, à condition que le sport corresponde à la course.
-        if (taperInfo?.rule.mandatory && w.sportType === taperInfo.objectiveSport) {
-            if (w.durationMinutes > taperInfo.rule.maxDurationMin) {
-                w.durationMinutes = taperInfo.rule.maxDurationMin;
+        // Pour les courses multi-disciplines (triathlon, duathlon), on accepte
+        // n'importe quelle discipline d'endurance comme opener valide.
+        if (taperInfo?.rule.mandatory) {
+            const objSport = taperInfo.objectiveSport;
+            const isMultiDiscipline = objSport === 'triathlon' || objSport === 'duathlon';
+            const sportMatches = isMultiDiscipline
+                ? (w.sportType === 'cycling' || w.sportType === 'running' || w.sportType === 'swimming')
+                : w.sportType === objSport;
+            if (sportMatches) {
+                if (w.durationMinutes > taperInfo.rule.maxDurationMin) {
+                    w.durationMinutes = taperInfo.rule.maxDurationMin;
+                }
+                return true;
             }
-            return true;
         }
 
         const dayRule = allowedSlots.get(w.dayOffset);
-        // Jour non autorisé → supprimer la séance
-        if (!dayRule) {
-            console.log(`[CreateWorkoutForWeek] 🚫 filtrée (jour ${w.dayOffset} non autorisé)`);
-            return false;
-        }
-        // Sport non prévu ce jour → supprimer
-        if (!dayRule.sports.has(w.sportType)) {
-            console.log(`[CreateWorkoutForWeek] 🚫 filtrée (sport ${w.sportType} non prévu jour ${w.dayOffset})`);
-            return false;
-        }
-        // Capper la durée au maximum autorisé (si défini)
+        if (!dayRule) return false;
+        if (!dayRule.sports.has(w.sportType)) return false;
+
         const maxMin = dayRule.maxMinutes[w.sportType];
         if (maxMin != null && w.durationMinutes > maxMin) {
             w.durationMinutes = maxMin;
         }
-        // Cap supplémentaire si le jour est dans la fenêtre de taper (non-mandatory)
         if (taperInfo && w.durationMinutes > taperInfo.rule.maxDurationMin) {
             w.durationMinutes = taperInfo.rule.maxDurationMin;
         }
         return true;
     });
-
-    console.log(`[CreateWorkoutForWeek] ✂️ ${aiResponse.length} séance(s) conservée(s) après filtrage`);
 
     // Structuration en parallèle des descriptions via un second appel IA.
     // Échec individuel → structure: [] (la séance reste utilisable avec sa description).
@@ -1251,9 +1239,9 @@ async function getCompletedBlocksHistory(): Promise<string> {
 
     const today = new Date();
     const lines = sortedBlocks.map(block => {
-        const blockEnd = addWeeks(parseISO(block.startDate), block.weekCount);
+        const blockEnd = addWeeks(parseLocalDate(block.startDate), block.weekCount);
         const isPast = today > blockEnd;
-        const isCurrent = today >= parseISO(block.startDate) && today <= blockEnd;
+        const isCurrent = today >= parseLocalDate(block.startDate) && today <= blockEnd;
         const status = isCurrent ? '🔵 EN COURS' : isPast ? '✅ TERMINÉ' : '⏳ À VENIR';
         const plan = plans.find(p => p.id === block.planId);
         return `- [${status}] ${block.type} — "${block.theme}" (${block.weekCount} sem, du ${block.startDate}) | CTL: ${block.startCTL}→${block.targetCTL} | Plan: ${plan?.name ?? 'N/A'}`;
@@ -1261,7 +1249,7 @@ async function getCompletedBlocksHistory(): Promise<string> {
 
     // Résumé des phases complétées
     const completedTypes = sortedBlocks
-        .filter(b => today > addWeeks(parseISO(b.startDate), b.weekCount))
+        .filter(b => today > addWeeks(parseLocalDate(b.startDate), b.weekCount))
         .map(b => b.type);
     const typeCounts = completedTypes.reduce((acc, t) => { acc[t] = (acc[t] || 0) + 1; return acc; }, {} as Record<string, number>);
     const summary = Object.entries(typeCounts).map(([t, n]) => `${t}(${n}x)`).join(', ');
@@ -1363,14 +1351,14 @@ async function analyzeAthleteContext(
 
     // --- 4. Analyse des blocs passés récents ---
     const recentBlocks = blocks
-        .filter(b => today > addWeeks(parseISO(b.startDate), b.weekCount))
+        .filter(b => today > addWeeks(parseLocalDate(b.startDate), b.weekCount))
         .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
         .slice(0, 3);
 
     if (recentBlocks.length > 0) {
         const lastBlock = recentBlocks[0];
         const daysSinceLastBlock = Math.round(
-            (today.getTime() - addWeeks(parseISO(lastBlock.startDate), lastBlock.weekCount).getTime()) / (1000 * 60 * 60 * 24)
+            (today.getTime() - addWeeks(parseLocalDate(lastBlock.startDate), lastBlock.weekCount).getTime()) / (1000 * 60 * 60 * 24)
         );
 
         lines.push(`\n## DERNIER BLOC TERMINÉ`);
@@ -1846,14 +1834,14 @@ export async function recalculateFitnessMetrics(): Promise<void> {
     // On peut donc démarrer au max(premier_workout, aujourd'hui - 200j)
     // en utilisant les valeurs stockées comme seed (leur erreur se dissipe en ~200j).
     const today   = format(new Date(), 'yyyy-MM-dd');
-    const cutoff  = format(addDays(parseISO(today), -200), 'yyyy-MM-dd');
+    const cutoff  = format(addDays(parseLocalDate(today), -200), 'yyyy-MM-dd');
     const startDate = completed[0].date > cutoff ? completed[0].date : cutoff;
 
     let ctl = startDate === completed[0].date ? 0 : (profile.currentCTL ?? 0);
     let atl = startDate === completed[0].date ? 0 : (profile.currentATL ?? 0);
 
-    let   current = parseISO(startDate);
-    const end     = parseISO(today);
+    let   current = parseLocalDate(startDate);
+    const end     = parseLocalDate(today);
 
     while (current <= end) {
         const dateStr = format(current, 'yyyy-MM-dd');
@@ -2114,7 +2102,7 @@ export async function addManualWorkout(workout: Workout) {
     }
 
     // ✅ Validation : vérifier le format de date
-    const parsed = parseISO(workout.date);
+    const parsed = parseLocalDate(workout.date);
     if (isNaN(parsed.getTime())) {
         throw new Error(`Format de date invalide: ${workout.date}. Attendu: YYYY-MM-DD`);
     }
@@ -2223,12 +2211,12 @@ export async function regenerateWeekFromDeviation(
     }
 
     // Trouver les séances futures de la même semaine (pending uniquement)
-    const triggerDate = parseISO(triggerWorkout.date);
+    const triggerDate = parseLocalDate(triggerWorkout.date);
     const weekStart = startOfISOWeek(triggerDate);
     const weekEnd = endOfISOWeek(triggerDate);
 
     const pendingThisWeek = allWorkouts.filter(w => {
-        const d = parseISO(w.date);
+        const d = parseLocalDate(w.date);
         return w.status === 'pending'
             && d > triggerDate
             && d >= weekStart
@@ -2239,7 +2227,7 @@ export async function regenerateWeekFromDeviation(
 
     // Construire le contexte semaine pour l'IA
     const weekWorkouts = allWorkouts.filter(w => {
-        const d = parseISO(w.date);
+        const d = parseLocalDate(w.date);
         return d >= weekStart && d <= weekEnd;
     }).sort((a, b) => a.date.localeCompare(b.date));
 
@@ -2444,16 +2432,16 @@ export async function syncStravaActivities() {
                 let activeWeekID = '';
                 const newWorkoutId = randomUUID();
                 if (existingBlocks && existingWeeks) {
-                    const activityDateObj = parseISO(activityDate);
+                    const activityDateObj = parseLocalDate(activityDate);
 
                     const activeBlock = existingBlocks.find(block => {
-                        const blockStart = parseISO(block.startDate);
+                        const blockStart = parseLocalDate(block.startDate);
                         const blockEnd = addDays(blockStart, block.weekCount * 7);
                         return activityDateObj >= blockStart && activityDateObj < blockEnd;
                     });
 
                     if (activeBlock) {
-                        const blockStart = parseISO(activeBlock.startDate);
+                        const blockStart = parseLocalDate(activeBlock.startDate);
                         const blockWeeks = existingWeeks.filter(w => activeBlock.weeksId?.includes(w.id));
                         const activeWeek = blockWeeks.find(week => {
                             const weekStart = addDays(blockStart, (week.weekNumber - 1) * 7);
@@ -2541,13 +2529,13 @@ function findBlockAndWeekForDate(
     targetDate: Date
 ): { block: Block; week: Week } | null {
     const block = blocks.find(b => {
-        const start = parseISO(b.startDate);
+        const start = parseLocalDate(b.startDate);
         const end = addDays(start, b.weekCount * 7);
         return targetDate >= start && targetDate < end;
     });
     if (!block) return null;
 
-    const blockStart = parseISO(block.startDate);
+    const blockStart = parseLocalDate(block.startDate);
     const blockWeeks = weeks.filter(w => block.weeksId?.includes(w.id));
     const week = blockWeeks.find(w => {
         const wStart = addDays(blockStart, (w.weekNumber - 1) * 7);
@@ -2577,7 +2565,7 @@ export async function getWeekContextForDate(weekStartDate: string): Promise<Week
     const [blocks, weeks] = await Promise.all([getBlock(), getWeek()]);
     if (!blocks || !weeks) return null;
 
-    const result = findBlockAndWeekForDate(blocks, weeks, parseISO(weekStartDate));
+    const result = findBlockAndWeekForDate(blocks, weeks, parseLocalDate(weekStartDate));
     if (!result) return null;
 
     return {
@@ -2598,7 +2586,7 @@ export async function getWeekPendingCount(weekStartDate: string): Promise<number
     const [blocks, weeks, workouts] = await Promise.all([getBlock(), getWeek(), getWorkout()]);
     if (!blocks || !weeks || !workouts) return 0;
 
-    const result = findBlockAndWeekForDate(blocks, weeks, parseISO(weekStartDate));
+    const result = findBlockAndWeekForDate(blocks, weeks, parseLocalDate(weekStartDate));
     if (!result) return 0;
 
     return workouts.filter(w => w.weekId === result.week.id && w.status === 'pending').length;
@@ -2623,7 +2611,7 @@ export async function generateWeekWorkoutsFromDate(
 
     if (!blocks || !weeks) throw new Error("Aucun plan trouvé.");
 
-    const result = findBlockAndWeekForDate(blocks, weeks, parseISO(weekStartDate));
+    const result = findBlockAndWeekForDate(blocks, weeks, parseLocalDate(weekStartDate));
     if (!result) throw new Error("Aucun bloc actif pour cette semaine.");
 
     const { block, week } = result;
@@ -2632,12 +2620,12 @@ export async function generateWeekWorkoutsFromDate(
 
     // Trouver les objectifs pertinents (cette semaine + semaine suivante)
     const objectives = await getObjectives();
-    const weekStart = parseISO(weekStartDate);
+    const weekStart = parseLocalDate(weekStartDate);
     const weekEndPlusOne = addDays(weekStart, 13);
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     const weekObjectives = objectives.filter(o =>
         o.status === 'upcoming' && o.date >= todayStr
-        && parseISO(o.date) >= weekStart && parseISO(o.date) <= weekEndPlusOne
+        && parseLocalDate(o.date) >= weekStart && parseLocalDate(o.date) <= weekEndPlusOne
     );
 
     const realCompletion3 = computeAvgCompletion(existingWorkouts ?? [], weeks, week.id);
@@ -2748,7 +2736,7 @@ export async function getPlanOverview(): Promise<PlanOverviewData | null> {
             .filter(w => block.weeksId.includes(w.id))
             .sort((a, b) => a.weekNumber - b.weekNumber);
 
-        const blockStart = parseISO(block.startDate);
+        const blockStart = parseLocalDate(block.startDate);
         const blockEnd = addDays(blockStart, block.weekCount * 7 - 1);
         const isCurrent = todayStr >= block.startDate && todayStr <= format(blockEnd, 'yyyy-MM-dd');
         const isPast = todayStr > format(blockEnd, 'yyyy-MM-dd');

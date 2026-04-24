@@ -606,18 +606,24 @@ function toObjective(row: typeof objectivesTable.$inferSelect): Objective {
 export async function getObjectives(): Promise<Objective[]> {
     const userId = await getCurrentUserId();
 
-    // Marquer automatiquement les objectifs passés (date <= aujourd'hui) comme 'passed'
-    const now = new Date();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    await db.update(objectivesTable)
-        .set({ status: 'passed', updatedAt: now })
-        .where(
-            and(
-                eq(objectivesTable.userId, userId),
-                eq(objectivesTable.status, 'upcoming'),
-                lte(objectivesTable.date, todayStr),
-            )
-        );
+    // Best-effort : marquer automatiquement les objectifs passés comme 'passed'.
+    // Si la migration 0004 n'a pas été appliquée (enum sans 'passed'), on avale
+    // l'erreur pour ne pas casser la lecture des objectifs.
+    try {
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        await db.update(objectivesTable)
+            .set({ status: 'passed', updatedAt: now })
+            .where(
+                and(
+                    eq(objectivesTable.userId, userId),
+                    eq(objectivesTable.status, 'upcoming'),
+                    lte(objectivesTable.date, todayStr),
+                )
+            );
+    } catch (err) {
+        console.error('[getObjectives] auto-mark passed failed (migration 0004 appliquée ?):', err);
+    }
 
     const rows = await db.query.objectives.findMany({
         where: eq(objectivesTable.userId, userId),

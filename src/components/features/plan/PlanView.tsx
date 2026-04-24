@@ -12,6 +12,7 @@ import { GenerationModal } from '@/components/features/calendar/GenerationModal'
 import type { Objective, Profile } from '@/lib/data/DatabaseTypes';
 import type { AvailabilitySlot } from '@/lib/data/type';
 import { FeatureGate } from '@/components/features/billing/FeatureGate';
+import { parseLocalDate } from '@/lib/utils';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -93,7 +94,7 @@ export function PlanView({ profile, objectives: userObjectives, onRefresh, onVie
 
     const { plan, blocks, objectives: planObjectives, totalCompletion, totalPlannedTSS, totalActualTSS, currentWeekIndex, totalWeeks } = data;
     const primaryObj = planObjectives.find(o => o.priority === 'principale');
-    const daysToGoal = primaryObj ? Math.max(0, Math.ceil((new Date(primaryObj.date).getTime() - Date.now()) / 86400000)) : null;
+    const daysToGoal = primaryObj ? Math.max(0, Math.ceil((parseLocalDate(primaryObj.date).getTime() - Date.now()) / 86400000)) : null;
 
     return (
         <div className="space-y-5 animate-in fade-in duration-300">
@@ -145,7 +146,7 @@ export function PlanView({ profile, objectives: userObjectives, onRefresh, onVie
                     <h2 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-1">Objectifs</h2>
                     <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
                         {planObjectives.map(obj => {
-                            const days = Math.max(0, Math.ceil((new Date(obj.date).getTime() - Date.now()) / 86400000));
+                            const days = Math.max(0, Math.ceil((parseLocalDate(obj.date).getTime() - Date.now()) / 86400000));
                             const isPrimary = obj.priority === 'principale';
                             return (
                                 <div key={obj.id} className={`

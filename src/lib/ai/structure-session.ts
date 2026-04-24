@@ -191,6 +191,121 @@ function normalizeBlock(b: RawBlock): StructureBlock {
     return b.type === 'Repeat' ? normalizeRepeat(b) : normalizeSimple(b);
 }
 
+function paceToSeconds(pace: string | null): number | null {
+    if (!pace) return null;
+    const m = pace.match(/^(\d+):(\d{2})$/);
+    if (!m) return null;
+    return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+}
+
+/**
+ * Détecte un Repeat où l'IA a inversé les phases active/récup.
+ * Heuristique : la phase active doit toujours être la plus intense. Si le signal principal
+ * du sport contredit ça, on considère le bloc comme inversé. La natation est ignorée
+ * (pas de paire active/récup en intensité — la récup est juste une pause au bord).
+ */
+function isRepeatInverted(b: StructureRepeatBlock, sport: SportType): boolean {
+    if (sport === 'swimming') return false;
+
+    if (b.targetPowerWatts != null && b.targetRecupPowerWatts != null) {
+        return b.targetRecupPowerWatts > b.targetPowerWatts;
+    }
+    if (sport === 'running' && b.targetPaceMinPerKm && b.targetRecupPaceMinPerKm) {
+        const active = paceToSeconds(b.targetPaceMinPerKm);
+        const recup = paceToSeconds(b.targetRecupPaceMinPerKm);
+        if (active != null && recup != null) return recup < active;
+    }
+    if (b.targetHeartRateBPM != null && b.targetRecupHeartRateBPM != null) {
+        return b.targetRecupHeartRateBPM > b.targetHeartRateBPM;
+    }
+    if (b.targetRPE != null && b.targetRecupRPE != null) {
+        return b.targetRecupRPE > b.targetRPE;
+    }
+    return false;
+}
+
+function swapRepeatPhases(b: StructureRepeatBlock): StructureRepeatBlock {
+    return {
+        ...b,
+        durationActifSecondes: b.durationRecupSecondes,
+        targetPowerWatts: b.targetRecupPowerWatts,
+        targetPaceMinPerKm: b.targetRecupPaceMinPerKm,
+        targetPaceMinPer100m: b.targetRecupPaceMinPer100m,
+        targetHeartRateBPM: b.targetRecupHeartRateBPM,
+        targetRPE: b.targetRecupRPE,
+
+        durationRecupSecondes: b.durationActifSecondes,
+        targetRecupPowerWatts: b.targetPowerWatts,
+        targetRecupPaceMinPerKm: b.targetPaceMinPerKm,
+        targetRecupPaceMinPer100m: b.targetPaceMinPer100m,
+        targetRecupHeartRateBPM: b.targetHeartRateBPM,
+        targetRecupRPE: b.targetRPE,
+    };
+}
+
+function findBlocksMissingActiveDuration(structure: StructureBlock[]): number[] {
+    return structure
+        .map((b, i) => ({ b, i }))
+        .filter(({ b }) => b.durationActifSecondes == null || b.durationActifSecondes <= 0)
+        .map(({ i }) => i);
+}
+
+/**
+ * Fallback de dernier recours : si après retry certaines durées sont toujours manquantes,
+ * on infère des valeurs plausibles depuis la durée totale de séance. Les valeurs inférées
+ * sont approximatives — le but est de ne jamais afficher "—" à l'utilisateur, pas de
+ * reconstituer exactement la prescription. La description texte reste la source de vérité.
+ */
+function fillMissingDurationsFallback(
+    structure: StructureBlock[],
+    totalSessionSeconds: number,
+): { filled: StructureBlock[]; filledIdx: number[] } {
+    const filled = structure.map(b => ({ ...b })) as StructureBlock[];
+
+    let knownTime = 0;
+    const unknownIdx: number[] = [];
+    for (let i = 0; i < filled.length; i++) {
+        const b = filled[i];
+        const active = b.durationActifSecondes;
+        if (b.type === 'Repeat') {
+            const rep = b.repeat || 1;
+            if (active != null && active > 0) {
+                knownTime += active * rep;
+                const recup = b.durationRecupSecondes;
+                if (recup != null && recup > 0) knownTime += recup * rep;
+            } else {
+                unknownIdx.push(i);
+            }
+        } else {
+            if (active != null && active > 0) knownTime += active;
+            else unknownIdx.push(i);
+        }
+    }
+
+    if (unknownIdx.length === 0) return { filled, filledIdx: [] };
+
+    const remaining = Math.max(60, totalSessionSeconds - knownTime);
+    const perBlock = remaining / unknownIdx.length;
+
+    for (const i of unknownIdx) {
+        const b = filled[i];
+        if (b.type === 'Repeat') {
+            const rep = b.repeat || 1;
+            const cycleTime = perBlock / rep;
+            const activePart = Math.max(30, Math.round(cycleTime * 0.5));
+            const recupPart = Math.max(30, Math.round(cycleTime * 0.5));
+            b.durationActifSecondes = activePart;
+            if (b.durationRecupSecondes == null || b.durationRecupSecondes <= 0) {
+                b.durationRecupSecondes = recupPart;
+            }
+        } else {
+            b.durationActifSecondes = Math.max(60, Math.round(perBlock));
+        }
+    }
+
+    return { filled, filledIdx: unknownIdx };
+}
+
 /**
  * Prend une description texte de séance et la convertit en tableau de blocs structurés.
  * Retourne [] si l'appel échoue — ne lève jamais, ne doit jamais casser le flux parent.
@@ -203,16 +318,9 @@ export async function structureSessionDescription(params: {
 }): Promise<{ structure: StructureBlock[]; tokensUsed: number }> {
     const { description, sportType, durationMinutes, profile } = params;
 
-    const tStart = Date.now();
-
     if (!description || description.trim().length === 0) {
-        console.warn(`[structureSessionDescription] ⚠️ description vide pour ${sportType} ${durationMinutes}min — skip`);
         return { structure: [], tokensUsed: 0 };
     }
-
-    console.log(
-        `[structureSessionDescription] ▶️ INPUT ${sportType} ${durationMinutes}min (desc=${description.length}ch)\n${description}`
-    );
 
     const zonesContext = buildZonesContext(profile, sportType);
 
@@ -232,6 +340,8 @@ CHAMPS :
 - distanceMeters / strokeType / equipment : SPÉCIFIQUES NATATION (voir section dédiée).
 
 RÉPÉTITIONS — PRÉFÉRER "Repeat" DÈS QUE POSSIBLE :
+- RÈGLE STRICTE ACTIF vs RÉCUP (à appliquer SANS EXCEPTION) : dans un bloc "Repeat", la phase "active" (champs durationActifSecondes + targetXxx) correspond TOUJOURS à la phase de plus HAUTE intensité (le stimulus travaillé) ; la phase "récup" (champs durationRecupSecondes + targetRecupXxx) correspond TOUJOURS à la phase de plus BASSE intensité. Cette règle prime sur l'ordre narratif et sur la durée relative. Conséquences chiffrées OBLIGATOIRES : targetRecupPowerWatts ≤ targetPowerWatts, targetRecupRPE ≤ targetRPE, targetRecupPaceMinPerKm ≥ targetPaceMinPerKm (pace plus élevée = plus lente = plus facile), targetRecupPaceMinPer100m ≥ targetPaceMinPer100m, targetRecupHeartRateBPM ≤ targetHeartRateBPM. Exemples : un sprint 10s Z5 au milieu d'une heure de Z2 → active=sprint Z5 (court mais intense), récup=Z2 entre sprints (long mais facile). "5x3' Z4 avec 2' récup Z1" → active=Z4, récup=Z1. NE JAMAIS inverser sous prétexte que la phase facile est plus longue ou annoncée en premier dans la description.
+- DURÉE INFÉRÉE depuis un cycle temporel : si la description exprime un cycle ("toutes les X minutes", "every X min", "tous les X'"), calcule durationRecupSecondes = X*60 - durationActifSecondes. Ne laisse PAS ces durées à null sous prétexte que le cycle est implicite — fais le calcul. Ex: "sprints de 10s toutes les 10 min" → durationActifSecondes=10, durationRecupSecondes=590.
 - Règle d'or : utilise TOUJOURS un bloc "Repeat" plutôt qu'une suite de blocs "Active" + "Rest" dès qu'un motif identique (même durée/distance + même cible active + même récup) se répète ≥ 2 fois. Même si la description d'origine n'emploie pas la notation "NxY", tu DOIS détecter le motif et le compresser en Repeat.
 - Dès qu'un motif "N x (Active X, Récup Y)" apparaît (explicitement "5x3 min" OU implicitement "3 min Z4, 2 min récup, 3 min Z4, 2 min récup, 3 min Z4"), utilise UN seul bloc "Repeat" avec :
   · repeat = N
@@ -245,6 +355,7 @@ RÉPÉTITIONS — PRÉFÉRER "Repeat" DÈS QUE POSSIBLE :
   · "3x(1min Z5, 1min Z2)" → UN bloc Repeat : repeat=3, durationActifSecondes=60, targetPowerWatts=<milieu Z5>, durationRecupSecondes=60, targetRecupPowerWatts=<milieu Z2>.
   · "4x30s sprint / 1min récup" → UN bloc Repeat : repeat=4, durationActifSecondes=30, targetRPE=9, durationRecupSecondes=60, targetRecupRPE=3.
   · "3 sprints de 15 sec en Z5 (265-300 W)" (sans récup précisée) → UN bloc Repeat : repeat=3, durationActifSecondes=15, targetPowerWatts=282, durationRecupSecondes=null (ou durée de récup réaliste estimée si contexte l'impose).
+  · "Séance Z2 60' avec sprints de 10s en Z5/Z6 toutes les 10 min" → un Warmup simple (ex: 10' Z2) PUIS un Repeat : repeat=5, durationActifSecondes=10, targetPowerWatts=<milieu Z5/Z6>, targetRPE=9, durationRecupSecondes=590, targetRecupPowerWatts=<milieu Z2>, targetRecupRPE=4. Ici le sprint est la phase ACTIVE (haute intensité), la croisière Z2 est la phase RÉCUP — ne jamais inverser même si la Z2 dure 60x plus longtemps que le sprint.
   · NATATION "8x50m crawl 15'' R" → UN bloc Repeat : repeat=8, distanceMeters=50, strokeType="crawl", durationRecupSecondes=15.
 - Pour une série VRAIMENT NON identique (ex: pyramide 1-2-3-2-1 min, ou 3 phases distinctes par rep) : N'utilise PAS Repeat. Liste chaque bloc individuellement avec type "Active" / "Rest". Mais avant d'y renoncer, vérifie qu'il n'y a vraiment aucun sous-motif répétable.
 - Si pas de récupération définie entre les reps (ex: effort continu sans pause), laisse les champs Recup* à null mais utilise quand même Repeat.
@@ -295,10 +406,7 @@ ${zonesContext}
 DESCRIPTION À STRUCTURER :
 ${description}`;
 
-    console.log(`[structureSessionDescription] prompt input = sys:${systemPrompt.length}ch + user:${userPrompt.length}ch`);
-
     try {
-        const tBeforeApi = Date.now();
         const { data, tokensUsed } = await callGeminiAPI({
             contents: [{ parts: [{ text: userPrompt }] }],
             systemInstruction: { parts: [{ text: systemPrompt }] },
@@ -309,41 +417,78 @@ ${description}`;
                 responseSchema: structureResponseSchema,
             },
         }, `struct/${sportType}`);
-        const tApi = Date.now() - tBeforeApi;
 
         if (!Array.isArray(data)) {
-            console.warn(`[structureSessionDescription] ⚠️ réponse IA non-tableau en ${tApi}ms, fallback []`);
             return { structure: [], tokensUsed };
         }
 
-        const tTotal = Date.now() - tStart;
-        console.log(
-            `[structureSessionDescription] ✅ ${sportType} ${durationMinutes}min → ${data.length} blocs (${tokensUsed} tokens) | api=${tApi}ms, total=${tTotal}ms`
-        );
-        console.log(
-            `[structureSessionDescription] JSON:\n${JSON.stringify(data, null, 2)}`
-        );
+        let structure: StructureBlock[] = (data as RawBlock[]).map(normalizeBlock);
+        let totalTokens = tokensUsed;
 
-        const structure: StructureBlock[] = (data as RawBlock[]).map(normalizeBlock);
+        const applyInversionSwap = (blocks: StructureBlock[]): StructureBlock[] => {
+            const out = blocks.slice();
+            for (let i = 0; i < out.length; i++) {
+                const block = out[i];
+                if (block.type === 'Repeat' && isRepeatInverted(block, sportType)) {
+                    out[i] = swapRepeatPhases(block);
+                }
+            }
+            return out;
+        };
 
-        if (sportType !== 'swimming') {
-            const missingDurations = structure
-                .map((b, i) => ({ b, i }))
-                .filter(({ b }) =>
-                    (b.type === 'Repeat' && (b.durationActifSecondes == null || b.durationActifSecondes <= 0)) ||
-                    (b.type !== 'Repeat' && (b.durationActifSecondes == null || b.durationActifSecondes <= 0))
-                );
-            if (missingDurations.length > 0) {
-                console.warn(
-                    `[structureSessionDescription] ⚠️ ${sportType} : ${missingDurations.length} bloc(s) sans durationActifSecondes — UI affichera "—". Indexes: ${missingDurations.map(x => x.i).join(',')}`
-                );
+        structure = applyInversionSwap(structure);
+
+        if (sportType === 'cycling' || sportType === 'running') {
+            const missingIdx = findBlocksMissingActiveDuration(structure);
+            if (missingIdx.length > 0) {
+                const retryUserPrompt = `${userPrompt}
+
+PREMIÈRE STRUCTURE PROPOSÉE (à corriger) :
+${JSON.stringify(structure, null, 2)}
+
+CORRECTION DEMANDÉE : les blocs aux indexes [${missingIdx.join(',')}] ont "durationActifSecondes" manquant (null ou 0). Pour ${sportType}, ce champ est OBLIGATOIRE sur TOUS les blocs. Remplis-le en inférant depuis :
+- les cycles temporels de la description ("toutes les X min", "tous les X'") → durationActifSecondes = durée de la phase active, durationRecupSecondes = X*60 - durationActifSecondes
+- les durées explicites ("5x3 min", "30s sprint")
+- la durée totale de la séance (${durationMinutes} min) si le motif doit la remplir
+
+Applique aussi la RÈGLE STRICTE ACTIF vs RÉCUP (active = phase la plus intense). RENVOIE LE TABLEAU COMPLET (tous les blocs, pas seulement les problématiques) avec les durées corrigées.`;
+
+                try {
+                    const { data: retryData, tokensUsed: retryTokens } = await callGeminiAPI({
+                        contents: [{ parts: [{ text: retryUserPrompt }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: {
+                            temperature: 0.2,
+                            maxOutputTokens: 4096,
+                            responseMimeType: "application/json",
+                            responseSchema: structureResponseSchema,
+                        },
+                    }, `struct-retry/${sportType}`);
+                    totalTokens += retryTokens;
+
+                    if (Array.isArray(retryData) && retryData.length > 0) {
+                        const retriedStructure = (retryData as RawBlock[]).map(normalizeBlock);
+                        const retriedMissing = findBlocksMissingActiveDuration(retriedStructure);
+                        if (retriedMissing.length < missingIdx.length) {
+                            structure = applyInversionSwap(retriedStructure);
+                        }
+                    }
+                } catch {
+                    // On garde la première structure en cas d'échec du retry.
+                }
             }
         }
 
-        return { structure, tokensUsed };
-    } catch (err) {
-        const tTotal = Date.now() - tStart;
-        console.error(`[structureSessionDescription] ❌ échec structuration après ${tTotal}ms, fallback []:`, err);
+        if (sportType !== 'swimming') {
+            const stillMissing = findBlocksMissingActiveDuration(structure);
+            if (stillMissing.length > 0) {
+                const { filled } = fillMissingDurationsFallback(structure, durationMinutes * 60);
+                structure = filled;
+            }
+        }
+
+        return { structure, tokensUsed: totalTokens };
+    } catch {
         return { structure: [], tokensUsed: 0 };
     }
 }

@@ -14,7 +14,8 @@ import {
     type TaperDayRule,
 } from "./constants";
 import { Objective, Profile } from "@/lib/data/DatabaseTypes";
-import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
+import { addDays, differenceInCalendarDays, format } from "date-fns";
+import { parseLocalDate } from "@/lib/utils";
 
 
 // ---- TSS / CTL -------------------------------------------------------------
@@ -205,7 +206,7 @@ export const buildTaperPlan = (
 
         for (const obj of objectives) {
             if (obj.priority !== 'principale' && obj.priority !== 'secondaire') continue;
-            const objDate    = parseISO(obj.date);
+            const objDate    = parseLocalDate(obj.date);
             const daysBefore = differenceInCalendarDays(objDate, currentDate);
             if (daysBefore < 0) continue; // la course est passée, pas de taper
             const windowDays = TAPER_WINDOW_DAYS[obj.priority];

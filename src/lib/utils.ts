@@ -115,6 +115,22 @@ export function formatDateKey(date: Date): string {
     return `${year}-${month}-${day}`;
 }
 
+/**
+ * Parse une date ISO "YYYY-MM-DD" en Date à minuit LOCAL (pas UTC).
+ * À utiliser pour toute string date-only (block.startDate, objective.date, workout.date…)
+ * afin d'éviter les décalages ±1 jour selon le fuseau horaire.
+ *
+ * Contraste avec :
+ *   - new Date("2026-05-19") → UTC midnight (par spec ECMAScript)
+ *   - date-fns v3+ parseISO("2026-05-19") → UTC midnight
+ * Les deux donnent un Date qui, converti via toLocaleDateString dans un TZ négatif,
+ * affiche le jour précédent. parseLocalDate évite ce piège.
+ */
+export function parseLocalDate(isoDate: string): Date {
+    const [y, m, d] = isoDate.slice(0, 10).split('-').map(Number);
+    return new Date(y, m - 1, d);
+}
+
 export function formatDuration(minutes: number): string {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;

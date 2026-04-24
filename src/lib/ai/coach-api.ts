@@ -147,10 +147,7 @@ export async function callGeminiAPI(
         },
     };
 
-    const payloadBytes = JSON.stringify(enhancedPayload).length;
-
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-        const t0 = Date.now();
         const controller = new AbortController();
         const timeoutHandle = setTimeout(() => controller.abort(), timeoutMs);
         try {
@@ -160,26 +157,16 @@ export async function callGeminiAPI(
                 body: JSON.stringify(enhancedPayload),
                 signal: controller.signal,
             });
-            const tFetch = Date.now() - t0;
 
             if (!response.ok) {
                 const errorBody = await response.text();
-                console.warn(`[callGeminiAPI:${tag}] ❌ HTTP ${response.status} en ${tFetch}ms (tentative ${attempt + 1})`);
                 throw new Error(`HTTP error! status: ${response.status}. ${errorBody.substring(0, 200)}`);
             }
 
-            const tBeforeJson = Date.now();
             const data = await response.json();
-            const tParse = Date.now() - tBeforeJson;
 
             const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
             const tokensUsed: number = data.usageMetadata?.totalTokenCount ?? 0;
-            const inTokens: number = data.usageMetadata?.promptTokenCount ?? 0;
-            const outTokens: number = data.usageMetadata?.candidatesTokenCount ?? 0;
-
-            console.log(
-                `[callGeminiAPI:${tag}] ✅ ${tFetch}ms fetch + ${tParse}ms parse | payload=${payloadBytes}B | tokens in=${inTokens} out=${outTokens} total=${tokensUsed}`
-            );
 
             if (!rawText) throw new Error("AI response empty.");
 
@@ -192,32 +179,19 @@ export async function callGeminiAPI(
 
             // Contre-mesure : Gemini peut produire des runs de \n dans les strings
             // (boucle de répétition) qui cassent le JSON. On collapse >=3 \n en un seul.
-            const nRunaway = (cleanText.match(/\\n\\n\\n+/g) ?? []).length;
-            if (nRunaway > 0) {
-                console.warn(`[callGeminiAPI:${tag}] 🧹 ${nRunaway} run(s) de \\n détecté(s) dans la réponse — nettoyage`);
-                cleanText = cleanText.replace(/(\\n){3,}/g, '\\n');
-            }
+            cleanText = cleanText.replace(/(\\n){3,}/g, '\\n');
 
             try {
                 return { data: JSON.parse(cleanText), tokensUsed };
             } catch (parseError) {
-                console.error(`[callGeminiAPI:${tag}] ❌ JSON invalide reçu de Gemini (preview): ${cleanText.slice(0, 400)}…`);
                 throw new Error(`JSON parsing failed: ${parseError}`);
             }
 
         } catch (error) {
-            const elapsed = Date.now() - t0;
-            const isTimeout = (error as Error)?.name === 'AbortError';
-            const msg = isTimeout
-                ? `TIMEOUT après ${elapsed}ms (seuil=${timeoutMs}ms) — Gemini a halluciné ou est bloqué`
-                : `${(error as Error)?.message ?? error} (${elapsed}ms)`;
-
             if (attempt < MAX_RETRIES - 1) {
                 const backoff = Math.pow(2, attempt) * 1000;
-                console.warn(`[callGeminiAPI:${tag}] ⚠️ Tentative ${attempt + 1} échouée : ${msg}. Retry dans ${backoff / 1000}s…`);
                 await delay(backoff);
             } else {
-                console.error(`[callGeminiAPI:${tag}] ❌ Toutes les tentatives ont échoué. Dernière : ${msg}`);
                 throw error;
             }
         } finally {
@@ -476,9 +450,6 @@ export async function generateSingleWorkoutFromAI(
     userInstruction?: string
 ): Promise<{ workout: Omit<Workout, 'userId' | 'weekId'>; tokensUsed: number }> {
 
-    const tStart = Date.now();
-    console.log(`[generateSingleWorkoutFromAI] ⏱️ START ${sportType} ${date}`);
-
     // Extraction des dispos
     const d = new Date(date);
     const dayName = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"][d.getDay()];
@@ -575,26 +546,14 @@ Génère UN objet JSON pour la séance.`;
         },
     };
 
-    console.log(`[generateSingleWorkoutFromAI] prompt input = sys:${systemPrompt.length}ch + user:${userPrompt.length}ch (${sportType})`);
-
-    const tBeforeGen = Date.now();
     const { data: resultData, tokensUsed } = await callGeminiAPI(payload, `single/${sportType}/gen`);
-    const tGen = Date.now() - tBeforeGen;
-    console.log(`[generateSingleWorkoutFromAI] ⏱️ GEN terminé en ${tGen}ms`);
 
     const w = (resultData as { workout: { title: string; type: string; duration: number; tss?: number; mode: 'Outdoor' | 'Indoor'; description: string } }).workout;
 
-    console.log(`[generateSingleWorkoutFromAI] 📥 ${sportType} ${w.duration}min — "${w.title}" (${w.type})`);
     const rawDesc = w.description ?? '';
-    console.log(`  description: "${rawDesc.slice(0, 250)}${rawDesc.length > 250 ? '…' : ''}" (${rawDesc.length} chars)`);
-
     const description = sanitizeDescription(rawDesc);
-    if (!description) {
-        console.warn(`[generateSingleWorkoutFromAI] ⚠️ description inutilisable (vide / N/A) — structuration skip`);
-    }
 
     // Second appel IA : structuration (fallback [] si pas de description ou échec).
-    const tBeforeStruct = Date.now();
     const { structure, tokensUsed: structureTokens } = description
         ? await structureSessionDescription({
             description,
@@ -603,11 +562,6 @@ Génère UN objet JSON pour la séance.`;
             profile,
         })
         : { structure: [], tokensUsed: 0 };
-    const tStruct = Date.now() - tBeforeStruct;
-    console.log(`[generateSingleWorkoutFromAI] ⏱️ STRUCT terminé en ${tStruct}ms`);
-
-    const tTotal = Date.now() - tStart;
-    console.log(`[generateSingleWorkoutFromAI] ⏱️ DONE ${sportType} — total=${tTotal}ms (gen=${tGen}ms + struct=${tStruct}ms)`);
 
     return {
         workout: {
