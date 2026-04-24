@@ -27,7 +27,23 @@ No test runner is configured — there is no `test` script and no test files in 
 
 ### Data flow: client → Server Action → crud.ts → Drizzle → Postgres
 
-**`src/lib/data/crud.ts` is server-only.** Its opening comment is explicit: never import it from a `'use client'` component. Client components must go through a Server Action in `src/app/actions/` (`schedule.ts`, `auth.ts`, `admin.ts`, `objectives.ts`). Every CRUD function derives `userId` from the Supabase session (`getCurrentUserId()`) — callers never pass it. The action layer enforces auth, rate limits, and revalidation; `crud.ts` owns DB mapping.
+**`src/lib/data/crud.ts` is server-only.** Its opening comment is explicit: never import it from a `'use client'` component. Client components must go through a Server Action in `src/app/actions/` (`schedule/`, `auth.ts`, `admin.ts`, `objectives.ts`). Every CRUD function derives `userId` from the Supabase session (`getCurrentUserId()`) — callers never pass it. The action layer enforces auth, rate limits, and revalidation; `crud.ts` owns DB mapping.
+
+### `actions/schedule/` is split by concern
+
+The schedule domain lives in `src/app/actions/schedule/` (no barrel — **import directly from the submodule**):
+
+- `plan-creation.ts` — `CreateAdvancedPlan`, `CreatePlanToObjective` (+ private `CreateBlocks`, `CreateWeeks`, `applyTaperToWeeks`)
+- `week-actions.ts` — `getWeekContextForDate`, `getWeekPendingCount`, `generateWeekWorkoutsFromDate` + type `WeekContext`
+- `workout-actions.ts` — CRUD direct: status, toggle mode, move, unlink Strava, add/delete manual, RPE update
+- `workout-ai.ts` — AI-driven: `createPlannedWorkoutAI`, `regenerateWorkout`, `getWorkoutAISummary`, `getWorkoutDeviation`, `regenerateWeekFromDeviation`
+- `strava-sync.ts` — `syncStravaActivities`
+- `plan-overview.ts` — `getPlanOverview` + types `PlanOverviewBlock/Week/Data`
+- `fitness-metrics.ts` — `recalculateFitnessMetrics` (CTL/ATL)
+- `profile.ts` — `loadInitialData`, `saveAthleteProfile`, `saveThemePreference`
+- `_internals/` — shared private helpers (no `'use server';`): `rate-limit`, `ai-context`, `fitness-tss`, `workout-helpers`, `week-finder`, `workout-generator` (the big `CreateWorkoutForWeek` — called from plan-creation and week-actions)
+
+Each public submodule has its own `'use server';`. `_internals/` files are plain TS helpers (pure functions or module-local utilities) so they can be imported from multiple action files without being registered as Server Actions. **Do not add a barrel `schedule.ts`**: Turbopack (Next.js 16) rejects named re-exports like `export { X } from …` from a `'use server'` file, and adding a non-`'use server'` barrel would obscure the direct-import convention.
 
 Two parallel type systems live in `src/lib/data/`:
 - **`type.ts`** — domain types (`PlannedData`, `CompletedData`, `Zones`, `AvailabilitySlot`, `StravaConfig`, `DeviationMetrics`, `ReturnCode`, etc.), used in `jsonb` columns and across the app.
@@ -53,12 +69,12 @@ The proxy entry point is **`src/proxy.ts`** (not `middleware.ts`) — Next.js 16
 ### AI layer (`src/lib/ai/`)
 
 Single Gemini endpoint (`gemini-2.5-flash`) called from `coach-api.ts`. Two generation modes:
-- Full plan / block generation (called from `CreateAdvancedPlan` in `actions/schedule.ts`) — returns a flat list of `RawAIWorkout` that the server then groups into blocks/weeks using helpers in `actions/helpers.ts` (`computeBlockSkeletons`, `computeWeeklyTSS`, `buildTaperPlan`, etc.).
+- Full plan / block generation (called from `CreateAdvancedPlan` in `actions/schedule/plan-creation.ts`) — returns a flat list of `RawAIWorkout` that the server then groups into blocks/weeks using helpers in `actions/helpers.ts` (`computeBlockSkeletons`, `computeWeeklyTSS`, `buildTaperPlan`, etc.).
 - Single workout regeneration — `generateSingleWorkoutFromAI`.
 
-`structure-session.ts` is a separate Gemini call that parses free-text workout descriptions into structured segments.
+The heavy per-week prompt (zones, availabilities, taper J-x, continuity with previous week) lives in `actions/schedule/_internals/workout-generator.ts` (`CreateWorkoutForWeek`). `structure-session.ts` is a separate Gemini call that parses free-text workout descriptions into structured segments.
 
-**Rate limiting:** `checkAndIncrementAICallLimit()` in `actions/schedule.ts` uses `atomicIncrementAICallCount` (DB-atomic) and per-day resets (`aiPlanCallsResetDate`, `aiWorkoutCallsResetDate` on `profiles`). Free plan = 3 plan/10 workout calls/day; pro/dev/admin = effectively unlimited. Token usage is tracked separately via `atomicIncrementTokenCount` against `tokenPerMonth`.
+**Rate limiting:** `checkAndIncrementAICallLimit()` in `actions/schedule/_internals/rate-limit.ts` uses `atomicIncrementAICallCount` (DB-atomic) and per-day resets (`aiPlanCallsResetDate`, `aiWorkoutCallsResetDate` on `profiles`). Free plan = 3 plan/10 workout calls/day; pro/dev/admin = effectively unlimited. Token usage is tracked separately via `atomicIncrementTokenCount` against `tokenPerMonth`.
 
 ### Strava integration
 

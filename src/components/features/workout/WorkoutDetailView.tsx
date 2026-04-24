@@ -20,7 +20,8 @@ import { formatDate } from '@/lib/utils';
 import { FeedbackForm } from './FeedbackForm';
 import { PlannedStructureView } from './PlannedStructureView';
 import { Profile } from '@/lib/data/DatabaseTypes';
-import { getWorkoutAISummary, getWorkoutDeviation, regenerateWeekFromDeviation, updateWorkoutRPE } from '@/app/actions/schedule';
+import { getWorkoutAISummary, getWorkoutDeviation, regenerateWeekFromDeviation } from '@/app/actions/schedule/workout-ai';
+import { updateWorkoutRPE } from '@/app/actions/schedule/workout-actions';
 import { BatteryLow, ArrowUpRight, Loader2 } from 'lucide-react';
 
 // --- Types ---

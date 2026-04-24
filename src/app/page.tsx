@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import AppClientWrapper from '@/components/AppClientWrapper';
 import { getObjectives, getProfile, getSchedule } from '@/lib/data/crud';
 import { createClient } from '@/lib/supabase/server';
-import { recalculateFitnessMetrics } from '@/app/actions/schedule';
+import { recalculateFitnessMetrics } from '@/app/actions/schedule/fitness-metrics';
 import { touchLastLogin } from '@/app/actions/auth';
 
 export default async function Home() {

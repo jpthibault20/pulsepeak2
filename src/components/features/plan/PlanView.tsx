@@ -6,7 +6,8 @@ import {
     Loader2, AlertCircle, Sparkles, Trophy, TrendingUp, Clock, CheckCircle2,
     MessageSquare, RotateCcw, Flag, X,
 } from 'lucide-react';
-import { getPlanOverview, generateWeekWorkoutsFromDate, type PlanOverviewData, type PlanOverviewBlock, type PlanOverviewWeek } from '@/app/actions/schedule';
+import { getPlanOverview, type PlanOverviewData, type PlanOverviewBlock, type PlanOverviewWeek } from '@/app/actions/schedule/plan-overview';
+import { generateWeekWorkoutsFromDate } from '@/app/actions/schedule/week-actions';
 import { WeekGenerationProgressModal, type WeekGenProgressState } from '@/components/features/calendar/WeekGenerationProgressModal';
 import { GenerationModal } from '@/components/features/calendar/GenerationModal';
 import type { Objective, Profile } from '@/lib/data/DatabaseTypes';

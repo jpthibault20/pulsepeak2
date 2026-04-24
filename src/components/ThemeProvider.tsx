@@ -2,7 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useState, useSyncExternalStore } from 'react';
 import { Sun, Moon } from 'lucide-react';
-import { saveThemePreference } from '@/app/actions/schedule';
+import { saveThemePreference } from '@/app/actions/schedule/profile';
 
 type Theme = 'dark' | 'light';
 
