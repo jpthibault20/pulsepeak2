@@ -5,8 +5,17 @@
  ******************************************************************************/
 
 import { AvailabilitySlot } from "@/lib/data/type";
-import { RECOVERY_TSS_RATIO, RECOVERY_WEEK_THRESHOLD } from "./constants";
-import { Profile } from "@/lib/data/DatabaseTypes";
+import {
+    RECOVERY_TSS_RATIO,
+    RECOVERY_WEEK_THRESHOLD,
+    TAPER_WINDOW_DAYS,
+    TAPER_RULES_PRINCIPAL,
+    TAPER_RULES_SECONDARY,
+    type TaperDayRule,
+} from "./constants";
+import { Objective, Profile } from "@/lib/data/DatabaseTypes";
+import { addDays, differenceInCalendarDays, format } from "date-fns";
+import { parseLocalDate } from "@/lib/utils";
 
 
 // ---- TSS / CTL -------------------------------------------------------------
@@ -159,6 +168,82 @@ export const formatAvailability = (availability: { [key: string]: AvailabilitySl
  * Jours IA LIBRE → toutes les disciplines actives sont autorisées.
  * Jours sans sport → aucun workout autorisé (repos).
  */
+// ---- Taper par J-x ---------------------------------------------------------
+
+export type TaperDayInfo = {
+    dayOffset:     number;                              // 0-6 (Lundi … Dimanche)
+    date:          string;                              // YYYY-MM-DD
+    daysBefore:    number;                              // J-x (0 = jour de course)
+    priority:      'principale' | 'secondaire';
+    objectiveName: string;
+    objectiveDate: string;
+    objectiveSport:string;
+    rule:          TaperDayRule;
+};
+
+/**
+ * Calcule, pour chaque jour d'une semaine (weekStartDate + 0..6), la règle de
+ * tapering applicable si ce jour tombe dans la fenêtre d'affûtage d'un
+ * objectif. Règle la plus restrictive si overlap (principale > secondaire,
+ * puis plus petit daysBefore).
+ *
+ * @param weekStartDate  - Lundi de la semaine cible
+ * @param objectives     - Liste des objectifs candidats (principaux + secondaires)
+ * @returns Map<dayOffset, TaperDayInfo> — seuls les jours impactés sont inclus
+ */
+export const buildTaperPlan = (
+    weekStartDate: Date,
+    objectives: Objective[],
+): Map<number, TaperDayInfo> => {
+    const result = new Map<number, TaperDayInfo>();
+    if (objectives.length === 0) return result;
+
+    for (let dayOffset = 0; dayOffset <= 6; dayOffset++) {
+        const currentDate    = addDays(weekStartDate, dayOffset);
+        const currentDateStr = format(currentDate, 'yyyy-MM-dd');
+
+        let best: TaperDayInfo | null = null;
+
+        for (const obj of objectives) {
+            if (obj.priority !== 'principale' && obj.priority !== 'secondaire') continue;
+            const objDate    = parseLocalDate(obj.date);
+            const daysBefore = differenceInCalendarDays(objDate, currentDate);
+            if (daysBefore < 0) continue; // la course est passée, pas de taper
+            const windowDays = TAPER_WINDOW_DAYS[obj.priority];
+            if (daysBefore > windowDays) continue; // hors fenêtre
+
+            const rules = obj.priority === 'principale' ? TAPER_RULES_PRINCIPAL : TAPER_RULES_SECONDARY;
+            const rule  = rules[daysBefore];
+            if (!rule) continue;
+
+            const candidate: TaperDayInfo = {
+                dayOffset,
+                date:          currentDateStr,
+                daysBefore,
+                priority:      obj.priority,
+                objectiveName: obj.name,
+                objectiveDate: obj.date,
+                objectiveSport:obj.sport,
+                rule,
+            };
+
+            if (!best) {
+                best = candidate;
+            } else if (best.priority !== 'principale' && candidate.priority === 'principale') {
+                // Un principal bat un secondaire
+                best = candidate;
+            } else if (best.priority === candidate.priority && candidate.daysBefore < best.daysBefore) {
+                // Même priorité : la course la plus proche gagne
+                best = candidate;
+            }
+        }
+
+        if (best) result.set(dayOffset, best);
+    }
+
+    return result;
+};
+
 export const buildAllowedSlots = (
     availability: { [key: string]: AvailabilitySlot },
     activeSports: string[],

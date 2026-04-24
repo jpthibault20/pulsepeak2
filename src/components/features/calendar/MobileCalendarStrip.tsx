@@ -6,7 +6,7 @@ import type { Workout, Objective } from '@/lib/data/DatabaseTypes';
 import { WorkoutBadge } from './WorkoutBadge';
 import { MobileWeekBar } from './MobileWeekBar';
 import { useCalendarContext } from './CalendarContext';
-import { formatDateKey, DAY_NAMES_SHORT, MONTH_NAMES } from '@/lib/utils';
+import { formatDateKey, DAY_NAMES_SHORT, MONTH_NAMES, parseLocalDate } from '@/lib/utils';
 import type { WeekStats } from '@/hooks/useWeekStats';
 
 interface MobileCalendarStripProps {
@@ -553,7 +553,7 @@ export function MobileCalendarStrip({
                                     <div className="flex flex-wrap gap-2.5 mt-1">
                                         <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                                             <Calendar size={9} />
-                                            {new Date(obj.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                            {parseLocalDate(obj.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                                         </span>
                                         {obj.distanceKm && (
                                             <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">

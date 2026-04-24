@@ -1,6 +1,7 @@
 import { Profile } from "../data/DatabaseTypes";
 import { SportType } from "../data/type";
 import { Workout } from "../data/DatabaseTypes";
+import { structureSessionDescription } from "./structure-session";
 
 // Lecture de la clé API depuis les variables d'environnement du serveur
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -18,6 +19,20 @@ function generateWorkoutId(date: string, sport: SportType): string {
     return `${sport}_${date.replace(/-/g, '')}_${randomSuffix}`;
 }
 
+// Détecte les placeholders "vides" courants renvoyés par l'IA ("N/A", "—", "None", etc.)
+function isPlaceholderDescription(s: string | null | undefined): boolean {
+    if (!s) return true;
+    const t = s.trim();
+    if (t.length === 0) return true;
+    return /^(n\.?\s*\/?\s*a\.?|—+|-+|none|null|aucun|vide)$/i.test(t);
+}
+
+// Nettoie une description IA : rejette "N/A" et co, sinon retourne le trim.
+function sanitizeDescription(s: string | null | undefined): string | null {
+    if (isPlaceholderDescription(s)) return null;
+    return s!.trim();
+}
+
 /**
  * Génère un plan d'entraînement complet via l'API Gemini.
  */
@@ -33,8 +48,74 @@ interface RawAIWorkout {
     target_power: number | null;      // Spécifique vélo
     target_pace: string | null;       // Spécifique course/natation (ex: "5:30/km")
     target_hr: number | null;         // Universel
-    description_outdoor: string;
-    description_indoor: string;
+    description: string;              // Description unique (fusionnée)
+}
+
+// Formatage d'une allure stockée en secondes/km vers "M:SS".
+function fmtPace(sec: number): string {
+    const m = Math.floor(sec / 60);
+    const s = Math.round(sec % 60);
+    return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+// Contexte zones athlète adapté au sport cible (pour le prompt du single-workout).
+function buildSportZonesContext(profile: Profile, sportType: SportType): string {
+    const parts: string[] = [];
+
+    if (sportType === 'cycling' && profile.cycling?.Test?.zones) {
+        const z = profile.cycling.Test.zones;
+        const ftp = profile.cycling.Test.ftp;
+        if (ftp) parts.push(`FTP: ${ftp} W`);
+        parts.push(`ZONES PUISSANCE (W): Z1<${z.z1.max} · Z2:${z.z2.min}-${z.z2.max} · Z3:${z.z3.min}-${z.z3.max} · Z4:${z.z4.min}-${z.z4.max} · Z5:${z.z5.min}-${z.z5.max}${z.z6 ? ` · Z6:${z.z6.min}-${z.z6.max}` : ''}${z.z7 ? ` · Z7:>${z.z7.min}` : ''}`);
+    }
+
+    if (sportType === 'running' && profile.running?.Test?.zones) {
+        const z = profile.running.Test.zones;
+        parts.push(`ZONES ALLURE (min/km): Z1:${fmtPace(z.z1.min)}-${fmtPace(z.z1.max)} · Z2:${fmtPace(z.z2.min)}-${fmtPace(z.z2.max)} · Z3:${fmtPace(z.z3.min)}-${fmtPace(z.z3.max)} · Z4:${fmtPace(z.z4.min)}-${fmtPace(z.z4.max)} · Z5:${fmtPace(z.z5.min)}-${fmtPace(z.z5.max)}`);
+    } else if (sportType === 'running' && profile.running?.Test?.vma) {
+        parts.push(`VMA: ${profile.running.Test.vma} km/h`);
+    }
+
+    if (profile.heartRate?.zones) {
+        const z = profile.heartRate.zones;
+        parts.push(`ZONES FC (bpm): Z1<${z.z1.max} · Z2:${z.z2.min}-${z.z2.max} · Z3:${z.z3.min}-${z.z3.max} · Z4:${z.z4.min}-${z.z4.max} · Z5:${z.z5.min}-${z.z5.max}`);
+    } else if (profile.heartRate?.max) {
+        parts.push(`FC Max: ${profile.heartRate.max} bpm`);
+    }
+
+    return parts.length > 0 ? parts.join('\n') : "Aucune zone définie — utilise des valeurs cohérentes avec le niveau ou le RPE.";
+}
+
+// Règles spécifiques au sport (injection dans le system prompt).
+function getSportRules(sportType: SportType): string {
+    if (sportType === 'swimming') {
+        return `NATATION — RÈGLES OBLIGATOIRES :
+- Volume en MÈTRES, jamais en minutes. Toujours indiquer le TOTAL de la séance (ex: 2400m) et la distance de CHAQUE section.
+- Chaque série doit préciser : nombre × distance (ex: "8x50m"), la NAGE (crawl/dos/brasse/papillon/4 nages/mixte), l'ALLURE CIBLE ou zone (ex: "allure Z3" ou "1'40''/100m"), et la RÉCUP au bord en secondes (ex: "15'' R").
+- Travail technique : NOMME précisément les éducatifs (Rattrapage, 6 temps, Manchot, Catch-up, Sculls, Poings fermés, Jambes avec planche). INTERDIT : "éducatifs variés", "travail technique", "prise d'eau", sans spécifier l'éducatif précis.
+- Matériel : préciser planche/pull-buoy/palmes/plaquettes/tuba quand pertinent.
+- Structure attendue : échauffement varié 300-600m → bloc technique avec éducatifs nommés → corps principal (séries avec intensité + récup) → retour au calme 100-300m.
+
+EXEMPLE DE DESCRIPTION ATTENDUE pour une séance technique 60 min (~2400m total) :
+"Échauffement 600m : 300m crawl souple en respi 3 temps + 6x50m 4 nages (25m éducatif / 25m nage complète), 15'' R. Bloc technique 8x50m crawl avec palmes (2x Rattrapage + 2x 6 temps + 2x Poings fermés + 2x crawl complet glisse maximale), 20'' R. Corps principal 6x100m crawl à allure Z3 (1'40''/100m), 20'' R. Retour au calme 200m dos souple."
+
+Ton de la description : technique, directe, sans remplissage littéraire. Cibles : allure /100m en priorité, fallback FC, dernier recours RPE.`;
+    }
+    if (sportType === 'cycling') {
+        return `CYCLISME — RÈGLES :
+- Cibles en WATTS en priorité (depuis les zones fournies), fallback FC, dernier recours RPE.
+- Structure : échauffement progressif, corps avec intervalles (durée + watts/zone explicites), récups entre intervalles, retour au calme.
+- Format séries : "NxD min Z? (XXX-YYY W), R:Xmin Z?".
+- Toujours spécifier la durée de chaque section (ex: "Échauffement 15 min") et les valeurs exactes des cibles.`;
+    }
+    if (sportType === 'running') {
+        return `COURSE À PIED — RÈGLES :
+- Cibles en ALLURE (min/km) en priorité, fallback FC, dernier recours RPE.
+- Structure : échauffement, corps avec intervalles, récups, retour au calme.
+- Format séries : "NxD min à X:XX/km, R:Xmin trot".
+- Toujours spécifier la durée de chaque section et les allures exactes.`;
+    }
+    return `Structure : échauffement, corps de séance, retour au calme. Cibles en RPE ou FC.`;
 }
 
 // Résultat d'un appel Gemini avec les tokens consommés
@@ -43,8 +124,17 @@ export interface GeminiResult<T = unknown> {
     tokensUsed: number;
 }
 
+// Timeout par défaut : coupe une tentative qui mouline (Gemini peut halluciner
+// pendant plusieurs minutes avant de s'arrêter tout seul). Valeur par tentative,
+// donc avec MAX_RETRIES=2 le worst-case devient 2*TIMEOUT.
+const DEFAULT_GEMINI_TIMEOUT_MS = 60_000;
+
 // Fonction générique pour appeler l'API
-export async function callGeminiAPI(payload: unknown): Promise<GeminiResult> {
+export async function callGeminiAPI(
+    payload: unknown,
+    tag: string = 'gemini',
+    timeoutMs: number = DEFAULT_GEMINI_TIMEOUT_MS,
+): Promise<GeminiResult> {
     if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set.");
 
     // Désactive le mode "thinking" de Gemini 2.5 Flash → 2-3x plus rapide
@@ -58,11 +148,14 @@ export async function callGeminiAPI(payload: unknown): Promise<GeminiResult> {
     };
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        const controller = new AbortController();
+        const timeoutHandle = setTimeout(() => controller.abort(), timeoutMs);
         try {
             const response = await fetch(`${API_URL}?key=${GEMINI_API_KEY}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(enhancedPayload)
+                body: JSON.stringify(enhancedPayload),
+                signal: controller.signal,
             });
 
             if (!response.ok) {
@@ -71,32 +164,38 @@ export async function callGeminiAPI(payload: unknown): Promise<GeminiResult> {
             }
 
             const data = await response.json();
+
             const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
             const tokensUsed: number = data.usageMetadata?.totalTokenCount ?? 0;
 
             if (!rawText) throw new Error("AI response empty.");
 
             // Nettoyage du markdown éventuel
-            const cleanText = rawText
+            let cleanText: string = rawText
                 .trim()
                 .replace(/^```json\s*/i, '')
                 .replace(/^```\s*/i, '')
                 .replace(/\s*```$/i, '');
 
+            // Contre-mesure : Gemini peut produire des runs de \n dans les strings
+            // (boucle de répétition) qui cassent le JSON. On collapse >=3 \n en un seul.
+            cleanText = cleanText.replace(/(\\n){3,}/g, '\\n');
+
             try {
                 return { data: JSON.parse(cleanText), tokensUsed };
             } catch (parseError) {
-                console.error("JSON invalide reçu de Gemini :", cleanText);
                 throw new Error(`JSON parsing failed: ${parseError}`);
             }
 
         } catch (error) {
             if (attempt < MAX_RETRIES - 1) {
-                console.warn(`Tentative ${attempt + 1} échouée. Retry dans ${Math.pow(2, attempt)}s...`);
-                await delay(Math.pow(2, attempt) * 1000);
+                const backoff = Math.pow(2, attempt) * 1000;
+                await delay(backoff);
             } else {
                 throw error;
             }
+        } finally {
+            clearTimeout(timeoutHandle);
         }
     }
     throw new Error("callGeminiAPI: all retries exhausted");
@@ -207,13 +306,12 @@ RÈGLES D'OR :
    - Si "Outdoor" : Plus de volume, gestion du terrain, descriptions axées sur le pilotage ou la route.
 6. **Contraintes Horaire** : NE JAMAIS programmer une séance plus longue que la disponibilité indiquée pour ce jour-là.
 7. **Jours de Repos** : Si nécessaire, n'hésite pas à laisser des jours vides (pas de JSON généré pour ce jour) pour la récupération.
-8. **Descriptions OBLIGATOIRES** : 
-   - description_indoor : DOIT contenir la structure précise des intervalles (ex: "10min Z1, 5x(30s Z5/30s Z1)...") pour TOUTES les séances, même celles prévues Outdoor (pour export Zwift/Garmin). JAMAIS de "N/A".
-   - description_outdoor : DOIT contenir les conseils de route/terrain (ex: "Route vallonnée, maintiens la cadence dans les bosses").
+8. **Description OBLIGATOIRE** : chaque séance DOIT contenir une description unique, précise et structurée (échauffement, corps, retour au calme avec valeurs de zones/watts/allures). JAMAIS de "N/A", jamais vide. Inclure les consignes de terrain ET la structure technique.
 FORMAT DE RÉPONSE :
 - Tu dois répondre UNIQUEMENT avec le JSON validé par le schéma fourni.
 - Aucune phrase d'introduction ou de conclusion.
 - Les descriptions des séances doivent être techniques mais motivantes (style coach).
+- LANGUE : français UNIQUEMENT pour tous les textes (title, type, description, synthesis). Pas d'anglais sauf termes techniques sans équivalent (FTP, TSS, RPE, VO2max).
 `;
 
     const userPrompt = `
@@ -272,10 +370,9 @@ FORMAT DE RÉPONSE :
                         "target_pace": { "type": "STRING", "nullable": true, "description": "Allure cible (Min/km ou min/100m)" },
                         "target_hr": { "type": "NUMBER", "nullable": true, "description": "BPM cible moyen" },
 
-                        "description_outdoor": { "type": "STRING", "description": "Consignes de terrain et sensations (Ne jamais mettre N/A)"},
-                        "description_indoor": { "type": "STRING", "description": "Structure technique PAS À PAS des blocs et intervalles (Ne jamais mettre N/A, même si mode=Outdoor)"}
+                        "description": { "type": "STRING", "description": "Description technique complète (échauffement, corps, retour au calme, structure d'intervalles). Jamais N/A, jamais vide." }
                     },
-                    "required": ["date", "sport", "title", "type", "duration", "mode", "description_outdoor", "description_indoor"]
+                    "required": ["date", "sport", "title", "type", "duration", "mode", "description"]
                 }
             }
         },
@@ -323,11 +420,11 @@ FORMAT DE RÉPONSE :
                     targetPaceMinPerKm: w.sport !== 'cycling' ? w.target_pace : null,
                     targetHeartRateBPM: w.target_hr || null,
 
-                    description: w.description_outdoor ?? w.description_indoor ?? null,
+                    description: sanitizeDescription(w.description),
                 },
-                
+
                 // Pas de données réalisées pour le futur
-                completedData: null 
+                completedData: null
             };
         });
 
@@ -339,60 +436,78 @@ FORMAT DE RÉPONSE :
 
 
 /**
- * Génère une SEULE séance de remplacement.
+ * Génère une SEULE séance (création ou remplacement) pour un sport donné.
+ * Le prompt et les zones s'adaptent au sportType passé en paramètre.
  */
 export async function generateSingleWorkoutFromAI(
     profile: Profile,
     history: unknown,
     date: string,
+    sportType: SportType,
     surroundingWorkouts: Record<string, string>,
     oldWorkout?: Workout,
     currentBlockFocus: string = "General Fitness",
     userInstruction?: string
 ): Promise<{ workout: Omit<Workout, 'userId' | 'weekId'>; tokensUsed: number }> {
 
-    // Le type de sport est forcé à vélo pour l'instant
-    const currentSport: SportType = 'cycling'; // TODO: Passer le sport en paramètre si on supporte la course à pied plus tard
-
-    // .. (Extraction des dispos inchangée) ..
+    // Extraction des dispos
     const d = new Date(date);
     const dayName = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"][d.getDay()];
-    const availability = profile.weeklyAvailability[dayName] || 60;
-
-    let zonesContext = "";
-    if (profile.cycling?.Test?.zones) {
-        // Version simplifiée pour économiser des tokens
-        const z = profile.cycling.Test.zones;
-        zonesContext = `ZONES (W): Z2 ${z.z2.min}-${z.z2.max}, Z4 ${z.z4.min}-${z.z4.max}, Z5 ${z.z5.min}-${z.z5.max}`;
+    const slot = profile.weeklyAvailability[dayName];
+    let availability: number = 60;
+    if (slot && typeof slot === 'object') {
+        const perSport = slot[sportType as keyof typeof slot] as number | undefined;
+        if (typeof perSport === 'number' && perSport > 0) availability = perSport;
+    } else if (typeof slot === 'number') {
+        availability = slot;
     }
+
+    const zonesContext = buildSportZonesContext(profile, sportType);
+    const sportRules = getSportRules(sportType);
 
     const scheduleContextStr = Object.entries(surroundingWorkouts)
         .map(([d, desc]) => `- ${d}: ${desc}`)
-        .join('\n');
+        .join('\n') || '(aucun contexte)';
 
     let oldWorkoutContext = "Nouveau créneau.";
     if (oldWorkout) {
         oldWorkoutContext = `REMPLACE: ${oldWorkout.title} (${oldWorkout.workoutType}, ${oldWorkout.plannedData?.durationMinutes ?? 0}min)`;
     }
 
-    const userDirective = userInstruction ? `DEMANDE UTILISATEUR: "${userInstruction}"` : "Propose une alternative pertinente.";
+    const userDirective = userInstruction ? `DEMANDE UTILISATEUR: "${userInstruction}"` : "Propose une séance pertinente.";
 
-    const systemPrompt = "Tu es expert cyclisme. JSON uniquement.";
+    const systemPrompt = `Tu es coach expert en ${sportType === 'cycling' ? 'cyclisme' : sportType === 'running' ? 'course à pied' : sportType === 'swimming' ? 'natation' : 'entraînement sportif'}. Tu génères UNE séance structurée au format JSON.
 
-    const userPrompt = `
-    DATE: ${date}. SPORT: ${currentSport.toUpperCase()}.
-    PROFIL: FTP ${profile.cycling?.Test?.ftp}. ${zonesContext}.
-    DISPO MAX: ${availability} min.
-    FOCUS: ${currentBlockFocus}.
-    
-    ${oldWorkoutContext}
-    ${userDirective}
-    
-    CONTEXTE SEMAINE:
-    ${scheduleContextStr}
-    
-    Génère un objet JSON pour la séance.
-    `;
+LANGUE : français. Termes techniques autorisés (FTP, TSS, RPE, VO2max).
+
+${sportRules}
+
+RÈGLES GÉNÉRALES :
+- "description" = paragraphe complet et AUTO-SUFFISANT que l'athlète peut lire et exécuter sans rien demander de plus. Il doit contenir toutes les valeurs chiffrées (durées, distances, cibles, récups, répétitions).
+- Interdits : "N/A", "au choix", "varié" non précisé, "travail technique" seul, "à ton rythme". Tout doit être explicite.
+- Format du texte : paragraphe dense, phrases enchaînées avec ponctuation. MAXIMUM 3 sauts de ligne simples (\\n) pour séparer les grandes sections. JAMAIS de sauts de ligne consécutifs (\\n\\n interdit).
+- Longueur attendue : entre 400 et 1200 caractères selon la complexité de la séance (une séance technique natation ≈ 600-900 caractères).
+- Adapte l'intensité au niveau athlète (${profile.experience ?? 'Intermédiaire'}) et au focus du bloc. Respecte la durée maximale indiquée.
+
+FORMAT DE SORTIE : JSON uniquement, validé par le schéma. Pas de texte avant/après.`;
+
+    const userPrompt = `DATE: ${date}
+SPORT: ${sportType.toUpperCase()}
+DISPO MAX: ${availability} min
+FOCUS DU BLOC: ${currentBlockFocus}
+NIVEAU: ${profile.experience ?? 'Intermédiaire'}
+
+ZONES ATHLÈTE:
+${zonesContext}
+
+${oldWorkoutContext}
+
+${userDirective}
+
+CONTEXTE SEMAINE:
+${scheduleContextStr}
+
+Génère UN objet JSON pour la séance.`;
 
     const responseSchema = {
         type: "OBJECT",
@@ -405,10 +520,9 @@ export async function generateSingleWorkoutFromAI(
                     "duration": { "type": "NUMBER" }, // -> plannedData.durationMinutes
                     "tss": { "type": "NUMBER" }, // -> plannedData.plannedTSS
                     "mode": { "type": "STRING", "enum": ["Outdoor", "Indoor"] },
-                    "description_outdoor": { "type": "STRING" },
-                    "description_indoor": { "type": "STRING" }
+                    "description": { "type": "STRING", "description": "Description technique unique. Jamais N/A, jamais vide." }
                 },
-                "required": ["title", "type", "duration", "tss", "mode", "description_outdoor", "description_indoor"]
+                "required": ["title", "type", "duration", "mode", "description"]
             }
         },
         "required": ["workout"]
@@ -417,18 +531,43 @@ export async function generateSingleWorkoutFromAI(
     const payload = {
         contents: [{ parts: [{ text: userPrompt }] }],
         systemInstruction: { parts: [{ text: systemPrompt }] },
-        generationConfig: { responseMimeType: "application/json", responseSchema: responseSchema, temperature: 0.7 },
+        generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: responseSchema,
+            // Compromis : assez bas pour limiter les boucles de répétition
+            // observées (flots de \n), assez haut pour produire du contenu
+            // détaillé plutôt qu'une version "safe" minimaliste.
+            temperature: 0.5,
+            // Cap dur contre les runaways. Séance typique ≈ 400-700 tokens ;
+            // 2000 laisse de la marge pour natation technique (plus verbeux).
+            maxOutputTokens: 2000,
+            // Filet de sécurité : coupe si Gemini sort 5 \n d'affilée.
+            stopSequences: ["\n\n\n\n\n"],
+        },
     };
 
-    const { data: resultData, tokensUsed } = await callGeminiAPI(payload);
-    const w = (resultData as { workout: Omit<RawAIWorkout, 'date'> }).workout;
+    const { data: resultData, tokensUsed } = await callGeminiAPI(payload, `single/${sportType}/gen`);
 
-    // Transformation vers la nouvelle structure
+    const w = (resultData as { workout: { title: string; type: string; duration: number; tss?: number; mode: 'Outdoor' | 'Indoor'; description: string } }).workout;
+
+    const rawDesc = w.description ?? '';
+    const description = sanitizeDescription(rawDesc);
+
+    // Second appel IA : structuration (fallback [] si pas de description ou échec).
+    const { structure, tokensUsed: structureTokens } = description
+        ? await structureSessionDescription({
+            description,
+            sportType,
+            durationMinutes: w.duration,
+            profile,
+        })
+        : { structure: [], tokensUsed: 0 };
+
     return {
         workout: {
-            id: oldWorkout?.id || generateWorkoutId(date, currentSport),
+            id: oldWorkout?.id || generateWorkoutId(date, sportType),
             date: date,
-            sportType: currentSport,
+            sportType,
             title: w.title,
             workoutType: w.type,
             mode: w.mode,
@@ -440,11 +579,12 @@ export async function generateSingleWorkoutFromAI(
                 targetPaceMinPerKm: null,
                 targetHeartRateBPM: null,
                 distanceKm: null,
-                description: w.description_outdoor ?? w.description_indoor ?? null,
+                description,
+                structure,
             },
             completedData: null,
         },
-        tokensUsed,
+        tokensUsed: tokensUsed + structureTokens,
     };
 }
 

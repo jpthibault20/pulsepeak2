@@ -7,7 +7,7 @@ import { AvailabilityTable } from './AvailabilityTable';
 import { WeekStatsPopover } from './WeekStatsPopover';
 import type { WeekStats } from '@/hooks/useWeekStats';
 import type { AvailabilitySlot } from '@/lib/data/type';
-import { getWeekContextForDate, generateWeekWorkoutsFromDate, getWeekPendingCount, type WeekContext } from '@/app/actions/schedule';
+import { getWeekContextForDate, generateWeekWorkoutsFromDate, getWeekPendingCount, type WeekContext } from '@/app/actions/schedule/week-actions';
 import { formatDateKey } from '@/lib/utils';
 import { FeatureGate } from '@/components/features/billing/FeatureGate';
 

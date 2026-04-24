@@ -7,6 +7,7 @@ interface SportsAndLinkAppProps {
     formData: Profile;
     setFormData: Dispatch<SetStateAction<Profile>>;
     isPro?: boolean;
+    showStrava?: boolean;
 }
 
 const SPORTS = [
@@ -42,7 +43,7 @@ const SPORTS = [
     },
 ];
 
-export const SportsAndAppLink: React.FC<SportsAndLinkAppProps> = ({ formData, setFormData, isPro = false }) => {
+export const SportsAndAppLink: React.FC<SportsAndLinkAppProps> = ({ formData, setFormData, isPro = false, showStrava = true }) => {
 
     const toggleSport = (sport: keyof typeof formData.activeSports) => {
         setFormData(prev => ({
@@ -104,6 +105,7 @@ export const SportsAndAppLink: React.FC<SportsAndLinkAppProps> = ({ formData, se
             </Card>
 
             {/* Strava */}
+            {showStrava && (
             <Card className="p-5 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 relative overflow-hidden">
                 {/* Strava orange accent */}
                 <div className="absolute top-0 right-0 w-20 h-20 bg-[#FC4C02]/5 rounded-bl-full pointer-events-none" />
@@ -185,6 +187,7 @@ export const SportsAndAppLink: React.FC<SportsAndLinkAppProps> = ({ formData, se
                     </div>
                 </div>
             </Card>
+            )}
         </div>
     );
 };

@@ -73,7 +73,15 @@ export function ChatView({ profile, schedule, messages, onMessagesChange }: Chat
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
+
+    // Auto-resize textarea to fit content (capped by CSS max-height)
+    useEffect(() => {
+        const el = inputRef.current;
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = `${el.scrollHeight}px`;
+    }, [input]);
 
     const handleReset = () => {
         if (loading) return;
@@ -247,15 +255,21 @@ export function ChatView({ profile, schedule, messages, onMessagesChange }: Chat
 
             {/* ── Input ── */}
             <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
-                <div className="flex gap-2 items-center">
-                    <input
+                <div className="flex gap-2 items-end">
+                    <textarea
                         ref={inputRef}
+                        rows={1}
                         value={input}
                         onChange={e => setInput(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSend();
+                            }
+                        }}
                         placeholder="Posez votre question..."
                         disabled={loading}
-                        className="flex-1 h-11 bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-2xl px-4 text-sm text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 disabled:opacity-60 transition-colors"
+                        className="flex-1 min-h-[44px] max-h-48 py-2.5 resize-none overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-2xl px-4 text-sm leading-6 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 disabled:opacity-60 transition-colors"
                     />
                     <button
                         onClick={() => handleSend()}

@@ -7,8 +7,10 @@ import {
     Bot,
     Map,
     Zap,
+    Shield,
 } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeProvider';
 import { useSubscription } from '@/lib/subscription/context';
 
@@ -26,7 +28,8 @@ export const Nav: React.FC<NavProps> = ({
     appName = "PulsePeak",
 }) => {
     const isActive = (v: View) => currentView === v;
-    const { plan } = useSubscription();
+    const { plan, role } = useSubscription();
+    const isAdmin = role === 'admin';
 
     return (
         <>
@@ -63,6 +66,7 @@ export const Nav: React.FC<NavProps> = ({
                         <DesktopItem active={isActive('settings')} onClick={() => onViewChange('settings')} icon={UserRound} label="Profil" />
                         <DesktopItem active={isActive('chat')} onClick={() => onViewChange('chat')} icon={Bot} label="Coach IA" />
                         <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1" />
+                        {isAdmin && <AdminLink />}
                         <ThemeToggle />
                     </div>
 
@@ -80,6 +84,7 @@ export const Nav: React.FC<NavProps> = ({
                                 <span className="text-green-600 dark:text-green-300 font-semibold">PRO plan</span>
                             </span>
                         )}
+                        {isAdmin && <AdminLink />}
                         <ThemeToggle />
                     </div>
                 </div>
@@ -127,6 +132,19 @@ const DesktopItem: React.FC<ItemProps> = ({ active, onClick, icon: Icon, label }
         <Icon size={16} strokeWidth={active ? 2.5 : 2} />
         {label}
     </button>
+);
+
+// ─── Admin link (icône discrète, visible uniquement pour les admins) ─────────
+
+const AdminLink: React.FC = () => (
+    <Link
+        href="/admin"
+        title="Admin"
+        aria-label="Admin"
+        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-slate-600 dark:hover:text-slate-300 dark:hover:bg-slate-800/50 transition-colors"
+    >
+        <Shield size={15} strokeWidth={1.75} />
+    </Link>
 );
 
 // ─── Mobile nav item ──────────────────────────────────────────────────────────

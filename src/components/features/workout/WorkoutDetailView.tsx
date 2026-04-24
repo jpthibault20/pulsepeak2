@@ -9,7 +9,7 @@ import {
     Bike, FootprintsIcon as Running, Waves, Heart,
     Timer, Gauge, TrendingUp, Unlink,
     Sparkles, ChevronDown, ChevronUp,
-    Flame, Target, Route
+    Flame, Target, Route, Plus, Minus
 } from 'lucide-react';
 import type { SportType, CompletedDataFeedback, CompletedLap, DeviationMetrics } from '@/lib/data/type';
 import type { Workout } from '@/lib/data/DatabaseTypes';
@@ -18,8 +18,10 @@ import { Button } from '@/components/ui/Button';
 import { FeatureGate } from '@/components/features/billing/FeatureGate';
 import { formatDate } from '@/lib/utils';
 import { FeedbackForm } from './FeedbackForm';
+import { PlannedStructureView } from './PlannedStructureView';
 import { Profile } from '@/lib/data/DatabaseTypes';
-import { getWorkoutAISummary, getWorkoutDeviation, regenerateWeekFromDeviation, updateWorkoutRPE } from '@/app/actions/schedule';
+import { getWorkoutAISummary, getWorkoutDeviation, regenerateWeekFromDeviation } from '@/app/actions/schedule/workout-ai';
+import { updateWorkoutRPE } from '@/app/actions/schedule/workout-actions';
 import { BatteryLow, ArrowUpRight, Loader2 } from 'lucide-react';
 
 // --- Types ---
@@ -84,14 +86,6 @@ const SPORT_CONFIG: Record<SportType, {
     },
 };
 
-// --- Structure block colors ---
-const STRUCTURE_COLORS: Record<string, { bg: string; border: string; text: string; icon: React.ElementType }> = {
-    Warmup:   { bg: 'bg-amber-50 dark:bg-amber-500/10',   border: 'border-amber-300 dark:border-amber-500/30',   text: 'text-amber-700 dark:text-amber-400', icon: Flame },
-    Active:   { bg: 'bg-red-50 dark:bg-red-500/10',       border: 'border-red-300 dark:border-red-500/30',       text: 'text-red-700 dark:text-red-400', icon: Zap },
-    Rest:     { bg: 'bg-blue-50 dark:bg-blue-500/10',     border: 'border-blue-300 dark:border-blue-500/30',     text: 'text-blue-700 dark:text-blue-400', icon: Clock },
-    Cooldown: { bg: 'bg-teal-50 dark:bg-teal-500/10',     border: 'border-teal-300 dark:border-teal-500/30',     text: 'text-teal-700 dark:text-teal-400', icon: Activity },
-};
-
 // --- Helpers ---
 function fmtDuration(minutes: number | undefined | null): string {
     if (!minutes) return '-';
@@ -109,13 +103,6 @@ function fmtDurationSec(totalSeconds: number | undefined): string {
     const m = Math.floor((totalSeconds % 3600) / 60);
     const s = Math.floor(totalSeconds % 60);
     if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    return `${m}:${String(s).padStart(2, '0')}`;
-}
-
-function fmtSecToMin(sec: number): string {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    if (s === 0) return `${m} min`;
     return `${m}:${String(s).padStart(2, '0')}`;
 }
 
@@ -202,8 +189,26 @@ const RPEQuickInput: React.FC<{
             <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">Comment as-tu ressenti cette séance ?</p>
             <div className="flex items-center gap-3">
                 <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">Facile</span>
+                <button
+                    type="button"
+                    onClick={() => setRpe((r) => Math.max(1, r - 1))}
+                    disabled={rpe <= 1}
+                    aria-label="Diminuer le RPE"
+                    className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                    <Minus size={12} />
+                </button>
                 <input type="range" min={1} max={10} step={1} value={rpe} onChange={(e) => setRpe(Number(e.target.value))}
                     className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer accent-slate-600 dark:accent-slate-400 bg-slate-200 dark:bg-slate-700" />
+                <button
+                    type="button"
+                    onClick={() => setRpe((r) => Math.min(10, r + 1))}
+                    disabled={rpe >= 10}
+                    aria-label="Augmenter le RPE"
+                    className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                    <Plus size={12} />
+                </button>
                 <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">Difficile</span>
                 <span className={`w-2 h-2 rounded-full shrink-0 ${RPE_COLORS[rpe]}`} />
                 <span className="text-xs font-bold font-mono text-slate-900 dark:text-white w-8 text-right">{rpe}<span className="text-[9px] font-normal text-slate-400">/10</span></span>
@@ -607,123 +612,15 @@ const LapsSection: React.FC<{ laps: CompletedLap[]; sport: SportType }> = ({ lap
 };
 
 // =====================================================
-// Planned Structure Timeline
+// Planned Description — délégué à PlannedStructureView
+// (affichage visuel structuré si `structure` présente, sinon fallback texte)
 // =====================================================
-const PlannedStructure: React.FC<{ workout: Workout }> = ({ workout }) => {
-    const planned = workout.plannedData;
-    if (!planned) return null;
-
-    const structure = planned.structure;
-    const description = planned.description;
-
-    // If we have structure blocks, show the visual timeline
-    if (structure && structure.length > 0) {
-        const totalDuration = structure.reduce((sum, s) => sum + s.durationActifSecondes, 0);
-
-        return (
-            <div className="mb-5">
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-                    <Target size={15} className="text-slate-400" />
-                    Structure de la séance
-                </h3>
-
-                {/* Visual bar */}
-                <div className="flex h-3 rounded-full overflow-hidden mb-4 bg-slate-100 dark:bg-slate-800">
-                    {structure.map((block, i) => {
-                        const pct = (block.durationActifSecondes / totalDuration) * 100;
-                        const colors = STRUCTURE_COLORS[block.type] || STRUCTURE_COLORS.Active;
-                        const barColors: Record<string, string> = {
-                            Warmup: 'bg-amber-400 dark:bg-amber-500',
-                            Active: 'bg-red-400 dark:bg-red-500',
-                            Rest: 'bg-blue-300 dark:bg-blue-400',
-                            Cooldown: 'bg-teal-400 dark:bg-teal-500',
-                        };
-                        return (
-                            <div
-                                key={i}
-                                className={`${barColors[block.type] || barColors.Active} ${i > 0 ? 'border-l border-white/30 dark:border-slate-900/30' : ''}`}
-                                style={{ width: `${Math.max(pct, 2)}%` }}
-                                title={`${block.type}: ${fmtSecToMin(block.durationActifSecondes)}`}
-                            />
-                        );
-                        void colors; // used by blocks below
-                    })}
-                </div>
-
-                {/* Block list */}
-                <div className="space-y-2">
-                    {structure.map((block, i) => {
-                        const colors = STRUCTURE_COLORS[block.type] || STRUCTURE_COLORS.Active;
-                        const BlockIcon = colors.icon;
-                        return (
-                            <div
-                                key={i}
-                                className={`flex items-start gap-3 p-3 rounded-xl border ${colors.bg} ${colors.border}`}
-                            >
-                                <div className={`flex items-center justify-center w-8 h-8 rounded-lg bg-white/60 dark:bg-slate-900/30 ${colors.text} shrink-0 mt-0.5`}>
-                                    <BlockIcon size={16} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-0.5">
-                                        <span className={`text-xs font-bold uppercase tracking-wider ${colors.text}`}>
-                                            {block.type === 'Warmup' ? 'Échauffement' : block.type === 'Active' ? 'Effort' : block.type === 'Rest' ? 'Récupération' : 'Retour au calme'}
-                                        </span>
-                                        <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                                            {fmtSecToMin(block.durationActifSecondes)}
-                                        </span>
-                                    </div>
-                                    <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                                        {block.description}
-                                    </p>
-                                    {/* Targets */}
-                                    <div className="flex flex-wrap gap-2 mt-1.5">
-                                        {block.targetPowerWatts != null && (
-                                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/80 dark:bg-slate-900/40 text-purple-600 dark:text-purple-400">
-                                                <Zap size={10} /> {block.targetPowerWatts}W
-                                            </span>
-                                        )}
-                                        {block.targetHeartRateBPM != null && (
-                                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/80 dark:bg-slate-900/40 text-rose-600 dark:text-rose-400">
-                                                <Heart size={10} /> {block.targetHeartRateBPM} bpm
-                                            </span>
-                                        )}
-                                        {block.targetPaceMinPerKm != null && (
-                                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/80 dark:bg-slate-900/40 text-orange-600 dark:text-orange-400">
-                                                <Gauge size={10} /> {block.targetPaceMinPerKm}/km
-                                            </span>
-                                        )}
-                                        {block.plannedTSS != null && block.plannedTSS > 0 && (
-                                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/80 dark:bg-slate-900/40 text-amber-600 dark:text-amber-400">
-                                                <Zap size={10} /> {block.plannedTSS} TSS
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-        );
-    }
-
-    // Fallback: raw description
-    if (description) {
-        return (
-            <div className="mb-5 p-4 rounded-2xl bg-white dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/50">
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-                    <Target size={15} className="text-slate-400" />
-                    Programme
-                </h3>
-                <div className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed font-mono">
-                    {description}
-                </div>
-            </div>
-        );
-    }
-
-    return null;
-};
+const PlannedStructure: React.FC<{ workout: Workout }> = ({ workout }) => (
+    <PlannedStructureView
+        description={workout.plannedData?.description}
+        structure={workout.plannedData?.structure}
+    />
+);
 
 
 // =====================================================

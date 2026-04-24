@@ -7,6 +7,7 @@ import { Modal } from '@/components/ui/Modale';
 import { AvailabilityTable } from './AvailabilityTable';
 import type { Objective, Profile } from '@/lib/data/DatabaseTypes';
 import type { AvailabilitySlot } from '@/lib/data/type';
+import { parseLocalDate } from '@/lib/utils';
 
 type Mode = 'block' | 'objective';
 type Step = 'config' | 'availability';
@@ -292,7 +293,7 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
                                             <div className="flex flex-wrap gap-3 mt-2">
                                                 <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                                                     <Calendar size={11} />
-                                                    {new Date(upcomingPrimary.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                    {parseLocalDate(upcomingPrimary.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                                                 </span>
                                                 {upcomingPrimary.distanceKm && (
                                                     <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
@@ -324,7 +325,7 @@ export const GenerationModal: React.FC<GenerationModalProps> = ({
                                                     <Target size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
                                                     <span className="text-sm text-slate-600 dark:text-slate-300 flex-1 truncate">{o.name}</span>
                                                     <span className="text-xs text-slate-500 shrink-0">
-                                                        {new Date(o.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                                                        {parseLocalDate(o.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                                                     </span>
                                                 </div>
                                             ))}

@@ -24,7 +24,17 @@
       "WebFetch(domain:github.com)",
       "Bash(wc:*)",
       "Bash(ls:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(echo \"EXIT_CODE=$?\")",
+      "Bash(npx eslint *)",
+      "Bash(echo \"TSC_EXIT=$?\")",
+      "Bash(echo \"LINT_EXIT=$?\")",
+      "Bash(git log *)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(git stash *)",
+      "Bash(sed -i 's/parseISO\\(/parseLocalDate\\(/g' src/app/actions/schedule.ts)",
+      "Read(//c/c/Users/tjean/OneDrive/Documents/github/pulsepeak2/src/app/actions/**)",
+      "Bash(npm run *)"
     ]
   }
 }
