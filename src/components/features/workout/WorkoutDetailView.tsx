@@ -908,17 +908,26 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
             {workout.workoutType !== 'Rest' && !isCompleting && !isEditing && (
                 <div className="mb-5">
                     {showRegenInput ? (
-                        <div className="flex items-center gap-2 animate-in fade-in duration-200">
-                            <input
-                                type="text"
+                        <div className="flex items-end gap-2 animate-in fade-in duration-200">
+                            <textarea
+                                rows={1}
                                 placeholder="Ex: Plus court, focus endurance..."
-                                className="flex-1 bg-white dark:bg-slate-900 border border-blue-300 dark:border-blue-500/50 rounded-xl text-sm px-3 py-2.5 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="flex-1 resize-none overflow-hidden bg-white dark:bg-slate-900 border border-blue-300 dark:border-blue-500/50 rounded-xl text-sm px-3 py-2.5 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none leading-snug"
                                 value={regenInstruction}
-                                onChange={(e) => setRegenInstruction(e.target.value)}
+                                onChange={(e) => {
+                                    setRegenInstruction(e.target.value);
+                                    e.currentTarget.style.height = 'auto';
+                                    e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`;
+                                }}
                                 autoFocus
-                                onKeyDown={(e) => e.key === 'Enter' && handleRegenerateClick()}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleRegenerateClick();
+                                    }
+                                }}
                             />
-                            <button onClick={() => { setShowRegenInput(false); setRegenInstruction(''); }} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" disabled={isMutating}>
+                            <button onClick={() => { setShowRegenInput(false); setRegenInstruction(''); }} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 shrink-0" disabled={isMutating}>
                                 <X size={18} />
                             </button>
                             <Button variant="primary" onClick={handleRegenerateClick} disabled={isMutating || !regenInstruction.trim()} className="shrink-0">
