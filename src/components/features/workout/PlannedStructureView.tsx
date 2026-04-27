@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Zap, Heart, Gauge, Waves, Dumbbell, Activity, Target, Clock,
+    ChevronDown, ChevronUp, Sparkles,
 } from 'lucide-react';
 import type {
     StructureBlock,
@@ -377,6 +378,8 @@ export const PlannedStructureView: React.FC<{
     structure?: StructureBlock[] | null;
 }> = ({ description, structure }) => {
     const hasStructure = Array.isArray(structure) && structure.length > 0;
+    const trimmedDescription = description?.trim() || null;
+    const [showDescription, setShowDescription] = useState(false);
 
     console.log('[PlannedStructureView] 🖼️ props reçues', {
         description,
@@ -387,7 +390,7 @@ export const PlannedStructureView: React.FC<{
         structure,
     });
 
-    if (!hasStructure && !description) return null;
+    if (!hasStructure && !trimmedDescription) return null;
 
     const totalSeconds = hasStructure ? computeTotalSeconds(structure!) : 0;
     const totalMeters = hasStructure ? computeTotalMeters(structure!) : 0;
@@ -432,7 +435,27 @@ export const PlannedStructureView: React.FC<{
                 </div>
             ) : (
                 <div className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed">
-                    {description}
+                    {trimmedDescription}
+                </div>
+            )}
+
+            {/* Description IA d'origine — accessible quand la structure est affichée */}
+            {hasStructure && trimmedDescription && (
+                <div className="mt-3 pt-3 border-t border-slate-200/70 dark:border-slate-700/40">
+                    <button
+                        type="button"
+                        onClick={() => setShowDescription(v => !v)}
+                        className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                    >
+                        <Sparkles size={12} className="text-indigo-400" />
+                        {showDescription ? 'Masquer la description IA' : 'Voir la description IA'}
+                        {showDescription ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                    </button>
+                    {showDescription && (
+                        <div className="mt-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/40 border border-slate-200/70 dark:border-slate-700/40 text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed animate-in fade-in slide-in-from-top-1 duration-200">
+                            {trimmedDescription}
+                        </div>
+                    )}
                 </div>
             )}
         </div>
