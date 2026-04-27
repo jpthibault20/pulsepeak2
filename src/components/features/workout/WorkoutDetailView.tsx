@@ -189,37 +189,62 @@ const RPEQuickInput: React.FC<{
 
     return (
         <div className="mb-4 px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/40">
-            <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">Comment as-tu ressenti cette séance ?</p>
-            <div className="flex items-center gap-3">
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">Facile</span>
+            {/* Header : question + valeur courante */}
+            <div className="flex items-center justify-between gap-3 mb-3">
+                <p className="text-xs font-medium text-slate-700 dark:text-slate-300">Comment as-tu ressenti cette séance ?</p>
+                <div className="flex items-center gap-1.5 shrink-0">
+                    <span className={`w-2 h-2 rounded-full ${RPE_COLORS[rpe]}`} />
+                    <span className="text-sm font-bold font-mono text-slate-900 dark:text-white">
+                        {rpe}<span className="text-[10px] font-normal text-slate-400">/10</span>
+                    </span>
+                </div>
+            </div>
+
+            {/* Slider entouré des boutons -/+, avec labels alignés sous la barre */}
+            <div className="flex items-center gap-2 mb-3">
                 <button
                     type="button"
                     onClick={() => setRpe((r) => Math.max(1, r - 1))}
                     disabled={rpe <= 1}
                     aria-label="Diminuer le RPE"
-                    className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                    <Minus size={12} />
+                    <Minus size={14} />
                 </button>
-                <input type="range" min={1} max={10} step={1} value={rpe} onChange={(e) => setRpe(Number(e.target.value))}
-                    className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer accent-slate-600 dark:accent-slate-400 bg-slate-200 dark:bg-slate-700" />
+                <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+                    <input
+                        type="range"
+                        min={1}
+                        max={10}
+                        step={1}
+                        value={rpe}
+                        onChange={(e) => setRpe(Number(e.target.value))}
+                        className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-slate-600 dark:accent-slate-400 bg-slate-200 dark:bg-slate-700"
+                    />
+                    <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 px-0.5">
+                        <span>Facile</span>
+                        <span>Difficile</span>
+                    </div>
+                </div>
                 <button
                     type="button"
                     onClick={() => setRpe((r) => Math.min(10, r + 1))}
                     disabled={rpe >= 10}
                     aria-label="Augmenter le RPE"
-                    className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                    <Plus size={12} />
-                </button>
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">Difficile</span>
-                <span className={`w-2 h-2 rounded-full shrink-0 ${RPE_COLORS[rpe]}`} />
-                <span className="text-xs font-bold font-mono text-slate-900 dark:text-white w-8 text-right">{rpe}<span className="text-[9px] font-normal text-slate-400">/10</span></span>
-                <button onClick={handleSave} disabled={saving}
-                    className="shrink-0 px-2.5 py-1 text-[11px] font-medium text-white bg-slate-800 dark:bg-slate-200 dark:text-slate-900 rounded-lg hover:bg-slate-700 dark:hover:bg-slate-300 transition-colors disabled:opacity-50">
-                    {saving ? <Loader2 size={11} className="animate-spin" /> : 'OK'}
+                    <Plus size={14} />
                 </button>
             </div>
+
+            {/* CTA pleine largeur */}
+            <button
+                onClick={handleSave}
+                disabled={saving}
+                className="w-full h-9 flex items-center justify-center gap-2 text-xs font-semibold text-white bg-slate-800 dark:bg-slate-200 dark:text-slate-900 rounded-lg hover:bg-slate-700 dark:hover:bg-slate-300 transition-colors disabled:opacity-50"
+            >
+                {saving ? <Loader2 size={13} className="animate-spin" /> : 'Valider'}
+            </button>
         </div>
     );
 };
