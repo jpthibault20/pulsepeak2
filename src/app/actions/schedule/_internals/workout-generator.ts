@@ -19,7 +19,7 @@ import { parseLocalDate } from '@/lib/utils';
 import { atomicIncrementTokenCount, getBlock, getWeek, getWorkout } from '@/lib/data/crud';
 import { Block, Objective, Plan, Profile, Week, Workout } from '@/lib/data/DatabaseTypes';
 import type { AvailabilitySlot, SportType } from '@/lib/data/type';
-import { callGeminiAPI } from '@/lib/ai/coach-api';
+import { buildCoachRoleIntro, callGeminiAPI } from '@/lib/ai/coach-api';
 import { structureSessionDescription } from '@/lib/ai/structure-session';
 import { buildAllowedSlots, buildTaperPlan, formatAvailability, getActiveSports } from '../../helpers';
 import { getPreviousWeekSummary } from './ai-context';
@@ -139,7 +139,9 @@ ${profile.heartRate.resting ? `- FC Repos : ${profile.heartRate.resting} bpm` : 
             : `MILIEU DE BLOC (S${week.weekNumber}/${block.weekCount}) — progression depuis la semaine précédente`;
 
    const aiPrompt = `
-Tu es un coach certifié, spécialisé en ${activeSports.join(", ")}, avec 15 ans d'expérience. Tu génères la semaine ${week.weekNumber} d'un bloc de ${block.weekCount} semaines.
+${buildCoachRoleIntro(profile.coachType)}
+
+Tu génères la semaine ${week.weekNumber} d'un bloc de ${block.weekCount} semaines pour cet athlète, dont les disciplines actives sont : ${activeSports.join(", ")}.
 
 ## LANGUE — IMPÉRATIF
 **Tous les textes (title, workoutType, description) doivent être rédigés en FRANÇAIS UNIQUEMENT.** Pas d'anglais, pas de mots anglais sauf termes techniques sans équivalent français (FTP, TSS, RPE, VO2max, Z1-Z7).

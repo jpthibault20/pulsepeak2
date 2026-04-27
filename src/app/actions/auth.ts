@@ -33,7 +33,7 @@ export async function createInitialProfile(
             email,
             currentCTL:    0,
             currentATL:    0,
-            aiPersonality: 'Analytique',
+            coachType:     'triathlon',
             plan:          'free',
             goal:          '',
             weaknesses:    '',

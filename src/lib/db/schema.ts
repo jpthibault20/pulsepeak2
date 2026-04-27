@@ -28,7 +28,7 @@ import type {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const experienceEnum         = pgEnum('experience',          ['Débutant', 'Intermédiaire', 'Avancé']);
-export const aiPersonalityEnum      = pgEnum('ai_personality',      ['Strict', 'Encourageant', 'Analytique']);
+export const coachTypeEnum          = pgEnum('coach_type',          ['cycling', 'running', 'swimming', 'triathlon']);
 export const subscriptionPlanEnum   = pgEnum('subscription_plan',   ['free', 'dev', 'pro']);
 export const userRoleEnum           = pgEnum('user_role',           ['user', 'admin']);
 export const planStatusEnum         = pgEnum('plan_status',         ['active', 'archived']);
@@ -95,7 +95,7 @@ export const profiles = pgTable('profiles', {
                     comments?: string;
                   }>(),
 
-    aiPersonality: aiPersonalityEnum('ai_personality').default('Analytique').notNull(),
+    coachType:     coachTypeEnum('coach_type').default('triathlon').notNull(),
     plan:          subscriptionPlanEnum('plan').default('free').notNull(),
     role:          userRoleEnum('role').default('user').notNull(),
     strava:        jsonb('strava').$type<StravaConfig>(),

@@ -1,4 +1,4 @@
-import { aiPersonality, AvailabilitySlot, CompletedData, CyclingTest, DeviationMetrics, PlannedData, SportType, StravaConfig, Zones } from "./type";
+import { CoachType, AvailabilitySlot, CompletedData, CyclingTest, DeviationMetrics, PlannedData, SportType, StravaConfig, Zones } from "./type";
 
 
 export interface Profile {
@@ -59,7 +59,7 @@ export interface Profile {
         comments?: string;
     }
 
-    aiPersonality: aiPersonality;
+    coachType: CoachType;
 
     role: 'user' | 'admin';
     plan?: 'free' | 'dev' | 'pro';

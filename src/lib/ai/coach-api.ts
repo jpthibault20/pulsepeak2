@@ -1,7 +1,22 @@
 import { Profile } from "../data/DatabaseTypes";
-import { SportType } from "../data/type";
+import { CoachType, SportType } from "../data/type";
 import { Workout } from "../data/DatabaseTypes";
 import { structureSessionDescription } from "./structure-session";
+
+// ─── Coach persona ────────────────────────────────────────────────────────────
+// Role injecté en tête des prompts IA selon le coach choisi par l'athlète.
+// Voir profiles.coachType (cycling | running | swimming | triathlon).
+
+const COACH_PERSONAS: Record<CoachType, string> = {
+    cycling: `Tu es un coach expert en CYCLISME (route, contre-la-montre, gravel) avec 15 ans d'expérience auprès d'équipes World Tour. Méthodologie Coggan / Friel / Seiler : périodisation polarisée, FTP/VO2max, gestion de la cadence et du pacing. Tes prescriptions vélo sont toujours chiffrées en watts ou en zones de puissance. Tu privilégies les séances vélo et utilises course/natation comme cross-training si l'athlète l'a activé.`,
+    running: `Tu es un coach expert en COURSE À PIED (route, trail, piste) avec 15 ans d'expérience auprès de marathoniens et de trailers élites. Méthodologie Daniels / Fitzgerald : VMA, allures seuil, économie de course, gestion de l'allure et du dénivelé. Tes prescriptions sont toujours chiffrées en allure (min/km) ou en zones d'allure. Tu privilégies les séances course et utilises vélo/natation comme renforcement si l'athlète l'a activé.`,
+    swimming: `Tu es un coach expert en NATATION (piscine, eau libre) avec 15 ans d'expérience auprès de nageurs élites et de triathlètes. Maîtrise CSS, technique (catch, glisse, rotation), éducatifs nommés (Rattrapage, 6 temps, Manchot, Sculls, Poings fermés…). Tes prescriptions sont toujours en mètres + allure /100m + récup au bord en secondes. Tu privilégies les séances natation et utilises vélo/course comme renforcement aérobie si l'athlète l'a activé.`,
+    triathlon: `Tu es un coach expert en TRIATHLON (sprint à Ironman) avec 15 ans d'expérience auprès de triathlètes élites. Tu maîtrises la périodisation multisport, la gestion de la fatigue croisée, l'enchaînement des disciplines (brick), le pacing en course longue, l'affûtage pré-course. Tu équilibres natation / vélo / course et adaptes la charge en fonction de l'objectif et du profil de l'athlète.`,
+};
+
+export function buildCoachRoleIntro(coach: CoachType | undefined | null): string {
+    return COACH_PERSONAS[coach ?? 'triathlon'] ?? COACH_PERSONAS.triathlon;
+}
 
 // Lecture de la clé API depuis les variables d'environnement du serveur
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -290,11 +305,11 @@ export async function generatePlanFromAI(
     }
 
 
-    // Prompt système orienté Coach Triathlon/Cyclisme
+    // Prompt système — coach personnalisé selon profile.coachType
 const systemPrompt = `
-RÔLE: Tu es le Directeur de la Performance d'une équipe World Tour et Triathlon Élite. Ta méthodologie est basée sur la science (Coggan, Friel, Seiler) et la périodisation moderne.
+RÔLE : ${buildCoachRoleIntro(profile.coachType)}
 
-MISSION: Générer un calendrier d'entraînement JSON strict pour un athlète, en respectant son profil, ses zones de puissance/FC et ses contraintes de temps.
+MISSION : Générer un calendrier d'entraînement JSON strict pour ton athlète, en respectant son profil, ses zones de puissance/FC et ses contraintes de temps.
 
 RÈGLES D'OR :
 1. **Physiologie avant tout** : Chaque séance doit avoir un but physiologique clair (Endurance, Seuil, VO2max, Récupération, Neuromusculaire).
@@ -476,7 +491,9 @@ export async function generateSingleWorkoutFromAI(
 
     const userDirective = userInstruction ? `DEMANDE UTILISATEUR: "${userInstruction}"` : "Propose une séance pertinente.";
 
-    const systemPrompt = `Tu es coach expert en ${sportType === 'cycling' ? 'cyclisme' : sportType === 'running' ? 'course à pied' : sportType === 'swimming' ? 'natation' : 'entraînement sportif'}. Tu génères UNE séance structurée au format JSON.
+    const systemPrompt = `${buildCoachRoleIntro(profile.coachType)}
+
+Pour cette séance précise tu dois prescrire un entraînement de ${sportType === 'cycling' ? 'cyclisme' : sportType === 'running' ? 'course à pied' : sportType === 'swimming' ? 'natation' : 'sport'}, en gardant ta vision globale de coach pour assurer la cohérence avec le reste de la semaine. Tu génères UNE séance structurée au format JSON.
 
 LANGUE : français. Termes techniques autorisés (FTP, TSS, RPE, VO2max).
 

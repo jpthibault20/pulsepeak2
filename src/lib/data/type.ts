@@ -1,4 +1,4 @@
-export type aiPersonality = 'Strict' | 'Encourageant' | 'Analytique';
+export type CoachType = 'cycling' | 'running' | 'swimming' | 'triathlon';
 
 export enum ReturnCode {
   RC_OK,
