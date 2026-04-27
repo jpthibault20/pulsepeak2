@@ -1,5 +1,6 @@
 import type { Workout, Profile } from '@/lib/data/DatabaseTypes';
 import type { DeviationMetrics, DeviationSignal, DeviationSeverity, CompletedLap } from '@/lib/data/type';
+import { getWorkoutTSS } from './computeTSS';
 
 // ─── Seuils ────────────────────────────────────────────────
 const THRESHOLDS = {
@@ -131,7 +132,8 @@ export function computeDeviationMetrics(
 
   // ── 2. TSS ────────────────────────────────────────────
   let tssDelta: number | null = null;
-  const actualTSS = cd.metrics?.cycling?.tss ?? cd.calculatedTSS ?? null;
+  const tssValue = getWorkoutTSS(workout, profile);
+  const actualTSS = tssValue > 0 ? tssValue : null;
   if (planned.plannedTSS && actualTSS) {
     tssDelta = Math.round(pctDelta(actualTSS, planned.plannedTSS));
     const absDelta = Math.abs(tssDelta);

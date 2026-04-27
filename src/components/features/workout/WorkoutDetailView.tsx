@@ -23,6 +23,7 @@ import { Profile } from '@/lib/data/DatabaseTypes';
 import { getWorkoutAISummary, getWorkoutDeviation, regenerateWeekFromDeviation } from '@/app/actions/schedule/workout-ai';
 import { updateWorkoutRPE } from '@/app/actions/schedule/workout-actions';
 import { BatteryLow, ArrowUpRight, Loader2 } from 'lucide-react';
+import { getWorkoutTSS } from '@/lib/stats/computeTSS';
 
 // --- Types ---
 interface WorkoutDetailViewProps {
@@ -128,8 +129,10 @@ function getCompletedMetrics(workout: Workout): MetricTile[] {
     if (cd.distanceKm && cd.distanceKm > 0) {
         tiles.push({ label: 'Distance', value: `${cd.distanceKm.toFixed(1)}`, sub: 'km', icon: Route, large: true });
     }
-    if (cd.metrics?.cycling?.tss) {
-        tiles.push({ label: 'TSS', value: `${Math.round(cd.metrics.cycling.tss)}`, icon: Zap, accent: 'text-amber-600 dark:text-amber-400', large: true });
+    // TSS canonique (toutes sources, pas seulement la puissance vélo)
+    const displayTSS = getWorkoutTSS(workout);
+    if (displayTSS > 0) {
+        tiles.push({ label: 'TSS', value: `${Math.round(displayTSS)}`, icon: Zap, accent: 'text-amber-600 dark:text-amber-400', large: true });
     }
     if (cd.heartRate?.avgBPM) {
         tiles.push({ label: 'FC Moy', value: `${cd.heartRate.avgBPM}`, sub: cd.heartRate.maxBPM ? `max ${cd.heartRate.maxBPM}` : 'bpm', icon: Heart, accent: 'text-rose-600 dark:text-rose-400' });

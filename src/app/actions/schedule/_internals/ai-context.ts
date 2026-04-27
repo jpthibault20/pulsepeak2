@@ -15,6 +15,7 @@ import { parseLocalDate } from '@/lib/utils';
 import { getBlock, getPlan } from '@/lib/data/crud';
 import { Block, Objective, Profile, Schedule, Week, Workout } from '@/lib/data/DatabaseTypes';
 import { RESIDUAL_EFFECTS_DAYS } from '../../constants';
+import { getWorkoutTSS } from '@/lib/stats/computeTSS';
 
 
 /**
@@ -53,7 +54,7 @@ export function getTrainingHistorySummary(workouts: Workout[]): string {
             sportCount[w.sportType] = (sportCount[w.sportType] || 0) + 1;
             typeCount[w.workoutType || 'Autre'] = (typeCount[w.workoutType || 'Autre'] || 0) + 1;
             totalDuration += w.completedData?.actualDurationMinutes || 0;
-            totalTSS += w.completedData?.metrics?.cycling?.tss || 0;
+            totalTSS += getWorkoutTSS(w);
         }
 
         const sports = Object.entries(sportCount).map(([s, n]) => `${s}(${n})`).join(', ');
@@ -65,7 +66,7 @@ export function getTrainingHistorySummary(workouts: Workout[]): string {
 
     // Résumé global de la tendance
     const totalWeeksWithData = recentWeeks.length;
-    const allTSS = recentWeeks.map(([, wks]) => wks.reduce((sum, w) => sum + (w.completedData?.metrics?.cycling?.tss || 0), 0));
+    const allTSS = recentWeeks.map(([, wks]) => wks.reduce((sum, w) => sum + getWorkoutTSS(w), 0));
     const avgTSS = Math.round(allTSS.reduce((a, b) => a + b, 0) / totalWeeksWithData);
     const tssFirst4 = allTSS.slice(0, Math.min(4, allTSS.length));
     const tssLast4 = allTSS.slice(Math.max(0, allTSS.length - 4));
@@ -329,10 +330,7 @@ export function getPreviousWeekSummary(
     lines.push(`## SEMAINE PRÉCÉDENTE (S${prevWeek.weekNumber}${prevBlock ? ` — ${prevBlock.type} "${prevBlock.theme}"` : ''})`);
 
     // TSS réel vs planifié
-    const actualTSS = completedWorkouts.reduce((sum, w) => {
-        const cd = w.completedData!;
-        return sum + (cd.metrics?.cycling?.tss ?? cd.calculatedTSS ?? w.plannedData?.plannedTSS ?? 0);
-    }, 0);
+    const actualTSS = completedWorkouts.reduce((sum, w) => sum + getWorkoutTSS(w), 0);
     const plannedTSS = prevWorkouts.reduce((sum, w) => sum + (w.plannedData?.plannedTSS ?? 0), 0);
     const tssRatio = plannedTSS > 0 ? Math.round((actualTSS / plannedTSS) * 100) : 0;
 
@@ -354,7 +352,7 @@ export function getPreviousWeekSummary(
         for (const w of completedWorkouts) {
             const cd = w.completedData!;
             const duration = cd.actualDurationMinutes;
-            const tss = cd.metrics?.cycling?.tss ?? cd.calculatedTSS ?? w.plannedData?.plannedTSS ?? 0;
+            const tss = getWorkoutTSS(w);
             const rpe = cd.perceivedEffort ? ` | RPE ${cd.perceivedEffort}/10` : '';
             lines.push(`  · ${w.sportType} ${w.workoutType} — ${duration}min | TSS ${tss}${rpe} | "${w.title}"`);
         }
