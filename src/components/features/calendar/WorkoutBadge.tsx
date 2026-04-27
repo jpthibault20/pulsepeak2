@@ -4,6 +4,7 @@ import {
     Bike, Footprints, Waves, Dumbbell, Activity
 } from 'lucide-react';
 import type { Workout } from '@/lib/data/DatabaseTypes';
+import { getWorkoutTSS } from '@/lib/stats/computeTSS';
 
 interface WorkoutBadgeProps {
     workout: Workout;
@@ -30,8 +31,9 @@ export function WorkoutBadge({ workout, onClick, isCompact = false }: WorkoutBad
     const isMissed = workout.status === 'missed';
 
     const duration = workout.completedData?.actualDurationMinutes || workout.plannedData?.durationMinutes || 0;
-    const tss = isCompleted && workout.completedData
-        ? (workout.completedData.calculatedTSS ?? workout.completedData.metrics?.cycling?.tss ?? workout.plannedData?.plannedTSS ?? 0)
+    // Affichage : TSS canonique pour les séances complétées, TSS planifié pour les pending.
+    const tss = isCompleted
+        ? getWorkoutTSS(workout)
         : (workout.plannedData?.plannedTSS ?? 0);
 
     // --- Style dynamique du conteneur ---

@@ -3,6 +3,7 @@ import { DayCell } from './DayCell';
 import { WeekSummaryCell } from './WeekSummaryCell';
 import { formatDateKey, DAY_NAMES_SHORT, type DayName } from '@/lib/utils';
 import { useCalendarContext } from './CalendarContext';
+import { getWorkoutTSS } from '@/lib/stats/computeTSS';
 
 interface CalendarGridProps {
     weekRows: (Date | null)[][];
@@ -70,10 +71,7 @@ export function CalendarGrid({
                         stats.actualDuration += actualMinutes;
                         stats.distance += workout.completedData.distanceKm ?? 0;
 
-                        // TSS réalisé : calculatedTSS (tous sports) > cycling.tss > plannedTSS
-                        const cd = workout.completedData;
-                        const tss = cd.calculatedTSS ?? cd.metrics?.cycling?.tss ?? workout.plannedData?.plannedTSS ?? 0;
-                        stats.completedTSS += tss;
+                        stats.completedTSS += getWorkoutTSS(workout);
 
                         // Durée par sport
                         if (stats.sportDuration[sport] !== undefined) {

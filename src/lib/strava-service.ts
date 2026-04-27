@@ -171,7 +171,7 @@ export async function getStravaActivityById(id: number) {
       accessToken,
       x.id,
       x.description,
-      { tss: completedData.metrics.cycling?.tss ?? completedData.calculatedTSS ?? null }
+      { tss: completedData.calculatedTSS ?? null }
     );
   }
 
