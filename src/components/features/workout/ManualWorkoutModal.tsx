@@ -124,9 +124,11 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                 plannedData: {
                     durationMinutes: duration,
                     distanceKm: distance,
+                    distanceMeters: null,
                     plannedTSS: tss || null,
                     targetPowerWatts: null,
                     targetPaceMinPerKm: null,
+                    targetPaceMinPer100m: null,
                     targetHeartRateBPM: null,
                     description: description || 'Séance manuelle',
                 },

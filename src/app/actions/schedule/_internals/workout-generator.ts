@@ -298,7 +298,8 @@ ${profile.experience === 'Débutant' ? `⚠️ DÉBUTANT — Appliquer impérati
 6. Ne pas placer 2 séances dures (Interval, Tempo) consécutives. TOUJOURS alterner dur/facile.
 7. dayOffset doit correspondre exactement au jour disponible (0=Lundi ... 6=Dimanche).
 8. Exactement UNE séance par sport par créneau (si "vélo 1.5h" → 1 séance vélo). Jours non listés = repos, pas de séance. Jours LIBRE = repos possible si pertinent.
-9. La "description" doit être précise, technique, structurée (échauffement, corps de séance, retour au calme).
+9. La "description" doit être précise, technique, structurée (échauffement, corps de séance, retour au calme). Style télégraphique : consignes factuelles uniquement (durées, cibles chiffrées, récups). Pas d'intro pédagogique, pas de justification, pas de conclusion. Longueur 150-400 caractères (jusqu'à 600 pour natation technique).
+   Cohérence durée : la somme des durées des blocs doit ≈ durationMinutes (±5%).
    Métrique PRIORITAIRE par sport :
    - VÉLO : WATTS/zones de puissance en priorité. Fallback : FC. Dernier recours : RPE.
    - COURSE : ALLURES (min/km) en priorité. Fallback : FC. Dernier recours : RPE.
@@ -423,23 +424,25 @@ Chaque objet contient exactement :
     });
 
     // Structuration en parallèle des descriptions via un second appel IA.
-    // Échec individuel → structure: [] (la séance reste utilisable avec sa description).
+    // La fonction renvoie un PlannedData complet (cibles top-level + structure).
+    // Échec individuel → PlannedData minimal (description conservée, structure: []).
     const structuredWorkouts = await Promise.all(
         aiResponse.map(async (w) => {
-            const { structure, tokensUsed } = await structureSessionDescription({
-                description: w.description,
-                sportType: w.sportType,
+            const { plannedData, tokensUsed } = await structureSessionDescription({
+                description:     w.description,
+                sportType:       w.sportType,
                 durationMinutes: w.durationMinutes,
+                plannedTSS:      w.plannedTSS,
                 profile,
             });
-            return { w, structure, tokensUsed };
+            return { w, plannedData, tokensUsed };
         })
     );
 
     const totalStructureTokens = structuredWorkouts.reduce((s, x) => s + x.tokensUsed, 0);
     if (totalStructureTokens > 0) await atomicIncrementTokenCount(totalStructureTokens);
 
-    return structuredWorkouts.map(({ w, structure }) => {
+    return structuredWorkouts.map(({ w, plannedData }) => {
         const workoutDate = addDays(weekStartDate, w.dayOffset);
         const wId = randomUUID();
         return {
@@ -452,16 +455,7 @@ Chaque objet contient exactement :
             workoutType: w.workoutType,
             mode:        'Outdoor',
             status:      'pending',
-            plannedData: {
-                durationMinutes:    w.durationMinutes,
-                targetPowerWatts:   null,
-                targetPaceMinPerKm: null,
-                targetHeartRateBPM: null,
-                distanceKm:         null,
-                plannedTSS:         w.plannedTSS,
-                description:        w.description,
-                structure,
-            },
+            plannedData,
             completedData: null,
         } satisfies Workout;
     });

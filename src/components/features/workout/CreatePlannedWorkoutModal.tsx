@@ -3,7 +3,7 @@
 import { Card, Button } from '@/components/ui';
 import type { SportType } from '@/lib/data/type';
 import {
-    CalendarPlus, Calendar, Bike, Waves, Footprints, Mountain, AlignLeft, Timer,
+    CalendarPlus, Calendar, Bike, Waves, Footprints, Mountain, AlignLeft, Timer, Pencil,
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { ProgressModal, type ProgressState, type ProgressModalConfig } from '../calendar/ProgressModal';
@@ -62,8 +62,12 @@ export const CreatePlannedWorkoutModal: React.FC<CreatePlannedWorkoutModalProps>
 }) => {
     const [sportType, setSportType] = useState<SportType>('cycling');
     const [workoutType, setWorkoutType] = useState('Endurance');
+    const [isCustomType, setIsCustomType] = useState(false);
+    const [customType, setCustomType] = useState('');
     const [duration, setDuration] = useState(60);
     const [description, setDescription] = useState('');
+
+    const effectiveWorkoutType = isCustomType ? customType.trim() : workoutType;
 
     const [progress, setProgress] = useState<ProgressState>({
         active: false, minimized: false, done: false, error: null, startedAt: 0,
@@ -73,13 +77,13 @@ export const CreatePlannedWorkoutModal: React.FC<CreatePlannedWorkoutModalProps>
 
     const config: ProgressModalConfig = {
         ...PROGRESS_CONFIG,
-        label: `${sportLabels[sportType]} – ${workoutType} · ${duration} min`,
+        label: `${sportLabels[sportType]} – ${effectiveWorkoutType || '?'} · ${duration} min`,
     };
 
     const handleCreate = async () => {
         setProgress({ active: true, minimized: false, done: false, error: null, startedAt: Date.now() });
 
-        const comment = [workoutType, description.trim()].filter(Boolean).join(' – ');
+        const comment = [effectiveWorkoutType, description.trim()].filter(Boolean).join(' – ');
 
         try {
             await onCreateAI(dateStr, sportType, duration, comment);
@@ -143,6 +147,7 @@ export const CreatePlannedWorkoutModal: React.FC<CreatePlannedWorkoutModalProps>
                                     onClick={() => {
                                         setSportType(sport);
                                         setWorkoutType(workoutTypes[sport][0]);
+                                        setIsCustomType(false);
                                     }}
                                     className={`
                                         h-11 flex items-center justify-center gap-1.5 rounded-lg border-2
@@ -170,10 +175,13 @@ export const CreatePlannedWorkoutModal: React.FC<CreatePlannedWorkoutModalProps>
                                 <button
                                     key={type}
                                     type="button"
-                                    onClick={() => setWorkoutType(type)}
+                                    onClick={() => {
+                                        setWorkoutType(type);
+                                        setIsCustomType(false);
+                                    }}
                                     className={`
                                         px-3 py-1.5 rounded-lg text-xs font-medium border transition-all
-                                        ${workoutType === type
+                                        ${!isCustomType && workoutType === type
                                             ? 'bg-emerald-50 dark:bg-emerald-500/20 border-emerald-500 text-emerald-600 dark:text-emerald-400'
                                             : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-600'
                                         }
@@ -182,7 +190,31 @@ export const CreatePlannedWorkoutModal: React.FC<CreatePlannedWorkoutModalProps>
                                     {type}
                                 </button>
                             ))}
+                            <button
+                                type="button"
+                                onClick={() => setIsCustomType(true)}
+                                className={`
+                                    inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all
+                                    ${isCustomType
+                                        ? 'bg-emerald-50 dark:bg-emerald-500/20 border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                                        : 'bg-white dark:bg-slate-900 border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-600'
+                                    }
+                                `}
+                            >
+                                <Pencil size={11} />
+                                Perso
+                            </button>
                         </div>
+                        {isCustomType && (
+                            <input
+                                type="text"
+                                value={customType}
+                                onChange={e => setCustomType(e.target.value)}
+                                placeholder="Ex: Sortie longue dénivelé, séance technique..."
+                                autoFocus
+                                className="mt-2 w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-colors"
+                            />
+                        )}
                     </div>
 
                     {/* Durée */}
@@ -223,7 +255,7 @@ export const CreatePlannedWorkoutModal: React.FC<CreatePlannedWorkoutModalProps>
                     <Button
                         variant="primary"
                         onClick={handleCreate}
-                        disabled={duration < 10}
+                        disabled={duration < 10 || !effectiveWorkoutType}
                         className="flex-1 bg-emerald-600! hover:bg-emerald-500!"
                     >
                         Planifier
