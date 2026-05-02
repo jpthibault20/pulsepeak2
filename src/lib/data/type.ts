@@ -1,4 +1,4 @@
-export type aiPersonality = 'Strict' | 'Encourageant' | 'Analytique';
+export type CoachType = 'cycling' | 'running' | 'swimming' | 'triathlon';
 
 export enum ReturnCode {
   RC_OK,
@@ -16,10 +16,12 @@ export interface AvailabilitySlot {
 }
 export interface PlannedData {
   durationMinutes: number;
-  targetPowerWatts: number | null;
-  targetPaceMinPerKm: string | null;
-  targetHeartRateBPM: number | null;
-  distanceKm: number | null;
+  targetPowerWatts: number | null;       // cible dominante vélo
+  targetPaceMinPerKm: string | null;     // cible dominante course ("M:SS")
+  targetPaceMinPer100m: string | null;   // cible dominante natation ("M:SS")
+  targetHeartRateBPM: number | null;     // cible FC tous sports
+  distanceKm: number | null;             // volume total vélo / course
+  distanceMeters: number | null;         // volume total natation
   plannedTSS: number | null;
   description: string | null;
   structure?: StructureBlock[];

@@ -85,7 +85,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
         id: '', createdAt: '', updatedAt: '', lastLoginAt: null,
         firstName: '', lastName: '', email: '', weight: undefined, height: undefined, birthDate: '',
         activeSports: { swimming: false, cycling: true, running: false },
-        aiPersonality: 'Analytique',
+        coachType: 'triathlon',
         strava: undefined,
         stravaWriteBack: true,
         currentATL: 0, currentCTL: 0,
@@ -115,7 +115,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSave, o
             birthDate: safeValue(initialData.birthDate, ''),
             weight: safeValue(initialData.weight, undefined),
             height: safeValue(initialData.height, undefined),
-            aiPersonality: safeValue(initialData.aiPersonality, 'Analytique'),
+            coachType: safeValue(initialData.coachType, 'triathlon'),
             experience: safeValue(initialData.experience, 'Débutant'),
             strava: initialData.strava || undefined,
             activeSports: {

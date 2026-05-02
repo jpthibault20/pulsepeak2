@@ -1,7 +1,22 @@
 import { Profile } from "../data/DatabaseTypes";
-import { SportType } from "../data/type";
+import { CoachType, SportType } from "../data/type";
 import { Workout } from "../data/DatabaseTypes";
 import { structureSessionDescription } from "./structure-session";
+
+// ─── Coach persona ────────────────────────────────────────────────────────────
+// Role injecté en tête des prompts IA selon le coach choisi par l'athlète.
+// Voir profiles.coachType (cycling | running | swimming | triathlon).
+
+const COACH_PERSONAS: Record<CoachType, string> = {
+    cycling: `Tu es un coach expert en CYCLISME (route, contre-la-montre, gravel) avec 15 ans d'expérience auprès d'équipes World Tour. Méthodologie Coggan / Friel / Seiler : périodisation polarisée, FTP/VO2max, gestion de la cadence et du pacing. Tes prescriptions vélo sont toujours chiffrées en watts ou en zones de puissance. Tu privilégies les séances vélo et utilises course/natation comme cross-training si l'athlète l'a activé.`,
+    running: `Tu es un coach expert en COURSE À PIED (route, trail, piste) avec 15 ans d'expérience auprès de marathoniens et de trailers élites. Méthodologie Daniels / Fitzgerald : VMA, allures seuil, économie de course, gestion de l'allure et du dénivelé. Tes prescriptions sont toujours chiffrées en allure (min/km) ou en zones d'allure. Tu privilégies les séances course et utilises vélo/natation comme renforcement si l'athlète l'a activé.`,
+    swimming: `Tu es un coach expert en NATATION (piscine, eau libre) avec 15 ans d'expérience auprès de nageurs élites et de triathlètes. Maîtrise CSS, technique (catch, glisse, rotation), éducatifs nommés (Rattrapage, 6 temps, Manchot, Sculls, Poings fermés…). Tes prescriptions sont toujours en mètres + allure /100m + récup au bord en secondes. Tu privilégies les séances natation et utilises vélo/course comme renforcement aérobie si l'athlète l'a activé.`,
+    triathlon: `Tu es un coach expert en TRIATHLON (sprint à Ironman) avec 15 ans d'expérience auprès de triathlètes élites. Tu maîtrises la périodisation multisport, la gestion de la fatigue croisée, l'enchaînement des disciplines (brick), le pacing en course longue, l'affûtage pré-course. Tu équilibres natation / vélo / course et adaptes la charge en fonction de l'objectif et du profil de l'athlète.`,
+};
+
+export function buildCoachRoleIntro(coach: CoachType | undefined | null): string {
+    return COACH_PERSONAS[coach ?? 'triathlon'] ?? COACH_PERSONAS.triathlon;
+}
 
 // Lecture de la clé API depuis les variables d'environnement du serveur
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -166,9 +181,10 @@ export async function callGeminiAPI(
             const data = await response.json();
 
             const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            const finishReason: string | undefined = data.candidates?.[0]?.finishReason;
             const tokensUsed: number = data.usageMetadata?.totalTokenCount ?? 0;
 
-            if (!rawText) throw new Error("AI response empty.");
+            if (!rawText) throw new Error(`AI response empty (finishReason=${finishReason ?? 'unknown'}).`);
 
             // Nettoyage du markdown éventuel
             let cleanText: string = rawText
@@ -177,14 +193,23 @@ export async function callGeminiAPI(
                 .replace(/^```\s*/i, '')
                 .replace(/\s*```$/i, '');
 
-            // Contre-mesure : Gemini peut produire des runs de \n dans les strings
-            // (boucle de répétition) qui cassent le JSON. On collapse >=3 \n en un seul.
+            // Contre-mesure : Gemini peut produire des runs de \n ou \t dans les strings
+            // (boucle de répétition) qui cassent le JSON. On collapse >=3 occurrences en une seule.
             cleanText = cleanText.replace(/(\\n){3,}/g, '\\n');
+            cleanText = cleanText.replace(/(\\t){3,}/g, '\\t');
+            // Tabs littéraux (caractère 0x09) interdits dans une string JSON par la spec —
+            // si Gemini en émet, le parse échoue. On les remplace par un espace.
+            cleanText = cleanText.replace(/\t/g, ' ');
 
             try {
                 return { data: JSON.parse(cleanText), tokensUsed };
             } catch (parseError) {
-                throw new Error(`JSON parsing failed: ${parseError}`);
+                // Diagnostic : on remonte le finishReason et la queue du texte
+                // pour distinguer une troncature (MAX_TOKENS) d'un vrai JSON cassé.
+                const tail = cleanText.slice(-120).replace(/\s+/g, ' ');
+                throw new Error(
+                    `JSON parsing failed (finishReason=${finishReason ?? 'unknown'}, len=${cleanText.length}, tail="…${tail}"): ${parseError}`
+                );
             }
 
         } catch (error) {
@@ -290,11 +315,11 @@ export async function generatePlanFromAI(
     }
 
 
-    // Prompt système orienté Coach Triathlon/Cyclisme
+    // Prompt système — coach personnalisé selon profile.coachType
 const systemPrompt = `
-RÔLE: Tu es le Directeur de la Performance d'une équipe World Tour et Triathlon Élite. Ta méthodologie est basée sur la science (Coggan, Friel, Seiler) et la périodisation moderne.
+RÔLE : ${buildCoachRoleIntro(profile.coachType)}
 
-MISSION: Générer un calendrier d'entraînement JSON strict pour un athlète, en respectant son profil, ses zones de puissance/FC et ses contraintes de temps.
+MISSION : Générer un calendrier d'entraînement JSON strict pour ton athlète, en respectant son profil, ses zones de puissance/FC et ses contraintes de temps.
 
 RÈGLES D'OR :
 1. **Physiologie avant tout** : Chaque séance doit avoir un but physiologique clair (Endurance, Seuil, VO2max, Récupération, Neuromusculaire).
@@ -306,11 +331,10 @@ RÈGLES D'OR :
    - Si "Outdoor" : Plus de volume, gestion du terrain, descriptions axées sur le pilotage ou la route.
 6. **Contraintes Horaire** : NE JAMAIS programmer une séance plus longue que la disponibilité indiquée pour ce jour-là.
 7. **Jours de Repos** : Si nécessaire, n'hésite pas à laisser des jours vides (pas de JSON généré pour ce jour) pour la récupération.
-8. **Description OBLIGATOIRE** : chaque séance DOIT contenir une description unique, précise et structurée (échauffement, corps, retour au calme avec valeurs de zones/watts/allures). JAMAIS de "N/A", jamais vide. Inclure les consignes de terrain ET la structure technique.
+8. **Description OBLIGATOIRE** : chaque séance DOIT contenir une description unique, structurée (échauffement, corps, retour au calme avec valeurs de zones/watts/allures). JAMAIS de "N/A", jamais vide. Style télégraphique : consignes factuelles (durées, cibles chiffrées, récups). Pas d'intro pédagogique, pas de justification, pas de conclusion. Longueur 150-400 caractères (jusqu'à 600 pour natation technique). Cohérence durée : la somme des durées des blocs doit ≈ durée totale (±5%).
 FORMAT DE RÉPONSE :
 - Tu dois répondre UNIQUEMENT avec le JSON validé par le schéma fourni.
 - Aucune phrase d'introduction ou de conclusion.
-- Les descriptions des séances doivent être techniques mais motivantes (style coach).
 - LANGUE : français UNIQUEMENT pour tous les textes (title, type, description, synthesis). Pas d'anglais sauf termes techniques sans équivalent (FTP, TSS, RPE, VO2max).
 `;
 
@@ -414,10 +438,12 @@ FORMAT DE RÉPONSE :
                     durationMinutes: w.duration,
                     plannedTSS: w.tss || null,
                     distanceKm: null, // L'IA ne le devine pas forcément bien, on laisse null
-                    
+                    distanceMeters: null,
+
                     // Mapping des cibles selon le sport
                     targetPowerWatts: w.sport === 'cycling' ? w.target_power : null,
-                    targetPaceMinPerKm: w.sport !== 'cycling' ? w.target_pace : null,
+                    targetPaceMinPerKm: w.sport === 'running' ? w.target_pace : null,
+                    targetPaceMinPer100m: w.sport === 'swimming' ? w.target_pace : null,
                     targetHeartRateBPM: w.target_hr || null,
 
                     description: sanitizeDescription(w.description),
@@ -476,18 +502,20 @@ export async function generateSingleWorkoutFromAI(
 
     const userDirective = userInstruction ? `DEMANDE UTILISATEUR: "${userInstruction}"` : "Propose une séance pertinente.";
 
-    const systemPrompt = `Tu es coach expert en ${sportType === 'cycling' ? 'cyclisme' : sportType === 'running' ? 'course à pied' : sportType === 'swimming' ? 'natation' : 'entraînement sportif'}. Tu génères UNE séance structurée au format JSON.
+    const systemPrompt = `${buildCoachRoleIntro(profile.coachType)}
+
+Pour cette séance précise tu dois prescrire un entraînement de ${sportType === 'cycling' ? 'cyclisme' : sportType === 'running' ? 'course à pied' : sportType === 'swimming' ? 'natation' : 'sport'}, en gardant ta vision globale de coach pour assurer la cohérence avec le reste de la semaine. Tu génères UNE séance structurée au format JSON.
 
 LANGUE : français. Termes techniques autorisés (FTP, TSS, RPE, VO2max).
 
 ${sportRules}
 
-RÈGLES GÉNÉRALES :
-- "description" = paragraphe complet et AUTO-SUFFISANT que l'athlète peut lire et exécuter sans rien demander de plus. Il doit contenir toutes les valeurs chiffrées (durées, distances, cibles, récups, répétitions).
-- Interdits : "N/A", "au choix", "varié" non précisé, "travail technique" seul, "à ton rythme". Tout doit être explicite.
-- Format du texte : paragraphe dense, phrases enchaînées avec ponctuation. MAXIMUM 3 sauts de ligne simples (\\n) pour séparer les grandes sections. JAMAIS de sauts de ligne consécutifs (\\n\\n interdit).
-- Longueur attendue : entre 400 et 1200 caractères selon la complexité de la séance (une séance technique natation ≈ 600-900 caractères).
-- Adapte l'intensité au niveau athlète (${profile.experience ?? 'Intermédiaire'}) et au focus du bloc. Respecte la durée maximale indiquée.
+RÈGLES :
+- "description" = consignes d'exécution factuelles : durées, distances, cibles chiffrées (watts/allure/FC), récups, répétitions. Style télégraphique. Pas d'intro pédagogique, pas de justification du pourquoi, pas de conclusion.
+- Cohérence durée : la somme des durées des blocs doit ≈ durée totale demandée (±5%).
+- Pas de "N/A", "au choix", "varié" non précisé. Tout explicite.
+- Longueur : 150-400 caractères (jusqu'à 600 pour natation technique).
+- Adapte au niveau athlète (${profile.experience ?? 'Intermédiaire'}) et au focus. Respecte la durée max.
 
 FORMAT DE SORTIE : JSON uniquement, validé par le schéma. Pas de texte avant/après.`;
 
@@ -538,10 +566,11 @@ Génère UN objet JSON pour la séance.`;
             // observées (flots de \n), assez haut pour produire du contenu
             // détaillé plutôt qu'une version "safe" minimaliste.
             temperature: 0.5,
-            // Cap dur contre les runaways. Séance typique ≈ 400-700 tokens ;
-            // 2000 laisse de la marge pour natation technique (plus verbeux).
-            maxOutputTokens: 2000,
-            // Filet de sécurité : coupe si Gemini sort 5 \n d'affilée.
+            // Cap dur contre les runaways. 4096 laisse de la marge pour
+            // séance longue + workoutType custom.
+            maxOutputTokens: 4096,
+            // Filet de sécurité : coupe sur 5 vrais \n d'affilée (signe de runaway).
+            // Les boucles de \\n / \\t escaped sont nettoyées en aval par cleanText.
             stopSequences: ["\n\n\n\n\n"],
         },
     };
@@ -553,15 +582,31 @@ Génère UN objet JSON pour la séance.`;
     const rawDesc = w.description ?? '';
     const description = sanitizeDescription(rawDesc);
 
-    // Second appel IA : structuration (fallback [] si pas de description ou échec).
-    const { structure, tokensUsed: structureTokens } = description
+    // Second appel IA : structuration → PlannedData complet (cibles top-level + structure).
+    // Si pas de description, on construit un PlannedData minimal sans appel IA.
+    const { plannedData, tokensUsed: structureTokens } = description
         ? await structureSessionDescription({
             description,
             sportType,
             durationMinutes: w.duration,
+            plannedTSS: w.tss ?? null,
             profile,
         })
-        : { structure: [], tokensUsed: 0 };
+        : {
+            plannedData: {
+                durationMinutes: w.duration,
+                targetPowerWatts: null,
+                targetPaceMinPerKm: null,
+                targetPaceMinPer100m: null,
+                targetHeartRateBPM: null,
+                distanceKm: null,
+                distanceMeters: null,
+                plannedTSS: w.tss ?? null,
+                description,
+                structure: [],
+            },
+            tokensUsed: 0,
+        };
 
     return {
         workout: {
@@ -572,16 +617,7 @@ Génère UN objet JSON pour la séance.`;
             workoutType: w.type,
             mode: w.mode,
             status: 'pending' as const,
-            plannedData: {
-                durationMinutes: w.duration,
-                plannedTSS: w.tss ?? null,
-                targetPowerWatts: null,
-                targetPaceMinPerKm: null,
-                targetHeartRateBPM: null,
-                distanceKm: null,
-                description,
-                structure,
-            },
+            plannedData,
             completedData: null,
         },
         tokensUsed: tokensUsed + structureTokens,

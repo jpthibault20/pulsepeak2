@@ -1,5 +1,5 @@
 import { Profile } from "../data/DatabaseTypes";
-import { SportType, StructureBlock, StructureSimpleBlock, StructureRepeatBlock, SwimStrokeType } from "../data/type";
+import { PlannedData, SportType, StructureBlock, StructureSimpleBlock, StructureRepeatBlock, SwimStrokeType } from "../data/type";
 import { callGeminiAPI } from "./coach-api";
 
 const SWIM_STROKES: readonly SwimStrokeType[] = ['crawl', 'dos', 'brasse', 'papillon', '4_nages', 'mixte'];
@@ -48,50 +48,55 @@ function buildZonesContext(profile: Profile, sportType: SportType): string {
     return parts.length > 0 ? parts.join('\n\n') : "Aucune zone définie pour l'athlète — utilise des valeurs cohérentes avec le niveau.";
 }
 
-// Schéma unique top-level : tous les champs actif + récup + natation + renfo en optionnel.
-// L'IA remplit ce qui est pertinent selon le type (simple vs Repeat) et le sport.
-const structureResponseSchema = {
-    type: "ARRAY",
-    items: {
-        type: "OBJECT",
-        properties: {
-            type: { type: "STRING", enum: ["Warmup", "Active", "Rest", "Cooldown", "Repeat"] },
+// ─── Schéma de réponse Gemini ─────────────────────────────────────────────────
+// Top-level = cibles dominantes de la séance + structure détaillée par bloc.
+const blockItemSchema = {
+    type: "OBJECT",
+    properties: {
+        type: { type: "STRING", enum: ["Warmup", "Active", "Rest", "Cooldown", "Repeat"] },
+        repeat: { type: "NUMBER", nullable: true },
 
-            // Uniquement pour type="Repeat"
-            repeat: { type: "NUMBER", nullable: true },
+        durationActifSecondes: { type: "NUMBER", nullable: true },
+        targetPowerWatts: { type: "NUMBER", nullable: true },
+        targetPaceMinPerKm: { type: "STRING", nullable: true },
+        targetPaceMinPer100m: { type: "STRING", nullable: true },
+        targetHeartRateBPM: { type: "NUMBER", nullable: true },
+        targetRPE: { type: "NUMBER", nullable: true },
 
-            // Phase ACTIVE (ou bloc simple : c'est la durée/cible du bloc lui-même)
-            durationActifSecondes: { type: "NUMBER", nullable: true },
-            targetPowerWatts: { type: "NUMBER", nullable: true },
-            targetPaceMinPerKm: { type: "STRING", nullable: true },
-            targetPaceMinPer100m: { type: "STRING", nullable: true },
-            targetHeartRateBPM: { type: "NUMBER", nullable: true },
-            targetRPE: { type: "NUMBER", nullable: true },
+        distanceMeters: { type: "NUMBER", nullable: true },
+        strokeType: { type: "STRING", nullable: true, enum: ["crawl", "dos", "brasse", "papillon", "4_nages", "mixte"] },
+        equipment: { type: "ARRAY", nullable: true, items: { type: "STRING" } },
 
-            // Natation (applicable au bloc simple ET à la phase active d'un Repeat)
-            distanceMeters: { type: "NUMBER", nullable: true },
-            strokeType: { type: "STRING", nullable: true, enum: ["crawl", "dos", "brasse", "papillon", "4_nages", "mixte"] },
-            equipment: { type: "ARRAY", nullable: true, items: { type: "STRING" } },
+        durationRecupSecondes: { type: "NUMBER", nullable: true },
+        targetRecupPowerWatts: { type: "NUMBER", nullable: true },
+        targetRecupPaceMinPerKm: { type: "STRING", nullable: true },
+        targetRecupPaceMinPer100m: { type: "STRING", nullable: true },
+        targetRecupHeartRateBPM: { type: "NUMBER", nullable: true },
+        targetRecupRPE: { type: "NUMBER", nullable: true },
 
-            // Phase RÉCUPÉRATION (uniquement pour type="Repeat")
-            durationRecupSecondes: { type: "NUMBER", nullable: true },
-            targetRecupPowerWatts: { type: "NUMBER", nullable: true },
-            targetRecupPaceMinPerKm: { type: "STRING", nullable: true },
-            targetRecupPaceMinPer100m: { type: "STRING", nullable: true },
-            targetRecupHeartRateBPM: { type: "NUMBER", nullable: true },
-            targetRecupRPE: { type: "NUMBER", nullable: true },
+        distanceKm: { type: "NUMBER", nullable: true },
+        plannedTSS: { type: "NUMBER", nullable: true },
+        reps: { type: "NUMBER", nullable: true },
+        sets: { type: "NUMBER", nullable: true },
+        loadKg: { type: "NUMBER", nullable: true },
 
-            // Uniquement sur blocs simples (hors natation)
-            distanceKm: { type: "NUMBER", nullable: true },
-            plannedTSS: { type: "NUMBER", nullable: true },
-            reps: { type: "NUMBER", nullable: true },
-            sets: { type: "NUMBER", nullable: true },
-            loadKg: { type: "NUMBER", nullable: true },
-
-            description: { type: "STRING" },
-        },
-        required: ["type", "description"],
+        description: { type: "STRING" },
     },
+    required: ["type", "description"],
+};
+
+const responseSchema = {
+    type: "OBJECT",
+    properties: {
+        targetPowerWatts: { type: "NUMBER", nullable: true },
+        targetPaceMinPerKm: { type: "STRING", nullable: true },
+        targetPaceMinPer100m: { type: "STRING", nullable: true },
+        targetHeartRateBPM: { type: "NUMBER", nullable: true },
+        distanceKm: { type: "NUMBER", nullable: true },
+        distanceMeters: { type: "NUMBER", nullable: true },
+        structure: { type: "ARRAY", items: blockItemSchema },
+    },
+    required: ["structure"],
 };
 
 type RawBlock = {
@@ -123,6 +128,16 @@ type RawBlock = {
     loadKg?: number | null;
 
     description?: string;
+};
+
+type RawResponse = {
+    targetPowerWatts?: number | null;
+    targetPaceMinPerKm?: string | null;
+    targetPaceMinPer100m?: string | null;
+    targetHeartRateBPM?: number | null;
+    distanceKm?: number | null;
+    distanceMeters?: number | null;
+    structure?: RawBlock[];
 };
 
 function safeStrokeType(s: string | null | undefined): SwimStrokeType | null {
@@ -306,98 +321,177 @@ function fillMissingDurationsFallback(
     return { filled, filledIdx: unknownIdx };
 }
 
+// ─── Exemples sport-spécifiques (un seul exemple injecté selon le sport) ─────
+// Le prompt est volontairement court : montrer plutôt qu'expliquer.
+
+const EXAMPLE_CYCLING = `EXEMPLE (cyclisme) :
+DESCRIPTION : "Échauffement 15 min Z2. Bloc principal : 5x3 min Z4 avec 2 min récup Z1. Retour au calme 10 min Z1."
+ZONES : Z1 <130W, Z2 140-180W, Z4 240-280W
+JSON :
+{
+  "targetPowerWatts": 260,
+  "targetPaceMinPerKm": null,
+  "targetPaceMinPer100m": null,
+  "targetHeartRateBPM": null,
+  "distanceKm": null,
+  "distanceMeters": null,
+  "structure": [
+    { "type": "Warmup", "durationActifSecondes": 900, "targetPowerWatts": 160, "description": "Échauffement progressif Z2" },
+    { "type": "Repeat", "repeat": 5, "durationActifSecondes": 180, "targetPowerWatts": 260, "durationRecupSecondes": 120, "targetRecupPowerWatts": 120, "description": "Bloc seuil 5x3'" },
+    { "type": "Cooldown", "durationActifSecondes": 600, "targetPowerWatts": 110, "description": "Retour au calme" }
+  ]
+}`;
+
+const EXAMPLE_RUNNING = `EXEMPLE (course à pied) :
+DESCRIPTION : "Footing 10 min Z2. 6x400m allure 5K (4:00/km) avec 90s récup en trottinant. Retour au calme 5 min."
+ZONES : Z2 5:30-6:00, Z1 6:00-6:30
+JSON :
+{
+  "targetPowerWatts": null,
+  "targetPaceMinPerKm": "4:00",
+  "targetPaceMinPer100m": null,
+  "targetHeartRateBPM": null,
+  "distanceKm": null,
+  "distanceMeters": null,
+  "structure": [
+    { "type": "Warmup", "durationActifSecondes": 600, "targetPaceMinPerKm": "5:45", "description": "Footing échauffement" },
+    { "type": "Repeat", "repeat": 6, "durationActifSecondes": 96, "targetPaceMinPerKm": "4:00", "durationRecupSecondes": 90, "targetRecupPaceMinPerKm": "6:30", "description": "6x400m allure 5K" },
+    { "type": "Cooldown", "durationActifSecondes": 300, "targetPaceMinPerKm": "6:00", "description": "Retour au calme" }
+  ]
+}`;
+
+const EXAMPLE_SWIMMING = `EXEMPLE (natation) :
+DESCRIPTION : "Échauffement 400m mixte. 8x50m crawl seuil (1:40/100m) 15'' R. 4x100m Rattrapage avec palmes 20'' R. Retour au calme 200m dos."
+JSON :
+{
+  "targetPowerWatts": null,
+  "targetPaceMinPerKm": null,
+  "targetPaceMinPer100m": "1:40",
+  "targetHeartRateBPM": null,
+  "distanceKm": null,
+  "distanceMeters": 1200,
+  "structure": [
+    { "type": "Warmup", "distanceMeters": 400, "strokeType": "mixte", "description": "Échauffement varié" },
+    { "type": "Repeat", "repeat": 8, "distanceMeters": 50, "strokeType": "crawl", "targetPaceMinPer100m": "1:40", "durationRecupSecondes": 15, "description": "Série seuil crawl" },
+    { "type": "Repeat", "repeat": 4, "distanceMeters": 100, "strokeType": "crawl", "equipment": ["palmes"], "durationRecupSecondes": 20, "description": "Rattrapage avec palmes" },
+    { "type": "Cooldown", "distanceMeters": 200, "strokeType": "dos", "description": "Retour au calme dos" }
+  ]
+}`;
+
+const EXAMPLE_OTHER = `EXEMPLE (renforcement) :
+DESCRIPTION : "Échauffement 5 min. 4 séries de 10 squats à 60kg, 1 min récup. 3 séries de 12 fentes par jambe. Étirements 5 min."
+JSON :
+{
+  "targetPowerWatts": null,
+  "targetPaceMinPerKm": null,
+  "targetPaceMinPer100m": null,
+  "targetHeartRateBPM": null,
+  "distanceKm": null,
+  "distanceMeters": null,
+  "structure": [
+    { "type": "Warmup", "durationActifSecondes": 300, "description": "Échauffement mobilité" },
+    { "type": "Active", "reps": 10, "sets": 4, "loadKg": 60, "targetRPE": 7, "description": "Squats 4x10 @ 60kg" },
+    { "type": "Active", "reps": 12, "sets": 3, "targetRPE": 6, "description": "Fentes 3x12 par jambe" },
+    { "type": "Cooldown", "durationActifSecondes": 300, "description": "Étirements" }
+  ]
+}`;
+
+function getSportExample(sportType: SportType): string {
+    switch (sportType) {
+        case 'cycling': return EXAMPLE_CYCLING;
+        case 'running': return EXAMPLE_RUNNING;
+        case 'swimming': return EXAMPLE_SWIMMING;
+        default: return EXAMPLE_OTHER;
+    }
+}
+
+function buildSystemPrompt(sportType: SportType): string {
+    return `Tu es un assistant secrétaire qui convertit une description textuelle de séance en JSON structuré.
+Ton rôle : extraire les cibles dominantes de la séance (top-level) et structurer le détail bloc par bloc. Tu ne crées rien — tu retranscris fidèlement ce qui est décrit.
+
+LANGUE : français. Termes techniques autorisés (FTP, TSS, RPE, Z1-Z7, vocabulaire natation : Rattrapage, Sculls, Manchot, etc.).
+
+CIBLES TOP-LEVEL — la cible "principale" de la séance :
+- targetPowerWatts : cyclisme uniquement
+- targetPaceMinPerKm : course à pied uniquement (format "M:SS")
+- targetPaceMinPer100m : natation uniquement (format "M:SS")
+- targetHeartRateBPM : si la séance est explicitement pilotée FC
+- distanceKm : volume total vélo / course si mentionné
+- distanceMeters : volume total natation si mentionné
+Pour une séance d'intervalles, la cible dominante = la cible des intervalles (pas l'échauffement). Pour une endurance continue, la cible = celle du bloc principal. null pour les champs non pertinents au sport.
+
+FIDÉLITÉ AU TEXTE — RÈGLE PRIMORDIALE :
+Tu retranscris les durées du texte LITTÉRALEMENT. "10 min" → 600s, "5 min récup" → 300s. JAMAIS arrondir, JAMAIS redistribuer pour faire coller à DURÉE TOTALE. La somme de tes durées PEUT diverger de DURÉE TOTALE — c'est acceptable. Si tes durées tombent PILE sur la durée totale alors qu'elles n'apparaissent pas telles quelles dans le texte, c'est un signe que tu as redistribué : recommence en lisant les durées explicites.
+
+ANTI-PATTERN (à NE JAMAIS reproduire) :
+DESCRIPTION : "15 min Z2. 3x10 min Z3 avec 5 min récup Z2 ENTRE. 5 min retour au calme." (DURÉE TOTALE = 60 min)
+✗ MAUVAIS : Repeat(repeat=3, durationActif=400s, durationRecup=400s) — les 400s n'existent NULLE PART dans le texte ; l'IA a divisé 2400s par 6 phases pour atteindre 60 min pile. Trahit la prescription.
+✓ BON : Repeat(repeat=2, durationActif=600, durationRecup=300) puis Active(durée=600, cible identique). Total : 15+10+5+10+5+10+5 = 60 min. Les 600/300 viennent directement du texte.
+
+STRUCTURE — types de blocs :
+- "Warmup" / "Active" / "Rest" / "Cooldown" : blocs simples à intensité constante.
+- "Repeat" : motif (phase active + récup) répété N fois. À utiliser DÈS qu'un motif identique se répète ≥ 2 fois (même implicitement).
+- PATTERN "N blocs avec récup ENTRE eux" (= N phases actives, N-1 récup, ex: "3x10 min avec 5 min récup entre") : utilise Repeat(repeat=N-1) PUIS un bloc Active simple identique au final. Ne mets JAMAIS Repeat(repeat=N) en raccourcissant les durées pour absorber la récup "en trop" — voir ANTI-PATTERN ci-dessus.
+- Dans un Repeat : la phase ACTIVE est TOUJOURS la plus intense, la phase RÉCUP la moins intense (peu importe leurs durées). Conséquences : targetRecupPowerWatts ≤ targetPowerWatts ; targetRecupPaceMinPerKm ≥ targetPaceMinPerKm (allure plus lente = plus facile) ; targetRecupHeartRateBPM ≤ targetHeartRateBPM.
+- Conversion zones : "Z4" → milieu de la plage Z4 fournie. Si une valeur explicite est donnée, utilise-la directement.
+- durationActifSecondes : OBLIGATOIRE pour cycling / running (convertis "3 min" → 180, "30s" → 30). Optionnel en natation si la distance suffit.
+- Natation : remplis distanceMeters + strokeType + equipment + targetPaceMinPer100m. Stroke par défaut : "crawl". Pour échauffement varié : "mixte". durationRecupSecondes = pause au bord (ex: "15'' R" → 15).
+- Remplis UNIQUEMENT les champs pertinents au sport, laisse les autres à null.
+
+${getSportExample(sportType)}
+
+RÉPONDS UNIQUEMENT par l'objet JSON validé par le schéma fourni. Aucun texte autour, aucune explication.`;
+}
+
 /**
- * Prend une description texte de séance et la convertit en tableau de blocs structurés.
- * Retourne [] si l'appel échoue — ne lève jamais, ne doit jamais casser le flux parent.
+ * Construit un PlannedData "fallback" en cas d'échec IA — préserve les infos
+ * connues en amont (durée, TSS, description) et laisse tout le reste à null.
+ */
+function buildFallbackPlanned(input: {
+    description: string;
+    durationMinutes: number;
+    plannedTSS: number | null;
+}): PlannedData {
+    return {
+        durationMinutes: input.durationMinutes,
+        targetPowerWatts: null,
+        targetPaceMinPerKm: null,
+        targetPaceMinPer100m: null,
+        targetHeartRateBPM: null,
+        distanceKm: null,
+        distanceMeters: null,
+        plannedTSS: input.plannedTSS,
+        description: input.description,
+        structure: [],
+    };
+}
+
+/**
+ * Prend une description texte de séance et renvoie un PlannedData complet :
+ * cibles dominantes top-level + structure détaillée par bloc.
+ *
+ * Les champs durationMinutes, plannedTSS et description proviennent de l'amont
+ * et sont passés tels quels — l'IA ne peut pas les modifier (zéro risque de
+ * dérive sur la durée de la séance).
+ *
+ * En cas d'échec (parsing, exception, structure vide), renvoie un PlannedData
+ * minimal avec structure=[] et toutes les cibles à null. Ne lève jamais.
  */
 export async function structureSessionDescription(params: {
     description: string;
     sportType: SportType;
     durationMinutes: number;
+    plannedTSS: number | null;
     profile: Profile;
-}): Promise<{ structure: StructureBlock[]; tokensUsed: number }> {
-    const { description, sportType, durationMinutes, profile } = params;
+}): Promise<{ plannedData: PlannedData; tokensUsed: number }> {
+    const { description, sportType, durationMinutes, plannedTSS, profile } = params;
 
     if (!description || description.trim().length === 0) {
-        return { structure: [], tokensUsed: 0 };
+        return { plannedData: buildFallbackPlanned(params), tokensUsed: 0 };
     }
 
     const zonesContext = buildZonesContext(profile, sportType);
-
-    const systemPrompt = `Tu convertis une description textuelle de séance d'entraînement en tableau JSON structuré de blocs.
-
-LANGUE : français UNIQUEMENT. Le champ "description" de chaque bloc doit être rédigé en français. Termes techniques autorisés (FTP, TSS, RPE, VO2max, Z1-Z7, ainsi que le vocabulaire natation : Rattrapage, Manchot, Sculls, etc.).
-
-TYPES DE BLOCS :
-- "Warmup" (échauffement), "Active" (travail continu), "Rest" (récupération isolée), "Cooldown" (retour au calme) : blocs simples à intensité constante.
-- "Repeat" : encapsule UNE phase active + UNE phase de récupération, exécutées N fois (voir règle RÉPÉTITIONS).
-
-CHAMPS :
-- "durationActifSecondes" : durée (en secondes) du bloc (pour un Repeat : durée de la phase active UNE répétition). OBLIGATOIRE pour cycling / running / other (endurance ou renfo temporisé) — ne renvoie JAMAIS null pour ces sports. Convertis systématiquement : "3 min" → 180, "30 sec" → 30, "1h" → 3600. Peut être null UNIQUEMENT pour la natation quand le volume est exprimé en mètres (voir section NATATION) ou pour du renfo basé uniquement sur reps/sets.
-- targetPowerWatts / targetPaceMinPerKm / targetPaceMinPer100m / targetHeartRateBPM / targetRPE : cibles de la phase active (ou du bloc simple).
-- Champs "Recup*" (durationRecupSecondes, targetRecupPowerWatts, etc.) : UNIQUEMENT pour type="Repeat". Définissent la phase de récupération ENTRE deux répétitions.
-- "durationRecupSecondes" : OBLIGATOIRE pour tout bloc Repeat cycling / running dès qu'une récupération est mentionnée (ex: "récup 2 min", "2 min entre", "r=90\""). null UNIQUEMENT si la description ne mentionne vraiment aucune pause entre répétitions, ou pour la natation où la pause est au bord (exprimée en secondes comme "15'' R").
-- distanceMeters / strokeType / equipment : SPÉCIFIQUES NATATION (voir section dédiée).
-
-RÉPÉTITIONS — PRÉFÉRER "Repeat" DÈS QUE POSSIBLE :
-- RÈGLE STRICTE ACTIF vs RÉCUP (à appliquer SANS EXCEPTION) : dans un bloc "Repeat", la phase "active" (champs durationActifSecondes + targetXxx) correspond TOUJOURS à la phase de plus HAUTE intensité (le stimulus travaillé) ; la phase "récup" (champs durationRecupSecondes + targetRecupXxx) correspond TOUJOURS à la phase de plus BASSE intensité. Cette règle prime sur l'ordre narratif et sur la durée relative. Conséquences chiffrées OBLIGATOIRES : targetRecupPowerWatts ≤ targetPowerWatts, targetRecupRPE ≤ targetRPE, targetRecupPaceMinPerKm ≥ targetPaceMinPerKm (pace plus élevée = plus lente = plus facile), targetRecupPaceMinPer100m ≥ targetPaceMinPer100m, targetRecupHeartRateBPM ≤ targetHeartRateBPM. Exemples : un sprint 10s Z5 au milieu d'une heure de Z2 → active=sprint Z5 (court mais intense), récup=Z2 entre sprints (long mais facile). "5x3' Z4 avec 2' récup Z1" → active=Z4, récup=Z1. NE JAMAIS inverser sous prétexte que la phase facile est plus longue ou annoncée en premier dans la description.
-- DURÉE INFÉRÉE depuis un cycle temporel : si la description exprime un cycle ("toutes les X minutes", "every X min", "tous les X'"), calcule durationRecupSecondes = X*60 - durationActifSecondes. Ne laisse PAS ces durées à null sous prétexte que le cycle est implicite — fais le calcul. Ex: "sprints de 10s toutes les 10 min" → durationActifSecondes=10, durationRecupSecondes=590.
-- Règle d'or : utilise TOUJOURS un bloc "Repeat" plutôt qu'une suite de blocs "Active" + "Rest" dès qu'un motif identique (même durée/distance + même cible active + même récup) se répète ≥ 2 fois. Même si la description d'origine n'emploie pas la notation "NxY", tu DOIS détecter le motif et le compresser en Repeat.
-- Dès qu'un motif "N x (Active X, Récup Y)" apparaît (explicitement "5x3 min" OU implicitement "3 min Z4, 2 min récup, 3 min Z4, 2 min récup, 3 min Z4"), utilise UN seul bloc "Repeat" avec :
-  · repeat = N
-  · durationActifSecondes + targetXxx = phase active
-  · durationRecupSecondes + targetRecupXxx = phase récupération
-- Détection implicite : si tu vois 2+ blocs consécutifs avec la même durée active + même cible + même récup, fusionne-les en UN Repeat. Ne génère pas "Active, Rest, Active, Rest, Active, Rest" — génère un Repeat repeat=3.
-- Même raisonnement pour les sprints en échauffement : "3 sprints de 15s en Z5 avec X récup" → bloc Repeat repeat=3 (imbriqué dans l'échauffement si besoin : émets un Warmup simple pour la partie continue, puis un Repeat pour les sprints, puis éventuellement un Cooldown si la description enchaîne).
-- Exemples :
-  · "2x15min Z3 avec 5min récup Z2" → UN bloc Repeat : repeat=2, durationActifSecondes=900, targetPowerWatts=<milieu Z3>, durationRecupSecondes=300, targetRecupPowerWatts=<milieu Z2>.
-  · "5x3 min Z4 (228-263 W), récup 2 min Z1 (<138 W)" → UN bloc Repeat : repeat=5, durationActifSecondes=180, targetPowerWatts=245, durationRecupSecondes=120, targetRecupPowerWatts=130. Les durées NE DOIVENT PAS être null.
-  · "3x(1min Z5, 1min Z2)" → UN bloc Repeat : repeat=3, durationActifSecondes=60, targetPowerWatts=<milieu Z5>, durationRecupSecondes=60, targetRecupPowerWatts=<milieu Z2>.
-  · "4x30s sprint / 1min récup" → UN bloc Repeat : repeat=4, durationActifSecondes=30, targetRPE=9, durationRecupSecondes=60, targetRecupRPE=3.
-  · "3 sprints de 15 sec en Z5 (265-300 W)" (sans récup précisée) → UN bloc Repeat : repeat=3, durationActifSecondes=15, targetPowerWatts=282, durationRecupSecondes=null (ou durée de récup réaliste estimée si contexte l'impose).
-  · "Séance Z2 60' avec sprints de 10s en Z5/Z6 toutes les 10 min" → un Warmup simple (ex: 10' Z2) PUIS un Repeat : repeat=5, durationActifSecondes=10, targetPowerWatts=<milieu Z5/Z6>, targetRPE=9, durationRecupSecondes=590, targetRecupPowerWatts=<milieu Z2>, targetRecupRPE=4. Ici le sprint est la phase ACTIVE (haute intensité), la croisière Z2 est la phase RÉCUP — ne jamais inverser même si la Z2 dure 60x plus longtemps que le sprint.
-  · NATATION "8x50m crawl 15'' R" → UN bloc Repeat : repeat=8, distanceMeters=50, strokeType="crawl", durationRecupSecondes=15.
-- Pour une série VRAIMENT NON identique (ex: pyramide 1-2-3-2-1 min, ou 3 phases distinctes par rep) : N'utilise PAS Repeat. Liste chaque bloc individuellement avec type "Active" / "Rest". Mais avant d'y renoncer, vérifie qu'il n'y a vraiment aucun sous-motif répétable.
-- Si pas de récupération définie entre les reps (ex: effort continu sans pause), laisse les champs Recup* à null mais utilise quand même Repeat.
-
-CIBLES PAR SPORT — remplis UNIQUEMENT les champs pertinents, laisse les autres à null :
-- cycling : targetPowerWatts (et targetRecupPowerWatts) en priorité, fallback targetHeartRateBPM, dernier recours targetRPE
-- running : targetPaceMinPerKm (et targetRecupPaceMinPerKm) en priorité (format "M:SS"), fallback targetHeartRateBPM, dernier recours targetRPE
-- swimming : voir section NATATION ci-dessous
-- other (renforcement) : targetRPE + reps + sets + loadKg
-
-NATATION — RÈGLES SPÉCIFIQUES (CRUCIAL) :
-- distanceMeters : OBLIGATOIRE dès qu'une distance est mentionnée. Distance PAR RÉPÉTITION en mètres (ex: 50 pour "8x50m", 400 pour un échauffement de 400m). Si la description mentionne une distance pour ce bloc, ce champ ne doit JAMAIS être null.
-- strokeType : OBLIGATOIRE pour tout bloc natation — "crawl" | "dos" | "brasse" | "papillon" | "4_nages" | "mixte". Si la nage est nommée → utilise-la. Si un éducatif de crawl est nommé (Rattrapage, 6 temps, etc.) → "crawl". Si un éducatif de dos est nommé → "dos". Pour les échauffements variés ("mixte", "crawl + dos + brasse") → "mixte". Par défaut si aucun indice → "crawl".
-- equipment : tableau de strings du matériel utilisé (ex: ["planche"], ["pull-buoy"], ["palmes"], ["plaquettes", "pull-buoy"]). null si pas de matériel mentionné. Vocabulaire : planche, pull-buoy, palmes, plaquettes, tuba frontal, élastique.
-- targetPaceMinPer100m : allure /100m au format "M:SS" (ex: "1:40"). Remplir si précisée dans le texte.
-- durationActifSecondes : OPTIONNEL en natation. Laisse null si la distance suffit. Rempli seulement si la description donne un temps précis (ex: "1h de nage continue").
-- durationRecupSecondes : récup au bord en secondes (ex: "10'' R" → 10, "15'' R" → 15, "20'' R" → 20).
-- ÉDUCATIFS : si la description nomme un éducatif (Rattrapage, 6 temps, Manchot, Catch-up, Zip-up, Sculls, Profil, Superman, Poings fermés, Jambes avec planche, etc.), mets ce nom EXACT dans "description".
-- INTERDIT de laisser strokeType et distanceMeters à null tous les deux sur un bloc natation — c'est le minimum vital pour le nageur.
-
-EXEMPLES NATATION :
-- "Échauffement 400m mixte (200m crawl, 100m dos, 100m brasse)" → 1 bloc Warmup : distanceMeters=400, strokeType="mixte", description="Échauffement varié".
-- "8x50m crawl à allure seuil (1'40''/100m), 15'' R" → 1 bloc Repeat : repeat=8, distanceMeters=50, strokeType="crawl", targetPaceMinPer100m="1:40", durationRecupSecondes=15, description="Série seuil crawl".
-- "4x100m Rattrapage avec palmes, 20'' R" → 1 bloc Repeat : repeat=4, distanceMeters=100, strokeType="crawl", equipment=["palmes"], durationRecupSecondes=20, description="Rattrapage".
-- "6x50m jambes avec planche crawl, 15'' R" → 1 bloc Repeat : repeat=6, distanceMeters=50, strokeType="crawl", equipment=["planche"], durationRecupSecondes=15, description="Jambes avec planche".
-- "200m retour au calme dos" → 1 bloc Cooldown : distanceMeters=200, strokeType="dos", description="Retour au calme".
-
-CONVERSION DES ZONES :
-- "Z2", "Z4", etc. → valeur numérique en prenant le MILIEU de la plage fournie dans les zones athlète.
-- Si la description donne déjà une valeur précise (ex: "250W", "1'40''/100m"), utilise-la directement.
-- Si aucune zone n'est définie, estime des valeurs cohérentes avec le niveau ou utilise targetRPE (1-10).
-
-CHAMPS NON APPLICABLES :
-- reps/sets/loadKg : null pour tout sport d'endurance.
-- distanceKm : null sauf pour vélo/course quand la description mentionne explicitement des km pour ce bloc (en natation utilise distanceMeters, pas distanceKm).
-- distanceMeters/strokeType/equipment : null hors natation.
-- plannedTSS : null sauf si la description le mentionne explicitement pour ce bloc.
-
-"description" du bloc : texte court (3-10 mots) décrivant son rôle ou le nom de l'éducatif (ex: "Échauffement progressif", "Rattrapage crawl", "Série seuil 2x15min"). Pour la natation : PRÉFÈRE le nom d'éducatif précis s'il est nommé dans la description source.
-
-FORMAT DE RÉPONSE : tableau JSON strict validé par le schéma fourni. Aucune phrase autour.`;
-
+    const systemPrompt = buildSystemPrompt(sportType);
     const userPrompt = `SPORT : ${sportType}
 DURÉE TOTALE : ${durationMinutes} min
 
@@ -414,15 +508,16 @@ ${description}`;
                 temperature: 0.2,
                 maxOutputTokens: 4096,
                 responseMimeType: "application/json",
-                responseSchema: structureResponseSchema,
+                responseSchema,
             },
         }, `struct/${sportType}`);
 
-        if (!Array.isArray(data)) {
-            return { structure: [], tokensUsed };
+        const parsed = data as RawResponse | null;
+        if (!parsed || !Array.isArray(parsed.structure)) {
+            return { plannedData: buildFallbackPlanned(params), tokensUsed };
         }
 
-        let structure: StructureBlock[] = (data as RawBlock[]).map(normalizeBlock);
+        let structure: StructureBlock[] = parsed.structure.map(normalizeBlock);
         let totalTokens = tokensUsed;
 
         const applyInversionSwap = (blocks: StructureBlock[]): StructureBlock[] => {
@@ -438,20 +533,16 @@ ${description}`;
 
         structure = applyInversionSwap(structure);
 
+        // Retry ciblé pour cycling / running quand des durées actives manquent.
         if (sportType === 'cycling' || sportType === 'running') {
             const missingIdx = findBlocksMissingActiveDuration(structure);
             if (missingIdx.length > 0) {
                 const retryUserPrompt = `${userPrompt}
 
 PREMIÈRE STRUCTURE PROPOSÉE (à corriger) :
-${JSON.stringify(structure, null, 2)}
+${JSON.stringify({ structure }, null, 2)}
 
-CORRECTION DEMANDÉE : les blocs aux indexes [${missingIdx.join(',')}] ont "durationActifSecondes" manquant (null ou 0). Pour ${sportType}, ce champ est OBLIGATOIRE sur TOUS les blocs. Remplis-le en inférant depuis :
-- les cycles temporels de la description ("toutes les X min", "tous les X'") → durationActifSecondes = durée de la phase active, durationRecupSecondes = X*60 - durationActifSecondes
-- les durées explicites ("5x3 min", "30s sprint")
-- la durée totale de la séance (${durationMinutes} min) si le motif doit la remplir
-
-Applique aussi la RÈGLE STRICTE ACTIF vs RÉCUP (active = phase la plus intense). RENVOIE LE TABLEAU COMPLET (tous les blocs, pas seulement les problématiques) avec les durées corrigées.`;
+CORRECTION : les blocs aux indexes [${missingIdx.join(',')}] ont "durationActifSecondes" manquant. Pour ${sportType} ce champ est OBLIGATOIRE. Renvoie l'objet JSON COMPLET avec toutes les durées corrigées.`;
 
                 try {
                     const { data: retryData, tokensUsed: retryTokens } = await callGeminiAPI({
@@ -461,16 +552,24 @@ Applique aussi la RÈGLE STRICTE ACTIF vs RÉCUP (active = phase la plus intense
                             temperature: 0.2,
                             maxOutputTokens: 4096,
                             responseMimeType: "application/json",
-                            responseSchema: structureResponseSchema,
+                            responseSchema,
                         },
                     }, `struct-retry/${sportType}`);
                     totalTokens += retryTokens;
 
-                    if (Array.isArray(retryData) && retryData.length > 0) {
-                        const retriedStructure = (retryData as RawBlock[]).map(normalizeBlock);
+                    const retryParsed = retryData as RawResponse | null;
+                    if (retryParsed && Array.isArray(retryParsed.structure) && retryParsed.structure.length > 0) {
+                        const retriedStructure = retryParsed.structure.map(normalizeBlock);
                         const retriedMissing = findBlocksMissingActiveDuration(retriedStructure);
                         if (retriedMissing.length < missingIdx.length) {
                             structure = applyInversionSwap(retriedStructure);
+                            // Le retry peut aussi avoir affiné les top-level ; on les reprend.
+                            parsed.targetPowerWatts = retryParsed.targetPowerWatts ?? parsed.targetPowerWatts;
+                            parsed.targetPaceMinPerKm = retryParsed.targetPaceMinPerKm ?? parsed.targetPaceMinPerKm;
+                            parsed.targetPaceMinPer100m = retryParsed.targetPaceMinPer100m ?? parsed.targetPaceMinPer100m;
+                            parsed.targetHeartRateBPM = retryParsed.targetHeartRateBPM ?? parsed.targetHeartRateBPM;
+                            parsed.distanceKm = retryParsed.distanceKm ?? parsed.distanceKm;
+                            parsed.distanceMeters = retryParsed.distanceMeters ?? parsed.distanceMeters;
                         }
                     }
                 } catch {
@@ -487,8 +586,21 @@ Applique aussi la RÈGLE STRICTE ACTIF vs RÉCUP (active = phase la plus intense
             }
         }
 
-        return { structure, tokensUsed: totalTokens };
+        const plannedData: PlannedData = {
+            durationMinutes,
+            targetPowerWatts: parsed.targetPowerWatts ?? null,
+            targetPaceMinPerKm: parsed.targetPaceMinPerKm ?? null,
+            targetPaceMinPer100m: parsed.targetPaceMinPer100m ?? null,
+            targetHeartRateBPM: parsed.targetHeartRateBPM ?? null,
+            distanceKm: parsed.distanceKm ?? null,
+            distanceMeters: parsed.distanceMeters ?? null,
+            plannedTSS,
+            description,
+            structure,
+        };
+
+        return { plannedData, tokensUsed: totalTokens };
     } catch {
-        return { structure: [], tokensUsed: 0 };
+        return { plannedData: buildFallbackPlanned(params), tokensUsed: 0 };
     }
 }
