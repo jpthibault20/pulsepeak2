@@ -6,7 +6,8 @@
  ******************************************************************************/
 
 import { CompletedData, CompletedDataFeedback } from '@/lib/data/type';
-import { Workout } from '@/lib/data/DatabaseTypes';
+import { Workout, Profile } from '@/lib/data/DatabaseTypes';
+import { computeWorkoutTSS } from '@/lib/stats/computeTSS';
 
 
 /**
@@ -24,41 +25,45 @@ export function findWorkoutIndex(workouts: Workout[], idOrDate: string): number 
  * Transforme les données saisies par l'utilisateur dans le formulaire de
  * feedback (CompletedDataFeedback — majoritairement des strings) en objet
  * CompletedData canonique stocké en base (typé, normalisé en nombres).
+ *
+ * Si `profile` est fourni, le TSS est calculé via la cascade unifiée
+ * (computeWorkoutTSS). Si l'utilisateur a saisi un TSS vélo manuel
+ * (feedback.tss), il est respecté tel quel et marqué `source = 'power'`
+ * (hypothèse : sortie de compteur de puissance).
  */
 export function transformFeedbackToCompletedData(
-    feedback: CompletedDataFeedback
+    feedback: CompletedDataFeedback,
+    profile?: Profile | null
 ): CompletedData {
     const sportType = feedback.sportType;
 
-    return {
+    const completed: CompletedData = {
         actualDurationMinutes: Number(feedback.actualDuration),
         distanceKm: feedback.distance ? Number(feedback.distance) : 0,
         perceivedEffort: Number(feedback.rpe),
-        notes: feedback.notes || "", // Chaîne vide si null
+        notes: feedback.notes || "",
 
         source: {
             type: 'manual',
-            stravaId: null // Pas de champ pour le moment
+            stravaId: null,
         },
 
-        laps: [], // Pas de tours détaillés en saisie manuelle
+        laps: [],
 
-        // Toujours renvoyer l'objet structurel, champs à null si pas de donnée
         heartRate: {
             avgBPM: feedback.avgHeartRate ? Number(feedback.avgHeartRate) : null,
-            maxBPM: null // Valeur explicite null
+            maxBPM: null,
         },
 
         caloriesBurned: feedback.calories ? Number(feedback.calories) : null,
 
-        // Métriques sport-spécifiques
         metrics: {
             cycling: sportType === 'cycling' ? {
-                tss: feedback.tss ? Number(feedback.tss) : null,
+                tss: null,             // Renseigné plus bas si source=power (saisie utilisateur ou calcul)
                 avgPowerWatts: feedback.avgPower ? Number(feedback.avgPower) : null,
                 maxPowerWatts: feedback.maxPower ? Number(feedback.maxPower) : null,
-                normalizedPowerWatts: null, // On garde la clé présente
-                intensityFactor: null,      // Souvent requis dans le type CyclingMetrics
+                normalizedPowerWatts: feedback.normalizedPower ? Number(feedback.normalizedPower) : null,
+                intensityFactor: null,
                 avgCadenceRPM: feedback.avgCadence ? Number(feedback.avgCadence) : null,
                 maxCadenceRPM: feedback.maxCadence ? Number(feedback.maxCadence) : null,
                 elevationGainMeters: feedback.elevation ? Number(feedback.elevation) : null,
@@ -67,6 +72,8 @@ export function transformFeedbackToCompletedData(
             } : null,
 
             running: sportType === 'running' ? {
+                tss: null,             // Renseigné plus bas si source=pace
+                intensityFactor: null,
                 avgPaceMinPerKm: feedback.avgPace ? feedback.avgPace : null,
                 bestPaceMinPerKm: null,
                 elevationGainMeters: feedback.elevation ? Number(feedback.elevation) : null,
@@ -77,9 +84,11 @@ export function transformFeedbackToCompletedData(
             } : null,
 
             swimming: sportType === 'swimming' ? {
+                tss: null,             // Renseigné plus bas si source=pace
+                intensityFactor: null,
                 avgPace100m: null,
                 bestPace100m: null,
-                strokeType: feedback.strokeType ?? null, // String ou Enum, pas de Number()
+                strokeType: feedback.strokeType ?? null,
                 avgStrokeRate: feedback.avgStrokeRate ? Number(feedback.avgStrokeRate) : null,
                 avgSwolf: feedback.avgSwolf ? Number(feedback.avgSwolf) : null,
                 poolLengthMeters: feedback.poolLengthMeters ? Number(feedback.poolLengthMeters) : null,
@@ -87,4 +96,36 @@ export function transformFeedbackToCompletedData(
             } : null
         }
     };
+
+    // ── TSS : saisie manuelle utilisateur (vélo) prend la priorité absolue ──
+    const userTss = feedback.tss ? Number(feedback.tss) : null;
+    if (userTss && userTss > 0 && sportType === 'cycling' && completed.metrics.cycling) {
+        completed.calculatedTSS = userTss;
+        completed.tssSource = 'power';
+        completed.metrics.cycling.tss = userTss;
+        if (feedback.intensityFactor) {
+            completed.intensityFactor = Number(feedback.intensityFactor);
+            completed.metrics.cycling.intensityFactor = Number(feedback.intensityFactor);
+        }
+        return completed;
+    }
+
+    // ── Sinon : cascade unifiée ──
+    const tssResult = computeWorkoutTSS(sportType, completed, profile);
+    completed.calculatedTSS = tssResult.tss;
+    completed.tssSource = tssResult.source;
+    if (tssResult.intensityFactor != null) completed.intensityFactor = tssResult.intensityFactor;
+
+    if (tssResult.source === 'power' && completed.metrics.cycling) {
+        completed.metrics.cycling.tss = tssResult.tss;
+        completed.metrics.cycling.intensityFactor = tssResult.intensityFactor;
+    } else if (tssResult.source === 'pace' && sportType === 'running' && completed.metrics.running) {
+        completed.metrics.running.tss = tssResult.tss;
+        completed.metrics.running.intensityFactor = tssResult.intensityFactor;
+    } else if (tssResult.source === 'pace' && sportType === 'swimming' && completed.metrics.swimming) {
+        completed.metrics.swimming.tss = tssResult.tss;
+        completed.metrics.swimming.intensityFactor = tssResult.intensityFactor;
+    }
+
+    return completed;
 }

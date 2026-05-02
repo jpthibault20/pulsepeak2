@@ -1,5 +1,6 @@
 import { CompletedData, SportType } from "@/lib/data/type";
 import { getProfile } from "./data/crud";
+import { computeWorkoutTSS, speedKmhToPaceMinPerKm, speedMsToPace100m } from "./stats/computeTSS";
 
 // --- DÉFINITION DES TYPES ENTRANTS (STRAVA) ---
 
@@ -99,53 +100,12 @@ export function mapStravaSport(stravaType: string): SportType {
 export async function mapStravaToCompletedData(activity: StravaActivityInput, streams?: StravaStream | null): Promise<CompletedData> {
   const powerData = streams?.watts?.data ?? null;
   const sport = mapStravaSport(activity.type);
-  let calculatedTSS: number | null = null;
 
-  try {
-    const profile = await getProfile();
-    const durationInHours = activity.moving_time / 3600;
-
-    // 1) Puissance (vélo) : TSS = durée(h) × IF² × 100
-    const ftp = profile?.cycling?.Test?.ftp || 0;
-    const np = activity.weighted_average_watts || activity.average_watts || 0;
-    if (np > 0 && ftp > 0) {
-        const intensityFactor = np / ftp;
-        calculatedTSS = Math.round(durationInHours * intensityFactor * intensityFactor * 100);
-    }
-
-    // 2) Cardio (hrTSS) : si pas de TSS puissance, utiliser la FC
-    if (calculatedTSS == null) {
-        const avgHR = activity.average_heartrate;
-        const maxHR = profile?.heartRate?.max;
-        if (avgHR && avgHR > 0 && maxHR && maxHR > 0) {
-            const restHR = profile?.heartRate?.resting ?? 0;
-            const hrRatio = restHR > 0
-                ? (avgHR - restHR) / (maxHR - restHR)
-                : avgHR / maxHR;
-            const ifHR = Math.min(Math.max(hrRatio, 0), 1);
-            calculatedTSS = Math.round(durationInHours * ifHR * ifHR * 100);
-        }
-    }
-
-    // 3) RPE Strava : estimation via perceived_exertion (échelle 1-10)
-    if (calculatedTSS == null && activity.perceived_exertion && activity.perceived_exertion > 0) {
-        calculatedTSS = Math.round(durationInHours * Math.pow(activity.perceived_exertion / 10, 2) * 100);
-    }
-
-    // 4) Défaut : TSS estimé par heure selon le sport (intensité modérée)
-    if (calculatedTSS == null) {
-        const defaultTSSPerHour: Record<SportType, number> = {
-            cycling: 50,
-            running: 60,
-            swimming: 55,
-            other: 50,
-        };
-        calculatedTSS = Math.round(durationInHours * defaultTSSPerHour[sport]);
-    }
-
-  } catch (error) {
-    console.error("Erreur lors de la récupération du profil pour TSS:", error);
-  }
+  // Profil pour les seuils (FTP/FCmax/VMA/CSS) — utilisé après pour computeWorkoutTSS.
+  const profile = await getProfile().catch(err => {
+    console.error("Erreur lors de la récupération du profil pour TSS:", err);
+    return null;
+  });
 
   // --- STRUCTURE DE BASE ---
   const completed: CompletedData = {
@@ -184,17 +144,16 @@ export async function mapStravaToCompletedData(activity: StravaActivityInput, st
       zoneDistribution: [],
     },
     metrics: { cycling: null, running: null, swimming: null },
-    calculatedTSS: calculatedTSS ?? undefined,
   };
 
-  // --- METRICS PAR SPORT ---
+  // --- METRICS PAR SPORT (signaux bruts, sans TSS — calculé en cascade ensuite) ---
   if (sport === 'cycling') {
     completed.metrics.cycling = {
-      tss: calculatedTSS, // On utilise la variable calculée plus haut
+      tss: null,                  // Renseigné plus bas si source=power
       avgPowerWatts: activity.average_watts || null,
       normalizedPowerWatts: activity.weighted_average_watts || null,
       maxPowerWatts: activity.max_watts || null,
-      intensityFactor: null, // Tu pourrais aussi stocker l'IF calculé haut dessus ici
+      intensityFactor: null,
       avgCadenceRPM: activity.average_cadence || null,
       maxCadenceRPM: null,
       elevationGainMeters: activity.total_elevation_gain,
@@ -203,7 +162,9 @@ export async function mapStravaToCompletedData(activity: StravaActivityInput, st
     };
   } else if (sport === 'running') {
     completed.metrics.running = {
-      avgPaceMinPerKm: null,
+      tss: null,                  // Renseigné plus bas si source=pace
+      intensityFactor: null,
+      avgPaceMinPerKm: speedKmhToPaceMinPerKm(activity.average_speed * 3.6),
       bestPaceMinPerKm: null,
       elevationGainMeters: activity.total_elevation_gain,
       avgCadenceSPM: activity.average_cadence ? activity.average_cadence * 2 : null,
@@ -214,7 +175,9 @@ export async function mapStravaToCompletedData(activity: StravaActivityInput, st
     };
   } else if (sport === 'swimming') {
     completed.metrics.swimming = {
-      avgPace100m: null,
+      tss: null,                  // Renseigné plus bas si source=pace
+      intensityFactor: null,
+      avgPace100m: speedMsToPace100m(activity.average_speed),
       bestPace100m: null,
       strokeType: null,
       avgStrokeRate: null,
@@ -224,12 +187,25 @@ export async function mapStravaToCompletedData(activity: StravaActivityInput, st
     };
   }
 
-  // --- INTEGRATION PULSEPEAK AUTOMATIQUE ---
-  // Note: Cette partie doit idéalement être faite dans le contrôleur qui possède l'AccessToken Strava.
-  // Mais si tu as accès à l'accessToken ici (via un contexte ou paramètre), tu peux décommenter :
-  
+  // --- CASCADE TSS UNIFIÉE (puissance/allure → cardio → défaut, par sport) ---
+  const tssResult = computeWorkoutTSS(sport, completed, profile);
+  completed.calculatedTSS = tssResult.tss;
+  completed.tssSource = tssResult.source;
+  if (tssResult.intensityFactor != null) completed.intensityFactor = tssResult.intensityFactor;
 
-
+  // metrics.{sport}.tss n'est rempli que si la source est la métrique primaire
+  // de ce sport (vélo→power, run/swim→pace). Sinon il reste null pour ne pas
+  // induire en erreur les consommateurs qui lisent ce champ.
+  if (tssResult.source === 'power' && completed.metrics.cycling) {
+    completed.metrics.cycling.tss = tssResult.tss;
+    completed.metrics.cycling.intensityFactor = tssResult.intensityFactor;
+  } else if (tssResult.source === 'pace' && sport === 'running' && completed.metrics.running) {
+    completed.metrics.running.tss = tssResult.tss;
+    completed.metrics.running.intensityFactor = tssResult.intensityFactor;
+  } else if (tssResult.source === 'pace' && sport === 'swimming' && completed.metrics.swimming) {
+    completed.metrics.swimming.tss = tssResult.tss;
+    completed.metrics.swimming.intensityFactor = tssResult.intensityFactor;
+  }
 
   return completed;
 }

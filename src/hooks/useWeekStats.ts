@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { SportType } from '@/lib/data/type';
 import { formatDateKey } from '@/lib/utils';
 import { Schedule } from '@/lib/data/DatabaseTypes';
+import { getWorkoutTSS } from '@/lib/stats/computeTSS';
 
 export interface WeekStats {
     plannedTSS: number;
@@ -56,10 +57,7 @@ export function useWeekStats(
                 stats.actualDuration += workout.completedData.actualDurationMinutes;
                 stats.distance += workout.completedData.distanceKm ?? 0;
 
-                // TSS réalisé : calculatedTSS (tous sports) > cycling.tss > plannedTSS
-                const cd = workout.completedData;
-                const tss = cd.calculatedTSS ?? cd.metrics?.cycling?.tss ?? workout.plannedData?.plannedTSS ?? 0;
-                stats.completedTSS += tss;
+                stats.completedTSS += getWorkoutTSS(workout);
 
                 if (stats.sportDuration[workout.sportType] !== undefined) {
                     stats.sportDuration[workout.sportType] += workout.completedData.actualDurationMinutes;

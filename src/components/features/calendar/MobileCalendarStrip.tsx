@@ -8,6 +8,7 @@ import { MobileWeekBar } from './MobileWeekBar';
 import { useCalendarContext } from './CalendarContext';
 import { formatDateKey, DAY_NAMES_SHORT, MONTH_NAMES, parseLocalDate } from '@/lib/utils';
 import type { WeekStats } from '@/hooks/useWeekStats';
+import { getWorkoutTSS } from '@/lib/stats/computeTSS';
 
 interface MobileCalendarStripProps {
     weekRows: (Date | null)[][];
@@ -408,12 +409,9 @@ export function MobileCalendarStrip({
                 stats.completed++;
                 stats.actualDuration += w.completedData.actualDurationMinutes;
                 stats.distance += w.completedData.distanceKm ?? 0;
-                // TSS réalisé : calculatedTSS (tous sports) > cycling.tss > plannedTSS
-                const cd = w.completedData;
-                const tss = cd.calculatedTSS ?? cd.metrics?.cycling?.tss ?? w.plannedData?.plannedTSS ?? 0;
-                stats.completedTSS += tss;
+                stats.completedTSS += getWorkoutTSS(w);
                 if (stats.sportDuration[sport] !== undefined) {
-                    stats.sportDuration[sport] += cd.actualDurationMinutes;
+                    stats.sportDuration[sport] += w.completedData.actualDurationMinutes;
                 }
             }
         });

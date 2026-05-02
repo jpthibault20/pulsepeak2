@@ -1,4 +1,4 @@
-export type aiPersonality = 'Strict' | 'Encourageant' | 'Analytique';
+export type CoachType = 'cycling' | 'running' | 'swimming' | 'triathlon';
 
 export enum ReturnCode {
   RC_OK,
@@ -16,10 +16,12 @@ export interface AvailabilitySlot {
 }
 export interface PlannedData {
   durationMinutes: number;
-  targetPowerWatts: number | null;
-  targetPaceMinPerKm: string | null;
-  targetHeartRateBPM: number | null;
-  distanceKm: number | null;
+  targetPowerWatts: number | null;       // cible dominante vélo
+  targetPaceMinPerKm: string | null;     // cible dominante course ("M:SS")
+  targetPaceMinPer100m: string | null;   // cible dominante natation ("M:SS")
+  targetHeartRateBPM: number | null;     // cible FC tous sports
+  distanceKm: number | null;             // volume total vélo / course
+  distanceMeters: number | null;         // volume total natation
   plannedTSS: number | null;
   description: string | null;
   structure?: StructureBlock[];
@@ -137,8 +139,13 @@ export interface CompletedData {
     swimming: SwimmingMetrics | null;
   };
 
-  calculatedTSS?: number; // Calculé par TON code (pas Strava) avec le FTP du profil
-  intensityFactor?: number; // IF (Normalised Power / FTP)
+  // TSS canonique de la séance complétée — calculé une fois à l'écriture
+  // (import Strava ou saisie manuelle) via computeWorkoutTSS.
+  calculatedTSS?: number;
+  // Source primaire utilisée pour calculer calculatedTSS.
+  // Cascade : cycling → power > hr > default ; running/swimming → pace > hr > default.
+  tssSource?: TssSource;
+  intensityFactor?: number; // IF utilisé pour le calcul (NP/FTP, NGP/seuil, etc.)
   variabilityIndex?: number; // VI (NP / Avg Power) - utile pour voir si la séance était stable
 
   // Métriques de déviation planifié vs réalisé
@@ -210,6 +217,10 @@ export interface CyclingMetrics {
 }
 
 export interface RunningMetrics {
+  // rTSS — uniquement renseigné quand calculé via la métrique primaire (allure).
+  // Si calculatedTSS provient de la FC ou du défaut, ce champ reste null.
+  tss: number | null;
+  intensityFactor: number | null; // NGP / allure seuil
   avgPaceMinPerKm: string | null; // Format "5:30"
   bestPaceMinPerKm: string | null;
   elevationGainMeters: number | null;
@@ -220,6 +231,10 @@ export interface RunningMetrics {
   strideLength?: number | null;   // NOUVEAU: Longueur de foulée (souvent dispo sur Strava)
 }
 export interface SwimmingMetrics {
+  // sTSS — uniquement renseigné quand calculé via la métrique primaire (allure).
+  // Si calculatedTSS provient de la FC ou du défaut, ce champ reste null.
+  tss: number | null;
+  intensityFactor: number | null; // pace_normalisée / CSS (cubé pour le sTSS)
   avgPace100m: string | null;
   bestPace100m: string | null;
   strokeType: string | null; // "Freestyle", "Mixed"...
@@ -228,6 +243,15 @@ export interface SwimmingMetrics {
   poolLengthMeters: number | null;
   totalStrokes: number | null;
 }
+
+/**
+ * Source primaire du TSS calculé pour une séance.
+ * - 'power'   : NP × FTP (vélo, ou Stryd run — non implémenté actuellement)
+ * - 'pace'    : rTSS (course) ou sTSS (natation)
+ * - 'hr'      : hrTSS via Karvonen
+ * - 'default' : estimation forfaitaire selon le sport (dernier recours)
+ */
+export type TssSource = 'power' | 'pace' | 'hr' | 'default';
 
 export interface CyclingTest {
   ftp?: number;

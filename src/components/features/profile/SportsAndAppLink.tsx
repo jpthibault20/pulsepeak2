@@ -1,7 +1,8 @@
 import { Card } from "@/components/ui/Card";
-import { Bike, Check, Footprints, Link2, Waves, Unlink, PenOff, Lock } from "lucide-react";
+import { Bike, Check, Footprints, Link2, Waves, Unlink, PenOff, Lock, Trophy } from "lucide-react";
 import React, { Dispatch, SetStateAction } from "react";
 import { Profile } from "@/lib/data/DatabaseTypes";
+import { CoachType } from "@/lib/data/type";
 
 interface SportsAndLinkAppProps {
     formData: Profile;
@@ -43,6 +44,56 @@ const SPORTS = [
     },
 ];
 
+// ─── Coach choice ─────────────────────────────────────────────────────────────
+// Choisit le rôle injecté en tête des prompts IA (cf. profiles.coachType).
+
+const COACHES: Array<{
+    key: CoachType;
+    label: string;
+    desc: string;
+    icon: React.ComponentType<{ size?: number; className?: string }>;
+    color: string;
+    bg: string;
+    border: string;
+}> = [
+    {
+        key: 'triathlon',
+        label: 'Coach Triathlon',
+        desc: 'Périodisation multisport, fatigue croisée, brick',
+        icon: Trophy,
+        color: 'text-violet-600 dark:text-violet-400',
+        bg: 'bg-violet-100 dark:bg-violet-500/10',
+        border: 'border-violet-500/30',
+    },
+    {
+        key: 'cycling',
+        label: 'Coach Cyclisme',
+        desc: 'Watts, FTP, VO2max, périodisation route',
+        icon: Bike,
+        color: 'text-orange-600 dark:text-orange-400',
+        bg: 'bg-orange-100 dark:bg-orange-500/10',
+        border: 'border-orange-500/30',
+    },
+    {
+        key: 'running',
+        label: 'Coach Running',
+        desc: 'Allures, VMA, économie de course',
+        icon: Footprints,
+        color: 'text-emerald-600 dark:text-emerald-400',
+        bg: 'bg-emerald-100 dark:bg-emerald-500/10',
+        border: 'border-emerald-500/30',
+    },
+    {
+        key: 'swimming',
+        label: 'Coach Natation',
+        desc: 'CSS, technique, éducatifs nommés',
+        icon: Waves,
+        color: 'text-cyan-600 dark:text-cyan-400',
+        bg: 'bg-cyan-100 dark:bg-cyan-500/10',
+        border: 'border-cyan-500/30',
+    },
+];
+
 export const SportsAndAppLink: React.FC<SportsAndLinkAppProps> = ({ formData, setFormData, isPro = false, showStrava = true }) => {
 
     const toggleSport = (sport: keyof typeof formData.activeSports) => {
@@ -52,7 +103,12 @@ export const SportsAndAppLink: React.FC<SportsAndLinkAppProps> = ({ formData, se
         }));
     };
 
+    const setCoach = (coach: CoachType) => {
+        setFormData(prev => ({ ...prev, coachType: coach }));
+    };
+
     const activeSports = SPORTS.filter(s => formData.activeSports[s.key]);
+    const currentCoach: CoachType = formData.coachType ?? 'triathlon';
 
     return (
         <div className="space-y-4">
@@ -98,6 +154,50 @@ export const SportsAndAppLink: React.FC<SportsAndLinkAppProps> = ({ formData, se
                                         ${active ? 'left-[18px]' : 'left-0.5'}
                                     `} />
                                 </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            </Card>
+
+            {/* Coach IA */}
+            <Card className="p-5 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800">
+                <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Coach IA</h3>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-500 mb-5">
+                    Choisis l&apos;expert qui pilotera la génération de tes plans et de tes séances. Son style et sa méthodologie influencent les prescriptions.
+                </p>
+
+                <div className="grid grid-cols-1 gap-3">
+                    {COACHES.map((coach) => {
+                        const active = currentCoach === coach.key;
+                        const Icon = coach.icon;
+                        return (
+                            <button
+                                key={coach.key}
+                                type="button"
+                                onClick={() => setCoach(coach.key)}
+                                className={`
+                                    flex items-center gap-4 p-4 rounded-xl border transition-all text-left
+                                    ${active
+                                        ? `${coach.bg} ${coach.border} shadow-sm`
+                                        : 'bg-slate-100/50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-800 opacity-60 hover:opacity-100 hover:border-slate-300 dark:hover:border-slate-700'
+                                    }
+                                `}
+                            >
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${active ? coach.bg : 'bg-slate-100 dark:bg-slate-800'}`}>
+                                    <Icon size={20} className={active ? coach.color : 'text-slate-400 dark:text-slate-600'} />
+                                </div>
+                                <div className="flex-1">
+                                    <p className={`text-sm font-semibold ${active ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>{coach.label}</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5">{coach.desc}</p>
+                                </div>
+                                {active && (
+                                    <div className={`w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center shrink-0`}>
+                                        <Check size={12} strokeWidth={3} className="text-white" />
+                                    </div>
+                                )}
                             </button>
                         );
                     })}

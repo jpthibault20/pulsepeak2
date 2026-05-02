@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Zap, Heart, Gauge, Waves, Dumbbell, Activity, Target, Clock,
+    Sparkles, FlaskConical, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import type {
     StructureBlock,
@@ -377,29 +378,23 @@ export const PlannedStructureView: React.FC<{
     structure?: StructureBlock[] | null;
 }> = ({ description, structure }) => {
     const hasStructure = Array.isArray(structure) && structure.length > 0;
+    const trimmedDescription = description?.trim() || null;
+    const [isStructureOpen, setIsStructureOpen] = useState(false);
 
-    console.log('[PlannedStructureView] 🖼️ props reçues', {
-        description,
-        descriptionType: typeof description,
-        descriptionLength: description?.length ?? 0,
-        hasStructure,
-        structureLength: structure?.length ?? 0,
-        structure,
-    });
-
-    if (!hasStructure && !description) return null;
+    if (!hasStructure && !trimmedDescription) return null;
 
     const totalSeconds = hasStructure ? computeTotalSeconds(structure!) : 0;
     const totalMeters = hasStructure ? computeTotalMeters(structure!) : 0;
 
     return (
         <div className="mb-5 p-4 rounded-2xl bg-white dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/50">
+            {/* Header */}
             <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <Target size={15} className="text-slate-400" />
                     Programme
                 </h3>
-                {hasStructure && (
+                {hasStructure && (totalMeters > 0 || totalSeconds > 0) && (
                     <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 tabular-nums">
                         {totalMeters > 0 && (
                             <span className="inline-flex items-center gap-1">
@@ -420,19 +415,48 @@ export const PlannedStructureView: React.FC<{
                 )}
             </div>
 
-            {hasStructure ? (
-                <div className="space-y-1.5">
-                    {structure!.map((block, i) =>
-                        block.type === 'Repeat' ? (
-                            <RepeatBlockCard key={i} block={block} index={i} />
-                        ) : (
-                            <SimpleBlockCard key={i} block={block} index={i} />
-                        )
-                    )}
-                </div>
-            ) : (
+            {/* 1. Description texte (toujours en premier si dispo) */}
+            {trimmedDescription && (
                 <div className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed">
-                    {description}
+                    {trimmedDescription}
+                </div>
+            )}
+
+            {/* 2. Structure assemblée (volet dépliable, badge BETA) */}
+            {hasStructure && (
+                <div className={trimmedDescription ? 'mt-4 pt-4 border-t border-slate-200/70 dark:border-slate-700/40' : ''}>
+                    <button
+                        type="button"
+                        onClick={() => setIsStructureOpen(v => !v)}
+                        className="flex items-center justify-between gap-2 w-full text-left hover:opacity-80 transition-opacity"
+                        aria-expanded={isStructureOpen}
+                    >
+                        <div className="flex items-center gap-2">
+                            <Sparkles size={13} className="text-indigo-400" />
+                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                                Structure assemblée
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-200/70 dark:border-amber-500/25">
+                                <FlaskConical size={9} />
+                                Beta
+                            </span>
+                        </div>
+                        {isStructureOpen
+                            ? <ChevronUp size={14} className="text-slate-400 dark:text-slate-500 shrink-0" />
+                            : <ChevronDown size={14} className="text-slate-400 dark:text-slate-500 shrink-0" />
+                        }
+                    </button>
+                    {isStructureOpen && (
+                        <div className="mt-2.5 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                            {structure!.map((block, i) =>
+                                block.type === 'Repeat' ? (
+                                    <RepeatBlockCard key={i} block={block} index={i} />
+                                ) : (
+                                    <SimpleBlockCard key={i} block={block} index={i} />
+                                )
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
         </div>

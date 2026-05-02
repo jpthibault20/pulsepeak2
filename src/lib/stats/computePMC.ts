@@ -1,5 +1,6 @@
 import type { Workout } from '@/lib/data/DatabaseTypes';
 import type { Zones } from '@/lib/data/type';
+import { getWorkoutTSS as getCanonicalTSS } from './computeTSS';
 
 /** Format a Date as YYYY-MM-DD in local timezone (avoids UTC shift from toISOString) */
 function toLocalDateStr(d: Date): string {
@@ -24,17 +25,13 @@ export interface WeeklyTSSPoint {
     weekStart: string;   // YYYY-MM-DD
 }
 
-/** Extract TSS from a completed workout */
+/**
+ * Extract TSS from a completed workout — délègue à la source de vérité unifiée
+ * (`computeTSS.getWorkoutTSS`) qui lit `cd.calculatedTSS` (TSS canonique calculé
+ * à l'écriture). Pas de fallback sur `plannedTSS` (cf. computeTSS.ts).
+ */
 export function getWorkoutTSS(w: Workout): number {
-    if (w.status !== 'completed' || !w.completedData) return 0;
-    const cd = w.completedData;
-    if (cd.metrics?.cycling?.tss != null && cd.metrics.cycling.tss > 0) return cd.metrics.cycling.tss;
-    if (cd.calculatedTSS != null && cd.calculatedTSS > 0) return cd.calculatedTSS;
-    const plannedTSS = w.plannedData?.plannedTSS ?? 0;
-    const plannedDur = w.plannedData?.durationMinutes ?? 0;
-    const actualDur = cd.actualDurationMinutes ?? 0;
-    if (plannedDur > 0 && plannedTSS > 0) return (actualDur / plannedDur) * plannedTSS;
-    return plannedTSS;
+    return getCanonicalTSS(w);
 }
 
 /** Compute PMC data for the last `days` days, or between `startDate` and `endDate` */

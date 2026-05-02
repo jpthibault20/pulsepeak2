@@ -64,6 +64,8 @@ export function createCompletedData(feedback: CompletedDataFeedback): CompletedD
         metrics: {
           cycling: null,
           running: {
+            tss: null,                    // calculatedTSS posé côté serveur via la cascade
+            intensityFactor: null,
             avgPaceMinPerKm: feedback.avgPace ?? null,
             bestPaceMinPerKm: null,
             elevationGainMeters: feedback.elevation ?? null,
@@ -84,6 +86,8 @@ export function createCompletedData(feedback: CompletedDataFeedback): CompletedD
           cycling: null,
           running: null,
           swimming: {
+            tss: null,                    // calculatedTSS posé côté serveur via la cascade
+            intensityFactor: null,
             avgPace100m: feedback.avgPace ?? null, // Réutilisation du champ pace générique
             bestPace100m: null,
             strokeType: feedback.strokeType ?? null,

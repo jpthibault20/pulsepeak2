@@ -18,6 +18,7 @@ import {
 } from '@/lib/data/crud';
 import type { SportType } from '@/lib/data/type';
 import { Objective, Plan } from '@/lib/data/DatabaseTypes';
+import { getWorkoutTSS } from '@/lib/stats/computeTSS';
 
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -121,12 +122,7 @@ export async function getPlanOverview(): Promise<PlanOverviewData | null> {
             const completed = weekWorkouts.filter(w => w.status === 'completed').length;
             const total = weekWorkouts.length;
             const plannedTSS = weekWorkouts.reduce((s, w) => s + (w.plannedData?.plannedTSS ?? 0), 0);
-            const actualTSS = weekWorkouts.reduce((s, w) => {
-                if (w.status !== 'completed' || !w.completedData) return s;
-                const cd = w.completedData;
-                const tss = cd.metrics?.cycling?.tss ?? cd.calculatedTSS ?? w.plannedData?.plannedTSS ?? 0;
-                return s + tss;
-            }, 0);
+            const actualTSS = weekWorkouts.reduce((s, w) => s + getWorkoutTSS(w), 0);
 
             blockPlannedTSS += plannedTSS || week.targetTSS;
             blockActualTSS += actualTSS;

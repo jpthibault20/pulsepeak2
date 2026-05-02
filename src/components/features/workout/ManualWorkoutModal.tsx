@@ -87,6 +87,8 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                         intensityFactor: null
                     } : null,
                     running: sportType === 'running' ? {
+                        tss: null,
+                        intensityFactor: null,
                         avgPaceMinPerKm: null,
                         bestPaceMinPerKm: null,
                         elevationGainMeters: null,
@@ -96,6 +98,8 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                         maxSpeedKmH: null
                     } : null,
                     swimming: sportType === 'swimming' ? {
+                        tss: null,
+                        intensityFactor: null,
                         avgPace100m: null,
                         bestPace100m: null,
                         strokeType: null,
@@ -120,9 +124,11 @@ export const ManualWorkoutModal: React.FC<ManualWorkoutModalProps> = ({
                 plannedData: {
                     durationMinutes: duration,
                     distanceKm: distance,
+                    distanceMeters: null,
                     plannedTSS: tss || null,
                     targetPowerWatts: null,
                     targetPaceMinPerKm: null,
+                    targetPaceMinPer100m: null,
                     targetHeartRateBPM: null,
                     description: description || 'Séance manuelle',
                 },

@@ -29,6 +29,7 @@ import {
     transformFeedbackToCompletedData,
 } from './_internals/workout-helpers';
 import { recalculateFitnessMetrics } from './fitness-metrics';
+import { computeWorkoutTSS } from '@/lib/stats/computeTSS';
 
 
 /**
@@ -48,8 +49,9 @@ export async function updateWorkoutStatus(
     }
 
     const workout = schedule.workouts[index];
+    const profile = (status === 'completed' && feedback) ? await getProfile() : null;
     const completedData = (status === 'completed' && feedback)
-        ? transformFeedbackToCompletedData(feedback)
+        ? transformFeedbackToCompletedData(feedback, profile)
         : null;
 
     // Atomic per-row update — pas de read-modify-write sur tout le schedule
@@ -230,6 +232,33 @@ export async function addManualWorkout(workout: Workout) {
     const parsed = parseLocalDate(workout.date);
     if (isNaN(parsed.getTime())) {
         throw new Error(`Format de date invalide: ${workout.date}. Attendu: YYYY-MM-DD`);
+    }
+
+    // ✅ Calcul du TSS canonique si la séance est marquée complétée à la création.
+    // Si l'utilisateur a saisi un TSS vélo manuel (cycling.tss), on le respecte
+    // comme source 'power' ; sinon on applique la cascade unifiée.
+    if (workout.status === 'completed' && workout.completedData) {
+        const cd = workout.completedData;
+        const userCyclingTss = cd.metrics?.cycling?.tss;
+        if (workout.sportType === 'cycling' && userCyclingTss && userCyclingTss > 0) {
+            cd.calculatedTSS = userCyclingTss;
+            cd.tssSource = 'power';
+        } else {
+            const r = computeWorkoutTSS(workout.sportType, cd, profile);
+            cd.calculatedTSS = r.tss;
+            cd.tssSource = r.source;
+            if (r.intensityFactor != null) cd.intensityFactor = r.intensityFactor;
+            if (r.source === 'power' && cd.metrics.cycling) {
+                cd.metrics.cycling.tss = r.tss;
+                cd.metrics.cycling.intensityFactor = r.intensityFactor;
+            } else if (r.source === 'pace' && workout.sportType === 'running' && cd.metrics.running) {
+                cd.metrics.running.tss = r.tss;
+                cd.metrics.running.intensityFactor = r.intensityFactor;
+            } else if (r.source === 'pace' && workout.sportType === 'swimming' && cd.metrics.swimming) {
+                cd.metrics.swimming.tss = r.tss;
+                cd.metrics.swimming.intensityFactor = r.intensityFactor;
+            }
+        }
     }
 
     // ✅ Ajout du workout
