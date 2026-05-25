@@ -3,19 +3,25 @@
  * @brief   Synchronisation des activités Strava → workouts PulsePeak.
  *
  *          Flux :
- *          1. Liste paginée des activités de l'année courante (Strava).
- *          2. Dedup sur stravaId déjà importé.
- *          3. Limitation plan gratuit (FREE_STRAVA_LIMIT = 5 activités).
- *          4. Fetch détaillé EN PARALLÈLE avec retry exponentiel.
- *          5. Matching best-effort sur (date + sport) avec une séance planifiée,
+ *          0. Résolution du token Strava UNE seule fois (réutilisé partout).
+ *          1. Choix de la fenêtre :
+ *               - rapide  (cas normal) : activités depuis `strava.lastSyncAt`.
+ *               - complète (1ʳᵉ sync, > 7j sans sync, ou forceFull) : année.
+ *          2. Liste paginée des activités sur la fenêtre choisie.
+ *          3. Dedup sur stravaId déjà importé.
+ *          4. Limitation plan gratuit (FREE_STRAVA_LIMIT = 5 activités).
+ *          5. Fetch détaillé EN PARALLÈLE avec retry exponentiel.
+ *          6. Matching best-effort sur (date + sport) avec une séance planifiée,
  *             sinon création d'une "Sortie Libre" rattachée à la semaine active.
- *          6. Passage en "missed" des séances pending antérieures à aujourd'hui.
- *          7. Recalcul CTL/ATL via recalculateFitnessMetrics().
+ *          7. Passage en "missed" des séances pending antérieures à aujourd'hui.
+ *          8. Sauvegarde PARTIELLE (seules les séances modifiées) + recalcul CTL/ATL.
+ *          9. Mise à jour du curseur lastSyncAt + write-back Strava DÉFÉRÉ.
  ******************************************************************************/
 
 'use server';
 
 import { randomUUID } from 'crypto';
+import { after } from 'next/server';
 import { addDays } from 'date-fns';
 import { parseLocalDate } from '@/lib/utils';
 import {
@@ -24,19 +30,27 @@ import {
     getWeek,
     getWorkout,
     saveWeek,
-    saveWorkout,
+    saveWorkoutsBatch,
 } from '@/lib/data/crud';
+import { setStravaLastSync } from '@/lib/profile-db';
 import type { SportType } from '@/lib/data/type';
 import { Workout } from '@/lib/data/DatabaseTypes';
 import {
     getStravaActivitiesAllPages,
     getStravaActivityById,
+    getValidAccessToken,
 } from '@/lib/strava-service';
-import { mapStravaSport } from '@/lib/strava-mapper';
+import { mapStravaSport, tagStravaActivity } from '@/lib/strava-mapper';
 import { recalculateFitnessMetrics } from './fitness-metrics';
 
+// Au-delà de ce délai sans synchro, on force une sync complète (année) pour
+// rattraper d'éventuels trous (activités ajoutées rétroactivement, sync ratée).
+const FULL_RESYNC_MAX_AGE_SEC = 7 * 24 * 3600;
+// Marge de recouvrement appliquée au curseur en sync rapide, pour ne rien rater
+// à la frontière (le dedup sur stravaId neutralise les doublons).
+const FAST_SYNC_OVERLAP_SEC = 24 * 3600;
 
-export async function syncStravaActivities() {
+export async function syncStravaActivities(forceFull = false) {
     console.log("⚡ Début Sync Strava...");
 
     // Helper : retry avec backoff exponentiel
@@ -84,20 +98,48 @@ export async function syncStravaActivities() {
             w.completedData?.source?.type === 'strava'
         );
 
-        // 3. Sync complète de l'année en cours (pagination).
-        //    On récupère toujours toutes les summaries (1-2 appels légers per_page=200),
-        //    le dedup en étape 4 évite de re-fetcher les détails des activités déjà connues.
-        //    Cela garantit qu'aucune activité n'est ratée, même si la première sync était incomplète.
+        // ── Résoudre le token UNE seule fois (réutilisé pour tous les appels) ──
+        const accessToken = await getValidAccessToken(profile ?? undefined);
+
+        // 3. Choix de la fenêtre de synchro.
+        //    - Rapide (défaut) : depuis lastSyncAt → 1-2 pages légères, peu de détails.
+        //    - Complète : 1ʳᵉ sync, > 7j sans sync, ou forceFull → toute l'année (rattrape les trous).
+        //    Le dedup (étape 4) évite de re-fetcher les détails des activités déjà connues.
+        const nowSec = Math.floor(Date.now() / 1000);
         const currentYear = new Date().getFullYear();
         const startOfYear = Math.floor(new Date(`${currentYear}-01-01T00:00:00Z`).getTime() / 1000);
 
-        console.log(`📅 Sync complète ${currentYear} (pagination)...`);
+        const lastSyncAt = profile?.strava?.lastSyncAt;
+        const isFirstSync = !lastSyncAt;
+        const isStale = !lastSyncAt || (nowSec - lastSyncAt) > FULL_RESYNC_MAX_AGE_SEC;
+        const doFullSync = forceFull || isFirstSync || isStale;
+
+        // Avance le curseur lastSyncAt → les prochaines syncs partent d'ici (chemin rapide).
+        const commitCursor = async () => {
+            if (!profile?.strava) return;
+            try {
+                await setStravaLastSync(nowSec);
+            } catch (e) {
+                console.warn("⚠️ Échec mise à jour du curseur lastSyncAt:", e);
+            }
+        };
+
+        const afterTs = doFullSync
+            ? startOfYear
+            : Math.max(startOfYear, lastSyncAt! - FAST_SYNC_OVERLAP_SEC);
+
+        console.log(
+            doFullSync
+                ? `📅 Sync COMPLÈTE ${currentYear} (${forceFull ? 'forcée' : isFirstSync ? '1ʳᵉ sync' : '> 7j sans sync'})...`
+                : `⚡ Sync RAPIDE depuis ${new Date(afterTs * 1000).toISOString().split('T')[0]}...`
+        );
         const activitiesSummary: { id: number; start_date: string; [key: string]: unknown }[] =
-            await getStravaActivitiesAllPages(startOfYear);
-        console.log(`📊 ${activitiesSummary.length} activité(s) trouvée(s) sur Strava pour ${currentYear}`);
+            await getStravaActivitiesAllPages(afterTs, accessToken);
+        console.log(`📊 ${activitiesSummary.length} activité(s) trouvée(s) sur la fenêtre.`);
 
         if (!activitiesSummary || activitiesSummary.length === 0) {
             console.log("✅ Aucune nouvelle activité à synchroniser.");
+            await commitCursor();
             return { success: true, count: 0 };
         }
 
@@ -111,6 +153,7 @@ export async function syncStravaActivities() {
 
         if (newSummaries.length === 0) {
             console.log("✅ Toutes les activités sont déjà à jour.");
+            await commitCursor();
             return { success: true, count: 0 };
         }
 
@@ -130,15 +173,20 @@ export async function syncStravaActivities() {
 
         console.log(`📥 ${summariesToProcess.length} nouvelles activités à récupérer (sur ${activitiesSummary.length}).`);
 
-        // 5. Récupérer tous les détails en PARALLÈLE avec retry
+        // 5. Récupérer tous les détails en PARALLÈLE avec retry (token & profil réutilisés)
         const detailResults = await Promise.allSettled(
             summariesToProcess.map((summary: { id: number }) =>
-                fetchWithRetry(() => getStravaActivityById(summary.id), summary.id)
+                fetchWithRetry(() => getStravaActivityById(summary.id, accessToken, profile ?? undefined), summary.id)
             )
         );
 
         let newItemsCount = 0;
         const updatedWeeks = existingWeeks ? [...existingWeeks] : [];
+        // Séances réellement modifiées (match / création / missed) → sauvegarde partielle.
+        const changedById = new Map<string, Workout>();
+        // Write-back Strava à effectuer APRÈS la réponse (déféré, hors chemin critique).
+        const tagJobs: { activityId: number; description: string | null; tss: number | null }[] = [];
+        const writeBackEnabled = profile?.stravaWriteBack !== false;
 
         // 6. Traiter chaque résultat
         for (let i = 0; i < summariesToProcess.length; i++) {
@@ -154,6 +202,15 @@ export async function syncStravaActivities() {
             const activityDate = summary.start_date.split('T')[0];
             const stravaSport = mapStravaSport(String(summary.type ?? detail.type ?? ''));
 
+            // Write-back de la description Strava → différé (étape 9).
+            if (writeBackEnabled) {
+                tagJobs.push({
+                    activityId: detail.id,
+                    description: detail.description ?? null,
+                    tss: completedData.calculatedTSS ?? null,
+                });
+            }
+
             // 🧠 MATCHING : séance planifiée existante pour cette date ET le même sport ?
             const matchingIndex = workouts.findIndex(w =>
                 w.date === activityDate &&
@@ -165,6 +222,7 @@ export async function syncStravaActivities() {
                 console.log(`   🤝 Match le ${activityDate} (${stravaSport}) -> mise à jour du plan.`);
                 workouts[matchingIndex].status = 'completed';
                 workouts[matchingIndex].completedData = completedData;
+                changedById.set(workouts[matchingIndex].id, workouts[matchingIndex]);
             } else {
                 console.log(`   ➕ Activité libre ajoutée : ${activityDate} (${stravaSport})`);
 
@@ -210,7 +268,7 @@ export async function syncStravaActivities() {
                     }
                 }
 
-                workouts.push({
+                const newWorkout: Workout = {
                     id: newWorkoutId,
                     userId: profile?.id ?? '',
                     weekId: activeWeekID,
@@ -233,7 +291,9 @@ export async function syncStravaActivities() {
                         structure: [],
                     },
                     completedData,
-                });
+                };
+                workouts.push(newWorkout);
+                changedById.set(newWorkout.id, newWorkout);
             }
             newItemsCount++;
         }
@@ -244,19 +304,36 @@ export async function syncStravaActivities() {
         for (const w of workouts) {
             if (w.status === 'pending' && !w.completedData && w.date < todayStr) {
                 w.status = 'missed';
+                changedById.set(w.id, w);
                 newItemsCount++;
             }
         }
 
-        // 7. Sauvegarder si changements
-        if (newItemsCount > 0) {
-            workouts.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-            await saveWorkout(workouts);
+        // 7. Sauvegarder UNIQUEMENT les séances modifiées (upsert groupé, 1 aller-retour).
+        //    On n'écrit plus tout l'historique : le coût ne dépend plus de sa taille.
+        if (changedById.size > 0) {
+            await saveWorkoutsBatch([...changedById.values()]);
             if (existingWeeks && updatedWeeks.some((w, i) => w !== existingWeeks[i])) {
                 await saveWeek(updatedWeeks);
             }
-            console.log(`💾 ${newItemsCount} activité(s) sauvegardée(s).`);
+            console.log(`💾 ${changedById.size} séance(s) modifiée(s) sauvegardée(s).`);
             await recalculateFitnessMetrics();
+        }
+
+        // 8. Avancer le curseur lastSyncAt (prochaine sync = chemin rapide).
+        await commitCursor();
+
+        // 9. Write-back des descriptions Strava → DÉFÉRÉ après la réponse (next/server `after`).
+        //    N'impacte plus le temps de synchro perçu par l'utilisateur.
+        if (tagJobs.length > 0) {
+            after(async () => {
+                await Promise.allSettled(
+                    tagJobs.map(job =>
+                        tagStravaActivity(accessToken, job.activityId, job.description, { tss: job.tss })
+                    )
+                );
+                console.log(`🏷️  ${tagJobs.length} description(s) Strava taguée(s) (différé).`);
+            });
         }
 
         return { success: true, count: newItemsCount };
