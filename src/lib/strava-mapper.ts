@@ -1,5 +1,6 @@
 import { CompletedData, SportType } from "@/lib/data/type";
 import { getProfile } from "./data/crud";
+import type { Profile } from "./data/DatabaseTypes";
 import { computeWorkoutTSS, speedKmhToPaceMinPerKm, speedMsToPace100m } from "./stats/computeTSS";
 
 // --- DÉFINITION DES TYPES ENTRANTS (STRAVA) ---
@@ -97,12 +98,13 @@ export function mapStravaSport(stravaType: string): SportType {
 }
 
 // Transforme l'objet API Strava TYPÉ en notre objet CompletedData
-export async function mapStravaToCompletedData(activity: StravaActivityInput, streams?: StravaStream | null): Promise<CompletedData> {
+export async function mapStravaToCompletedData(activity: StravaActivityInput, streams?: StravaStream | null, profileArg?: Profile): Promise<CompletedData> {
   const powerData = streams?.watts?.data ?? null;
   const sport = mapStravaSport(activity.type);
 
   // Profil pour les seuils (FTP/FCmax/VMA/CSS) — utilisé après pour computeWorkoutTSS.
-  const profile = await getProfile().catch(err => {
+  // Réutilise le profil injecté par l'appelant si fourni (évite un aller-retour DB par activité).
+  const profile = profileArg ?? await getProfile().catch(err => {
     console.error("Erreur lors de la récupération du profil pour TSS:", err);
     return null;
   });

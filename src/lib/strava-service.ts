@@ -1,6 +1,7 @@
 // src/lib/strava-service.ts
 import { getProfile, updateProfileStravaData } from './profile-db';
-import { mapStravaToCompletedData, tagStravaActivity, StravaStream } from './strava-mapper';
+import { mapStravaToCompletedData, mapStravaSport, StravaStream } from './strava-mapper';
+import type { Profile } from './data/DatabaseTypes';
 
 const STRAVA_CLIENT_ID = process.env.STRAVA_CLIENT_ID;
 const STRAVA_CLIENT_SECRET = process.env.STRAVA_CLIENT_SECRET;
@@ -11,18 +12,22 @@ const STRAVA_CLIENT_SECRET = process.env.STRAVA_CLIENT_SECRET;
  * Cette fonction récupère un token valide.
  * Si l'actuel est périmé, elle le rafraîchit automatiquement et met à jour le JSON.
  */
-async function getValidAccessToken() {
-  const profile = await getProfile();
+/**
+ * Résout un access token valide. Accepte un `profile` déjà chargé pour éviter
+ * un aller-retour DB redondant (les fonctions de sync le passent une fois).
+ */
+export async function getValidAccessToken(profile?: Profile): Promise<string> {
+  const p = profile ?? await getProfile();
 
-  if (!profile.strava) {
+  if (!p.strava) {
     throw new Error("Pas de compte Strava connecté.");
   }
 
   const nowInSeconds = Math.floor(Date.now() / 1000);
 
   // On prend une marge de sécurité de 60 secondes
-  if (profile.strava.expiresAt > nowInSeconds + 60) {
-    return profile.strava.accessToken;
+  if (p.strava.expiresAt > nowInSeconds + 60) {
+    return p.strava.accessToken;
   }
 
   console.log("🔄 Token périmé ou proche de l'expiration. Rafraîchissement...");
@@ -35,7 +40,7 @@ async function getValidAccessToken() {
       client_id: STRAVA_CLIENT_ID,
       client_secret: STRAVA_CLIENT_SECRET,
       grant_type: 'refresh_token',
-      refresh_token: profile.strava.refreshToken,
+      refresh_token: p.strava.refreshToken,
     }),
   });
 
@@ -47,12 +52,14 @@ async function getValidAccessToken() {
 
   const data = await response.json();
 
-  // Mise à jour de la DB (fichier JSON) avec les nouveaux tokens
+  // Mise à jour de la DB avec les nouveaux tokens.
+  // On préserve les autres champs (ex. lastSyncAt) déjà présents dans strava.
   await updateProfileStravaData({
+    ...p.strava,
     accessToken: data.access_token,
     refreshToken: data.refresh_token,
     expiresAt: data.expires_at,
-    athleteId: profile.strava.athleteId
+    athleteId: p.strava.athleteId,
   });
 
   console.log("✅ Token rafraîchi avec succès !");
@@ -62,8 +69,8 @@ async function getValidAccessToken() {
 /**
  * Récupère une seule page d'activités (sync incrémentale rapide).
  */
-export async function getStravaActivities(after: number | null = null, perPage: number = 30) {
-  const accessToken = await getValidAccessToken();
+export async function getStravaActivities(after: number | null = null, perPage: number = 30, token?: string) {
+  const accessToken = token ?? await getValidAccessToken();
 
   let url = `https://www.strava.com/api/v3/athlete/activities?per_page=${perPage}`;
 
@@ -90,8 +97,8 @@ export async function getStravaActivities(after: number | null = null, perPage: 
  */
 interface StravaSummary { id: number; start_date: string; [key: string]: unknown }
 
-export async function getStravaActivitiesAllPages(after: number): Promise<StravaSummary[]> {
-  const accessToken = await getValidAccessToken();
+export async function getStravaActivitiesAllPages(after: number, token?: string): Promise<StravaSummary[]> {
+  const accessToken = token ?? await getValidAccessToken();
   const PER_PAGE = 200;
   const all: StravaSummary[] = [];
   let page = 1;
@@ -145,16 +152,24 @@ async function getStravaStreams(accessToken: string, activityId: number): Promis
   }
 }
 
-export async function getStravaActivityById(id: number) {
-  const accessToken = await getValidAccessToken();
+/**
+ * Récupère le détail d'une activité + ses streams (puissance) si c'est du vélo.
+ *
+ * @param token   Access token déjà résolu (évite un getProfile par activité).
+ * @param profile Profil déjà chargé, transmis au mapper pour le calcul de TSS.
+ *
+ * NB : le write-back de description vers Strava (`tagStravaActivity`) n'est PLUS
+ * fait ici. Il est déféré par l'appelant (hors chemin critique de la sync).
+ */
+export async function getStravaActivityById(id: number, token?: string, profile?: Profile) {
+  const accessToken = token ?? await getValidAccessToken(profile);
 
-  const [res, streams] = await Promise.all([
-    fetch(`https://www.strava.com/api/v3/activities/${id}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-      next: { revalidate: 3600 },
-    }),
-    getStravaStreams(accessToken, id),
-  ]);
+  // Le détail summary n'indique pas toujours le sport ; on fetch d'abord le détail,
+  // puis les streams uniquement pour le vélo (seul sport exploitant la puissance).
+  const res = await fetch(`https://www.strava.com/api/v3/activities/${id}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    next: { revalidate: 3600 },
+  });
 
   if (!res.ok) {
     console.error(`Erreur fetch detail activity ${id}:`, res.statusText);
@@ -163,17 +178,11 @@ export async function getStravaActivityById(id: number) {
 
   const x = await res.json();
 
-  const completedData = await mapStravaToCompletedData(x, streams);
+  const streams = mapStravaSport(String(x.type ?? '')) === 'cycling'
+    ? await getStravaStreams(accessToken, id)
+    : null;
 
-  const profile = await getProfile();
-  if (profile.stravaWriteBack !== false) {
-    await tagStravaActivity(
-      accessToken,
-      x.id,
-      x.description,
-      { tss: completedData.calculatedTSS ?? null }
-    );
-  }
+  const completedData = await mapStravaToCompletedData(x, streams, profile);
 
   return { raw: x, completedData };
 }

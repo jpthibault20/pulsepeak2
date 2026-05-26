@@ -490,6 +490,50 @@ export async function saveWorkout(workoutList: Workout[], planStartDate?: string
     });
 }
 
+/**
+ * Upsert groupé d'un sous-ensemble de workouts, en UN seul INSERT multi-lignes.
+ *
+ * Contrairement à `saveWorkout`, ne réécrit PAS tout l'historique et ne supprime
+ * aucun orphelin : on ne touche qu'aux lignes fournies. À utiliser quand seules
+ * quelques séances changent (ex. sync Strava) pour éviter le coût O(N) de la
+ * réécriture complète.
+ */
+export async function saveWorkoutsBatch(workoutList: Workout[]): Promise<void> {
+    if (workoutList.length === 0) return;
+    const userId = await getCurrentUserId();
+
+    await db
+        .insert(workoutsTable)
+        .values(workoutList.map((w) => ({
+            id:            w.id,
+            userId,
+            weekId:        w.weekId || null,
+            date:          w.date,
+            sportType:     w.sportType,
+            title:         w.title         ?? '',
+            workoutType:   w.workoutType   ?? null,
+            mode:          (w.mode as 'Outdoor' | 'Indoor') ?? 'Outdoor',
+            status:        (w.status as 'pending' | 'completed' | 'missed') ?? 'pending',
+            plannedData:   w.plannedData   ?? null,
+            completedData: w.completedData ?? null,
+        })))
+        .onConflictDoUpdate({
+            target: workoutsTable.id,
+            set: {
+                updatedAt:     new Date(),
+                weekId:        sql`excluded.week_id`,
+                date:          sql`excluded.date`,
+                sportType:     sql`excluded.sport_type`,
+                title:         sql`excluded.title`,
+                workoutType:   sql`excluded.workout_type`,
+                mode:          sql`excluded.mode`,
+                status:        sql`excluded.status`,
+                plannedData:   sql`excluded.planned_data`,
+                completedData: sql`excluded.completed_data`,
+            },
+        });
+}
+
 export async function deleteWorkoutById(workoutId: string): Promise<void> {
     const userId = await getCurrentUserId();
     await db.delete(workoutsTable).where(

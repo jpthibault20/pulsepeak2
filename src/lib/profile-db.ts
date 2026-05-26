@@ -3,7 +3,7 @@
 // src/lib/profile-db.ts
 import { db } from '@/lib/db';
 import { profiles } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { createClient } from '@/lib/supabase/server';
 import { StravaConfig } from '@/lib/data/type';
 import { Profile } from './data/DatabaseTypes';
@@ -26,4 +26,23 @@ export async function updateProfileStravaData(stravaData: StravaConfig): Promise
         .where(eq(profiles.id, userId));
 
     return getProfileFromCrud();
+}
+
+/**
+ * Met à jour uniquement le curseur `lastSyncAt` dans le jsonb `strava`,
+ * via `jsonb_set` atomique — évite d'écraser des tokens fraîchement rafraîchis
+ * pendant la synchro (pas de lecture-modification-écriture côté app).
+ */
+export async function setStravaLastSync(lastSyncAt: number): Promise<void> {
+    const supabase = await createClient();
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) throw new Error('Utilisateur non authentifié');
+
+    await db
+        .update(profiles)
+        .set({
+            strava: sql`jsonb_set(${profiles.strava}, '{lastSyncAt}', to_jsonb(${lastSyncAt}::bigint), true)`,
+            updatedAt: new Date(),
+        })
+        .where(eq(profiles.id, user.id));
 }
