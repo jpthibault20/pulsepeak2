@@ -286,6 +286,12 @@ export interface StravaConfig {
   accessToken: string;
   refreshToken: string;
   expiresAt: number;
+  /**
+   * Timestamp (epoch secondes) de la dernière synchro réussie.
+   * Sert de curseur pour la sync incrémentale rapide (param `after` Strava).
+   * Absent → première synchro : on balaie toute l'année.
+   */
+  lastSyncAt?: number;
 }
 
 export interface CompletedDataFeedback {
