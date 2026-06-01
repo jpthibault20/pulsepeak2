@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Trophy, Calendar, MapPin, Mountain, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modale';
@@ -25,37 +25,42 @@ const SPORT_OPTIONS: { value: ObjectiveSport; label: string }[] = [
 ];
 
 export function ObjectiveModal({ isOpen, onClose, onSave, initialDate, initial, isSaving = false }: ObjectiveModalProps) {
-    const [name, setName] = useState('');
-    const [date, setDate] = useState('');
-    const [sport, setSport] = useState<ObjectiveSport>('triathlon');
-    const [distanceKm, setDistanceKm] = useState('');
-    const [elevationGainM, setElevationGainM] = useState('');
-    const [priority, setPriority] = useState<Objective['priority']>('secondaire');
-    const [comment, setComment] = useState('');
+    const [name, setName] = useState(initial?.name ?? '');
+    const [date, setDate] = useState(initial?.date ?? initialDate ?? '');
+    const [sport, setSport] = useState<ObjectiveSport>(initial?.sport ?? 'triathlon');
+    const [distanceKm, setDistanceKm] = useState(initial?.distanceKm?.toString() ?? '');
+    const [elevationGainM, setElevationGainM] = useState(initial?.elevationGainM?.toString() ?? '');
+    const [priority, setPriority] = useState<Objective['priority']>(initial?.priority ?? 'secondaire');
+    const [comment, setComment] = useState(initial?.comment ?? '');
 
-    // Synchronise le formulaire à l'ouverture (ou quand on passe d'un objectif à un autre)
-    // Dépendances sur initial?.id permet de re-synchroniser si l'utilisateur sélectionne
-    // un autre objectif sans fermer la modale.
-    useEffect(() => {
-        if (!isOpen) return;
-        if (initial) {
-            setName(initial.name);
-            setDate(initial.date);
-            setSport(initial.sport);
-            setDistanceKm(initial.distanceKm?.toString() ?? '');
-            setElevationGainM(initial.elevationGainM?.toString() ?? '');
-            setPriority(initial.priority);
-            setComment(initial.comment ?? '');
-        } else {
-            setName('');
-            setDate(initialDate ?? '');
-            setSport('triathlon');
-            setDistanceKm('');
-            setElevationGainM('');
-            setPriority('secondaire');
-            setComment('');
+    // Synchronise le formulaire à l'ouverture (ou quand on passe d'un objectif à un autre
+    // sans fermer la modale). Pattern React "adjusting state during rendering" — évite
+    // un useEffect qui causerait un setState en cascade.
+    // cf. https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+    const syncKey = `${isOpen ? '1' : '0'}|${initial?.id ?? ''}|${initialDate ?? ''}`;
+    const [lastSyncKey, setLastSyncKey] = useState(syncKey);
+    if (lastSyncKey !== syncKey) {
+        setLastSyncKey(syncKey);
+        if (isOpen) {
+            if (initial) {
+                setName(initial.name);
+                setDate(initial.date);
+                setSport(initial.sport);
+                setDistanceKm(initial.distanceKm?.toString() ?? '');
+                setElevationGainM(initial.elevationGainM?.toString() ?? '');
+                setPriority(initial.priority);
+                setComment(initial.comment ?? '');
+            } else {
+                setName('');
+                setDate(initialDate ?? '');
+                setSport('triathlon');
+                setDistanceKm('');
+                setElevationGainM('');
+                setPriority('secondaire');
+                setComment('');
+            }
         }
-    }, [isOpen, initial, initialDate]);
+    }
 
     const canSave = name.trim().length >= 2 && date.length === 10;
 

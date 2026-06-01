@@ -136,7 +136,7 @@ export async function moveWorkout(workoutId: string, newDateStr: string) {
         };
         // Retirer le plannedData de la séance complétée + insérer la nouvelle séance
         await Promise.all([
-            updateWorkoutById(sourceWorkout.id, { plannedData: null as any }),
+            updateWorkoutById(sourceWorkout.id, { plannedData: null }),
             insertSingleWorkout(newWorkout),
         ]);
     } else {
@@ -194,7 +194,7 @@ export async function unlinkStravaWorkout(workoutId: string, targetWorkoutId: st
             workoutType: 'Sortie Libre',
             mode: sourceWorkout.mode,
             status: 'completed',
-            plannedData: null as any,
+            plannedData: null,
             completedData,
         };
 

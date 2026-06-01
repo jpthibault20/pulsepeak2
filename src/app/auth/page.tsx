@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Activity, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, ArrowRight, Mail, RefreshCw } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { createInitialProfile } from '@/app/actions/auth';
@@ -51,11 +51,14 @@ const RESEND_COOLDOWN = 60; // secondes
 
 export default function AuthPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const supabase = createClient();
 
     const [tab, setTab] = useState<Tab>('login');
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(
+        searchParams.get('error') ? 'Une erreur est survenue. Veuillez réessayer.' : null
+    );
     const [success, setSuccess] = useState<string | null>(null);
 
     // Login fields
@@ -74,14 +77,6 @@ export default function AuthPage() {
     const [resendEmail, setResendEmail] = useState('');
     const [resendCooldown, setResendCooldown] = useState(0);
     const [isResending, setIsResending] = useState(false);
-
-    // Lire l'erreur depuis les query params (ex: après un callback raté)
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('error')) {
-            setError('Une erreur est survenue. Veuillez réessayer.');
-        }
-    }, []);
 
     // Countdown timer
     useEffect(() => {
