@@ -375,16 +375,14 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
 
     // --- Workout Handlers ---
     const handleUpdateStatus = useCallback(async (
-        workoutIdOrDate: string,
+        workoutId: string,
         status: 'pending' | 'completed' | 'missed',
         feedback?: CompletedDataFeedback
     ) => {
         try {
-            await updateWorkoutStatus(workoutIdOrDate, status, feedback);
+            await updateWorkoutStatus(workoutId, status, feedback);
             if (schedule && feedback) {
-                const updatedWorkout = schedule.workouts.find(
-                    w => w.id === workoutIdOrDate || w.date === workoutIdOrDate
-                );
+                const updatedWorkout = schedule.workouts.find(w => w.id === workoutId);
                 if (updatedWorkout) {
                     setSelectedWorkout({
                         ...updatedWorkout,
@@ -400,13 +398,11 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
         }
     }, [refreshData, schedule]);
 
-    const handleToggleMode = useCallback(async (workoutIdOrDate: string) => {
+    const handleToggleMode = useCallback(async (workoutId: string) => {
         try {
-            await toggleWorkoutMode(workoutIdOrDate);
+            await toggleWorkoutMode(workoutId);
             if (schedule) {
-                const workout = schedule.workouts.find(
-                    w => w.id === workoutIdOrDate || w.date === workoutIdOrDate
-                );
+                const workout = schedule.workouts.find(w => w.id === workoutId);
                 if (workout) {
                     const newMode = workout.mode === 'Outdoor' ? 'Indoor' : 'Outdoor';
                     setSelectedWorkout({ ...workout, mode: newMode });
@@ -460,9 +456,9 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
         }
     }, [refreshData]);
 
-    const handleDeleteWorkout = useCallback(async (workoutIdOrDate: string) => {
+    const handleDeleteWorkout = useCallback(async (workoutId: string) => {
         try {
-            await deleteWorkout(workoutIdOrDate);
+            await deleteWorkout(workoutId);
             await refreshData();
             setView('dashboard');
             setSelectedWorkout(null);
@@ -472,15 +468,13 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
         }
     }, [refreshData]);
 
-    const handleRegenerateWorkout = useCallback(async (workoutIdOrDate: string, instruction?: string) => {
+    const handleRegenerateWorkout = useCallback(async (workoutId: string, instruction?: string) => {
         try {
-            await regenerateWorkout(workoutIdOrDate, instruction);
+            await regenerateWorkout(workoutId, instruction);
             const { schedule: newSchedule } = await loadInitialData();
             setSchedule(newSchedule);
             if (newSchedule) {
-                const regeneratedWorkout = newSchedule.workouts.find(
-                    w => w.id === workoutIdOrDate || w.date === workoutIdOrDate
-                );
+                const regeneratedWorkout = newSchedule.workouts.find(w => w.id === workoutId);
                 if (regeneratedWorkout) {
                     setSelectedWorkout(regeneratedWorkout);
                 }
