@@ -12,6 +12,11 @@ export interface WeekStats {
     completed: number;
     total: number;
     completedTSS: number;
+    // Nombre de séances en attente d'exécution (status === 'pending').
+    // Sert à savoir si la semaine est déjà planifiée par l'IA — les séances
+    // 'completed' (Strava, manuelles, ou AI déjà réalisées) ne comptent pas,
+    // même si leur plannedData contient des valeurs (cas saisie manuelle).
+    plannedCount: number;
     sportBreakdown: Record<SportType, number>; // Nombre de séances
     sportDuration: Record<SportType, number>;  // ✅ NOUVEAU: Durée cumulée (minutes)
 }
@@ -28,6 +33,7 @@ export function useWeekStats(
             completed: 0,
             completedTSS: 0,
             total: 0,
+            plannedCount: 0,
             sportBreakdown: { cycling: 0, running: 0, swimming: 0, other: 0  },
             sportDuration: { cycling: 0, running: 0, swimming: 0, other: 0  }
         };
@@ -44,6 +50,8 @@ export function useWeekStats(
             stats.total++;
             stats.plannedTSS += workout.plannedData?.plannedTSS ?? 0;
             stats.plannedDuration += workout.plannedData?.durationMinutes ?? 0;
+
+            if (workout.status === 'pending') stats.plannedCount++;
 
             if (stats.sportBreakdown[workout.sportType] !== undefined) {
                 stats.sportBreakdown[workout.sportType]++;
