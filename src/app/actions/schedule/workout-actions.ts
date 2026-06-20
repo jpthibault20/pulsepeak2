@@ -37,15 +37,15 @@ import { computeWorkoutTSS } from '@/lib/stats/computeTSS';
  * Déclenche systématiquement un recalcul CTL/ATL (le statut influe sur la charge).
  */
 export async function updateWorkoutStatus(
-    workoutIdOrDate: string,
+    workoutId: string,
     status: 'pending' | 'completed' | 'missed',
     feedback?: CompletedDataFeedback
 ): Promise<void> {
     const schedule = await getSchedule();
-    const index = findWorkoutIndex(schedule.workouts, workoutIdOrDate);
+    const index = findWorkoutIndex(schedule.workouts, workoutId);
 
     if (index === -1) {
-        throw new Error(`Workout non trouvé: ${workoutIdOrDate}`);
+        throw new Error(`Workout non trouvé: ${workoutId}`);
     }
 
     const workout = schedule.workouts[index];
@@ -67,31 +67,31 @@ export async function updateWorkoutStatus(
 
 /** Alias pour clarté sémantique — marque une séance comme réalisée. */
 export async function completeWorkout(
-    workoutIdOrDate: string,
+    workoutId: string,
     feedback: CompletedDataFeedback
 ): Promise<void> {
-    return updateWorkoutStatus(workoutIdOrDate, 'completed', feedback);
+    return updateWorkoutStatus(workoutId, 'completed', feedback);
 }
 
 
 /** Alias pour clarté sémantique — marque une séance comme manquée. */
-export async function markWorkoutAsMissed(workoutIdOrDate: string): Promise<void> {
-    return updateWorkoutStatus(workoutIdOrDate, 'missed');
+export async function markWorkoutAsMissed(workoutId: string): Promise<void> {
+    return updateWorkoutStatus(workoutId, 'missed');
 }
 
 
 /** Alias pour clarté sémantique — repasse une séance en planifiée. */
-export async function resetWorkoutToPending(workoutIdOrDate: string): Promise<void> {
-    return updateWorkoutStatus(workoutIdOrDate, 'pending');
+export async function resetWorkoutToPending(workoutId: string): Promise<void> {
+    return updateWorkoutStatus(workoutId, 'pending');
 }
 
 
 /**
  * Bascule le mode d'une séance entre Indoor et Outdoor.
  */
-export async function toggleWorkoutMode(workoutIdOrDate: string) {
+export async function toggleWorkoutMode(workoutId: string) {
     const schedule = await getSchedule();
-    const index = findWorkoutIndex(schedule.workouts, workoutIdOrDate);
+    const index = findWorkoutIndex(schedule.workouts, workoutId);
 
     if (index !== -1) {
         const currentMode = schedule.workouts[index].mode;
@@ -136,7 +136,7 @@ export async function moveWorkout(workoutId: string, newDateStr: string) {
         };
         // Retirer le plannedData de la séance complétée + insérer la nouvelle séance
         await Promise.all([
-            updateWorkoutById(sourceWorkout.id, { plannedData: null as any }),
+            updateWorkoutById(sourceWorkout.id, { plannedData: null }),
             insertSingleWorkout(newWorkout),
         ]);
     } else {
@@ -194,7 +194,7 @@ export async function unlinkStravaWorkout(workoutId: string, targetWorkoutId: st
             workoutType: 'Sortie Libre',
             mode: sourceWorkout.mode,
             status: 'completed',
-            plannedData: null as any,
+            plannedData: null,
             completedData,
         };
 
@@ -270,8 +270,8 @@ export async function addManualWorkout(workout: Workout) {
 
 
 /** Supprime une séance du schedule par ID ou par date. */
-export async function deleteWorkout(workoutIdOrDate: string) {
-    await deleteWorkoutById(workoutIdOrDate);
+export async function deleteWorkout(workoutId: string) {
+    await deleteWorkoutById(workoutId);
     revalidatePath('/');
 }
 

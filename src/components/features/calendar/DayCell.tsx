@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, BedDouble, Layers, Trophy, Target } from 'lucide-react';
+import { Plus, BedDouble, Layers, Trophy, Target, X } from 'lucide-react';
 import type { Workout, Objective } from '@/lib/data/DatabaseTypes';
 import { WorkoutBadge } from './WorkoutBadge';
 import { WorkoutPopover } from './WorkoutPopover';
@@ -30,6 +30,7 @@ export function DayCell({
     // Calcul pour le style multi-séances
     const hasMultiple = workouts.length > 1;
     const isRestDay = workouts.length === 0;
+    const allMissed = hasMultiple && workouts.every(w => w.status === 'missed');
     const primaryObj = objectives.find(o => o.priority === 'principale');
     const secondaryObjs = objectives.filter(o => o.priority === 'secondaire');
 
@@ -120,18 +121,23 @@ export function DayCell({
                         <button
                             onClick={() => setShowPopover(!showPopover)}
                             className={`
-                                w-full bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/90
-                                border border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600
-                                rounded-md p-2 text-left transition-all group/stack
-                                shadow-sm
+                                w-full rounded-md p-2 text-left transition-all group/stack shadow-sm
+                                ${allMissed
+                                    ? 'bg-red-50 dark:bg-red-950/10 hover:bg-red-100 dark:hover:bg-red-950/20 border border-red-200 dark:border-red-500/30 hover:border-red-300 dark:hover:border-red-500/50'
+                                    : 'bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/90 border border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600'
+                                }
                             `}
                         >
                             <div className="flex items-center gap-2 mb-2">
-                                <div className={`p-1 rounded ${getMultiCardStyle(workouts)}`}>
-                                    <Layers size={14} />
+                                <div className={`p-1 rounded ${allMissed
+                                    ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
+                                    : getMultiCardStyle(workouts)}`}>
+                                    {allMissed ? <X size={14} strokeWidth={2.5} /> : <Layers size={14} />}
                                 </div>
-                                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                                    {workouts.length} Séances
+                                <span className={`text-xs font-semibold ${allMissed
+                                    ? 'text-red-700 dark:text-red-300'
+                                    : 'text-slate-700 dark:text-slate-200'}`}>
+                                    {workouts.length} {allMissed ? 'Séances manquées' : 'Séances'}
                                 </span>
                             </div>
 
@@ -140,7 +146,7 @@ export function DayCell({
                                 {workouts.map((w) => (
                                     <div
                                         key={w.id}
-                                        className={`h-1.5 w-full rounded-full opacity-80 ${getSportColorLine(w.sportType)}`}
+                                        className={`h-1.5 w-full rounded-full ${allMissed ? 'opacity-40' : 'opacity-80'} ${getSportColorLine(w.sportType)}`}
                                         title={w.title}
                                     />
                                 ))}

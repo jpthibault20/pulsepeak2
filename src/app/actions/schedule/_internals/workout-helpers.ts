@@ -11,13 +11,16 @@ import { computeWorkoutTSS } from '@/lib/stats/computeTSS';
 
 
 /**
- * Trouve l'index d'un workout dans un tableau par ID ou par date (format YYYY-MM-DD).
- * Accepte les deux pour garder la rétro-compatibilité avec les anciens appelants.
+ * Trouve l'index d'un workout dans un tableau par ID.
+ *
+ * Le matching par date a été retiré : avec plusieurs séances le même jour,
+ * il renvoyait la première trouvée — pas forcément celle visée — ce qui a
+ * causé des erreurs (mauvaise séance marquée "non faite", régénérée, etc.).
  *
  * @returns l'index dans le tableau, ou -1 si introuvable
  */
-export function findWorkoutIndex(workouts: Workout[], idOrDate: string): number {
-    return workouts.findIndex(w => w.id === idOrDate || w.date === idOrDate);
+export function findWorkoutIndex(workouts: Workout[], workoutId: string): number {
+    return workouts.findIndex(w => w.id === workoutId);
 }
 
 

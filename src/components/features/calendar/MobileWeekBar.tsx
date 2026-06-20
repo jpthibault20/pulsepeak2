@@ -269,6 +269,20 @@ export function MobileWeekBar({
                 </div>
             )}
 
+            {/* Aucune séance planifiée (mais activités déjà enregistrées) → bouton de génération */}
+            {!isPastWeek && stats.plannedCount === 0 && (
+                <FeatureGate feature="generate-plan" mode="modal" label="Générer un plan IA">
+                    <button
+                        onClick={handleOpenGenSheet}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 mt-2.5 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 rounded-xl text-white text-sm font-semibold transition-colors shadow-lg shadow-blue-500/20"
+                        aria-label="Générer les séances planifiées de la semaine avec l'IA"
+                    >
+                        <Sparkles size={14} />
+                        Générer cette semaine
+                    </button>
+                </FeatureGate>
+            )}
+
             {renderGenSheet()}
             <WeekGenerationProgressModal
                 state={weekGenProgress}

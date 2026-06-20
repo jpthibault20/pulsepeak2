@@ -157,7 +157,7 @@ export interface Workout {
     mode: 'Outdoor' | 'Indoor';
     status: 'pending' | 'completed' | 'missed';
 
-    plannedData: PlannedData;
+    plannedData: PlannedData | null;
     completedData: CompletedData | null;
 
     aiSummary?: string | null;         // Résumé IA mis en cache (généré une seule fois)

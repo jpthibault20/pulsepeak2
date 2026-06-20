@@ -8,6 +8,7 @@
 
 import {
     getObjectives,
+    getPlan,
     getProfile,
     getSchedule,
     saveProfile,
@@ -16,8 +17,17 @@ import {
 import { Objective, Profile, Schedule } from '@/lib/data/DatabaseTypes';
 
 
+/** Forme minimale du plan actif exposée au client (pour la modale de confirmation). */
+export interface ActivePlanSummary {
+    id:   string;
+    name: string;
+}
+
+
 /**
- * Charge en parallèle le profil, le schedule courant et les objectifs.
+ * Charge en parallèle le profil, le schedule courant, les objectifs et un
+ * résumé du plan actif (utilisé par AppClientWrapper pour décider d'afficher
+ * la modale de confirmation de remplacement).
  * Utilisé au chargement de la page principale. Tolérant aux erreurs réseau :
  * retourne une forme vide plutôt que de lever.
  */
@@ -25,17 +35,23 @@ export async function loadInitialData(): Promise<{
     profile: Profile | null;
     schedule: Schedule | null;
     objectives: Objective[];
+    activePlan: ActivePlanSummary | null;
 }> {
     try {
-        const [profile, schedule, objectives] = await Promise.all([
+        const [profile, schedule, objectives, plans] = await Promise.all([
             getProfile(),
             getSchedule(),
             getObjectives(),
+            getPlan(),
         ]);
-        return { profile, schedule, objectives };
+        const active = plans?.find(p => p.status === 'active') ?? null;
+        const activePlan: ActivePlanSummary | null = active
+            ? { id: active.id, name: active.name }
+            : null;
+        return { profile, schedule, objectives, activePlan };
     } catch (error) {
         console.error("Erreur lors du chargement initial des données:", error);
-        return { profile: null, schedule: null, objectives: [] };
+        return { profile: null, schedule: null, objectives: [], activePlan: null };
     }
 }
 

@@ -44,6 +44,7 @@ import { buildTaperPlan, computeBlockSkeletons, computeWeeklyTSS } from '../help
 import { checkAndIncrementAICallLimit } from './_internals/rate-limit';
 import { analyzeAthleteContext, computeAvgCompletion, getCompletedBlocksHistory, getTrainingHistorySummary } from './_internals/ai-context';
 import { CreateWorkoutForWeek } from './_internals/workout-generator';
+import { prepareArchive } from './_internals/plan-archive';
 
 
 /******************************************************************************
@@ -83,6 +84,17 @@ export async function CreateAdvancedPlan(
         getWeek(),
         getWorkout(),
     ]);
+
+    // Archive le plan actif existant + applique le cap de rétention.
+    // À ce stade, le nouveau plan n'est pas encore créé : prepareArchive
+    // retourne les listes filtrées auxquelles on ajoutera les nouvelles données.
+    const archive = prepareArchive(
+        plan ?? [],
+        existingBlocks ?? [],
+        existingWeeks ?? [],
+        existingWorkouts ?? [],
+        startDate,
+    );
 
     // Création du plan
     const newPlan = CreatePlan(blockFocus, customTheme, startDate, numWeeks, userID);
@@ -126,12 +138,14 @@ export async function CreateAdvancedPlan(
             : week
     );
 
-    // Sauvegarde : respecter l'ordre des FK (plan → blocks → weeks → workouts)
+    // Sauvegarde : respecter l'ordre des FK (plan → blocks → weeks → workouts).
+    // Les listes `*ToKeep` viennent de prepareArchive : plans actifs basculés
+    // en 'archived', cap appliqué, workouts futurs des plans purgés nettoyés.
     try {
-        await savePlan([...(Array.isArray(plan) ? plan : []), newPlan]);
-        await saveBlocks([...(Array.isArray(existingBlocks) ? existingBlocks : []), ...updatedBlocks]);
-        await saveWeek([...(Array.isArray(existingWeeks) ? existingWeeks : []), ...updatedWeeks]);
-        await saveWorkout([...(Array.isArray(existingWorkouts) ? existingWorkouts : []), ...newWorkouts], startDate);
+        await savePlan([...archive.plansToKeep, newPlan]);
+        await saveBlocks([...archive.blocksToKeep, ...updatedBlocks]);
+        await saveWeek([...archive.weeksToKeep, ...updatedWeeks]);
+        await saveWorkout([...archive.workoutsToKeep, ...newWorkouts], startDate);
     } catch (err) {
         console.error('[CreateAdvancedPlan] Erreur lors de la sauvegarde:', err);
         return { state: ReturnCode.RC_Error, error: 'Erreur lors de la sauvegarde du plan.' };
@@ -161,9 +175,13 @@ export async function CreatePlanToObjective(userID: string, planStartDate: strin
 
     const todayStr = format(new Date(), 'yyyy-MM-dd');
 
-    const [profile, objectives] = await Promise.all([
+    const [profile, objectives, existingPlans, existingBlocks, existingWeeks, existingWorkouts] = await Promise.all([
         getProfile(),
         getObjectives(),
+        getPlan(),
+        getBlock(),
+        getWeek(),
+        getWorkout(),
     ]);
 
     // Premier objectif principal à venir
@@ -235,9 +253,7 @@ export async function CreatePlanToObjective(userID: string, planStartDate: strin
         return objDate >= firstWeekStart && objDate <= firstWeekEnd;
     });
 
-    const existingAllWorkouts2 = await getWorkout();
-    const existingAllWeeks2 = await getWeek();
-    const realCompletion2 = computeAvgCompletion(existingAllWorkouts2 ?? [], existingAllWeeks2 ?? [], firstWeek.id);
+    const realCompletion2 = computeAvgCompletion(existingWorkouts ?? [], existingWeeks ?? [], firstWeek.id);
     const firstWeekWorkouts = await CreateWorkoutForWeek(profile, newPlan, firstBlock, firstWeek, null, realCompletion2, weeklyAvailability ?? profile.weeklyAvailability, relevantObjectives);
 
     const newWorkouts: Workout[] = [...firstWeekWorkouts];
@@ -245,12 +261,22 @@ export async function CreatePlanToObjective(userID: string, planStartDate: strin
         w.id === firstWeek.id ? { ...w, workoutsId: firstWeekWorkouts.map(wk => wk.id) } : w
     );
 
-    // Sauvegarde — remplace tout (aucun plan/bloc/semaine existant conservé)
+    // Archive le plan actif existant + applique le cap de rétention.
+    const archive = prepareArchive(
+        existingPlans ?? [],
+        existingBlocks ?? [],
+        existingWeeks ?? [],
+        existingWorkouts ?? [],
+        startDate,
+    );
+
+    // Sauvegarde — le plan actif précédent est conservé en 'archived', les
+    // anciens archivés au-delà du cap sont purgés en cascade via savePlan.
     try {
-        await savePlan([newPlan]);
-        await saveBlocks([...updatedBlocks]);
-        await saveWeek([...weeksWithWorkouts]);
-        await saveWorkout([...newWorkouts], startDate);
+        await savePlan([...archive.plansToKeep, newPlan]);
+        await saveBlocks([...archive.blocksToKeep, ...updatedBlocks]);
+        await saveWeek([...archive.weeksToKeep, ...weeksWithWorkouts]);
+        await saveWorkout([...archive.workoutsToKeep, ...newWorkouts], startDate);
     } catch (err) {
         console.error('[CreatePlanToObjective] Erreur sauvegarde:', err);
         return { state: ReturnCode.RC_Error, error: 'Erreur lors de la sauvegarde du plan.' };
