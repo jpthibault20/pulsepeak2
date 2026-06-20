@@ -389,7 +389,7 @@ export function MobileCalendarStrip({
     const weekStats = useMemo<WeekStats>(() => {
         const stats: WeekStats = {
             plannedTSS: 0, plannedDuration: 0, actualDuration: 0, distance: 0,
-            completed: 0, completedTSS: 0, total: 0,
+            completed: 0, completedTSS: 0, total: 0, plannedCount: 0,
             sportBreakdown: { cycling: 0, running: 0, swimming: 0, other: 0 },
             sportDuration: { cycling: 0, running: 0, swimming: 0, other: 0 },
         };
@@ -401,6 +401,7 @@ export function MobileCalendarStrip({
             stats.total++;
             stats.plannedTSS += w.plannedData?.plannedTSS ?? 0;
             stats.plannedDuration += w.plannedData?.durationMinutes ?? 0;
+            if (w.status === 'pending') stats.plannedCount++;
             const sport = w.sportType as keyof typeof stats.sportBreakdown;
             if (stats.sportBreakdown[sport] !== undefined) {
                 stats.sportBreakdown[sport]++;

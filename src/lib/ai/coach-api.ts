@@ -184,7 +184,7 @@ export async function callGeminiAPI(
             const finishReason: string | undefined = data.candidates?.[0]?.finishReason;
             const tokensUsed: number = data.usageMetadata?.totalTokenCount ?? 0;
 
-            if (!rawText) throw new Error(`AI response empty (finishReason=${finishReason ?? 'unknown'}).`);
+            if (!rawText) throw new Error(`AI response empty [${tag}] (finishReason=${finishReason ?? 'unknown'}).`);
 
             // Nettoyage du markdown éventuel
             let cleanText: string = rawText
@@ -208,7 +208,7 @@ export async function callGeminiAPI(
                 // pour distinguer une troncature (MAX_TOKENS) d'un vrai JSON cassé.
                 const tail = cleanText.slice(-120).replace(/\s+/g, ' ');
                 throw new Error(
-                    `JSON parsing failed (finishReason=${finishReason ?? 'unknown'}, len=${cleanText.length}, tail="…${tail}"): ${parseError}`
+                    `JSON parsing failed [${tag}] (finishReason=${finishReason ?? 'unknown'}, len=${cleanText.length}, tail="…${tail}"): ${parseError}`
                 );
             }
 

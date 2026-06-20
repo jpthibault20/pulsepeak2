@@ -108,7 +108,7 @@ export async function createPlannedWorkoutAI(
  * Régénère une séance existante via l'IA, en conservant les clés relationnelles
  * (id, userId, weekId) et la date d'origine.
  */
-export async function regenerateWorkout(workoutIdOrDate: string, instruction?: string) {
+export async function regenerateWorkout(workoutId: string, instruction?: string) {
 
     await checkAndIncrementAICallLimit('workout');
 
@@ -118,7 +118,7 @@ export async function regenerateWorkout(workoutIdOrDate: string, instruction?: s
     if (!existingProfile) throw new Error("Profil manquant");
 
     // Trouver la séance cible
-    const targetIndex = findWorkoutIndex(existingSchedule.workouts, workoutIdOrDate);
+    const targetIndex = findWorkoutIndex(existingSchedule.workouts, workoutId);
     if (targetIndex === -1) throw new Error("Séance introuvable");
 
     const oldWorkout = existingSchedule.workouts[targetIndex];

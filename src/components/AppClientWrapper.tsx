@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 
 // Import des Server Actions (par sous-module schedule)
-import { saveAthleteProfile, loadInitialData } from '@/app/actions/schedule/profile';
+import { saveAthleteProfile, loadInitialData, type ActivePlanSummary } from '@/app/actions/schedule/profile';
 import { CreateAdvancedPlan, CreatePlanToObjective } from '@/app/actions/schedule/plan-creation';
 import {
     updateWorkoutStatus,
@@ -35,6 +35,7 @@ import { Nav, View } from '@/components/layout/nav';
 import { ChatView, type Message as ChatMessage } from '@/components/features/chat/ChatView';
 import { PlanView } from '@/components/features/plan/PlanView';
 import { GenerationProgressModal, type GenProgressState } from '@/components/features/calendar/GenerationProgressModal';
+import { ConfirmReplacePlanModal } from '@/components/features/plan/ConfirmReplacePlanModal';
 import { TutorialOverlay } from '@/components/features/tutorial/TutorialOverlay';
 import { WelcomeScreen } from '@/components/features/tutorial/WelcomeScreen';
 import { Card } from '@/components/ui';
@@ -47,10 +48,11 @@ interface AppClientWrapperProps {
     initialProfile: Profile;
     initialSchedule: Schedule;
     initialObjectives: Objective[];
+    initialActivePlan: ActivePlanSummary | null;
 }
 
 // --- Composant Principal ---
-export default function AppClientWrapper({ initialProfile, initialSchedule, initialObjectives }: AppClientWrapperProps) {
+export default function AppClientWrapper({ initialProfile, initialSchedule, initialObjectives, initialActivePlan }: AppClientWrapperProps) {
 
     // --- Sync theme from DB profile ---
     const { setThemeFromProfile } = useTheme();
@@ -69,8 +71,12 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
     const [profile, setProfile] = useState<Profile>(initialProfile);
     const [schedule, setSchedule] = useState<Schedule | null>(initialSchedule);
     const [objectives, setObjectives] = useState<Objective[]>(initialObjectives);
+    const [activePlan, setActivePlan] = useState<ActivePlanSummary | null>(initialActivePlan);
     const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
     const [previousView, setPreviousView] = useState<View>('dashboard');
+
+    // Action de génération en attente de confirmation (popup "Remplacer le plan")
+    const [pendingReplaceAction, setPendingReplaceAction] = useState<{ run: () => Promise<void> } | null>(null);
 
     // Calendrier — persist le mois sélectionné entre les changements de vue
     const [calendarDate, setCalendarDate] = useState(new Date());
@@ -110,10 +116,11 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
     const refreshData = useCallback(async () => {
         try {
             setIsRefreshing(true);
-            const { profile: profileData, schedule: scheduleData, objectives: objectivesData } = await loadInitialData();
+            const { profile: profileData, schedule: scheduleData, objectives: objectivesData, activePlan: activePlanData } = await loadInitialData();
             setProfile(profileData as Profile);
             setSchedule(scheduleData);
             setObjectives(objectivesData);
+            setActivePlan(activePlanData);
             setError(null);
         } catch (e) {
             console.error('Erreur refresh données:', e);
@@ -192,17 +199,21 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
     }, []);
 
     // --- Plan Generation Handlers ---
-    const handleGenerate = useCallback(async (
+    // Logique de génération réelle, séparée du gate de confirmation : on l'appelle
+    // soit directement (pas de plan actif), soit après que l'utilisateur a validé
+    // la modale de remplacement (ConfirmReplacePlanModal).
+    const runAdvancedPlan = useCallback(async (
         blockFocus: string,
         customTheme: string | null,
         startDate: string,
         numWeeks: number,
         weeklyAvailability: { [key: string]: import('@/lib/data/type').AvailabilitySlot }
     ) => {
+        const p = profileRef.current;
         const sports = [
-            profile.activeSports.cycling ? 'Cyclisme' : '',
-            profile.activeSports.running ? 'Course à pied' : '',
-            profile.activeSports.swimming ? 'Natation' : '',
+            p.activeSports.cycling ? 'Cyclisme' : '',
+            p.activeSports.running ? 'Course à pied' : '',
+            p.activeSports.swimming ? 'Natation' : '',
         ].filter(Boolean).join(', ');
 
         setGenProgress({
@@ -211,16 +222,16 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
             done: false,
             startedAt: Date.now(),
             profileInfo: {
-                firstName: profile.firstName,
-                experience: profile.experience,
-                currentCTL: profile.currentCTL,
+                firstName: p.firstName,
+                experience: p.experience,
+                currentCTL: p.currentCTL,
                 sports,
             },
         });
 
         try {
             setIsRefreshing(true);
-            await CreateAdvancedPlan(blockFocus, customTheme, startDate, numWeeks, profile.id, weeklyAvailability);
+            await CreateAdvancedPlan(blockFocus, customTheme, startDate, numWeeks, p.id, weeklyAvailability);
             await refreshData();
             setGenProgress(prev => prev ? { ...prev, done: true, minimized: false } : null);
             if (genProgressTimerRef.current) clearTimeout(genProgressTimerRef.current);
@@ -232,13 +243,17 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
         } finally {
             setIsRefreshing(false);
         }
-    }, [profile, refreshData]);
+    }, [refreshData]);
 
-    const handleGenerateToObjective = useCallback(async (planStartDate: string, weeklyAvailability: { [key: string]: import('@/lib/data/type').AvailabilitySlot }) => {
+    const runPlanToObjective = useCallback(async (
+        planStartDate: string,
+        weeklyAvailability: { [key: string]: import('@/lib/data/type').AvailabilitySlot }
+    ) => {
+        const p = profileRef.current;
         const sports = [
-            profile.activeSports.cycling ? 'Cyclisme' : '',
-            profile.activeSports.running ? 'Course à pied' : '',
-            profile.activeSports.swimming ? 'Natation' : '',
+            p.activeSports.cycling ? 'Cyclisme' : '',
+            p.activeSports.running ? 'Course à pied' : '',
+            p.activeSports.swimming ? 'Natation' : '',
         ].filter(Boolean).join(', ');
 
         setGenProgress({
@@ -247,16 +262,16 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
             done: false,
             startedAt: Date.now(),
             profileInfo: {
-                firstName: profile.firstName,
-                experience: profile.experience,
-                currentCTL: profile.currentCTL,
+                firstName: p.firstName,
+                experience: p.experience,
+                currentCTL: p.currentCTL,
                 sports,
             },
         });
 
         try {
             setIsRefreshing(true);
-            const result = await CreatePlanToObjective(profile.id, planStartDate, weeklyAvailability);
+            const result = await CreatePlanToObjective(p.id, planStartDate, weeklyAvailability);
             if ('error' in result && result.error) {
                 setGenProgress(null);
                 setError(result.error);
@@ -273,7 +288,51 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
         } finally {
             setIsRefreshing(false);
         }
-    }, [profile, refreshData]);
+    }, [refreshData]);
+
+    // Gate de confirmation : si un plan est déjà actif, on diffère l'appel
+    // dans `pendingReplaceAction` et on affiche la modale. Sinon, exécution directe.
+    const handleGenerate = useCallback(async (
+        blockFocus: string,
+        customTheme: string | null,
+        startDate: string,
+        numWeeks: number,
+        weeklyAvailability: { [key: string]: import('@/lib/data/type').AvailabilitySlot }
+    ) => {
+        if (activePlan) {
+            setPendingReplaceAction({
+                run: () => runAdvancedPlan(blockFocus, customTheme, startDate, numWeeks, weeklyAvailability),
+            });
+            return;
+        }
+        await runAdvancedPlan(blockFocus, customTheme, startDate, numWeeks, weeklyAvailability);
+    }, [activePlan, runAdvancedPlan]);
+
+    const handleGenerateToObjective = useCallback(async (
+        planStartDate: string,
+        weeklyAvailability: { [key: string]: import('@/lib/data/type').AvailabilitySlot }
+    ) => {
+        if (activePlan) {
+            setPendingReplaceAction({
+                run: () => runPlanToObjective(planStartDate, weeklyAvailability),
+            });
+            return;
+        }
+        await runPlanToObjective(planStartDate, weeklyAvailability);
+    }, [activePlan, runPlanToObjective]);
+
+    const handleConfirmReplace = useCallback(async () => {
+        const action = pendingReplaceAction;
+        if (!action) return;
+        // On ferme la modale AVANT de lancer la génération pour laisser place
+        // à GenerationProgressModal (sinon les deux modales se superposent).
+        setPendingReplaceAction(null);
+        await action.run();
+    }, [pendingReplaceAction]);
+
+    const handleCancelReplace = useCallback(() => {
+        setPendingReplaceAction(null);
+    }, []);
 
     // --- Objective Handlers ---
     const handleSaveObjective = useCallback(async (obj: Objective) => {
@@ -316,16 +375,14 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
 
     // --- Workout Handlers ---
     const handleUpdateStatus = useCallback(async (
-        workoutIdOrDate: string,
+        workoutId: string,
         status: 'pending' | 'completed' | 'missed',
         feedback?: CompletedDataFeedback
     ) => {
         try {
-            await updateWorkoutStatus(workoutIdOrDate, status, feedback);
+            await updateWorkoutStatus(workoutId, status, feedback);
             if (schedule && feedback) {
-                const updatedWorkout = schedule.workouts.find(
-                    w => w.id === workoutIdOrDate || w.date === workoutIdOrDate
-                );
+                const updatedWorkout = schedule.workouts.find(w => w.id === workoutId);
                 if (updatedWorkout) {
                     setSelectedWorkout({
                         ...updatedWorkout,
@@ -341,13 +398,11 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
         }
     }, [refreshData, schedule]);
 
-    const handleToggleMode = useCallback(async (workoutIdOrDate: string) => {
+    const handleToggleMode = useCallback(async (workoutId: string) => {
         try {
-            await toggleWorkoutMode(workoutIdOrDate);
+            await toggleWorkoutMode(workoutId);
             if (schedule) {
-                const workout = schedule.workouts.find(
-                    w => w.id === workoutIdOrDate || w.date === workoutIdOrDate
-                );
+                const workout = schedule.workouts.find(w => w.id === workoutId);
                 if (workout) {
                     const newMode = workout.mode === 'Outdoor' ? 'Indoor' : 'Outdoor';
                     setSelectedWorkout({ ...workout, mode: newMode });
@@ -401,9 +456,9 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
         }
     }, [refreshData]);
 
-    const handleDeleteWorkout = useCallback(async (workoutIdOrDate: string) => {
+    const handleDeleteWorkout = useCallback(async (workoutId: string) => {
         try {
-            await deleteWorkout(workoutIdOrDate);
+            await deleteWorkout(workoutId);
             await refreshData();
             setView('dashboard');
             setSelectedWorkout(null);
@@ -413,15 +468,13 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
         }
     }, [refreshData]);
 
-    const handleRegenerateWorkout = useCallback(async (workoutIdOrDate: string, instruction?: string) => {
+    const handleRegenerateWorkout = useCallback(async (workoutId: string, instruction?: string) => {
         try {
-            await regenerateWorkout(workoutIdOrDate, instruction);
+            await regenerateWorkout(workoutId, instruction);
             const { schedule: newSchedule } = await loadInitialData();
             setSchedule(newSchedule);
             if (newSchedule) {
-                const regeneratedWorkout = newSchedule.workouts.find(
-                    w => w.id === workoutIdOrDate || w.date === workoutIdOrDate
-                );
+                const regeneratedWorkout = newSchedule.workouts.find(w => w.id === workoutId);
                 if (regeneratedWorkout) {
                     setSelectedWorkout(regeneratedWorkout);
                 }
@@ -622,6 +675,15 @@ export default function AppClientWrapper({ initialProfile, initialSchedule, init
                     state={genProgress}
                     onMinimize={() => setGenProgress(prev => prev ? { ...prev, minimized: true } : null)}
                     onRestore={() => setGenProgress(prev => prev ? { ...prev, minimized: false } : null)}
+                />
+            )}
+
+            {pendingReplaceAction && activePlan && (
+                <ConfirmReplacePlanModal
+                    isOpen
+                    activePlanName={activePlan.name}
+                    onConfirm={handleConfirmReplace}
+                    onCancel={handleCancelReplace}
                 />
             )}
 

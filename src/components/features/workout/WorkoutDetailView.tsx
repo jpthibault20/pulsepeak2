@@ -32,15 +32,15 @@ interface WorkoutDetailViewProps {
     profile: Profile;
     onClose: () => void;
     onUpdate: (
-        dateKey: string,
+        workoutId: string,
         status: 'pending' | 'completed' | 'missed',
         feedback?: CompletedDataFeedback
     ) => Promise<void>;
-    onToggleMode: (dateKey: string) => Promise<void>;
+    onToggleMode: (workoutId: string) => Promise<void>;
     onMoveWorkout: (workoutId: string, newDateStr: string) => Promise<void>;
     onUnlinkStrava: (workoutId: string, targetWorkoutId: string | null) => Promise<void>;
-    onDelete: (dateKey: string) => Promise<void>;
-    onRegenerate: (dateKey: string, instruction?: string) => Promise<void>;
+    onDelete: (workoutId: string) => Promise<void>;
+    onRegenerate: (workoutId: string, instruction?: string) => Promise<void>;
     onRefresh?: () => Promise<void>;
 }
 
@@ -714,7 +714,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
         if (!regenInstruction.trim()) { setShowRegenInput(false); return; }
         setIsMutating(true); setIsRegenerating(true);
         try {
-            await onRegenerate(workout.date, regenInstruction);
+            await onRegenerate(workout.id, regenInstruction);
             setShowRegenInput(false); setRegenInstruction('');
         } catch (e) { console.error(e); }
         finally { setIsMutating(false); setIsRegenerating(false); }
@@ -729,7 +729,7 @@ export const WorkoutDetailView: React.FC<WorkoutDetailViewProps> = ({
     const handleStatusUpdate = async (status: 'pending' | 'completed' | 'missed', feedback?: CompletedDataFeedback) => {
         setIsMutating(true);
         try {
-            await onUpdate(workout.date, status, feedback);
+            await onUpdate(workout.id, status, feedback);
             setIsCompleting(false); setIsEditing(false);
             if (status === 'pending' && isCompleted) onClose();
         } catch (e) { console.error(e); }
