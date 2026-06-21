@@ -311,7 +311,7 @@ const AISummary: React.FC<{ workout: Workout; enabled: boolean }> = ({ workout, 
                     Erreur - Cliquer pour réessayer
                 </button>
             ) : summary ? (
-                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{summary}</p>
+                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">{summary}</p>
             ) : null}
         </div>
     );
